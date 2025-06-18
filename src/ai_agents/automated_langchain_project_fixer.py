@@ -38,6 +38,7 @@ try:
     from langchain_openai import ChatOpenAI
 except ImportError:
     from langchain_openai import ChatOpenAI
+from langchain_community.llms import Ollama
 
 from langchain.memory import ConversationBufferMemory
 from langchain.agents import initialize_agent, AgentType
@@ -415,9 +416,20 @@ class DependencyCheckerTool(BaseTool):
 
 class AutomatedProjectFixer:
     """Main class for automated project fixing"""
+    SEVERITY_ORDER = {"info": 0, "low": 1, "medium": 2, "high": 3}
     
-    def __init__(self, project_root: str):
-        self.project_root = Path(project_root)
+    def __init__(self, project_root: str, ollama_model_name: str = "codellama",
+                 include_patterns: Optional[List[str]] = None,
+                 exclude_patterns: Optional[List[str]] = None,
+                 min_severity: str = "info"):
+        self.project_root = Path(project_root) # Ensure this is a Path object
+        self.ollama_model_name = ollama_model_name
+        self.include_patterns = include_patterns
+        self.exclude_patterns = exclude_patterns
+        self.min_severity = min_severity.lower()
+        if self.min_severity not in AutomatedProjectFixer.SEVERITY_ORDER:
+            logger.warning(f"Invalid min_severity '{self.min_severity}'. Defaulting to 'info'.")
+            self.min_severity = "info"
         self.fix_report: Dict[str, Any] = {
             'start_time': datetime.now().isoformat(),
             'files_processed': 0,
@@ -444,13 +456,8 @@ class AutomatedProjectFixer:
         logger.info("🧠 Initializing LangChain components...")
         
         try:
-            # Initialize LLM (using a mock since we don't have API key)
-            # In production, you would use: ChatOpenAI(api_key="your-key")
-            self.llm = ChatOpenAI(
-                model="gpt-3.5-turbo",
-                temperature=0.1,
-                # api_key would be set from environment
-            )
+            # Initialize LLM
+            self.llm = Ollama(model=self.ollama_model_name)
             
             # Initialize embeddings
             self.embeddings = HuggingFaceEmbeddings(
@@ -468,23 +475,67 @@ class AutomatedProjectFixer:
             logger.info("✅ LangChain components initialized successfully")
             
         except Exception as e:
-            logger.warning(f"⚠️ LangChain initialization failed: {e}")
-            logger.info("📝 Continuing with direct tool usage...")
+            logger.warning(f"⚠️ Local LLM (Ollama) initialization failed: {e}")
+            logger.info("📝 Continuing with direct tool usage / non-LLM analysis...")
     
     def get_project_files(self) -> List[Path]:
-        """Get all relevant project files"""
-        extensions = ['.py', '.js', '.ts', '.jsx', '.tsx', '.json', '.yaml', '.yml', '.txt', '.md']
-        ignore_dirs = {'__pycache__', '.git', 'node_modules', '.venv', 'venv', 'env'}
+        """Get all relevant project files, applying include and exclude patterns."""
+        files: Set[Path] = set()
         
-        files: List[Path] = []
-        for ext in extensions:
-            for file_path in self.project_root.rglob(f'*{ext}'):
-                # Skip files in ignored directories
-                if any(ignored in file_path.parts for ignored in ignore_dirs):
-                    continue
-                files.append(file_path)
-        
-        return files
+        # Default ignored directories and extensions
+        default_ignore_dirs = {'__pycache__', '.git', 'node_modules', '.venv', 'venv', 'env', 'dist', 'build'}
+        default_extensions = ['.py', '.js', '.ts', '.jsx', '.tsx', '.json', '.yaml', '.yml', '.txt', '.md']
+
+        if self.include_patterns:
+            logger.info(f"Using include patterns: {self.include_patterns}")
+            for pattern in self.include_patterns:
+                for file_path in self.project_root.rglob(pattern):
+                    if file_path.is_file():
+                        files.add(file_path)
+        else: # Fallback to default extensions
+            logger.info(f"No include patterns provided, using default extensions: {default_extensions}")
+            for ext in default_extensions:
+                for file_path in self.project_root.rglob(f'*{ext}'):
+                    if file_path.is_file():
+                        files.add(file_path)
+
+        final_files: List[Path] = []
+        for file_path in files:
+            # Check against default ignored directories
+            # Ensure paths are relative to project_root for consistent .parts comparison
+            try:
+                relative_path_parts = file_path.relative_to(self.project_root).parts
+            except ValueError: # file_path is not under self.project_root, should not happen with rglob
+                relative_path_parts = file_path.parts
+
+            if any(ignored_dir in relative_path_parts for ignored_dir in default_ignore_dirs):
+                # logger.debug(f"Excluding '{file_path}' due to ignored directory in path.")
+                continue
+
+            # Check against user-defined exclude patterns
+            excluded_by_pattern = False
+            if self.exclude_patterns:
+                # Path.match expects patterns relative to the Path object it's called on.
+                # For patterns like 'data/*' or '*/test/*', they should work fine if file_path is absolute
+                # or relative to where the patterns are defined (project_root).
+                # To be safe, we can make file_path relative to project_root for matching.
+                try:
+                    path_for_matching = file_path.relative_to(self.project_root)
+                except ValueError: # If file path is not under project root for some reason.
+                    path_for_matching = file_path
+
+                for pattern in self.exclude_patterns:
+                    if path_for_matching.match(pattern):
+                        # logger.debug(f"Excluding '{file_path}' due to exclude pattern: '{pattern}'")
+                        excluded_by_pattern = True
+                        break
+            if excluded_by_pattern:
+                continue
+
+            final_files.append(file_path)
+
+        logger.info(f"Found {len(final_files)} files to scan after applying include/exclude filters.")
+        return final_files
     
     async def scan_project(self) -> Dict[str, Any]:
         """Scan the entire project for issues"""
@@ -506,6 +557,22 @@ class AutomatedProjectFixer:
                     continue
                 
                 file_analysis = json.loads(result)
+
+                # Filter issues by severity before adding to report
+                original_issue_count = file_analysis.get('total_issues', 0)
+                if original_issue_count > 0:
+                    min_sev_level = AutomatedProjectFixer.SEVERITY_ORDER[self.min_severity]
+
+                    filtered_issues = [
+                        issue for issue in file_analysis.get('issues', [])
+                        if AutomatedProjectFixer.SEVERITY_ORDER.get(issue.get('severity', '').lower(), -1) >= min_sev_level
+                    ]
+                    file_analysis['issues'] = filtered_issues
+                    file_analysis['total_issues'] = len(filtered_issues)
+
+                    if original_issue_count != file_analysis['total_issues']:
+                        logger.debug(f"Filtered issues for {file_path.name} from {original_issue_count} to {file_analysis['total_issues']} based on min_severity '{self.min_severity}'.")
+
                 all_issues[str(file_path)] = file_analysis
                 
                 if file_analysis['total_issues'] > 0:
