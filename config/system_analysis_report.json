@@ -1,0 +1,233 @@
+{
+  "timestamp": "2025-06-16T14:36:02.382544",
+  "system_overview": {
+    "total_mcp_servers": 36,
+    "total_ai_agents": 0,
+    "duplicates_found": 9,
+    "duplicates_removed": 9,
+    "active_mcp_servers": 27,
+    "active_ai_agents": 0
+  },
+  "mcp_servers": {
+    "aave_flash_loan_mcp_server": {
+      "type": "flash_loan",
+      "port": 3,
+      "capabilities": [
+        "flash_loan",
+        "arbitrage",
+        "dex",
+        "price_oracle",
+        "risk_management"
+      ],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "clean_context7_mcp_server": {
+      "type": "unknown",
+      "port": 8001,
+      "capabilities": [],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "clean_context7_mcp_server.py": {
+      "type": "unknown",
+      "port": 8001,
+      "capabilities": [],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "clean_matic_mcp_server": {
+      "type": "unknown",
+      "port": 8000,
+      "capabilities": [
+        "dex",
+        "price_oracle"
+      ],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "copilot_mcp_mcp_server": {
+      "type": "unknown",
+      "port": 8000,
+      "capabilities": [],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "copilot_mcp_mcp_server.py": {
+      "type": "unknown",
+      "port": 8000,
+      "capabilities": [],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "evm_mcp_server": {
+      "type": "unknown",
+      "port": 8003,
+      "capabilities": [
+        "price_oracle"
+      ],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "evm_mcp_server.py": {
+      "type": "unknown",
+      "port": 8003,
+      "capabilities": [
+        "price_oracle"
+      ],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "fix_all_local_mcp_servers": {
+      "type": "unknown",
+      "port": 8000,
+      "capabilities": [
+        "dex"
+      ],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "flash_loan_mcp_mcp_server": {
+      "type": "flash_loan",
+      "port": 8000,
+      "capabilities": [
+        "flash_loan"
+      ],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "foundry_mcp_mcp_server": {
+      "type": "unknown",
+      "port": 8000,
+      "capabilities": [],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "foundry_mcp_mcp_server.py": {
+      "type": "unknown",
+      "port": 8000,
+      "capabilities": [],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "identify_mcp_servers": {
+      "type": "unknown",
+      "port": 0,
+      "capabilities": [],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "mcp_server_entrypoint": {
+      "type": "unknown",
+      "port": 2,
+      "capabilities": [],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "mcp_server_manager": {
+      "type": "unknown",
+      "port": 8000,
+      "capabilities": [
+        "dex",
+        "price_oracle"
+      ],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "mcp_server_manager.py": {
+      "type": "unknown",
+      "port": 8000,
+      "capabilities": [
+        "dex",
+        "price_oracle"
+      ],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "mcp_server_template": {
+      "type": "unknown",
+      "port": 8000,
+      "capabilities": [],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "mcp_server_template.py": {
+      "type": "unknown",
+      "port": 8000,
+      "capabilities": [],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "organize_mcp_servers": {
+      "type": "unknown",
+      "port": 8000,
+      "capabilities": [],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "real_time_price_mcp_server": {
+      "type": "unknown",
+      "port": 3,
+      "capabilities": [
+        "arbitrage",
+        "dex",
+        "price_oracle"
+      ],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "simple_mcp_server": {
+      "type": "unknown",
+      "port": 8000,
+      "capabilities": [],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "start_mcp_servers": {
+      "type": "unknown",
+      "port": 8000,
+      "capabilities": [],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "start_mcp_servers.py": {
+      "type": "unknown",
+      "port": 8000,
+      "capabilities": [],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "training_mcp_server": {
+      "type": "unknown",
+      "port": 3010,
+      "capabilities": [
+        "arbitrage",
+        "risk_management"
+      ],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "unified_mcp_server": {
+      "type": "unknown",
+      "port": 1,
+      "capabilities": [],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "working_mcp_server_template": {
+      "type": "unknown",
+      "port": 8000,
+      "capabilities": [],
+      "is_duplicate": false,
+      "duplicate_of": null
+    },
+    "working_mcp_server_template.py": {
+      "type": "unknown",
+      "port": 8000,
+      "capabilities": [],
+      "is_duplicate": false,
+      "duplicate_of": null
+    }
+  },
+  "ai_agents": {}
+}

@@ -1,0 +1,950 @@
+version: '3.8'
+
+# LangChain Master Coordination - Complete Docker Compose
+# ======================================================
+# This docker-compose file includes all services with proper coordination:
+# - Infrastructure services (Redis, PostgreSQL, RabbitMQ, etc.)
+# - 21+ MCP servers
+# - 30+ AI agents
+# - Monitoring and health checks
+# - Auto-scaling and recovery
+
+networks:
+  mcpnet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  redis_data:
+  postgres_data:
+  rabbitmq_data:
+  etcd_data:
+  prometheus_data:
+  grafana_data:
+
+services:
+  # ===== CORE INFRASTRUCTURE =====
+  
+  # Master Coordinator - The brain of the system
+  langchain-master-coordinator:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.coordinator
+    container_name: langchain-master-coordinator
+    ports:
+      - "3000:3000"  # Main coordination API
+      - "8080:8080"  # Dashboard/UI
+      - "9090:9090"  # Metrics endpoint
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://postgres:password@postgres:5432/mcp_coordination
+      - RABBITMQ_URL=amqp://mcp_admin:mcp_secure_2025@rabbitmq:5672
+      - ETCD_URL=http://etcd:2379
+      - PROMETHEUS_URL=http://prometheus:9090
+      - GRAFANA_URL=http://grafana:3000
+      - TOTAL_SERVICES=50
+      - ENABLE_AUTO_SCALING=true
+      - ENABLE_SELF_HEALING=true
+      - HEALTH_CHECK_INTERVAL=30
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./shared_project:/app/project
+      - ./logs:/app/logs
+      - ./config:/app/config
+      - ./mcp_servers:/app/mcp_servers
+      - ./ai_agent:/app/ai_agent
+    networks:
+      - mcpnet
+    depends_on:
+      - redis
+      - postgres
+      - rabbitmq
+      - etcd
+      - prometheus
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Message Queue - RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: mcp-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"  # Management UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=mcp_admin
+      - RABBITMQ_DEFAULT_PASS=mcp_secure_2025
+      - RABBITMQ_NODE_PORT=5672
+      - RABBITMQ_MANAGEMENT_PORT=15672
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./config/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+    networks:
+      - mcpnet
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Shared Memory - Redis
+  redis:
+    image: redis:7-alpine
+    container_name: mcp-redis
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=redis_secure_2025
+    volumes:
+      - redis_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass redis_secure_2025
+    networks:
+      - mcpnet
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "redis_secure_2025", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Database - PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: mcp-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=mcp_coordination
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - mcpnet
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Configuration Service - etcd
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.0
+    container_name: mcp-etcd
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+    environment:
+      - ETCD_NAME=etcd0
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd:2380
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+      - ETCD_INITIAL_CLUSTER=etcd0=http://etcd:2380
+      - ETCD_INITIAL_CLUSTER_STATE=new
+    volumes:
+      - etcd_data:/etcd-data
+    networks:
+      - mcpnet
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Monitoring - Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mcp-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  # Visualization - Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mcp-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin_secure_2025
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana:/etc/grafana/provisioning
+    networks:
+      - mcpnet
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # ===== MCP SERVERS (21 servers) =====
+  
+  # Context7 MCP Server
+  context7-mcp:
+    build:
+      context: ./mcp_servers/context7
+      dockerfile: Dockerfile
+    container_name: context7-mcp-server
+    ports:
+      - "4001:4000"
+    environment:
+      - MCP_SERVER_ID=context7-mcp
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://postgres:password@postgres:5432/mcp_coordination
+    volumes:
+      - ./shared_project:/app/project
+      - ./logs/mcp:/app/logs
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Enhanced Copilot MCP Server
+  enhanced-copilot-mcp:
+    build:
+      context: ./mcp_servers/enhanced_copilot
+      dockerfile: Dockerfile
+    container_name: enhanced-copilot-mcp-server
+    ports:
+      - "4002:4000"
+    environment:
+      - MCP_SERVER_ID=enhanced-copilot-mcp
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./shared_project:/app/project
+      - ./logs/mcp:/app/logs
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  # Blockchain MCP Servers
+  matic-mcp:
+    build:
+      context: ./mcp_servers/blockchain
+      dockerfile: Dockerfile.matic
+    container_name: matic-mcp-server
+    ports:
+      - "4003:4000"
+    environment:
+      - MCP_SERVER_ID=matic-mcp
+      - BLOCKCHAIN_TYPE=matic
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  evm-mcp:
+    build:
+      context: ./mcp_servers/blockchain
+      dockerfile: Dockerfile.evm
+    container_name: evm-mcp-server
+    ports:
+      - "4004:4000"
+    environment:
+      - MCP_SERVER_ID=evm-mcp
+      - BLOCKCHAIN_TYPE=evm
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  foundry-mcp:
+    build:
+      context: ./mcp_servers/foundry
+      dockerfile: Dockerfile
+    container_name: foundry-mcp-server
+    ports:
+      - "4005:4000"
+    environment:
+      - MCP_SERVER_ID=foundry-mcp
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  # Flash Loan MCP Servers
+  flash-loan-blockchain-mcp:
+    build:
+      context: ./mcp_servers/flash_loan
+      dockerfile: Dockerfile.blockchain
+    container_name: flash-loan-blockchain-mcp
+    ports:
+      - "4006:4000"
+    environment:
+      - MCP_SERVER_ID=flash-loan-blockchain-mcp
+      - SERVICE_TYPE=blockchain
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  flash-loan-strategist-mcp:
+    build:
+      context: ./mcp_servers/flash_loan
+      dockerfile: Dockerfile.strategist
+    container_name: flash-loan-strategist-mcp
+    ports:
+      - "4013:4000"
+    environment:
+      - MCP_SERVER_ID=flash-loan-strategist-mcp
+      - SERVICE_TYPE=strategist
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  # Price and Market Data MCP Servers
+  price-oracle-mcp:
+    build:
+      context: ./mcp_servers/price_oracle
+      dockerfile: Dockerfile
+    container_name: price-oracle-mcp-server
+    ports:
+      - "4007:4000"
+    environment:
+      - MCP_SERVER_ID=price-oracle-mcp
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  dex-price-mcp:
+    build:
+      context: ./mcp_servers/dex_services
+      dockerfile: Dockerfile.price
+    container_name: dex-price-mcp-server
+    ports:
+      - "4008:4000"
+    environment:
+      - MCP_SERVER_ID=dex-price-mcp
+      - SERVICE_TYPE=price
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  market-data-mcp:
+    build:
+      context: ./mcp_servers/market_data
+      dockerfile: Dockerfile
+    container_name: market-data-mcp-server
+    ports:
+      - "4009:4000"
+    environment:
+      - MCP_SERVER_ID=market-data-mcp
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  dex-liquidity-mcp:
+    build:
+      context: ./mcp_servers/dex_services
+      dockerfile: Dockerfile.liquidity
+    container_name: dex-liquidity-mcp-server
+    ports:
+      - "4010:4000"
+    environment:
+      - MCP_SERVER_ID=dex-liquidity-mcp
+      - SERVICE_TYPE=liquidity
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  # Execution and Management MCP Servers
+  contract-executor-mcp:
+    build:
+      context: ./mcp_servers/execution
+      dockerfile: Dockerfile.executor
+    container_name: contract-executor-mcp-server
+    ports:
+      - "4011:4000"
+    environment:
+      - MCP_SERVER_ID=contract-executor-mcp
+      - SERVICE_TYPE=executor
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  gas-optimizer-mcp:
+    build:
+      context: ./mcp_servers/optimization
+      dockerfile: Dockerfile.gas
+    container_name: gas-optimizer-mcp-server
+    ports:
+      - "4014:4000"
+    environment:
+      - MCP_SERVER_ID=gas-optimizer-mcp
+      - SERVICE_TYPE=gas
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  transaction-manager-mcp:
+    build:
+      context: ./mcp_servers/transaction
+      dockerfile: Dockerfile
+    container_name: transaction-manager-mcp-server
+    ports:
+      - "4015:4000"
+    environment:
+      - MCP_SERVER_ID=transaction-manager-mcp
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  # Coordination and Integration MCP Servers
+  enhanced-coordinator-mcp:
+    build:
+      context: ./mcp_servers/coordination
+      dockerfile: Dockerfile.enhanced
+    container_name: enhanced-coordinator-mcp-server
+    ports:
+      - "4016:4000"
+    environment:
+      - MCP_SERVER_ID=enhanced-coordinator-mcp
+      - SERVICE_TYPE=enhanced
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  integration-bridge-mcp:
+    build:
+      context: ./mcp_servers/integration
+      dockerfile: Dockerfile.bridge
+    container_name: integration-bridge-mcp-server
+    ports:
+      - "4017:4000"
+    environment:
+      - MCP_SERVER_ID=integration-bridge-mcp
+      - SERVICE_TYPE=bridge
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  # Risk and Security MCP Servers
+  risk-assessment-mcp:
+    build:
+      context: ./mcp_servers/risk_management
+      dockerfile: Dockerfile.assessment
+    container_name: risk-assessment-mcp-server
+    ports:
+      - "4018:4000"
+    environment:
+      - MCP_SERVER_ID=risk-assessment-mcp
+      - SERVICE_TYPE=assessment
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  circuit-breaker-mcp:
+    build:
+      context: ./mcp_servers/security
+      dockerfile: Dockerfile.circuit_breaker
+    container_name: circuit-breaker-mcp-server
+    ports:
+      - "4019:4000"
+    environment:
+      - MCP_SERVER_ID=circuit-breaker-mcp
+      - SERVICE_TYPE=circuit_breaker
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  validation-mcp:
+    build:
+      context: ./mcp_servers/validation
+      dockerfile: Dockerfile
+    container_name: validation-mcp-server
+    ports:
+      - "4020:4000"
+    environment:
+      - MCP_SERVER_ID=validation-mcp
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  simulation-mcp:
+    build:
+      context: ./mcp_servers/simulation
+      dockerfile: Dockerfile
+    container_name: simulation-mcp-server
+    ports:
+      - "4021:4000"
+    environment:
+      - MCP_SERVER_ID=simulation-mcp
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  # Analytics and Monitoring MCP Servers
+  analytics-dashboard-mcp:
+    build:
+      context: ./mcp_servers/analytics
+      dockerfile: Dockerfile.dashboard
+    container_name: analytics-dashboard-mcp-server
+    ports:
+      - "4022:4000"
+    environment:
+      - MCP_SERVER_ID=analytics-dashboard-mcp
+      - SERVICE_TYPE=dashboard
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  performance-metrics-mcp:
+    build:
+      context: ./mcp_servers/monitoring
+      dockerfile: Dockerfile.metrics
+    container_name: performance-metrics-mcp-server
+    ports:
+      - "4023:4000"
+    environment:
+      - MCP_SERVER_ID=performance-metrics-mcp
+      - SERVICE_TYPE=metrics
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  alert-system-mcp:
+    build:
+      context: ./mcp_servers/alerting
+      dockerfile: Dockerfile
+    container_name: alert-system-mcp-server
+    ports:
+      - "4024:4000"
+    environment:
+      - MCP_SERVER_ID=alert-system-mcp
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  # ===== AI AGENTS (30+ agents) =====
+  
+  # AAVE Flash Loan Executor
+  aave-flash-loan-executor:
+    build:
+      context: ./ai_agent
+      dockerfile: Dockerfile.aave_executor
+    container_name: aave-flash-loan-executor
+    ports:
+      - "5001:5000"
+    environment:
+      - AGENT_ID=aave-flash-loan-executor
+      - AGENT_TYPE=executor
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://mcp_admin:mcp_secure_2025@rabbitmq:5672
+      - ENABLE_FLASH_LOAN=true
+      - ADMIN_PRIVILEGES=true
+    volumes:
+      - ./shared_project:/app/project
+      - ./logs/agents:/app/logs
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  # Arbitrage Detector
+  arbitrage-detector:
+    build:
+      context: ./ai_agent
+      dockerfile: Dockerfile.arbitrage
+    container_name: arbitrage-detector
+    ports:
+      - "5002:5000"
+    environment:
+      - AGENT_ID=arbitrage-detector
+      - AGENT_TYPE=detector
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./shared_project:/app/project
+      - ./logs/agents:/app/logs
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  # Code Indexers (1-20)
+  code-indexer-1:
+    build:
+      context: ./ai_agent
+      dockerfile: Dockerfile.code_indexer
+      args:
+        AGENT_ID: 1
+    container_name: code-indexer-1
+    ports:
+      - "5101:5000"
+    environment:
+      - AGENT_ID=code-indexer-1
+      - AGENT_TYPE=code_indexer
+      - AGENT_NUMBER=1
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+      - REDIS_URL=redis://redis:6379
+      - MCP_SERVER_PATH=/app/mcp_servers/ai_integration
+    volumes:
+      - ./shared_project:/app/project
+      - ./logs/agents:/app/logs
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  code-indexer-2:
+    build:
+      context: ./ai_agent
+      dockerfile: Dockerfile.code_indexer
+      args:
+        AGENT_ID: 2
+    container_name: code-indexer-2
+    ports:
+      - "5102:5000"
+    environment:
+      - AGENT_ID=code-indexer-2
+      - AGENT_TYPE=code_indexer
+      - AGENT_NUMBER=2
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+      - REDIS_URL=redis://redis:6379
+      - MCP_SERVER_PATH=/app/mcp_servers/blockchain_integration
+    volumes:
+      - ./shared_project:/app/project
+      - ./logs/agents:/app/logs
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  # Builders (1-2)
+  builder-1:
+    build:
+      context: ./ai_agent
+      dockerfile: Dockerfile.builder
+      args:
+        BUILDER_ID: 1
+    container_name: builder-1
+    ports:
+      - "5201:5000"
+    environment:
+      - AGENT_ID=builder-1
+      - AGENT_TYPE=builder
+      - BUILDER_NUMBER=1
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./shared_project:/app/project
+      - ./logs/agents:/app/logs
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  builder-2:
+    build:
+      context: ./ai_agent
+      dockerfile: Dockerfile.builder
+      args:
+        BUILDER_ID: 2
+    container_name: builder-2
+    ports:
+      - "5202:5000"
+    environment:
+      - AGENT_ID=builder-2
+      - AGENT_TYPE=builder
+      - BUILDER_NUMBER=2
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./shared_project:/app/project
+      - ./logs/agents:/app/logs
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  # Executors (1-2)
+  executor-1:
+    build:
+      context: ./ai_agent
+      dockerfile: Dockerfile.executor
+      args:
+        EXECUTOR_ID: 1
+    container_name: executor-1
+    ports:
+      - "5301:5000"
+    environment:
+      - AGENT_ID=executor-1
+      - AGENT_TYPE=executor
+      - EXECUTOR_NUMBER=1
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+      - REDIS_URL=redis://redis:6379
+      - ENABLE_FLASH_LOAN=true
+    volumes:
+      - ./shared_project:/app/project
+      - ./logs/agents:/app/logs
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  executor-2:
+    build:
+      context: ./ai_agent
+      dockerfile: Dockerfile.executor
+      args:
+        EXECUTOR_ID: 2
+    container_name: executor-2
+    ports:
+      - "5302:5000"
+    environment:
+      - AGENT_ID=executor-2
+      - AGENT_TYPE=executor
+      - EXECUTOR_NUMBER=2
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+      - REDIS_URL=redis://redis:6379
+      - ENABLE_FLASH_LOAN=true
+    volumes:
+      - ./shared_project:/app/project
+      - ./logs/agents:/app/logs
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  # Coordinators (1-2)
+  coordinator-1:
+    build:
+      context: ./ai_agent
+      dockerfile: Dockerfile.coordinator
+      args:
+        COORDINATOR_ID: 1
+    container_name: coordinator-1
+    ports:
+      - "5401:5000"
+    environment:
+      - AGENT_ID=coordinator-1
+      - AGENT_TYPE=coordinator
+      - COORDINATOR_NUMBER=1
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+      - REDIS_URL=redis://redis:6379
+      - ADMIN_PRIVILEGES=true
+    volumes:
+      - ./shared_project:/app/project
+      - ./logs/agents:/app/logs
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  coordinator-2:
+    build:
+      context: ./ai_agent
+      dockerfile: Dockerfile.coordinator
+      args:
+        COORDINATOR_ID: 2
+    container_name: coordinator-2
+    ports:
+      - "5402:5000"
+    environment:
+      - AGENT_ID=coordinator-2
+      - AGENT_TYPE=coordinator
+      - COORDINATOR_NUMBER=2
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+      - REDIS_URL=redis://redis:6379
+      - ADMIN_PRIVILEGES=true
+    volumes:
+      - ./shared_project:/app/project
+      - ./logs/agents:/app/logs
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  # Planners (1-2)
+  planner-1:
+    build:
+      context: ./ai_agent
+      dockerfile: Dockerfile.planner
+      args:
+        PLANNER_ID: 1
+    container_name: planner-1
+    ports:
+      - "5501:5000"
+    environment:
+      - AGENT_ID=planner-1
+      - AGENT_TYPE=planner
+      - PLANNER_NUMBER=1
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./shared_project:/app/project
+      - ./logs/agents:/app/logs
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  planner-2:
+    build:
+      context: ./ai_agent
+      dockerfile: Dockerfile.planner
+      args:
+        PLANNER_ID: 2
+    container_name: planner-2
+    ports:
+      - "5502:5000"
+    environment:
+      - AGENT_ID=planner-2
+      - AGENT_TYPE=planner
+      - PLANNER_NUMBER=2
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./shared_project:/app/project
+      - ./logs/agents:/app/logs
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+    restart: unless-stopped
+
+  # ===== HEALTH MONITORING =====
+  
+  # Health Monitor Service
+  health-monitor:
+    build:
+      context: ./monitoring
+      dockerfile: Dockerfile.health
+    container_name: health-monitor
+    ports:
+      - "6000:6000"
+    environment:
+      - MONITOR_INTERVAL=30
+      - COORDINATOR_URL=http://langchain-master-coordinator:3000
+      - PROMETHEUS_URL=http://prometheus:9090
+      - GRAFANA_URL=http://grafana:3000
+    volumes:
+      - ./logs/monitoring:/app/logs
+      - ./config/monitoring:/app/config
+    networks:
+      - mcpnet
+    depends_on:
+      - langchain-master-coordinator
+      - prometheus
+      - grafana
+    restart: unless-stopped
+
+  # Log Aggregator
+  log-aggregator:
+    image: fluent/fluentd:v1.14-debian-1
+    container_name: log-aggregator
+    ports:
+      - "24224:24224"
+    volumes:
+      - ./logs:/fluentd/log
+      - ./config/fluentd.conf:/fluentd/etc/fluent.conf
+    networks:
+      - mcpnet
+    restart: unless-stopped

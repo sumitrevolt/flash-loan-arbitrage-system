@@ -1,0 +1,684 @@
+version: '3.8'
+
+networks:
+  flashloan-network:
+    driver: bridge
+
+volumes:
+  flashloan-logs:
+  flashloan-data:
+
+services:
+  # Enhanced Orchestrator
+  orchestrator:
+    build: ./containers/orchestrator
+    container_name: flashloan-orchestrator
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8080:8080"
+    volumes:
+      - flashloan-logs:/app/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    depends_on:
+      - mcp-auth-manager
+      - mcp-blockchain
+      - mcp-defi-analyzer
+      - mcp-flash-loan
+      - mcp-arbitrage
+      - mcp-liquidity
+      - mcp-price-feed
+      - mcp-risk-manager
+      - mcp-portfolio
+      - mcp-api-client
+      - mcp-database
+      - mcp-cache-manager
+      - mcp-file-processor
+      - mcp-notification
+      - mcp-monitoring
+      - mcp-security
+      - mcp-data-analyzer
+      - mcp-web-scraper
+      - mcp-task-queue
+      - mcp-filesystem
+      - mcp-coordinator
+      - agent-coordinator
+      - agent-analyzer
+      - agent-executor
+      - agent-risk-manager
+      - agent-monitor
+      - agent-data-collector
+      - agent-arbitrage-bot
+      - agent-liquidity-manager
+      - agent-reporter
+      - agent-healer
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Authentication & Authorization
+  mcp-auth-manager:
+    build: ./containers/mcp-auth-manager
+    container_name: flashloan-mcp-auth-manager
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8100:8100"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Blockchain Integration
+  mcp-blockchain:
+    build: ./containers/mcp-blockchain
+    container_name: flashloan-mcp-blockchain
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8101:8101"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8101/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # DeFi Protocol Analysis
+  mcp-defi-analyzer:
+    build: ./containers/mcp-defi-analyzer
+    container_name: flashloan-mcp-defi-analyzer
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8102:8102"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8102/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Flash Loan Core Logic
+  mcp-flash-loan:
+    build: ./containers/mcp-flash-loan
+    container_name: flashloan-mcp-flash-loan
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8103:8103"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8103/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Arbitrage Detection
+  mcp-arbitrage:
+    build: ./containers/mcp-arbitrage
+    container_name: flashloan-mcp-arbitrage
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8104:8104"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8104/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Liquidity Management
+  mcp-liquidity:
+    build: ./containers/mcp-liquidity
+    container_name: flashloan-mcp-liquidity
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8105:8105"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8105/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Price Feed Aggregation
+  mcp-price-feed:
+    build: ./containers/mcp-price-feed
+    container_name: flashloan-mcp-price-feed
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8106:8106"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8106/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Risk Assessment
+  mcp-risk-manager:
+    build: ./containers/mcp-risk-manager
+    container_name: flashloan-mcp-risk-manager
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8107:8107"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8107/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Portfolio Management
+  mcp-portfolio:
+    build: ./containers/mcp-portfolio
+    container_name: flashloan-mcp-portfolio
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8108:8108"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8108/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # External API Client
+  mcp-api-client:
+    build: ./containers/mcp-api-client
+    container_name: flashloan-mcp-api-client
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8109:8109"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8109/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Database Operations
+  mcp-database:
+    build: ./containers/mcp-database
+    container_name: flashloan-mcp-database
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8110:8110"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8110/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Cache Management
+  mcp-cache-manager:
+    build: ./containers/mcp-cache-manager
+    container_name: flashloan-mcp-cache-manager
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8111:8111"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8111/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # File Processing
+  mcp-file-processor:
+    build: ./containers/mcp-file-processor
+    container_name: flashloan-mcp-file-processor
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8112:8112"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8112/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Notification Service
+  mcp-notification:
+    build: ./containers/mcp-notification
+    container_name: flashloan-mcp-notification
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8113:8113"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8113/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # System Monitoring
+  mcp-monitoring:
+    build: ./containers/mcp-monitoring
+    container_name: flashloan-mcp-monitoring
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8114:8114"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8114/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Security Operations
+  mcp-security:
+    build: ./containers/mcp-security
+    container_name: flashloan-mcp-security
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8115:8115"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8115/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Data Analysis
+  mcp-data-analyzer:
+    build: ./containers/mcp-data-analyzer
+    container_name: flashloan-mcp-data-analyzer
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8116:8116"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8116/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Web Scraping
+  mcp-web-scraper:
+    build: ./containers/mcp-web-scraper
+    container_name: flashloan-mcp-web-scraper
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8117:8117"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8117/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Task Queue Management
+  mcp-task-queue:
+    build: ./containers/mcp-task-queue
+    container_name: flashloan-mcp-task-queue
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8118:8118"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8118/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # File System Operations
+  mcp-filesystem:
+    build: ./containers/mcp-filesystem
+    container_name: flashloan-mcp-filesystem
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8119:8119"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8119/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MCP Coordination
+  mcp-coordinator:
+    build: ./containers/mcp-coordinator
+    container_name: flashloan-mcp-coordinator
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8120:8120"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8120/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # System Coordination
+  agent-coordinator:
+    build: ./containers/agent-coordinator
+    container_name: flashloan-agent-coordinator
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8200:8200"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8200/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Market Analysis
+  agent-analyzer:
+    build: ./containers/agent-analyzer
+    container_name: flashloan-agent-analyzer
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8201:8201"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8201/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Trade Execution
+  agent-executor:
+    build: ./containers/agent-executor
+    container_name: flashloan-agent-executor
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8202:8202"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8202/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Risk Management
+  agent-risk-manager:
+    build: ./containers/agent-risk-manager
+    container_name: flashloan-agent-risk-manager
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8203:8203"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8203/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # System Monitoring
+  agent-monitor:
+    build: ./containers/agent-monitor
+    container_name: flashloan-agent-monitor
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8204:8204"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8204/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Data Collection
+  agent-data-collector:
+    build: ./containers/agent-data-collector
+    container_name: flashloan-agent-data-collector
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8205:8205"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8205/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Arbitrage Operations
+  agent-arbitrage-bot:
+    build: ./containers/agent-arbitrage-bot
+    container_name: flashloan-agent-arbitrage-bot
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8206:8206"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8206/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Liquidity Operations
+  agent-liquidity-manager:
+    build: ./containers/agent-liquidity-manager
+    container_name: flashloan-agent-liquidity-manager
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8207:8207"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8207/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Report Generation
+  agent-reporter:
+    build: ./containers/agent-reporter
+    container_name: flashloan-agent-reporter
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8208:8208"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8208/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Auto-Healing Operations
+  agent-healer:
+    build: ./containers/agent-healer
+    container_name: flashloan-agent-healer
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8209:8209"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8209/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+

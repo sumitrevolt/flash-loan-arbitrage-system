@@ -1,0 +1,120 @@
+{
+  "timestamp": "2025-06-09T23:47:21.163546",
+  "test_results": {
+    "Flash Loan Arbitrage MCP (TypeScript)": {
+      "port": 8000,
+      "health_check": {
+        "success": false,
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000275DE6CD6D0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))",
+        "response_time": 0
+      },
+      "functionality_test": {
+        "success": false,
+        "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /status (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000275DE6CFB50>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))",
+        "response_time": 0
+      },
+      "overall_status": "\u274c NOT RESPONDING"
+    },
+    "TaskManager MCP": {
+      "port": 8001,
+      "health_check": {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.149824,
+        "content": "{\"status\": \"healthy\", \"service\": \"foundry_mcp_server\", \"foundry_available\": true, \"foundry_version\": \"forge Version: 1.1.0-stable\\nCommit SHA: d484a00089d789a19e2e43e63bbb3f1500eb2cbf\\nBuild Timestamp"
+      },
+      "functionality_test": {
+        "success": true,
+        "status_code": 404,
+        "response_time": 0.030571,
+        "content": "404: Not Found"
+      },
+      "overall_status": "\u2705 FUNCTIONAL"
+    },
+    "MATIC MCP": {
+      "port": 8002,
+      "health_check": {
+        "success": true,
+        "status_code": 200,
+        "response_time": 2.661307,
+        "content": "{\"connected\":true,\"network\":\"Polygon\",\"service\":\"MATIC MCP Server\",\"status\":\"ok\",\"timestamp\":\"2025-06-09T23:47:03.554750\"}\n"
+      },
+      "functionality_test": {
+        "success": true,
+        "status_code": 404,
+        "response_time": 2.046577,
+        "content": "<!doctype html>\n<html lang=en>\n<title>404 Not Found</title>\n<h1>Not Found</h1>\n<p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try agai"
+      },
+      "overall_status": "\u2705 FUNCTIONAL"
+    },
+    "EVM MCP": {
+      "port": 8003,
+      "health_check": {
+        "success": true,
+        "status_code": 200,
+        "response_time": 5.221844,
+        "content": "{\"connected_networks\":4,\"networks\":[\"ethereum\",\"polygon\",\"bsc\",\"arbitrum\"],\"service\":\"EVM MCP Server\",\"status\":\"ok\",\"timestamp\":\"2025-06-09T23:47:10.825154\",\"total_networks\":4}\n"
+      },
+      "functionality_test": {
+        "success": true,
+        "status_code": 404,
+        "response_time": 2.053465,
+        "content": "<!doctype html>\n<html lang=en>\n<title>404 Not Found</title>\n<h1>Not Found</h1>\n<p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try agai"
+      },
+      "overall_status": "\u2705 FUNCTIONAL"
+    },
+    "Context7 MCP": {
+      "port": 8004,
+      "health_check": {
+        "success": true,
+        "status_code": 200,
+        "response_time": 2.050954,
+        "content": "{\"active_sessions\":0,\"context_items\":0,\"service\":\"Context7 MCP Server\",\"status\":\"ok\",\"timestamp\":\"2025-06-09T23:47:14.932639\",\"total_usage\":0}\n"
+      },
+      "functionality_test": {
+        "success": true,
+        "status_code": 404,
+        "response_time": 2.064983,
+        "content": "<!doctype html>\n<html lang=en>\n<title>404 Not Found</title>\n<h1>Not Found</h1>\n<p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try agai"
+      },
+      "overall_status": "\u2705 FUNCTIONAL"
+    },
+    "Price Oracle MCP": {
+      "port": 8005,
+      "health_check": {
+        "success": true,
+        "status_code": 200,
+        "response_time": 2.083764,
+        "content": "{\"active_alerts\":0,\"cached_symbols\":0,\"metrics\":{\"alerts_triggered\":0,\"average_response_time\":0.0,\"data_quality_score\":0.0,\"failed_aggregations\":0,\"successful_aggregations\":0,\"total_price_requests\":0}"
+      },
+      "functionality_test": {
+        "success": true,
+        "status_code": 404,
+        "response_time": 2.066856,
+        "content": "<!doctype html>\n<html lang=en>\n<title>404 Not Found</title>\n<h1>Not Found</h1>\n<p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try agai"
+      },
+      "overall_status": "\u2705 FUNCTIONAL"
+    },
+    "MCP Coordinator": {
+      "port": 8007,
+      "health_check": {
+        "success": true,
+        "status_code": 200,
+        "response_time": 0.003494,
+        "content": "{\"status\":\"ok\",\"service\":\"TaskManager MCP\"}"
+      },
+      "functionality_test": {
+        "success": true,
+        "status_code": 404,
+        "response_time": 0.002008,
+        "content": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /status</pre>\n</body>\n</html>\n"
+      },
+      "overall_status": "\u2705 FUNCTIONAL"
+    }
+  },
+  "summary": {
+    "functional_servers": 6,
+    "total_tested": 7,
+    "success_rate": 85.71428571428571
+  }
+}

@@ -1,0 +1,203 @@
+{
+  "name": "Unified MCP Server Configuration",
+  "version": "1.0.0",
+  "description": "Main configuration for all MCP servers in the flash loan arbitrage system",
+  "timestamp": "2024-01-20T10:00:00Z",
+  "servers": {
+    "flash_loan_mcp": {
+      "name": "Flash Loan MCP Server",
+      "type": "python",
+      "path": "mcp/working_unified_flash_loan_mcp_server.py",
+      "port": 3001,
+      "enabled": true,
+      "dependencies": [
+        "mcp",
+        "web3",
+        "aiohttp"
+      ],
+      "environment_variables": {
+        "POLYGON_RPC_URL": "",
+        "PRIVATE_KEY": "",
+        "ETHERSCAN_API_KEY": ""
+      }
+    },
+    "copilot_mcp": {
+      "name": "Enhanced Copilot MCP Server",
+      "type": "python",
+      "path": "core/working_enhanced_copilot_mcp_server.py",
+      "port": 3002,
+      "enabled": true,
+      "dependencies": [
+        "mcp",
+        "aiohttp"
+      ],
+      "environment_variables": {}
+    },
+    "foundry_mcp": {
+      "name": "Enhanced Foundry MCP Server",
+      "type": "python",
+      "path": "foundry-mcp-server/working_enhanced_foundry_mcp_server.py",
+      "port": 3003,
+      "enabled": true,
+      "dependencies": [
+        "mcp",
+        "subprocess"
+      ],
+      "environment_variables": {}
+    },
+    "flash_loan_arbitrage_ts": {
+      "name": "Flash Loan Arbitrage MCP (TypeScript)",
+      "type": "typescript",
+      "path": "mcp/flash-loan-arbitrage-mcp/index.ts",
+      "built_path": "mcp/flash-loan-arbitrage-mcp/dist/index.js",
+      "port": 8000,
+      "enabled": true,
+      "dependencies": [
+        "@modelcontextprotocol/sdk"
+      ],
+      "environment_variables": {
+        "POLYGON_RPC_URL": "",
+        "PRIVATE_KEY": "",
+        "ETHERSCAN_API_KEY": ""
+      }
+    },    "taskmanager_mcp": {
+      "name": "Task Manager MCP Server",
+      "type": "typescript",
+      "path": "mcp/mcp-taskmanager/index.ts",
+      "built_path": "mcp/mcp-taskmanager/dist/index.js",
+      "port": 8001,
+      "enabled": true,
+      "dependencies": [
+        "@modelcontextprotocol/sdk"
+      ],
+      "environment_variables": {}
+    },
+    "matic_mcp": {
+      "name": "MATIC MCP Server",
+      "type": "python",
+      "path": "mcp/matic-mcp-server/matic_mcp_server.py",
+      "port": 8002,
+      "enabled": true,
+      "dependencies": [
+        "mcp",
+        "web3",
+        "aiohttp",
+        "requests"
+      ],
+      "environment_variables": {
+        "POLYGON_RPC_URL": "https://polygon-rpc.com",
+        "POLYGONSCAN_API_KEY": ""
+      }
+    },
+    "evm_mcp": {
+      "name": "EVM MCP Server",
+      "type": "python",
+      "path": "mcp/evm-mcp-server/evm_mcp_server.py",
+      "port": 8003,
+      "enabled": true,
+      "dependencies": [
+        "mcp",
+        "web3",
+        "aiohttp",
+        "requests"
+      ],
+      "environment_variables": {
+        "ETHEREUM_RPC_URL": "https://eth.llamarpc.com",
+        "POLYGON_RPC_URL": "https://polygon-rpc.com",
+        "BSC_RPC_URL": "https://bsc-dataseed.binance.org",
+        "ARBITRUM_RPC_URL": "https://arb1.arbitrum.io/rpc"
+      }
+    },
+    "context7_mcp": {
+      "name": "Context7 MCP Server",
+      "type": "python",
+      "path": "mcp/context7-mcp-server/context7_mcp_server.py",
+      "port": 8004,
+      "enabled": true,
+      "dependencies": [
+        "mcp",
+        "aiohttp",
+        "sqlite3"
+      ],
+      "environment_variables": {}
+    },
+    "price_oracle_mcp": {
+      "name": "Price Oracle MCP Server",
+      "type": "python",
+      "path": "mcp/price-oracle-mcp-server/price_oracle_mcp_server.py",
+      "port": 8005,
+      "enabled": true,
+      "dependencies": [
+        "mcp",
+        "aiohttp",
+        "requests",
+        "web3"
+      ],
+      "environment_variables": {
+        "COINGECKO_API_KEY": "",
+        "BINANCE_API_KEY": "",
+        "BINANCE_SECRET_KEY": "",
+        "COINBASE_API_KEY": "",
+        "COINBASE_SECRET_KEY": "",
+        "CHAINLINK_RPC_URL": "https://eth.llamarpc.com"
+      }
+    },
+    "risk_management_mcp": {
+      "name": "Risk Management MCP Server",
+      "type": "python",
+      "path": "mcp/risk-management-mcp-server/risk_management_mcp_server.py",
+      "port": 8006,
+      "enabled": true,
+      "dependencies": [
+        "mcp",
+        "aiohttp",
+        "numpy",
+        "pandas"
+      ],
+      "environment_variables": {}
+    }
+  },
+  "global_configuration": {
+    "workspace_path": "c:\\Users\\Ratanshila\\Documents\\flash loan",
+    "log_level": "INFO",
+    "max_concurrent_servers": 11,
+    "health_check_interval": 30,
+    "auto_restart": true,    "ports": {
+      "python_servers": [
+        3001,
+        3002,
+        3003,
+        8002,
+        8003,
+        8004,
+        8005,
+        8006
+      ],
+      "typescript_servers": [
+        8000,
+        8001
+      ],
+      "monitoring": 8007
+    }
+  },  "startup_order": [
+    "copilot_mcp",
+    "foundry_mcp",
+    "flash_loan_mcp",
+    "matic_mcp",
+    "evm_mcp",
+    "context7_mcp",
+    "price_oracle_mcp",
+    "risk_management_mcp",
+    "taskmanager_mcp",
+    "flash_loan_arbitrage_ts"
+  ],
+  "health_checks": {
+    "enabled": true,
+    "endpoints": {
+      "python_servers": "/health",
+      "typescript_servers": "/health"
+    },
+    "timeout": 5000,
+    "retry_attempts": 3
+  }
+}

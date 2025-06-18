@@ -1,0 +1,15 @@
+{
+  "timestamp": "2025-06-16T08:26:31.216148",
+  "system_metrics": {
+    "cpu_usage": 33.3,
+    "memory_usage": 85.5,
+    "disk_usage": 97.7,
+    "active_containers": 3,
+    "failed_containers": 4
+  },
+  "service_health": {},
+  "infrastructure_services": 5,
+  "mcp_servers": 24,
+  "ai_agents": 30,
+  "total_services": 59
+}

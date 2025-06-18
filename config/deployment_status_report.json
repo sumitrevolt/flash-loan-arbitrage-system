@@ -1,0 +1,126 @@
+{
+  "timestamp": "2025-06-16T11:32:18.852720",
+  "infrastructure": {
+    "postgres": "running",
+    "redis": "running",
+    "rabbitmq": "running"
+  },
+  "mcp_servers": {
+    "mcp-server-1": {
+      "port": 4001,
+      "status": "healthy"
+    },
+    "mcp-server-2": {
+      "port": 4002,
+      "status": "healthy"
+    },
+    "mcp-server-3": {
+      "port": 4003,
+      "status": "healthy"
+    },
+    "mcp-server-4": {
+      "port": 4004,
+      "status": "healthy"
+    },
+    "mcp-server-5": {
+      "port": 4005,
+      "status": "healthy"
+    },
+    "mcp-server-6": {
+      "port": 4006,
+      "status": "healthy"
+    },
+    "mcp-server-7": {
+      "port": 4007,
+      "status": "healthy"
+    },
+    "mcp-server-8": {
+      "port": 4008,
+      "status": "healthy"
+    },
+    "mcp-server-9": {
+      "port": 4009,
+      "status": "healthy"
+    },
+    "mcp-server-10": {
+      "port": 4010,
+      "status": "healthy"
+    },
+    "mcp-server-11": {
+      "port": 4011,
+      "status": "healthy"
+    },
+    "mcp-server-12": {
+      "port": 4012,
+      "status": "healthy"
+    },
+    "mcp-server-13": {
+      "port": 4013,
+      "status": "healthy"
+    },
+    "mcp-server-14": {
+      "port": 4014,
+      "status": "healthy"
+    },
+    "mcp-server-15": {
+      "port": 4015,
+      "status": "healthy"
+    },
+    "mcp-server-16": {
+      "port": 4016,
+      "status": "healthy"
+    },
+    "mcp-server-17": {
+      "port": 4017,
+      "status": "healthy"
+    },
+    "mcp-server-18": {
+      "port": 4018,
+      "status": "healthy"
+    },
+    "mcp-server-19": {
+      "port": 4019,
+      "status": "healthy"
+    },
+    "mcp-server-20": {
+      "port": 4020,
+      "status": "healthy"
+    },
+    "mcp-server-21": {
+      "port": 4021,
+      "status": "healthy"
+    }
+  },
+  "ai_agents": {
+    "ai-agent-1": {
+      "port": 5001,
+      "status": "healthy"
+    },
+    "ai-agent-2": {
+      "port": 5002,
+      "status": "healthy"
+    },
+    "ai-agent-3": {
+      "port": 5003,
+      "status": "healthy"
+    },
+    "ai-agent-4": {
+      "port": 5004,
+      "status": "healthy"
+    },
+    "ai-agent-5": {
+      "port": 5005,
+      "status": "healthy"
+    },
+    "ai-agent-6": {
+      "port": 5006,
+      "status": "healthy"
+    }
+  },
+  "summary": {
+    "total_services": 30,
+    "healthy": 30,
+    "unhealthy": 0,
+    "health_percentage": 100.0
+  }
+}

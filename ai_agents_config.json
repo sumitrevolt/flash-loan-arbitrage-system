@@ -1,0 +1,44 @@
+{
+  "agents": {
+    "flash_loan_optimizer": {
+      "role": "Flash loan opportunity analysis",
+      "port": 9001
+    },
+    "risk_manager": {
+      "role": "Risk assessment and management",
+      "port": 9002
+    },
+    "arbitrage_detector": {
+      "role": "Cross-DEX arbitrage detection",
+      "port": 9003
+    },
+    "transaction_executor": {
+      "role": "Transaction execution and monitoring",
+      "port": 9004
+    },
+    "market_analyzer": {
+      "role": "Real-time market trend analysis",
+      "port": 9005
+    },
+    "route_optimizer": {
+      "role": "Optimize transaction paths across chains",
+      "port": 9006
+    },
+    "compliance_checker": {
+      "role": "Ensure regulatory adherence",
+      "port": 9007
+    },
+    "security_analyst": {
+      "role": "Continuous vulnerability scanning",
+      "port": 9008
+    },
+    "gas_optimizer": {
+      "role": "Minimize transaction costs",
+      "port": 9009
+    },
+    "liquidity_monitor": {
+      "role": "Track liquidity pools across DEXes",
+      "port": 9010
+    }
+  }
+}

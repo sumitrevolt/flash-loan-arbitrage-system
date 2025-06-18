@@ -1,0 +1,601 @@
+{
+  "total_servers": 31,
+  "healthy_servers": 31,
+  "trained_servers": 31,
+  "success_rate": 1.0,
+  "training_results": [
+    {
+      "server_name": "mcp-auth-manager",
+      "server_type": "authentication",
+      "port": 8100,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.967463950802831,
+      "loss": 0.08695459525979955,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:13:53.067722"
+    },
+    {
+      "server_name": "mcp-blockchain",
+      "server_type": "blockchain",
+      "port": 8101,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.957945665238391,
+      "loss": 0.11785734818412888,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:13:53.600564"
+    },
+    {
+      "server_name": "mcp-defi-analyzer",
+      "server_type": "defi_analysis",
+      "port": 8102,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.9048671043541403,
+      "loss": 0.13140933601196134,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:13:54.136443"
+    },
+    {
+      "server_name": "mcp-flash-loan",
+      "server_type": "flash_loans",
+      "port": 8103,
+      "training_samples": 100,
+      "training_features": [
+        "available_liquidity",
+        "utilization_rate",
+        "fee_rate",
+        "success_rate",
+        "avg_loan_size"
+      ],
+      "status": "completed",
+      "accuracy": 0.8510012343447049,
+      "loss": 0.1466843286770486,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:13:54.672916"
+    },
+    {
+      "server_name": "mcp-arbitrage",
+      "server_type": "arbitrage",
+      "port": 8104,
+      "training_samples": 100,
+      "training_features": [
+        "price_diff_percent",
+        "liquidity_ratio",
+        "gas_cost_usd",
+        "volume_24h",
+        "potential_profit",
+        "success_rate"
+      ],
+      "status": "completed",
+      "accuracy": 0.8545929409444815,
+      "loss": 0.11730848134450748,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:13:55.213222"
+    },
+    {
+      "server_name": "mcp-liquidity",
+      "server_type": "liquidity",
+      "port": 8105,
+      "training_samples": 100,
+      "training_features": [
+        "available_liquidity",
+        "utilization_rate",
+        "fee_rate",
+        "success_rate",
+        "avg_loan_size"
+      ],
+      "status": "completed",
+      "accuracy": 0.9092524878647795,
+      "loss": 0.024255386290248423,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:13:55.739950"
+    },
+    {
+      "server_name": "mcp-price-feed",
+      "server_type": "price_feeds",
+      "port": 8106,
+      "training_samples": 100,
+      "training_features": [
+        "price_usd",
+        "price_change_24h",
+        "volume_24h",
+        "market_cap",
+        "accuracy_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.9573900152890065,
+      "loss": 0.0670151006669044,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:13:56.263887"
+    },
+    {
+      "server_name": "mcp-risk-manager",
+      "server_type": "risk_management",
+      "port": 8107,
+      "training_samples": 100,
+      "training_features": [
+        "volatility_score",
+        "liquidity_depth",
+        "price_impact",
+        "counterparty_risk",
+        "risk_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.8886004209893918,
+      "loss": 0.09439734052523346,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:13:56.789458"
+    },
+    {
+      "server_name": "mcp-portfolio",
+      "server_type": "portfolio",
+      "port": 8108,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.8798153358218923,
+      "loss": 0.10107790158348667,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:13:57.313714"
+    },
+    {
+      "server_name": "mcp-api-client",
+      "server_type": "api_client",
+      "port": 8109,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.8761757100238017,
+      "loss": 0.13176067496774757,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:13:57.842135"
+    },
+    {
+      "server_name": "mcp-database",
+      "server_type": "database",
+      "port": 8110,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.9451574821415109,
+      "loss": 0.09379335764657837,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:13:58.365826"
+    },
+    {
+      "server_name": "mcp-cache-manager",
+      "server_type": "cache",
+      "port": 8111,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.8753264712752717,
+      "loss": 0.09193636510896014,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:13:58.892036"
+    },
+    {
+      "server_name": "mcp-file-processor",
+      "server_type": "file_processing",
+      "port": 8112,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.96302061328089,
+      "loss": 0.04852982506955263,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:13:59.422834"
+    },
+    {
+      "server_name": "mcp-notification",
+      "server_type": "notifications",
+      "port": 8113,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.947491619559442,
+      "loss": 0.08829887740382397,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:13:59.947677"
+    },
+    {
+      "server_name": "mcp-monitoring",
+      "server_type": "monitoring",
+      "port": 8114,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.8680970396300597,
+      "loss": 0.10600831924904461,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:14:00.475255"
+    },
+    {
+      "server_name": "mcp-security",
+      "server_type": "security",
+      "port": 8115,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.9460151997947961,
+      "loss": 0.039604006904238584,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:14:01.001926"
+    },
+    {
+      "server_name": "mcp-data-analyzer",
+      "server_type": "data_analysis",
+      "port": 8116,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.9467956503779626,
+      "loss": 0.10193569460195985,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:14:01.527198"
+    },
+    {
+      "server_name": "mcp-web-scraper",
+      "server_type": "web_scraping",
+      "port": 8117,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.929169381859605,
+      "loss": 0.06571955927331549,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:14:02.050991"
+    },
+    {
+      "server_name": "mcp-task-queue",
+      "server_type": "task_management",
+      "port": 8118,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.9576262330140068,
+      "loss": 0.05343972681371828,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:14:02.576127"
+    },
+    {
+      "server_name": "mcp-filesystem",
+      "server_type": "filesystem",
+      "port": 8119,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.9070022461100603,
+      "loss": 0.035297729724011864,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:14:03.101336"
+    },
+    {
+      "server_name": "mcp-coordinator",
+      "server_type": "coordination",
+      "port": 8120,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.879689000028396,
+      "loss": 0.13136667583627032,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:14:03.626107"
+    },
+    {
+      "server_name": "agent-coordinator",
+      "server_type": "ai_coordination",
+      "port": 8200,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.8557998851170867,
+      "loss": 0.04758831852767466,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:14:04.153066"
+    },
+    {
+      "server_name": "agent-analyzer",
+      "server_type": "ai_analysis",
+      "port": 8201,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.8955368464366902,
+      "loss": 0.07963782656842067,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:14:04.679080"
+    },
+    {
+      "server_name": "agent-executor",
+      "server_type": "ai_execution",
+      "port": 8202,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.9448452494198031,
+      "loss": 0.07155769433003688,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:14:05.207480"
+    },
+    {
+      "server_name": "agent-risk-manager",
+      "server_type": "ai_risk",
+      "port": 8203,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.9451494680520547,
+      "loss": 0.10988075602856083,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:14:05.736837"
+    },
+    {
+      "server_name": "agent-monitor",
+      "server_type": "ai_monitoring",
+      "port": 8204,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.8583520732678462,
+      "loss": 0.1416405068540079,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:14:06.261420"
+    },
+    {
+      "server_name": "agent-data-collector",
+      "server_type": "ai_data",
+      "port": 8205,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.9050873701599071,
+      "loss": 0.11945002340494976,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:14:06.788812"
+    },
+    {
+      "server_name": "agent-arbitrage-bot",
+      "server_type": "ai_arbitrage",
+      "port": 8206,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.8652239858100834,
+      "loss": 0.06603497699822507,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:14:07.312417"
+    },
+    {
+      "server_name": "agent-liquidity-manager",
+      "server_type": "ai_liquidity",
+      "port": 8207,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.9561810294947523,
+      "loss": 0.08876727014379507,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:14:07.838888"
+    },
+    {
+      "server_name": "agent-reporter",
+      "server_type": "ai_reporting",
+      "port": 8208,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.8527079038457323,
+      "loss": 0.06101416529530983,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:14:08.366829"
+    },
+    {
+      "server_name": "agent-healer",
+      "server_type": "ai_healing",
+      "port": 8209,
+      "training_samples": 100,
+      "training_features": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "target_metric",
+        "performance_score"
+      ],
+      "status": "completed",
+      "accuracy": 0.864861965166989,
+      "loss": 0.14510336238702962,
+      "training_time": 0.5,
+      "timestamp": "2025-06-17T00:14:08.894478"
+    }
+  ],
+  "trained_server_names": [
+    "mcp-auth-manager",
+    "mcp-blockchain",
+    "mcp-defi-analyzer",
+    "mcp-flash-loan",
+    "mcp-arbitrage",
+    "mcp-liquidity",
+    "mcp-price-feed",
+    "mcp-risk-manager",
+    "mcp-portfolio",
+    "mcp-api-client",
+    "mcp-database",
+    "mcp-cache-manager",
+    "mcp-file-processor",
+    "mcp-notification",
+    "mcp-monitoring",
+    "mcp-security",
+    "mcp-data-analyzer",
+    "mcp-web-scraper",
+    "mcp-task-queue",
+    "mcp-filesystem",
+    "mcp-coordinator",
+    "agent-coordinator",
+    "agent-analyzer",
+    "agent-executor",
+    "agent-risk-manager",
+    "agent-monitor",
+    "agent-data-collector",
+    "agent-arbitrage-bot",
+    "agent-liquidity-manager",
+    "agent-reporter",
+    "agent-healer"
+  ],
+  "training_timestamp": "2025-06-17T00:14:08.912469"
+}

@@ -1,0 +1,46 @@
+# MCP Server Coordinator
+FROM python:3.12-slim-bookworm
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    gcc \
+    libc6-dev \
+    libffi-dev \
+    netcat-openbsd \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy requirements
+COPY requirements.txt ./
+
+# Create Python virtual environment and install dependencies
+RUN python3 -m venv /app/venv && \
+    . /app/venv/bin/activate && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy MCP coordinator source
+COPY mcp_servers/ ./mcp_servers/
+COPY utils/ ./utils/
+COPY config/ ./config/
+
+# Create non-root user
+RUN adduser -D -s /bin/sh mcpuser && \
+    chown -R mcpuser:mcpuser /app
+
+USER mcpuser
+
+# Activate virtual environment
+ENV PATH="/app/venv/bin:$PATH"
+
+# Expose port
+EXPOSE 8900
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -c "import socket; s=socket.socket(); s.connect(('localhost', 8900)); s.close()" || exit 1
+
+# Start the MCP coordinator
+CMD ["python", "mcp_servers/coordinator/mcp_coordinator.py"]

@@ -1,0 +1,303 @@
+import asyncio\n"""
+Debug Logger for Flash Loan Arbitrage System.
+Provides enhanced logging capabilities for debugging.
+"""
+
+import logging
+import json
+import os
+import time
+import traceback
+from datetime import datetime
+from typing import Dict, Any, Optional, List, Union
+
+class DebugLogger:
+    """
+    Enhanced logging for the Flash Loan Arbitrage System.
+    Provides structured logging with context and transaction details.
+    """
+    
+    def __init__(self, log_dir='logs/debug', enabled=True):
+        """
+        Initialize the DebugLogger.
+        
+        Args:
+            log_dir (str): Directory for debug log files.
+            enabled (bool): Whether debug logging is enabled.
+        """
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.log_dir = log_dir
+        self.enabled = enabled
+        
+        # Create log directory if it doesn't exist
+        os.makedirs(log_dir, exist_ok=True)
+        
+        # Transaction log file
+        self.tx_log_file = os.path.join(log_dir, 'transactions.json')
+        self.opportunity_log_file = os.path.join(log_dir, 'opportunities.json')
+        self.error_log_file = os.path.join(log_dir, 'errors.json')
+        self.system_log_file = os.path.join(log_dir, 'system_output.log')
+        
+        # Initialize log files if they don't exist
+        self._initialize_log_files()
+        
+        self.logger.info(f"Debug logger initialized (enabled={enabled})")
+    
+    def _initialize_log_files(self):
+        """Initialize log files if they don't exist."""
+        for file_path in [self.tx_log_file, self.opportunity_log_file, self.error_log_file]:
+            if not os.path.exists(file_path):
+                with open(file_path, 'w') as f:
+                    json.dump([], f)
+        
+        # Create system log file
+        if not os.path.exists(self.system_log_file):
+            with open(self.system_log_file, 'w') as f:
+                f.write(f"# Flash Loan System Debug Log\n")
+                f.write(f"# Started at {datetime.now().isoformat()}\n\n")
+    
+    def log_transaction(self, tx_data: Dict[str, Any]):
+        """
+        Log a transaction.
+        
+        Args:
+            tx_data (Dict[str, Any]): Transaction data.
+        """
+        if not self.enabled:
+            return
+        
+        try:
+            # Add timestamp
+            tx_data['timestamp'] = datetime.now().isoformat()
+            
+            # Load existing transactions
+            transactions = []
+            if os.path.exists(self.tx_log_file):
+                with open(self.tx_log_file, 'r') as f:
+                    try:
+                        transactions = json.load(f)
+                    except json.JSONDecodeError:
+                        self.logger.error(f"Error decoding transaction log file. Creating new file.")
+                        transactions = []
+            
+            # Add new transaction
+            transactions.append(tx_data)
+            
+            # Write back to file
+            with open(self.tx_log_file, 'w') as f:
+                json.dump(transactions, f, indent=2)
+            
+            self.logger.debug(f"Logged transaction: {tx_data.get('hash', 'unknown')}")
+        except Exception as e:
+            self.logger.error(f"Error logging transaction: {e}")
+    
+    def log_opportunity(self, opportunity_data: Dict[str, Any]):
+        """
+        Log an arbitrage opportunity.
+        
+        Args:
+            opportunity_data (Dict[str, Any]): Opportunity data.
+        """
+        if not self.enabled:
+            return
+        
+        try:
+            # Add timestamp
+            opportunity_data['timestamp'] = datetime.now().isoformat()
+            
+            # Load existing opportunities
+            opportunities = []
+            if os.path.exists(self.opportunity_log_file):
+                with open(self.opportunity_log_file, 'r') as f:
+                    try:
+                        opportunities = json.load(f)
+                    except json.JSONDecodeError:
+                        self.logger.error(f"Error decoding opportunity log file. Creating new file.")
+                        opportunities = []
+            
+            # Add new opportunity
+            opportunities.append(opportunity_data)
+            
+            # Write back to file
+            with open(self.opportunity_log_file, 'w') as f:
+                json.dump(opportunities, f, indent=2)
+            
+            self.logger.debug(f"Logged opportunity: {opportunity_data.get('token', 'unknown')} from {opportunity_data.get('buy_dex', 'unknown')} to {opportunity_data.get('sell_dex', 'unknown')}")
+        except Exception as e:
+            self.logger.error(f"Error logging opportunity: {e}")
+    
+    def log_error(self, error: Union[str, Exception], context: Optional[Dict[str, Any]] = None):
+        """
+        Log an error.
+        
+        Args:
+            error (Union[str, Exception]): Error message or exception.
+            context (Dict[str, Any], optional): Context information.
+        """
+        if not self.enabled:
+            return
+        
+        try:
+            # Create error data
+            error_data = {
+                'timestamp': datetime.now().isoformat(),
+                'error': str(error),
+                'context': context or {}
+            }
+            
+            # Add traceback if exception
+            if isinstance(error, Exception):
+                error_data['traceback'] = traceback.format_exc()
+            
+            # Load existing errors
+            errors = []
+            if os.path.exists(self.error_log_file):
+                with open(self.error_log_file, 'r') as f:
+                    try:
+                        errors = json.load(f)
+                    except json.JSONDecodeError:
+                        self.logger.error(f"Error decoding error log file. Creating new file.")
+                        errors = []
+            
+            # Add new error
+            errors.append(error_data)
+            
+            # Write back to file
+            with open(self.error_log_file, 'w') as f:
+                json.dump(errors, f, indent=2)
+            
+            self.logger.debug(f"Logged error: {str(error)[:100]}...")
+        except Exception as e:
+            self.logger.error(f"Error logging error: {e}")
+    
+    def log_system_output(self, message: str, level: str = 'INFO'):
+        """
+        Log system output.
+        
+        Args:
+            message (str): Message to log.
+            level (str): Log level.
+        """
+        if not self.enabled:
+            return
+        
+        try:
+            # Format message
+            timestamp = datetime.now().isoformat()
+            formatted_message = f"{timestamp} - {level} - {message}\n"
+            
+            # Append to file
+            with open(self.system_log_file, 'a') as f:
+                f.write(formatted_message)
+        except Exception as e:
+            self.logger.error(f"Error logging system output: {e}")
+    
+    def get_recent_transactions(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Get recent transactions.
+        
+        Args:
+            limit (int): Maximum number of transactions to return.
+            
+        Returns:
+            List[Dict[str, Any]]: Recent transactions.
+        """
+        try:
+            if os.path.exists(self.tx_log_file):
+                with open(self.tx_log_file, 'r') as f:
+                    transactions = json.load(f)
+                return transactions[-limit:]
+            return []
+        except Exception as e:
+            self.logger.error(f"Error getting recent transactions: {e}")
+            return []
+    
+    def get_recent_opportunities(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Get recent opportunities.
+        
+        Args:
+            limit (int): Maximum number of opportunities to return.
+            
+        Returns:
+            List[Dict[str, Any]]: Recent opportunities.
+        """
+        try:
+            if os.path.exists(self.opportunity_log_file):
+                with open(self.opportunity_log_file, 'r') as f:
+                    opportunities = json.load(f)
+                return opportunities[-limit:]
+            return []
+        except Exception as e:
+            self.logger.error(f"Error getting recent opportunities: {e}")
+            return []
+    
+    def get_recent_errors(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Get recent errors.
+        
+        Args:
+            limit (int): Maximum number of errors to return.
+            
+        Returns:
+            List[Dict[str, Any]]: Recent errors.
+        """
+        try:
+            if os.path.exists(self.error_log_file):
+                with open(self.error_log_file, 'r') as f:
+                    errors = json.load(f)
+                return errors[-limit:]
+            return []
+        except Exception as e:
+            self.logger.error(f"Error getting recent errors: {e}")
+            return []
+    
+    def clear_logs(self):
+        """Clear all log files."""
+        try:
+            for file_path in [self.tx_log_file, self.opportunity_log_file, self.error_log_file]:
+                with open(file_path, 'w') as f:
+                    json.dump([], f)
+            
+            with open(self.system_log_file, 'w') as f:
+                f.write(f"# Flash Loan System Debug Log\n")
+                f.write(f"# Cleared at {datetime.now().isoformat()}\n\n")
+            
+            self.logger.info("Cleared all debug logs")
+        except Exception as e:
+            self.logger.error(f"Error clearing logs: {e}")
+    
+    def set_enabled(self, enabled: bool):
+        """
+        Set whether debug logging is enabled.
+        
+        Args:
+            enabled (bool): Whether debug logging is enabled.
+        """
+        self.enabled = enabled
+        self.logger.info(f"Debug logging {'enabled' if enabled else 'disabled'}")
+    
+    async def initialize(self, enabled: bool = True):
+        """
+        Initialize the debug logger.
+        
+        Args:
+            enabled (bool): Whether debug logging is enabled.
+        """
+        self.enabled = enabled
+        self.logger.info(f"Initializing debug logger (enabled={enabled})")
+        
+        # Create log directory if it doesn't exist
+        os.makedirs(self.log_dir, exist_ok=True)
+        
+        # Initialize log files
+        self._initialize_log_files()
+        
+        # Log initialization
+        self.log_system_output("Debug logger initialized", "INFO")
+        
+        return True
+
+
+# Create a singleton instance
+debug_logger = DebugLogger()

@@ -1,0 +1,236 @@
+{
+  "version": "2.0.0",
+  "generated_at": "2025-06-12T12:00:00Z",
+  "total_agents": 10,
+  "agent_roles": {
+    "code_indexers": {
+      "count": 2,
+      "description": "Full repo understanding and code analysis",
+      "port_range": "3101-3102",
+      "agents": [
+        {
+          "id": 1,
+          "name": "code_indexer-1",
+          "container_name": "mcp-code-indexer-1",
+          "port": 3101,
+          "url": "http://localhost:3101",
+          "mcp_server_path": "/app/ai_agents",
+          "role": "code_indexer",
+          "description": "Full repo understanding and code analysis",
+          "capabilities": [
+            "code_analysis",
+            "repo_understanding",
+            "pattern_recognition",
+            "dependency_mapping",
+            "architecture_analysis"
+          ],
+          "priority": "high"
+        },
+        {
+          "id": 2,
+          "name": "code_indexer-2",
+          "container_name": "mcp-code-indexer-2",
+          "port": 3102,
+          "url": "http://localhost:3102",
+          "mcp_server_path": "/app/ai_agents",
+          "role": "code_indexer",
+          "description": "Full repo understanding and code analysis",
+          "capabilities": [
+            "code_analysis",
+            "repo_understanding",
+            "pattern_recognition",
+            "dependency_mapping",
+            "architecture_analysis"
+          ],
+          "priority": "high"
+        }
+      ]
+    },
+    "builders": {
+      "count": 2,
+      "description": "Build and compile projects efficiently",
+      "port_range": "3121-3122",
+      "agents": [
+        {
+          "id": 1,
+          "name": "builder-1",
+          "container_name": "mcp-builder-1",
+          "port": 3121,
+          "url": "http://localhost:3121",
+          "mcp_server_path": "/app/ai_agents",
+          "role": "builder",
+          "description": "Build and compile projects efficiently",
+          "capabilities": [
+            "project_compilation",
+            "dependency_resolution",
+            "build_optimization",
+            "error_handling",
+            "multi_language_support"
+          ],
+          "priority": "high"
+        },
+        {
+          "id": 2,
+          "name": "builder-2",
+          "container_name": "mcp-builder-2",
+          "port": 3122,
+          "url": "http://localhost:3122",
+          "mcp_server_path": "/app/ai_agents",
+          "role": "builder",
+          "description": "Build and compile projects efficiently",
+          "capabilities": [
+            "project_compilation",
+            "dependency_resolution",
+            "build_optimization",
+            "error_handling",
+            "multi_language_support"
+          ],
+          "priority": "high"
+        }
+      ]
+    },
+    "executors": {
+      "count": 2,
+      "description": "Execute trades and transactions",
+      "port_range": "3136-3137",
+      "agents": [
+        {
+          "id": 1,
+          "name": "executor-1",
+          "container_name": "mcp-executor-1",
+          "port": 3136,
+          "url": "http://localhost:3136",
+          "mcp_server_path": "/app/ai_agents",
+          "role": "executor",
+          "description": "Execute trades and transactions",
+          "capabilities": [
+            "trade_execution",
+            "transaction_management",
+            "risk_assessment",
+            "performance_monitoring",
+            "error_recovery"
+          ],
+          "priority": "critical"
+        },
+        {
+          "id": 2,
+          "name": "executor-2",
+          "container_name": "mcp-executor-2",
+          "port": 3137,
+          "url": "http://localhost:3137",
+          "mcp_server_path": "/app/ai_agents",
+          "role": "executor",
+          "description": "Execute trades and transactions",
+          "capabilities": [
+            "trade_execution",
+            "transaction_management",
+            "risk_assessment",
+            "performance_monitoring",
+            "error_recovery"
+          ],
+          "priority": "critical"
+        }
+      ]
+    },
+    "coordinators": {
+      "count": 2,
+      "description": "Coordinate between systems",
+      "port_range": "3151-3152",
+      "agents": [
+        {
+          "id": 1,
+          "name": "coordinator-1",
+          "container_name": "mcp-coordinator-agent-1",
+          "port": 3151,
+          "url": "http://localhost:3151",
+          "mcp_server_path": "/app/ai_agents",
+          "role": "coordinator",
+          "description": "Coordinate between systems",
+          "capabilities": [
+            "system_coordination",
+            "task_distribution",
+            "resource_management",
+            "performance_optimization",
+            "failure_handling"
+          ],
+          "priority": "critical"
+        },
+        {
+          "id": 2,
+          "name": "coordinator-2",
+          "container_name": "mcp-coordinator-agent-2",
+          "port": 3152,
+          "url": "http://localhost:3152",
+          "mcp_server_path": "/app/ai_agents",
+          "role": "coordinator",
+          "description": "Coordinate between systems",
+          "capabilities": [
+            "system_coordination",
+            "task_distribution",
+            "resource_management",
+            "performance_optimization",
+            "failure_handling"
+          ],
+          "priority": "critical"
+        }
+      ]
+    },
+    "planners": {
+      "count": 2,
+      "description": "Plan and strategize operations",
+      "port_range": "3161-3162",
+      "agents": [
+        {
+          "id": 1,
+          "name": "planner-1",
+          "container_name": "mcp-planner-1",
+          "port": 3161,
+          "url": "http://localhost:3161",
+          "mcp_server_path": "/app/ai_agents",
+          "role": "planner",
+          "description": "Plan and strategize operations",
+          "capabilities": [
+            "strategic_planning",
+            "risk_analysis",
+            "opportunity_identification",
+            "resource_allocation",
+            "performance_prediction"
+          ],
+          "priority": "high"
+        },
+        {
+          "id": 2,
+          "name": "planner-2",
+          "container_name": "mcp-planner-2",
+          "port": 3162,
+          "url": "http://localhost:3162",
+          "mcp_server_path": "/app/ai_agents",
+          "role": "planner",
+          "description": "Plan and strategize operations",
+          "capabilities": [
+            "strategic_planning",
+            "risk_analysis",
+            "opportunity_identification",
+            "resource_allocation",
+            "performance_prediction"
+          ],
+          "priority": "high"
+        }
+      ]
+    }
+  },
+  "summary": {
+    "total_containers": 10,
+    "total_ports": 10,
+    "port_range": "3101-3162",
+    "high_priority_agents": 6,
+    "critical_priority_agents": 4,
+    "roles_distribution": {
+      "code_indexers": 2,
+      "builders": 2,
+      "executors": 2,
+      "coordinators": 2,
+      "planners": 2
+    }
+  }
+}

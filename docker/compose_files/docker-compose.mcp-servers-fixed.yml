@@ -1,0 +1,148 @@
+version: '3.8'
+
+services:
+  # Context7 MCP Server
+  context7-mcp:
+    image: node:18-alpine
+    container_name: context7-mcp-server
+    ports:
+      - "4001:4000"
+    environment:
+      - MCP_SERVER_ID=context7-mcp
+      - COORDINATOR_URL=http://localhost:9000
+      - REDIS_URL=redis://localhost:6379
+    command: >
+      sh -c "
+      npm init -y &&
+      npm install express cors &&
+      cat > server.js << 'EOF'
+      const express = require('express');
+      const app = express();
+      
+      app.use(express.json());
+      
+      app.get('/health', (req, res) => {
+        res.json({
+          status: 'healthy',
+          service: 'context7-mcp',
+          timestamp: new Date().toISOString()
+        });
+      });
+      
+      app.get('/status', (req, res) => {
+        res.json({
+          service: 'context7-mcp',
+          version: '1.0.0',
+          uptime: process.uptime()
+        });
+      });
+      
+      const PORT = process.env.PORT || 4000;
+      app.listen(PORT, '0.0.0.0', () => {
+        console.log('Context7 MCP Server running on port ' + PORT);
+      });
+      EOF
+      node server.js
+      "
+    restart: unless-stopped
+    
+  # Enhanced Copilot MCP Server  
+  enhanced-copilot-mcp:
+    image: node:18-alpine
+    container_name: enhanced-copilot-mcp-server
+    ports:
+      - "4002:4000"
+    environment:
+      - MCP_SERVER_ID=enhanced-copilot-mcp
+      - COORDINATOR_URL=http://localhost:9000
+    command: >
+      sh -c "
+      npm init -y &&
+      npm install express cors &&
+      cat > server.js << 'EOF'
+      const express = require('express');
+      const app = express();
+      
+      app.use(express.json());
+      
+      app.get('/health', (req, res) => {
+        res.json({
+          status: 'healthy',
+          service: 'enhanced-copilot-mcp',
+          timestamp: new Date().toISOString()
+        });
+      });
+      
+      app.get('/assist', (req, res) => {
+        res.json({
+          service: 'enhanced-copilot-mcp',
+          message: 'AI assistance ready',
+          capabilities: ['code-completion', 'code-analysis', 'documentation']
+        });
+      });
+      
+      const PORT = process.env.PORT || 4000;
+      app.listen(PORT, '0.0.0.0', () => {
+        console.log('Enhanced Copilot MCP Server running on port ' + PORT);
+      });
+      EOF
+      node server.js
+      "
+    restart: unless-stopped
+    
+  # Price Oracle MCP Server
+  price-oracle-mcp:
+    image: node:18-alpine
+    container_name: price-oracle-mcp-server
+    ports:
+      - "4007:4000"
+    environment:
+      - MCP_SERVER_ID=price-oracle-mcp
+      - COORDINATOR_URL=http://localhost:9000
+    command: >
+      sh -c "
+      npm init -y &&
+      npm install express cors axios &&
+      cat > server.js << 'EOF'
+      const express = require('express');
+      const app = express();
+      
+      app.use(express.json());
+      
+      app.get('/health', (req, res) => {
+        res.json({
+          status: 'healthy',
+          service: 'price-oracle-mcp',
+          timestamp: new Date().toISOString()
+        });
+      });
+      
+      app.get('/price/:token', (req, res) => {
+        const token = req.params.token;
+        const mockPrice = Math.random() * 1000;
+        res.json({
+          token: token,
+          price: mockPrice,
+          timestamp: new Date().toISOString(),
+          source: 'mock-oracle'
+        });
+      });
+      
+      app.get('/prices', (req, res) => {
+        const tokens = ['ETH', 'BTC', 'USDC', 'DAI', 'WETH'];
+        const prices = tokens.map(token => ({
+          token,
+          price: Math.random() * 1000,
+          timestamp: new Date().toISOString()
+        }));
+        res.json({ prices });
+      });
+      
+      const PORT = process.env.PORT || 4000;
+      app.listen(PORT, '0.0.0.0', () => {
+        console.log('Price Oracle MCP Server running on port ' + PORT);
+      });
+      EOF
+      node server.js
+      "
+    restart: unless-stopped

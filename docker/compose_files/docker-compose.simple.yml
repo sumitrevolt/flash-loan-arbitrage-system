@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: langchain-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    
+  postgres:
+    image: postgres:15-alpine
+    container_name: langchain-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=langchain_mcp
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    restart: unless-stopped
+    
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: langchain-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=langchain
+      - RABBITMQ_DEFAULT_PASS=langchain123
+    restart: unless-stopped

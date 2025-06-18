@@ -1,0 +1,334 @@
+{
+  "agents": {
+    "automated_retraining_scheduler": {
+      "name": "automated_retraining_scheduler",
+      "file": "src/ai_agents/automated_retraining_scheduler.py",
+      "port": 5000,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "check_training_status": {
+      "name": "check_training_status",
+      "file": "src/ai_agents/check_training_status.py",
+      "port": 5001,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "container_monitor": {
+      "name": "container_monitor",
+      "file": "src/ai_agents/container_monitor.py",
+      "port": 5002,
+      "role": "monitoring",
+      "capabilities": [
+        "system_monitoring",
+        "alert_management"
+      ]
+    },
+    "enhanced_langchain_orchestrator": {
+      "name": "enhanced_langchain_orchestrator",
+      "file": "src/ai_agents/enhanced_langchain_orchestrator.py",
+      "port": 5003,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "fixed_langchain_builder": {
+      "name": "fixed_langchain_builder",
+      "file": "src/ai_agents/fixed_langchain_builder.py",
+      "port": 5004,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "langchain_complete_builder": {
+      "name": "langchain_complete_builder",
+      "file": "src/ai_agents/langchain_complete_builder.py",
+      "port": 5005,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "langchain_docker_orchestrator": {
+      "name": "langchain_docker_orchestrator",
+      "file": "src/ai_agents/langchain_docker_orchestrator.py",
+      "port": 5006,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "langchain_system_launcher": {
+      "name": "langchain_system_launcher",
+      "file": "src/ai_agents/langchain_system_launcher.py",
+      "port": 5007,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "launch_enhanced_langchain_system": {
+      "name": "launch_enhanced_langchain_system",
+      "file": "src/ai_agents/launch_enhanced_langchain_system.py",
+      "port": 5008,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "robust_langchain_builder": {
+      "name": "robust_langchain_builder",
+      "file": "src/ai_agents/robust_langchain_builder.py",
+      "port": 5009,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "simple_aave_trainer": {
+      "name": "simple_aave_trainer",
+      "file": "src/ai_agents/simple_aave_trainer.py",
+      "port": 5010,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "simple_langchain_deploy": {
+      "name": "simple_langchain_deploy",
+      "file": "src/ai_agents/simple_langchain_deploy.py",
+      "port": 5011,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "training_summary": {
+      "name": "training_summary",
+      "file": "src/ai_agents/training_summary.py",
+      "port": 5012,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "master_coordinator": {
+      "name": "master_coordinator",
+      "file": "src/ai_agents/master_coordinator.py",
+      "port": 5013,
+      "role": "coordination",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "github_copilot_trainer": {
+      "name": "github_copilot_trainer",
+      "file": "src/ai_agents/github_copilot_trainer.py",
+      "port": 5014,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "langchain_final_coordinator": {
+      "name": "langchain_final_coordinator",
+      "file": "src/ai_agents/langchain_final_coordinator.py",
+      "port": 5015,
+      "role": "coordination",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "langchain_final_coordinator_fixed": {
+      "name": "langchain_final_coordinator_fixed",
+      "file": "src/ai_agents/langchain_final_coordinator_fixed.py",
+      "port": 5016,
+      "role": "coordination",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "langchain_master_coordinator": {
+      "name": "langchain_master_coordinator",
+      "file": "src/ai_agents/langchain_master_coordinator.py",
+      "port": 5017,
+      "role": "coordination",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "master_langchain_system": {
+      "name": "master_langchain_system",
+      "file": "src/ai_agents/master_langchain_system.py",
+      "port": 5018,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "multi_agent_terminal_coordinator": {
+      "name": "multi_agent_terminal_coordinator",
+      "file": "src/ai_agents/multi_agent_terminal_coordinator.py",
+      "port": 5019,
+      "role": "coordination",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "run_langchain_master": {
+      "name": "run_langchain_master",
+      "file": "src/ai_agents/run_langchain_master.py",
+      "port": 5020,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "simple-langchain-coordinator": {
+      "name": "simple-langchain-coordinator",
+      "file": "src/ai_agents/simple-langchain-coordinator.py",
+      "port": 5021,
+      "role": "coordination",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "ultimate_langchain_coordinator": {
+      "name": "ultimate_langchain_coordinator",
+      "file": "src/ai_agents/ultimate_langchain_coordinator.py",
+      "port": 5022,
+      "role": "coordination",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "advanceds": {
+      "name": "advanceds",
+      "file": "src/ai_agents/advanced_ai_agents.py",
+      "port": 5023,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "complete_enhanced_system": {
+      "name": "complete_enhanced_system",
+      "file": "src/ai_agents/complete_ai_enhanced_system.py",
+      "port": 5024,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "complete_enhanced_system_type_safe": {
+      "name": "complete_enhanced_system_type_safe",
+      "file": "src/ai_agents/complete_ai_enhanced_system_type_safe.py",
+      "port": 5025,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "enhanceds": {
+      "name": "enhanceds",
+      "file": "src/ai_agents/enhanced_ai_agents.py",
+      "port": 5026,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "enhanceds_v2": {
+      "name": "enhanceds_v2",
+      "file": "src/ai_agents/enhanced_ai_agents_v2.py",
+      "port": 5027,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "enhanced_system": {
+      "name": "enhanced_system",
+      "file": "src/ai_agents/enhanced_ai_system.py",
+      "port": 5028,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "langchain_duplicate_merger": {
+      "name": "langchain_duplicate_merger",
+      "file": "src/ai_agents/langchain_duplicate_merger.py",
+      "port": 5029,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "langchain_postgresql_test": {
+      "name": "langchain_postgresql_test",
+      "file": "src/ai_agents/langchain_postgresql_test.py",
+      "port": 5030,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "langchain_system_status": {
+      "name": "langchain_system_status",
+      "file": "src/ai_agents/langchain_system_status.py",
+      "port": 5031,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "live_blockchain_verification": {
+      "name": "live_blockchain_verification",
+      "file": "src/ai_agents/live_blockchain_verification.py",
+      "port": 5032,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "project_organizer_langchain": {
+      "name": "project_organizer_langchain",
+      "file": "src/ai_agents/project_organizer_langchain.py",
+      "port": 5033,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "system_repair": {
+      "name": "system_repair",
+      "file": "src/ai_agents/system_repair.py",
+      "port": 5034,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    },
+    "__main__": {
+      "name": "__main__",
+      "file": "src/ai_agents/__main__.py",
+      "port": 5035,
+      "role": "general",
+      "capabilities": [
+        "general_ai_assistance"
+      ]
+    }
+  },
+  "coordination": {
+    "master_coordinator": "src/ai_agents/master_coordinator.py",
+    "communication_protocol": "http",
+    "task_distribution": "round_robin"
+  }
+}

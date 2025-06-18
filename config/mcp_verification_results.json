@@ -1,0 +1,26 @@
+{
+  "started_at": "2025-06-17 10:12:48",
+  "contract_address": "0x7dB59723064aaD15b90042b9205F60A6A7029ABF",
+  "mcp_servers": [
+    {
+      "pid": 31396,
+      "running": true
+    },
+    {
+      "pid": 24564,
+      "running": true
+    }
+  ],
+  "verification": {
+    "success": false,
+    "error": "Fail - Unable to verify. Compiled contract deployment bytecode does NOT match the transaction deployment bytecode.",
+    "attempts": 1
+  },
+  "alternatives": {
+    "flattened_file": "FlashLoanArbitrageFixed_Flattened.sol",
+    "constructor_args_file": "constructor_args.txt",
+    "manual_guide": "MANUAL_VERIFICATION_GUIDE.md"
+  },
+  "final_status": "verification_failed_alternatives_created",
+  "completed_at": "2025-06-17 10:13:05"
+}

@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "flash-loan-system": {
+      "command": "python",
+      "args": ["working_flash_loan_mcp.py"],
+      "cwd": "."
+    },
+    "simple-server": {
+      "command": "python",
+      "args": ["simple_mcp_server.py"],
+      "cwd": "."
+    }
+  }
+}

@@ -1,0 +1,299 @@
+"""
+Arbitrage strategy module for the Flash Loan system.
+Finds arbitrage opportunities across different DEXes.
+"""
+
+import logging
+import json
+import os
+import time
+from typing import List, Dict, Any, cast
+
+from flash_loan.core.dex_integration_singleton import get_instance
+from flash_loan.core.message_bus import message_bus
+
+# Import DEX fee manager
+from flash_loan.core.dex_fee_manager import dex_fee_manager
+
+# Configure logging
+logger = logging.getLogger(__name__)
+
+class ArbitrageStrategy:
+    """
+    Arbitrage strategy for finding and analyzing opportunities across DEXes.
+    Implements singleton pattern for system-wide access.
+    """
+    _instance = None
+
+    def __new__(cls, *args: Any, **kwargs: Any):
+        if cls._instance is None:
+            cls._instance = super(ArbitrageStrategy, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+
+    def __init__(self, config_path: str = 'config/arbitrage_strategy_config.json') -> None:
+        if self._initialized:
+            return
+
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.config_path = config_path
+        self.config = self._load_config()
+        self.dex_integration = get_instance()
+
+        # Track opportunities
+        self.recent_opportunities: List[Dict[str, Any]] = []
+        self.max_recent_opportunities = 50
+        self.last_scan_time = 0
+        self._initialized = True
+
+    def _load_config(self) -> Dict[str, Any]:
+        """Load arbitrage strategy configuration."""
+        # Default configuration values
+        default_config: Dict[str, Any] = {
+            "min_profit_threshold_usd": 5.0,
+            "max_opportunities": 50,
+            "min_liquidity": 10000,
+            "allowed_tokens": ["WETH", "USDC", "DAI", "WBTC", "USDT", "LINK", "UNI", "AAVE", "MATIC", "COMP"],
+            "allowed_dexes": ["QuickSwap", "SushiSwap", "UniswapV3"],
+            "opportunity_ttl": 30,
+            "max_slippage": 1.0,
+            "gas_buffer": 1.2,
+            "min_profit_percentage": 1.0,  # Minimum profit percentage (1%)
+            "max_profit_percentage": 8.0  # Maximum profit percentage (8%)
+        }
+
+
+        # Load user config and merge
+        try:
+            if os.path.exists(self.config_path):
+                with open(self.config_path, 'r') as f:
+                    user_config = json.load(f)
+                merged: Dict[str, Any] = default_config.copy()
+                merged.update(user_config)
+                return merged
+        except Exception as e:
+            self.logger.error(f"Error loading config file: {e}")
+        # Fallback to defaults
+        return default_config
+
+    async def initialize(self) -> bool:
+        """Initialize the arbitrage strategy."""
+        try:
+            self.logger.info("Initializing arbitrage strategy...")
+
+            # Ensure DEX integration is initialized
+            if not self.dex_integration:
+                self.dex_integration = get_instance()
+                
+            # Check if dex_integration has initialize method before calling
+            if self.dex_integration and hasattr(self.dex_integration, "initialize"):
+                await self.dex_integration.initialize()  # type: ignore[attr-defined]
+
+            self.logger.info("Arbitrage strategy initialized successfully")
+            return True
+        except Exception as e:
+            self.logger.error(f"Failed to initialize arbitrage strategy: {e}")
+            return False
+
+    async def scan_for_opportunities(self) -> List[Dict[str, Any]]:
+        """
+        Scan for arbitrage opportunities across DEXes.
+
+        Returns:
+            List[Dict[str, Any]]: List of arbitrage opportunities
+        """
+        try:
+            self.logger.info("Scanning for arbitrage opportunities...")
+
+            # Get allowed tokens and DEXes from config
+            allowed_tokens = self.config.get("allowed_tokens", [])
+            _allowed_dexes = self.config.get("allowed_dexes", [])  # renamed to avoid unused-var warning
+            min_profit_threshold_usd = self.config.get("min_profit_threshold", 5.0)
+
+            # Track scan time
+            start_time = time.time()
+            self.last_scan_time = start_time
+
+            # Get all token pairs
+            opportunities: List[Dict[str, Any]] = []
+
+            # For each token, check price differences between DEXes
+            for token in allowed_tokens:
+                # Get validated prices from all DEXes
+                try:
+                    # Check if dex_integration exists and has get_validated_prices method
+                    if not self.dex_integration or not hasattr(self.dex_integration, "get_validated_prices"):
+                        self.logger.warning(f"DEX integration not available or missing get_validated_prices method for {token}")
+                        continue
+                        
+                    # Use the new validated prices function
+                    token_prices: Dict[str, float] = await self.dex_integration.get_validated_prices(token)  # type: ignore[attr-defined]
+
+                    self.logger.info(f"Got validated prices for {token}: {token_prices}")
+
+                    # Need at least 2 DEXes with prices to compare
+                    if len(token_prices) < 2:  # type: ignore[arg-type]
+                        self.logger.debug(f"Not enough valid prices for {token}, skipping")
+                        continue
+                except Exception as e:
+                    self.logger.warning(f"Error getting validated prices for {token}: {e}")
+                    continue
+
+                # Find arbitrage opportunities between DEXes
+                for buy_dex, buy_price in cast(Dict[str, float], token_prices).items():
+                    for sell_dex, sell_price in cast(Dict[str, float], token_prices).items():
+                        if buy_dex == sell_dex:
+                            continue
+
+                        # Calculate profit percentage
+                        price_diff = sell_price - buy_price
+                        if price_diff <= 0:
+                            continue
+
+                        profit_percentage = (price_diff / buy_price) * 100
+
+                        # Calculate profit in USD for a standard trade size
+                        trade_size_usd = self.config.get("trade_size_usd", 1000)  # Default $1000
+
+                        # Calculate token amount for the trade size (in human units)
+                        if buy_price > 0:
+                            trade_size_token = trade_size_usd / buy_price
+                        else:
+                            trade_size_token = 0
+                        self.logger.debug(f"[DEBUG] Calculated trade_size_token for {token}: trade_size_usd={trade_size_usd}, buy_price={buy_price}, trade_size_token={trade_size_token}")
+
+                        # Calculate fees using the fee manager
+                        fees = dex_fee_manager.calculate_fees(token, buy_dex, sell_dex, trade_size_usd)
+                        aave_fee_usd = fees["aave_fee_usd"]
+                        buy_dex_fee_usd = fees["buy_dex_fee_usd"]
+                        sell_dex_fee_usd = fees["sell_dex_fee_usd"]
+                        total_fees_usd = fees["total_fees_usd"]
+
+                        # Log fee details for debugging
+                        self.logger.debug(f"Fee details for {token} {buy_dex}->{sell_dex}: " +
+                                         f"Aave: ${aave_fee_usd:.4f} ({fees['aave_fee_rate']*100:.4f}%), " +
+                                         f"Buy DEX: ${buy_dex_fee_usd:.4f} ({fees['buy_fee_rate']*100:.4f}%), " +
+                                         f"Sell DEX: ${sell_dex_fee_usd:.4f} ({fees['sell_fee_rate']*100:.4f}%)")
+
+                        # Calculate profit after fees
+                        gross_profit_usd = (trade_size_usd * price_diff) / buy_price
+                        profit_usd = gross_profit_usd - total_fees_usd
+
+                        # Recalculate profit percentage after fees
+                        profit_percentage_after_fees = (profit_usd / trade_size_usd) * 100
+
+                        # Check if profit meets threshold and is within the 1-10% range
+                        min_profit_percentage = self.config.get("min_profit_percentage", 1.0)
+                        max_profit_percentage = self.config.get("max_profit_percentage", 10.0)
+
+                        if (profit_usd >= min_profit_threshold_usd and
+                            profit_percentage_after_fees >= min_profit_percentage and
+                            profit_percentage_after_fees <= max_profit_percentage and
+                            trade_size_token > 0):
+                            opportunity: Dict[str, Any] = {
+                                 "token": token,
+                                 "buy_dex": buy_dex,
+                                 "sell_dex": sell_dex,
+                                 "buy_price": buy_price,
+                                 "sell_price": sell_price,
+                                 "price_diff": price_diff,
+                                 "profit_percentage": profit_percentage,
+                                 "profit_percentage_after_fees": profit_percentage_after_fees,
+                                 "gross_profit_usd": gross_profit_usd,
+                                 "profit_usd": profit_usd,
+                                 "trade_size_usd": trade_size_usd,
+                                 "trade_size_token": trade_size_token,
+                                 "aave_fee_usd": aave_fee_usd,
+                                 "buy_dex_fee_usd": buy_dex_fee_usd,
+                                 "sell_dex_fee_usd": sell_dex_fee_usd,
+                                 "total_fees_usd": total_fees_usd,
+                                 "timestamp": time.time()
+                            }
+
+                            opportunities.append(opportunity)
+                            self.logger.info(f"Found opportunity: {token} from {buy_dex} to {sell_dex}, "
+                                            f"Gross Profit: ${gross_profit_usd:.2f}, Fees: ${total_fees_usd:.2f}, "
+                                            f"Net Profit: ${profit_usd:.2f} ({profit_percentage_after_fees:.2f}% after fees), "
+                                            f"Token Amount: {trade_size_token}")
+
+            # Sort opportunities by profit (highest first)
+            opportunities.sort(key=lambda x: Any: Any: x["profit_usd"], reverse=True)
+
+            # Update recent opportunities
+            self.recent_opportunities.extend(opportunities)
+            if len(self.recent_opportunities) > self.max_recent_opportunities:
+                self.recent_opportunities = self.recent_opportunities[-self.max_recent_opportunities:]
+
+            # Save opportunities to file
+            self._save_opportunities(opportunities)
+
+            # Publish opportunities to message bus
+            if opportunities:
+                message_bus.publish("arbitrage_opportunities", {"opportunities": opportunities})
+
+            scan_duration = time.time() - start_time
+            self.logger.info(f"Scan completed in {scan_duration:.2f}s. Found {len(opportunities)} opportunities.")
+
+            return opportunities
+
+        except Exception as e:
+            self.logger.error(f"Error scanning for opportunities: {e}")
+            return []
+
+    def _save_opportunities(self, opportunities: List[Dict[str, Any]]) -> None:
+        """
+        Save opportunities to file.
+
+        Args:
+            opportunities (List[Dict[str, Any]]): List of arbitrage opportunities
+        """
+        try:
+            if not opportunities:
+                return
+
+            # Create directory if it doesn't exist
+            os.makedirs("data/opportunities", exist_ok=True)
+
+            # Save to file with timestamp
+            timestamp = int(time.time())
+            file_path = f"data/opportunities/opportunities_{timestamp}.json"
+
+            with open(file_path, "w") as f:
+                json.dump(opportunities, f, indent=2)
+
+            self.logger.debug(f"Saved {len(opportunities)} opportunities to {file_path}")
+
+        except Exception as e:
+            self.logger.error(f"Error saving opportunities: {e}")
+
+    def get_recent_opportunities(self) -> List[Dict[str, Any]]:
+        """
+        Get recent arbitrage opportunities.
+
+        Returns:
+            List[Dict[str, Any]]: List of recent arbitrage opportunities
+        """
+        return self.recent_opportunities
+
+    async def find_opportunities(self, min_profit_usd: float = 5.0,
+                              min_profit_percentage: float = 1.0,
+                              max_profit_percentage: float = 8.0) -> List[Dict[str, Any]]:
+        """
+        Find arbitrage opportunities across DEXes.
+        This is an alias for scan_for_opportunities to maintain compatibility with run_system.py.
+
+        Args:
+            min_profit_usd (float): Minimum profit threshold in USD
+            min_profit_percentage (float): Minimum profit percentage (default: 2%)
+            max_profit_percentage (float): Maximum profit percentage (default: 10%)
+
+        Returns:
+            List[Dict[str, Any]]: List of arbitrage opportunities
+        """
+        # Update the config parameters
+        self.config["min_profit_threshold_usd"] = min_profit_usd
+        self.config["min_profit_percentage"] = min_profit_percentage
+        self.config["max_profit_percentage"] = max_profit_percentage
+
+        # Call the scan_for_opportunities method
+        return await self.scan_for_opportunities()

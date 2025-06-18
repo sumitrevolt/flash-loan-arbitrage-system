@@ -1,0 +1,109 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "github.copilot.enable": {
+      "*": true,
+      "plaintext": false,
+      "markdown": false,
+      "scminput": false
+    },
+    "github.copilot.chat.agent.thinkingTool": true,
+    "github.copilot.chat.codesearch.enabled": true,
+    "github.copilot.chat.completionContext.typescript.mode": "sidecar",
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "github.copilot.nextEditSuggestions.fixes": true,
+    "github.copilot.chat.editor.temporalContext.enabled": true,
+    
+    // Python specific settings
+    "python.defaultInterpreterPath": "python",
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "basic",
+    
+    // MCP Integration Context
+    "files.associations": {
+      "*.mcp": "json",
+      "mcp_*.py": "python"
+    },
+    
+    // Custom snippets and context for MCP
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": true
+    },
+    
+    // Terminal integration
+    "terminal.integrated.env.windows": {
+      "MCP_BRIDGE_URL": "ws://localhost:8888",
+      "MCP_SERVERS_AVAILABLE": "flash_loan_blockchain,defi_analyzer,flash_loan,arbitrage,liquidity,price_feed,risk_manager,portfolio,api_client,database,cache_manager,file_processor,notification,monitoring,security,data_analyzer,web_scraper,task_queue,filesystem,coordinator"
+    }
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Start MCP Bridge",
+        "type": "shell",
+        "command": "python",
+        "args": ["mcp_bridge.py", "--verbose"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared",
+          "showReuseMessage": true,
+          "clear": false
+        },
+        "problemMatcher": [],
+        "isBackground": true,
+        "runOptions": {
+          "runOn": "folderOpen"
+        }
+      },
+      {
+        "label": "Test MCP Connection",
+        "type": "shell",
+        "command": "python",
+        "args": ["copilot_mcp_client.py"],
+        "group": "test",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        }
+      },
+      {
+        "label": "Stop MCP Bridge",
+        "type": "shell",
+        "command": "taskkill",
+        "args": ["/F", "/IM", "python.exe", "/FI", "WINDOWTITLE eq *mcp_bridge*"],
+        "group": "build",
+        "windows": {
+          "command": "taskkill",
+          "args": ["/F", "/IM", "python.exe", "/FI", "WINDOWTITLE eq *mcp_bridge*"]
+        }
+      },
+      {
+        "label": "Check Docker MCP Status",
+        "type": "shell",
+        "command": "docker",
+        "args": ["ps", "--format", "table {{.Names}}\\t{{.Status}}\\t{{.Ports}}", "--filter", "name=flashloan-mcp"],
+        "group": "test"
+      }
+    ]
+  },
+  "extensions": {
+    "recommendations": [
+      "GitHub.copilot",
+      "GitHub.copilot-chat",
+      "ms-python.python",
+      "ms-python.vscode-pylance"
+    ]
+  }
+}

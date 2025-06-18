@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # AAVE Flash Loan Executor
+  aave-executor:
+    image: python:3.11-slim
+    container_name: aave-flash-loan-executor
+    ports:
+      - "5001:5000"
+    environment:
+      - AGENT_ID=aave-executor
+      - COORDINATOR_URL=http://localhost:9000
+      - REDIS_URL=redis://localhost:6379
+    volumes:
+      - ./scripts:/scripts
+    command: >
+      sh -c "
+      pip install flask redis requests &&
+      python /scripts/aave-agent.py
+      "
+    restart: unless-stopped
+    
+  # Arbitrage Detector
+  arbitrage-detector:
+    image: python:3.11-slim
+    container_name: arbitrage-detector
+    ports:
+      - "5002:5000"
+    environment:
+      - AGENT_ID=arbitrage-detector
+      - COORDINATOR_URL=http://localhost:9000
+    volumes:
+      - ./scripts:/scripts
+    command: >
+      sh -c "
+      pip install flask requests &&
+      python /scripts/arbitrage-agent.py
+      "
+    restart: unless-stopped
+    
+  # Code Indexer
+  code-indexer-1:
+    image: python:3.11-slim
+    container_name: code-indexer-1
+    ports:
+      - "5101:5000"
+    environment:
+      - AGENT_ID=code-indexer-1
+      - COORDINATOR_URL=http://localhost:9000
+    volumes:
+      - ./scripts:/scripts
+    command: >
+      sh -c "
+      pip install flask &&
+      python /scripts/indexer-agent.py
+      "
+    restart: unless-stopped

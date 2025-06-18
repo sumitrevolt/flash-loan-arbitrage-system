@@ -1,0 +1,73 @@
+# Claude Desktop Bridge Service
+FROM node:lts-bookworm-slim AS builder
+
+# Update packages to fix potential vulnerabilities and clean up cache
+RUN apt-get update && \
+    apt-get upgrade -y --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+# requirements.txt is for Python, ensure it's needed here or remove if only Node.js
+COPY requirements.txt ./
+COPY yarn.lock ./
+
+# Install Node.js dependencies
+# Using --frozen-lockfile for CI/CD best practices
+RUN yarn install --frozen-lockfile --production=false
+
+# Create Python virtual environment and install dependencies
+# Ensure python3 and python3-venv are available in node:20-bookworm-slim
+# If Python is truly needed in this Node.js focused image, you might need to install it first:
+# RUN apt-get update && apt-get install -y python3 python3-venv --no-install-recommends && rm -rf /var/lib/apt/lists/*
+RUN python3 -m venv /app/venv && \
+    . /app/venv/bin/activate && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy source code
+COPY . .
+
+# Build the project
+RUN yarn build
+
+# Stage 2: Production image
+FROM node:lts-bookworm-slim AS final
+
+# Update packages in the final stage as well and clean up cache
+RUN apt-get update && \
+    apt-get upgrade -y --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy built files and dependencies from builder stage
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/yarn.lock ./
+COPY --from=builder /app/venv /app/venv
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PATH="/app/venv/bin:$PATH"
+
+# Expose ports
+EXPOSE 8080 9090
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Copy startup script
+COPY docker/claude/start-claude-bridge.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+# Ensure non-root user for security
+# For Debian-based images:
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+USER appuser
+
+# Start the service
+CMD ["node", "dist/index.js"]

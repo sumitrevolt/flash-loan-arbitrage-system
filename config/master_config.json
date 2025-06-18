@@ -1,0 +1,26 @@
+{
+  "project": {
+    "name": "Flash Loan Arbitrage System",
+    "version": "1.0.0",
+    "description": "Automated flash loan arbitrage trading system"
+  },
+  "environment": {
+    "development": {
+      "rpc_url": "http://localhost:8545",
+      "network": "hardhat"
+    },
+    "staging": {
+      "rpc_url": "${POLYGON_MUMBAI_RPC_URL}",
+      "network": "mumbai"
+    },
+    "production": {
+      "rpc_url": "${POLYGON_RPC_URL}",
+      "network": "polygon"
+    }
+  },
+  "services": {
+    "mcp_servers": "config/unified_mcp_config.json",
+    "ai_agents": "config/ai_agents_config.json",
+    "database": "config/database_config.json"
+  }
+}

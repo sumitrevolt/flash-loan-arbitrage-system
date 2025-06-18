@@ -1,0 +1,399 @@
+{
+  "verification_time": "2025-06-16T12:05:15.967850",
+  "summary": {
+    "timestamp": "2025-06-16T12:05:15.967850",
+    "total_services": 31,
+    "healthy_services": 27,
+    "health_percentage": 87.1,
+    "status": "operational"
+  },
+  "detailed_results": {
+    "Web3 Provider MCP": {
+      "name": "Web3 Provider MCP",
+      "port": 4002,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "port": 4002,
+        "service": "web3-provider-mcp",
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "Arbitrage Detector MCP": {
+      "name": "Arbitrage Detector MCP",
+      "port": 4004,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "port": 4004,
+        "service": "arbitrage-detector-mcp",
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "EVM MCP Server": {
+      "name": "EVM MCP Server",
+      "port": 4006,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "port": 4006,
+        "service": "evm-mcp-server",
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "Redis": {
+      "name": "Redis",
+      "port": 6379,
+      "type": "infrastructure",
+      "port_open": true,
+      "http_healthy": false,
+      "response_data": null,
+      "status": "port_open_no_http"
+    },
+    "DEX Price Server": {
+      "name": "DEX Price Server",
+      "port": 4003,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "port": 4003,
+        "service": "dex-price-server",
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "PostgreSQL": {
+      "name": "PostgreSQL",
+      "port": 5432,
+      "type": "infrastructure",
+      "port_open": true,
+      "http_healthy": false,
+      "response_data": null,
+      "status": "port_open_no_http"
+    },
+    "RabbitMQ": {
+      "name": "RabbitMQ",
+      "port": 5672,
+      "type": "infrastructure",
+      "port_open": true,
+      "http_healthy": false,
+      "response_data": null,
+      "status": "port_open_no_http"
+    },
+    "RabbitMQ Management": {
+      "name": "RabbitMQ Management",
+      "port": 15672,
+      "type": "infrastructure",
+      "port_open": true,
+      "http_healthy": false,
+      "response_data": null,
+      "status": "port_open_no_http"
+    },
+    "Flash Loan MCP": {
+      "name": "Flash Loan MCP",
+      "port": 4001,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "port": 4001,
+        "service": "flash-loan-mcp",
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "Matic MCP Server": {
+      "name": "Matic MCP Server",
+      "port": 4007,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "port": 4007,
+        "service": "matic-mcp-server",
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "Foundry Integration MCP": {
+      "name": "Foundry Integration MCP",
+      "port": 4005,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "port": 4005,
+        "service": "foundry-integration-mcp",
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "Context7 MCP Server": {
+      "name": "Context7 MCP Server",
+      "port": 4009,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "status": "healthy",
+        "service": "context7-mcp-server",
+        "port": 4009
+      },
+      "status": "healthy"
+    },
+    "GitHub MCP Server": {
+      "name": "GitHub MCP Server",
+      "port": 4008,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "status": "healthy",
+        "service": "github-mcp-server",
+        "port": 4008
+      },
+      "status": "healthy"
+    },
+    "Price Oracle MCP": {
+      "name": "Price Oracle MCP",
+      "port": 4011,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "status": "healthy",
+        "service": "price-oracle-mcp-server",
+        "port": 4011
+      },
+      "status": "healthy"
+    },
+    "Notification Service": {
+      "name": "Notification Service",
+      "port": 4013,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "status": "healthy",
+        "service": "notification-service",
+        "port": 4013
+      },
+      "status": "healthy"
+    },
+    "DEX Services MCP": {
+      "name": "DEX Services MCP",
+      "port": 4012,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "status": "healthy",
+        "service": "dex-services-mcp",
+        "port": 4012
+      },
+      "status": "healthy"
+    },
+    "Liquidity Monitor": {
+      "name": "Liquidity Monitor",
+      "port": 4015,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "status": "healthy",
+        "service": "liquidity-monitor",
+        "port": 4015
+      },
+      "status": "healthy"
+    },
+    "Audit Logger": {
+      "name": "Audit Logger",
+      "port": 4014,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "status": "healthy",
+        "service": "audit-logger",
+        "port": 4014
+      },
+      "status": "healthy"
+    },
+    "Market Data Feed": {
+      "name": "Market Data Feed",
+      "port": 4016,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "port": 4016,
+        "service": "market-data-feed",
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "Enhanced Copilot MCP": {
+      "name": "Enhanced Copilot MCP",
+      "port": 4010,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "status": "healthy",
+        "service": "enhanced-copilot-mcp-server",
+        "port": 4010
+      },
+      "status": "healthy"
+    },
+    "Performance Monitor": {
+      "name": "Performance Monitor",
+      "port": 4018,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "port": 4018,
+        "service": "performance-monitor",
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "Risk Manager": {
+      "name": "Risk Manager",
+      "port": 4017,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "port": 4017,
+        "service": "risk-manager",
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "Arbitrage Agent": {
+      "name": "Arbitrage Agent",
+      "port": 5002,
+      "type": "ai_agents",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "agent": "arbitrage-agent",
+        "port": 5002,
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "Health Checker": {
+      "name": "Health Checker",
+      "port": 4021,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "port": 4021,
+        "service": "health-checker",
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "Coordinator Agent": {
+      "name": "Coordinator Agent",
+      "port": 5001,
+      "type": "ai_agents",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "agent": "coordinator-agent",
+        "port": 5001,
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "Code Indexer": {
+      "name": "Code Indexer",
+      "port": 4020,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "port": 4020,
+        "service": "code-indexer",
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "Analytics Engine": {
+      "name": "Analytics Engine",
+      "port": 4019,
+      "type": "mcp_servers",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "port": 4019,
+        "service": "analytics-engine",
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "Monitoring Agent": {
+      "name": "Monitoring Agent",
+      "port": 5003,
+      "type": "ai_agents",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "agent": "monitoring-agent",
+        "port": 5003,
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "Builder Agent": {
+      "name": "Builder Agent",
+      "port": 5004,
+      "type": "ai_agents",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "agent": "builder-agent",
+        "port": 5004,
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "Contract Executor": {
+      "name": "Contract Executor",
+      "port": 5006,
+      "type": "ai_agents",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "agent": "contract-executor",
+        "port": 5006,
+        "status": "healthy"
+      },
+      "status": "healthy"
+    },
+    "AAVE Executor": {
+      "name": "AAVE Executor",
+      "port": 5005,
+      "type": "ai_agents",
+      "port_open": true,
+      "http_healthy": true,
+      "response_data": {
+        "agent": "aave-executor",
+        "port": 5005,
+        "status": "healthy"
+      },
+      "status": "healthy"
+    }
+  }
+}

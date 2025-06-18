@@ -1,0 +1,124 @@
+{
+  "name": "arbitrage-command-center",
+  "displayName": "Arbitrage Command Center",
+  "description": "Direct command interface for MCP servers and AI agents",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [
+    "onCommand:arbitrage.openCommandCenter",
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "arbitrage.openCommandCenter",
+        "title": "Open Arbitrage Command Center",
+        "category": "Arbitrage"
+      },
+      {
+        "command": "arbitrage.startBot",
+        "title": "Start Trading Bot",
+        "category": "Arbitrage"
+      },
+      {
+        "command": "arbitrage.stopBot",
+        "title": "Stop Trading Bot",
+        "category": "Arbitrage"
+      },
+      {
+        "command": "arbitrage.systemStatus",
+        "title": "System Status",
+        "category": "Arbitrage"
+      },
+      {
+        "command": "arbitrage.generateRevenue",
+        "title": "Generate Revenue",
+        "category": "Arbitrage"
+      },
+      {
+        "command": "arbitrage.selfHeal",
+        "title": "Self Heal System",
+        "category": "Arbitrage"
+      },
+      {
+        "command": "arbitrage.indexCodex",
+        "title": "Index & Codex",
+        "category": "Arbitrage"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "arbitrage.openCommandCenter",
+          "when": "true"
+        },
+        {
+          "command": "arbitrage.startBot",
+          "when": "true"
+        },
+        {
+          "command": "arbitrage.stopBot",
+          "when": "true"
+        },
+        {
+          "command": "arbitrage.systemStatus",
+          "when": "true"
+        },
+        {
+          "command": "arbitrage.generateRevenue",
+          "when": "true"
+        },
+        {
+          "command": "arbitrage.selfHeal",
+          "when": "true"
+        },
+        {
+          "command": "arbitrage.indexCodex",
+          "when": "true"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "arbitrageCommandCenter",
+          "name": "Arbitrage Command Center",
+          "when": "true"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "arbitrage",
+          "title": "Arbitrage System",
+          "icon": "$(graph-line)"
+        }
+      ]
+    },
+    "webviews": [
+      {
+        "viewType": "arbitrage.commandCenter",
+        "title": "Command Center"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "16.x",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "ws": "^8.14.2",
+    "axios": "^1.6.0"
+  }
+}

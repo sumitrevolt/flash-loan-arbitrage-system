@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced DEX Calculations Dashboard - Real-time Arbitrage Analysis</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+            color: #333; 
+            min-height: 100vh;
+        }
+        .container { max-width: 1800px; margin: 0 auto; padding: 20px; }
+        
+        .header { 
+            background: rgba(255, 255, 255, 0.95); 
+            padding: 20px; 
+            border-radius: 15px; 
+            margin-bottom: 20px; 
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            -webkit-backdrop-filter: blur(10px); /* Safari */
+            backdrop-filter: blur(10px);
+        }
+        .header h1 { color: #1e3c72; font-size: 2.5em; margin-bottom: 10px; }
+        .header p { color: #666; font-size: 1.1em; }
+        
+        .status-bar {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            -webkit-backdrop-filter: blur(10px); /* Safari */
+            backdrop-filter: blur(10px);
+        }
+        
+        .card h2 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        
+        .opportunity-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .opportunity-item:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .opportunity-high { border-left: 5px solid #dc3545; }
+        .opportunity-medium { border-left: 5px solid #ffc107; }
+        .opportunity-low { border-left: 5px solid #28a745; }
+        
+        .risk-high { background: linear-gradient(45deg, #ffebee, #fff); }
+        .risk-medium { background: linear-gradient(45deg, #fff8e1, #fff); }
+        .risk-low { background: linear-gradient(45deg, #e8f5e8, #fff); }
+        
+        .profit-badge {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            margin: 5px 0;
+        }
+        
+        .profit-high { background: linear-gradient(45deg, #28a745, #20c997); }
+        .profit-medium { background: linear-gradient(45deg, #ffc107, #fd7e14); }
+        .profit-low { background: linear-gradient(45deg, #6c757d, #495057); }
+        
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .calculation-details {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        
+        .calculation-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .calculation-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            color: #28a745;
+        }
+        
+        .dex-tag {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            margin: 0 5px;
+        }
+        
+        .confidence-meter {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #dc3545, #ffc107, #28a745);
+            transition: width 0.3s ease;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        .alert-panel {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-high { background: linear-gradient(45deg, #dc3545, #c82333); }
+        .alert-medium { background: linear-gradient(45deg, #ffc107, #e0a800); }
+        .alert-low { background: linear-gradient(45deg, #28a745, #218838); }
+        
+        .control-panel {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .control-btn {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            color: #666;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .emoji { font-size: 1.2em; margin-right: 10px; }
+
+        .full-width-card { /* Added for inline style removal */
+            grid-column: 1 / -1;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .metric-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Enhanced DEX Calculations Dashboard</h1>
+            <p>Advanced Real-time Arbitrage Analysis with Risk Assessment - Port 8005</p>
+        </div>
+        
+        <div class="status-bar">
+            <div>
+                <strong>🟢 System Status:</strong> <span id="systemStatus">Monitoring Active</span>
+            </div>
+            <div>
+                <strong>📊 Last Update:</strong> <span id="lastUpdate">Loading...</span>
+            </div>
+            <div>
+                <strong>⚡ Opportunities:</strong> <span id="opportunityCount">0</span>
+            </div>
+        </div>
+        
+        <div class="control-panel">
+            <h3>🎛️ Control Panel</h3>
+            <button class="control-btn" onclick="refreshCalculations()">🔄 Refresh Calculations</button>
+            <button class="control-btn" onclick="toggleAutoRefresh()">⏰ Toggle Auto-Refresh</button>
+            <button class="control-btn" onclick="exportData()">📤 Export Data</button>
+            <button class="control-btn" onclick="showSettings()">⚙️ Settings</button>
+        </div>
+        
+        <!-- Market Summary -->
+        <div class="metric-grid">
+            <div class="metric-card">
+                <div class="metric-value" id="totalOpportunities">0</div>
+                <div class="metric-label">Total Opportunities</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="totalProfit">$0</div>
+                <div class="metric-label">Total Potential Profit</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="averageSpread">0%</div>
+                <div class="metric-label">Average Spread</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="marketEfficiency">0%</div>
+                <div class="metric-label">Market Efficiency</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="volatilityIndex">0</div>
+                <div class="metric-label">Volatility Index</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="liquidityIndex">0</div>
+                <div class="metric-label">Liquidity Index</div>
+            </div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <!-- Enhanced Arbitrage Opportunities -->
+            <div class="card full-width-card">
+                <h2><span class="emoji">💹</span>Enhanced Arbitrage Opportunities</h2>
+                <div id="enhancedOpportunities">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <span>Loading enhanced calculations...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Market Analysis Charts -->
+            <div class="card">
+                <h2><span class="emoji">📈</span>Profit Distribution</h2>
+                <div class="chart-container">
+                    <canvas id="profitChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><span class="emoji">⚖️</span>Risk Analysis</h2>
+                <div class="chart-container">
+                    <canvas id="riskChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Real-time Market Conditions -->
+            <div class="card">
+                <h2><span class="emoji">🌡️</span>Market Conditions</h2>
+                <div id="marketConditions">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <span>Analyzing market conditions...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- DEX Performance -->
+            <div class="card">
+                <h2><span class="emoji">🏆</span>DEX Performance</h2>
+                <div id="dexPerformance">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <span>Loading DEX performance data...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const socket = io();
+        let autoRefresh = true;
+        let profitChart, riskChart;
+        
+        // Socket event handlers
+        socket.on('connect', () => {
+            console.log('Connected to Enhanced DEX Calculations Dashboard');
+            refreshCalculations();
+        });
+        
+        socket.on('calculations_update', (data) => {
+            updateOpportunities(data.opportunities);
+            updateSummary(data.summary);
+            updateLastUpdate();
+        });
+        
+        // Initialize charts
+        function initializeCharts() {
+            const profitCtx = document.getElementById('profitChart').getContext('2d');
+            profitChart = new Chart(profitCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['High Profit', 'Medium Profit', 'Low Profit'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#28a745', '#ffc107', '#6c757d'],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            const riskCtx = document.getElementById('riskChart').getContext('2d');
+            riskChart = new Chart(riskCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Low Risk', 'Medium Risk', 'High Risk'],
+                    datasets: [{
+                        label: 'Opportunities',
+                        data: [0, 0, 0],
+                        backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Refresh calculations
+        async function refreshCalculations() {
+            try {
+                const [calcResponse, analysisResponse] = await Promise.all([
+                    fetch('/api/enhanced-calculations'),
+                    fetch('/api/market-analysis')
+                ]);
+                
+                if (calcResponse.ok && analysisResponse.ok) {
+                    const calcData = await calcResponse.json();
+                    const analysisData = await analysisResponse.json();
+                    
+                    updateOpportunities(calcData.opportunities);
+                    updateSummary(calcData.summary);
+                    updateMarketAnalysis(analysisData);
+                    updateLastUpdate();
+                } else {
+                    showError('Failed to fetch calculation data');
+                }
+            } catch (error) {
+                console.error('Error refreshing calculations:', error);
+                showError('Connection error');
+            }
+        }
+        
+        // Update opportunities display
+        function updateOpportunities(opportunities) {
+            const container = document.getElementById('enhancedOpportunities');
+            
+            if (!opportunities || opportunities.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">No arbitrage opportunities detected</p>';
+                return;
+            }
+            
+            container.innerHTML = opportunities.slice(0, 15).map(opp => `
+                <div class="opportunity-item opportunity-${opp.risk_level} risk-${opp.risk_level}">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                        <div>
+                            <strong style="font-size: 1.1em;">${opp.token_pair}</strong><br>
+                            <span class="dex-tag">${opp.buy_dex}</span> → <span class="dex-tag">${opp.sell_dex}</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="profit-badge profit-${opp.risk_level}">
+                                $${opp.net_profit.toFixed(2)}
+                            </div>
+                            <div style="font-size: 0.9em; color: #666;">
+                                ${opp.spread_percent.toFixed(2)}% spread
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="calculation-details">
+                        <div class="calculation-row">
+                            <span>Buy Price:</span>
+                            <span>$${opp.buy_price.toFixed(6)}</span>
+                        </div>
+                        <div class="calculation-row">
+                            <span>Sell Price:</span>
+                            <span>$${opp.sell_price.toFixed(6)}</span>
+                        </div>
+                        <div class="calculation-row">
+                            <span>Max Trade Amount:</span>
+                            <span>$${opp.max_trade_amount.toLocaleString()}</span>
+                        </div>
+                        <div class="calculation-row">
+                            <span>Price Impact (Buy/Sell):</span>
+                            <span>${opp.price_impact_buy.toFixed(2)}% / ${opp.price_impact_sell.toFixed(2)}%</span>
+                        </div>
+                        <div class="calculation-row">
+                            <span>Gas Cost:</span>
+                            <span>$${opp.gas_cost_usd.toFixed(4)}</span>
+                        </div>
+                        <div class="calculation-row">
+                            <span>ROI:</span>
+                            <span>${opp.roi_percent.toFixed(2)}%</span>
+                        </div>
+                        <div class="calculation-row">
+                            <span>Execution Time:</span>
+                            <span>${opp.execution_time_ms}ms</span>
+                        </div>
+                        <div class="calculation-row">
+                            <span><strong>Net Profit:</strong></span>
+                            <span><strong>$${opp.net_profit.toFixed(2)}</strong></span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="font-size: 0.9em;">Confidence Score:</span>
+                            <span style="font-weight: bold;">${(opp.confidence_score * 100).toFixed(0)}%</span>
+                        </div>
+                        <div class="confidence-meter">
+                            <div class="confidence-fill" style="width: ${(opp.confidence_score * 100)}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.8em; color: #666;">
+                        <span>Risk: ${opp.risk_level.toUpperCase()}</span>
+                        <span>Liquidity: $${(opp.liquidity_buy + opp.liquidity_sell).toLocaleString()}</span>
+                        <span>${new Date(opp.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Update summary metrics
+        function updateSummary(summary) {
+            if (!summary) return;
+            
+            document.getElementById('totalOpportunities').textContent = summary.total_opportunities || 0;
+            document.getElementById('totalProfit').textContent = `$${(summary.total_potential_profit || 0).toFixed(2)}`;
+            document.getElementById('averageSpread').textContent = `${(summary.average_spread || 0).toFixed(2)}%`;
+            document.getElementById('opportunityCount').textContent = summary.total_opportunities || 0;
+            
+            // Update charts
+            if (summary.risk_distribution && profitChart) {
+                const riskData = [
+                    summary.risk_distribution.low || 0,
+                    summary.risk_distribution.medium || 0,
+                    summary.risk_distribution.high || 0
+                ];
+                
+                riskChart.data.datasets[0].data = riskData;
+                riskChart.update();
+            }
+        }
+        
+        // Update market analysis
+        function updateMarketAnalysis(analysis) {
+            if (!analysis) return;
+            
+            // Update market conditions
+            const conditionsHTML = `
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">${analysis.market_conditions.volatility_index.toFixed(1)}</div>
+                        <div class="metric-label">Volatility Index</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${analysis.market_conditions.liquidity_index.toFixed(1)}</div>
+                        <div class="metric-label">Liquidity Index</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${analysis.market_conditions.market_efficiency.toFixed(1)}%</div>
+                        <div class="metric-label">Market Efficiency</div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('marketConditions').innerHTML = conditionsHTML;
+            
+            // Update performance metrics
+            document.getElementById('marketEfficiency').textContent = `${analysis.market_conditions.market_efficiency.toFixed(1)}%`;
+            document.getElementById('volatilityIndex').textContent = analysis.market_conditions.volatility_index.toFixed(1);
+            document.getElementById('liquidityIndex').textContent = analysis.market_conditions.liquidity_index.toFixed(1);
+            
+            // Update DEX performance
+            updateDEXPerformance(analysis);
+        }
+        
+        // Update DEX performance
+        function updateDEXPerformance(analysis) {
+            const perfContainer = document.getElementById('dexPerformance');
+            
+            if (!analysis.risk_analysis) {
+                perfContainer.innerHTML = '<p>No performance data available</p>';
+                return;
+            }
+            
+            const perfHTML = `
+                <div style="margin-bottom: 15px;">
+                    <div class="calculation-row">
+                        <span>High Risk Opportunities:</span>
+                        <span>${analysis.risk_analysis.high_risk_opportunities}</span>
+                    </div>
+                    <div class="calculation-row">
+                        <span>Medium Risk Opportunities:</span>
+                        <span>${analysis.risk_analysis.medium_risk_opportunities}</span>
+                    </div>
+                    <div class="calculation-row">
+                        <span>Low Risk Opportunities:</span>
+                        <span>${analysis.risk_analysis.low_risk_opportunities}</span>
+                    </div>
+                    <div class="calculation-row">
+                        <span>Average Price Impact:</span>
+                        <span>${analysis.risk_analysis.average_price_impact.toFixed(2)}%</span>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <strong>Performance Metrics:</strong>
+                    <div class="calculation-row">
+                        <span>Success Probability:</span>
+                        <span>${(analysis.performance_metrics.success_probability * 100).toFixed(1)}%</span>
+                    </div>
+                    <div class="calculation-row">
+                        <span>Avg Execution Time:</span>
+                        <span>${analysis.performance_metrics.average_execution_time.toFixed(0)}ms</span>
+                    </div>
+                </div>
+            `;
+            
+            perfContainer.innerHTML = perfHTML;
+        }
+        
+        // Update last update time
+        function updateLastUpdate() {
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+        }
+        
+        // Control functions
+        function toggleAutoRefresh() {
+            autoRefresh = !autoRefresh;
+            console.log(`Auto-refresh ${autoRefresh ? 'enabled' : 'disabled'}`);
+        }
+        
+        function exportData() {
+            // Implementation for data export
+            console.log('Exporting data...');
+        }
+        
+        function showSettings() {
+            // Implementation for settings modal
+            console.log('Showing settings...');
+        }
+        
+        function showError(message) {
+            console.error(message);
+            // Could show toast notification
+        }
+        
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            if (autoRefresh) {
+                refreshCalculations();
+            }
+        }, 30000);
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeCharts();
+            setTimeout(refreshCalculations, 1000);
+        });
+    </script>
+</body>
+</html>

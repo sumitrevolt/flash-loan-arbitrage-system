@@ -1,0 +1,139 @@
+# Dockerfile for AutoGen Multi-Agent System
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    fastapi \
+    uvicorn \
+    pyautogen \
+    redis \
+    pika \
+    aiohttp \
+    websockets \
+    openai \
+    requests
+
+# Copy source code
+COPY src/autogen_agents/ ./autogen_agents/
+
+# Create AutoGen agent system
+RUN echo '#!/usr/bin/env python3\n\
+import asyncio\n\
+import json\n\
+import logging\n\
+import os\n\
+from typing import Dict, List, Any\n\
+import redis\n\
+import pika\n\
+from fastapi import FastAPI, HTTPException\n\
+import uvicorn\n\
+import autogen\n\
+from autogen import AssistantAgent, UserProxyAgent, GroupChat, GroupChatManager\n\
+\n\
+logging.basicConfig(level=logging.INFO)\n\
+logger = logging.getLogger(__name__)\n\
+\n\
+app = FastAPI(title="AutoGen Multi-Agent System")\n\
+\n\
+class AutoGenCoordinator:\n\
+    def __init__(self):\n\
+        self.redis_client = redis.Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379"))\n\
+        self.agents = {}\n\
+        self.group_chat = None\n\
+        self.group_chat_manager = None\n\
+        self._initialize_agents()\n\
+    \n\
+    def _initialize_agents(self):\n\
+        config_list = [{\n\
+            "model": "gpt-3.5-turbo",\n\
+            "api_key": os.getenv("OPENAI_API_KEY", "dummy_key"),\n\
+            "api_base": os.getenv("OLLAMA_HOST", "http://localhost:11434/v1"),\n\
+        }]\n\
+        \n\
+        self.agents["coordinator"] = AssistantAgent(\n\
+            name="Coordinator",\n\
+            system_message="You coordinate arbitrage strategies.",\n\
+            llm_config={"config_list": config_list}\n\
+        )\n\
+        \n\
+        self.agents["analyzer"] = AssistantAgent(\n\
+            name="Analyzer", \n\
+            system_message="You analyze market data and opportunities.",\n\
+            llm_config={"config_list": config_list}\n\
+        )\n\
+        \n\
+        self.agents["executor"] = AssistantAgent(\n\
+            name="Executor",\n\
+            system_message="You execute flash loan transactions.",\n\
+            llm_config={"config_list": config_list}\n\
+        )\n\
+        \n\
+        self.agents["risk_manager"] = AssistantAgent(\n\
+            name="RiskManager",\n\
+            system_message="You assess and manage risks.",\n\
+            llm_config={"config_list": config_list}\n\
+        )\n\
+        \n\
+        self.agents["user_proxy"] = UserProxyAgent(\n\
+            name="UserProxy",\n\
+            human_input_mode="NEVER",\n\
+            max_consecutive_auto_reply=10\n\
+        )\n\
+        \n\
+        self.group_chat = GroupChat(\n\
+            agents=list(self.agents.values()),\n\
+            messages=[],\n\
+            max_round=10\n\
+        )\n\
+        \n\
+        self.group_chat_manager = GroupChatManager(\n\
+            groupchat=self.group_chat,\n\
+            llm_config={"config_list": config_list}\n\
+        )\n\
+\n\
+coordinator = AutoGenCoordinator()\n\
+\n\
+@app.get("/health")\n\
+async def health():\n\
+    return {"status": "healthy", "agents": len(coordinator.agents)}\n\
+\n\
+@app.post("/coordinate")\n\
+async def coordinate_agents(task: dict):\n\
+    try:\n\
+        # Simulate AutoGen conversation\n\
+        result = {\n\
+            "task": task.get("description", ""),\n\
+            "agents_involved": list(coordinator.agents.keys()),\n\
+            "status": "completed",\n\
+            "conversation_summary": "Multi-agent coordination completed"\n\
+        }\n\
+        return result\n\
+    except Exception as e:\n\
+        raise HTTPException(status_code=500, detail=str(e))\n\
+\n\
+if __name__ == "__main__":\n\
+    uvicorn.run(app, host="0.0.0.0", port=8000)\n\
+' > /app/autogen_system.py
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Expose port
+EXPOSE 8000
+
+# Run the AutoGen system
+CMD ["python", "autogen_system.py"]

@@ -1,0 +1,104 @@
+{
+  "mcpServers": {
+    "flash-loan-arbitrage": {
+      "command": "python",
+      "args": ["working_flash_loan_mcp.py"],
+      "cwd": ".",
+      "env": {
+        "POLYGON_RPC_URL": "https://polygon-rpc.com"
+      }
+    },
+    "simple-flash-loan": {
+      "command": "python",
+      "args": ["simple_mcp_server.py"],
+      "cwd": "/app",
+      "env": {
+        "PYTHONPATH": "/app",
+        "MCP_PORT": "8904",
+        "REDIS_URL": "redis://redis:6379"
+      }
+    },
+    "real-time-price": {
+      "command": "python",
+      "args": ["mcp_servers/pricing/real_time_price_mcp_server.py"],
+      "cwd": "/app",
+      "env": {
+        "PYTHONPATH": "/app",
+        "MCP_PORT": "8902",
+        "REDIS_URL": "redis://redis:6379"
+      }
+    },
+    "aave-protocol": {
+      "command": "python",
+      "args": ["mcp_servers/aave/aave_flash_loan_mcp_server.py"],
+      "cwd": "/app",
+      "env": {
+        "PYTHONPATH": "/app",
+        "MCP_PORT": "8903",
+        "POSTGRES_URL": "postgresql://claude:claude123@postgres:5432/claude_flashloan",
+        "AAVE_POOL_ADDRESS": "0x794a61358D6845594F94dc1DB02A252b5b4814aD"
+      }
+    },
+    "blockchain-integration": {
+      "command": "python",
+      "args": ["mcp_servers/blockchain_integration/clean_matic_mcp_server.py"],
+      "cwd": "/app",
+      "env": {
+        "PYTHONPATH": "/app",
+        "MCP_PORT": "8905",
+        "POLYGON_RPC_URL": "https://polygon-rpc.com"
+      }
+    },
+    "context7-ai": {
+      "command": "python",
+      "args": ["mcp_servers/ai_integration/clean_context7_mcp_server.py"],
+      "cwd": "/app",
+      "env": {
+        "PYTHONPATH": "/app",
+        "MCP_PORT": "8906"
+      }
+    },
+    "task-manager": {
+      "command": "node",
+      "args": ["mcp_servers/task_management/mcp-taskmanager/dist/index.js"],
+      "cwd": "/app",
+      "env": {
+        "NODE_ENV": "production"
+      }
+    },
+    "ai-agent-coordinator": {
+      "command": "python",
+      "args": ["ai_agent/unified_agent.py"],
+      "cwd": "/app",
+      "env": {
+        "PYTHONPATH": "/app",
+        "AGENT_ROLE": "coordinator",
+        "AGENT_PORT": "7000",
+        "REDIS_URL": "redis://redis:6379"
+      }
+    },
+    "code-analysis-agent": {
+      "command": "python",
+      "args": ["ai_agent/unified_agent.py"],
+      "cwd": "/app",
+      "env": {
+        "PYTHONPATH": "/app",
+        "AGENT_ROLE": "code_indexer",
+        "AGENT_PORT": "7001",
+        "REDIS_URL": "redis://redis:6379"
+      }
+    },
+    "trading-strategy-agent": {
+      "command": "python",
+      "args": ["ai_agent/unified_agent.py"],
+      "cwd": "/app",
+      "env": {
+        "PYTHONPATH": "/app",
+        "AGENT_ROLE": "trading_strategist",
+        "AGENT_PORT": "7002",
+        "REDIS_URL": "redis://redis:6379"
+      }
+    }
+  }
+} 
+

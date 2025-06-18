@@ -1,0 +1,48 @@
+# Code Analysis AI Agent
+FROM python:3.12-slim-bookworm
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    gcc \
+    libc6-dev \
+    libffi-dev \
+    git \
+    netcat-openbsd \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy requirements
+COPY requirements.txt ./
+
+# Create Python virtual environment and install dependencies
+RUN python3 -m venv /app/venv && \
+    . /app/venv/bin/activate && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Set venv path
+ENV PATH="/app/venv/bin:$PATH"
+
+# Copy AI agent source
+COPY ai_agent/ ./ai_agent/
+COPY agents/ ./agents/
+COPY utils/ ./utils/
+COPY config/ ./config/
+
+# Create non-root user
+RUN adduser -D -s /bin/sh codeuser && \
+    chown -R codeuser:codeuser /app
+
+USER codeuser
+
+# Expose port
+EXPOSE 7001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:7001/health || exit 1
+
+# Start the code analysis AI agent
+CMD ["python", "ai_agent/unified_agent.py"]

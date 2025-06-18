@@ -1,0 +1,38 @@
+# Dockerfile for Aave MCP Server
+FROM python:3.12-alpine
+
+# Install system dependencies
+RUN apk add --no-cache \
+    curl \
+    gcc \
+    musl-dev \
+    libffi-dev
+
+WORKDIR /app
+
+# Copy requirements
+COPY requirements.txt ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy Aave server code
+COPY mcp_servers/aave/ ./
+COPY utils/ ./utils/
+COPY config/ ./config/
+
+# Create non-root user
+RUN adduser -D -s /bin/sh appuser && \
+    chown -R appuser:appuser /app
+
+USER appuser
+
+# Expose port
+EXPOSE 8902
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -c "import socket; s=socket.socket(); s.connect(('localhost', 8902)); s.close()" || exit 1
+
+# Start the MCP server
+CMD ["python", "aave_flash_loan_mcp_server.py"]

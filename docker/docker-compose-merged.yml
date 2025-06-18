@@ -1,0 +1,113 @@
+version: '3.8'
+
+services:
+  # Infrastructure Services
+  redis:
+    image: redis:7-alpine
+    container_name: fl_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: fl_postgres
+    environment:
+      POSTGRES_DB: flashloan
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d flashloan -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: fl_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbitmq
+      RABBITMQ_DEFAULT_PASS: rabbitmq_password
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # LangChain Orchestrator
+  langchain_orchestrator:
+    build:
+      context: .
+      dockerfile: containers/orchestrator/Dockerfile
+    container_name: fl_langchain_orchestrator
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://postgres:postgres_password@postgres:5432/flashloan
+      - RABBITMQ_URL=amqp://rabbitmq:rabbitmq_password@rabbitmq:5672
+      - ORCHESTRATOR_MODE=production
+      - LOG_LEVEL=INFO
+      - MCP_COORDINATION_ENABLED=true
+      - AGENT_COORDINATION_ENABLED=true
+      - AUTO_ERROR_HANDLING=true
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+      - postgres
+      - rabbitmq
+    networks:
+      - flashloan_network
+    volumes:
+      - ./logs:/app/logs
+      - ./config:/app/config
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # MCP Servers
+  mcp_server_01_price_monitor:
+    build:
+      context: .
+      dockerfile: containers/mcp_servers/Dockerfile
+      args:
+        SERVER_TYPE: price_monitor
+    container_name: fl_mcp_price_monitor
+    environment:
+      - MCP_SERVER_NAME=price_monitor
+    ports:
+      - "4001:4001"
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+networks:
+  flashloan_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

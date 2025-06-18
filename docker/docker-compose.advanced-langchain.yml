@@ -1,0 +1,668 @@
+version: '3.8'
+
+networks:
+  flashloan_net:
+    driver: overlay
+    driver_opts:
+      encrypted: "true"
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
+
+volumes:
+  redis_data:
+  postgres_data:
+  rabbitmq_data:
+  prometheus_data:
+  grafana_data:
+  etcd_data:
+  model_checkpoints:
+  quantum_cache:
+  swarm_data:
+  ml_training_data:
+  github_workspace:
+  vector_store:
+  agent_memory:
+
+services:
+  # ============================================
+  # INFRASTRUCTURE LAYER
+  # ============================================
+  
+  redis-cluster:
+    image: redis:7-alpine
+    container_name: redis-cluster
+    command: >
+      redis-server
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --maxmemory 2gb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+    ports:
+      - "6379:6379"
+      - "16379:16379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - flashloan_net
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: any
+        delay: 5s
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+
+  postgres-master:
+    image: postgres:15-alpine
+    container_name: postgres-master
+    environment:
+      POSTGRES_DB: flashloan_db
+      POSTGRES_USER: flashloan_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password}
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init_scripts:/docker-entrypoint-initdb.d
+    networks:
+      - flashloan_net
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: flashloan
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-secure_password}
+      RABBITMQ_DEFAULT_VHOST: flashloan_vhost
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - flashloan_net
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.9
+    container_name: etcd
+    command: >
+      etcd
+      --name etcd0
+      --advertise-client-urls http://etcd:2379
+      --listen-client-urls http://0.0.0.0:2379
+      --initial-advertise-peer-urls http://etcd:2380
+      --listen-peer-urls http://0.0.0.0:2380
+      --initial-cluster etcd0=http://etcd:2380
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+    volumes:
+      - etcd_data:/etcd-data
+    networks:
+      - flashloan_net
+
+  # ============================================
+  # MONITORING & OBSERVABILITY
+  # ============================================
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=30d'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - flashloan_net
+    depends_on:
+      - etcd
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    ports:
+      - "3000:3000"
+    networks:
+      - flashloan_net
+    depends_on:
+      - prometheus
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    environment:
+      COLLECTOR_ZIPKIN_HOST_PORT: 9411
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+    networks:
+      - flashloan_net
+
+  # ============================================
+  # ENHANCED LANGCHAIN ORCHESTRATOR
+  # ============================================
+
+  langchain-orchestrator:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.enhanced
+    container_name: langchain-orchestrator
+    environment:
+      - ORCHESTRATOR_MODE=MASTER
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - REDIS_URL=redis://redis-cluster:6379
+      - POSTGRES_URL=postgresql://flashloan_user:${POSTGRES_PASSWORD}@postgres-master:5432/flashloan_db
+      - RABBITMQ_URL=amqp://flashloan:${RABBITMQ_PASSWORD}@rabbitmq:5672/flashloan_vhost
+      - ETCD_ENDPOINTS=http://etcd:2379
+      - PROMETHEUS_PUSHGATEWAY=http://prometheus:9091
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
+      - LOG_LEVEL=INFO
+      - ENABLE_GPU=true
+      - CUDA_VISIBLE_DEVICES=0,1
+    volumes:
+      - ./enhanced_langchain_orchestrator.py:/app/orchestrator.py
+      - ./src:/app/src
+      - ./configs:/app/configs
+      - model_checkpoints:/app/models
+      - quantum_cache:/app/quantum_cache
+      - vector_store:/app/vector_store
+    ports:
+      - "8000:8000"
+      - "8001:8001"  # Metrics endpoint
+    networks:
+      - flashloan_net
+    depends_on:
+      - redis-cluster
+      - postgres-master
+      - rabbitmq
+      - etcd
+      - jaeger
+    deploy:
+      resources:
+        limits:
+          cpus: '8'
+          memory: 32G
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 2
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================
+  # QUANTUM DECISION ENGINE
+  # ============================================
+
+  quantum-decision-engine:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.quantum
+    container_name: quantum-decision-engine
+    environment:
+      - SERVICE_NAME=quantum-decision-engine
+      - REDIS_URL=redis://redis-cluster:6379
+      - QUANTUM_BACKEND=qiskit
+      - OPTIMIZATION_LEVEL=3
+      - PARALLEL_EXPERIMENTS=10
+    volumes:
+      - quantum_cache:/app/quantum_cache
+      - ./src/quantum:/app/quantum
+    ports:
+      - "8010:8010"
+    networks:
+      - flashloan_net
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: '4'
+          memory: 16G
+
+  # ============================================
+  # SWARM INTELLIGENCE CLUSTER
+  # ============================================
+
+  swarm-coordinator:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.swarm
+    container_name: swarm-coordinator
+    environment:
+      - SERVICE_NAME=swarm-coordinator
+      - SWARM_SIZE=50
+      - CONVERGENCE_THRESHOLD=0.95
+      - EXPLORATION_RATE=0.2
+      - REDIS_URL=redis://redis-cluster:6379
+      - ETCD_ENDPOINTS=http://etcd:2379
+    volumes:
+      - swarm_data:/app/swarm_data
+      - ./src/swarm:/app/swarm
+    ports:
+      - "8020:8020"
+    networks:
+      - flashloan_net
+    depends_on:
+      - redis-cluster
+      - etcd
+
+  swarm-agent:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.swarm-agent
+    environment:
+      - COORDINATOR_URL=http://swarm-coordinator:8020
+      - REDIS_URL=redis://redis-cluster:6379
+      - AGENT_SPECIALIZATION=${AGENT_SPECIALIZATION:-general}
+    volumes:
+      - ./src/swarm:/app/swarm
+    networks:
+      - flashloan_net
+    deploy:
+      replicas: 50
+      restart_policy:
+        condition: any
+        delay: 10s
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+
+  # ============================================
+  # DEEP LEARNING INFRASTRUCTURE
+  # ============================================
+
+  ml-training-master:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ml
+    container_name: ml-training-master
+    environment:
+      - SERVICE_NAME=ml-training-master
+      - TRAINING_MODE=distributed
+      - WORLD_SIZE=4
+      - RANK=0
+      - MASTER_ADDR=ml-training-master
+      - MASTER_PORT=29500
+      - CUDA_VISIBLE_DEVICES=0
+      - REDIS_URL=redis://redis-cluster:6379
+    volumes:
+      - model_checkpoints:/app/models
+      - ml_training_data:/app/data
+      - ./src/ml:/app/ml
+    ports:
+      - "8030:8030"
+      - "29500:29500"
+    networks:
+      - flashloan_net
+    deploy:
+      placement:
+        constraints:
+          - node.labels.gpu == true
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  ml-training-worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ml
+    environment:
+      - SERVICE_NAME=ml-training-worker
+      - TRAINING_MODE=distributed
+      - WORLD_SIZE=4
+      - MASTER_ADDR=ml-training-master
+      - MASTER_PORT=29500
+      - REDIS_URL=redis://redis-cluster:6379
+    volumes:
+      - model_checkpoints:/app/models
+      - ml_training_data:/app/data
+      - ./src/ml:/app/ml
+    networks:
+      - flashloan_net
+    deploy:
+      replicas: 3
+      placement:
+        constraints:
+          - node.labels.gpu == true
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # ============================================
+  # TRANSFORMER MARKET PREDICTOR
+  # ============================================
+
+  market-predictor:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.transformer
+    container_name: market-predictor
+    environment:
+      - SERVICE_NAME=market-predictor
+      - MODEL_TYPE=transformer
+      - D_MODEL=512
+      - N_HEADS=8
+      - N_LAYERS=6
+      - PREDICTION_HORIZON=100
+      - CUDA_VISIBLE_DEVICES=0
+      - REDIS_URL=redis://redis-cluster:6379
+    volumes:
+      - model_checkpoints:/app/models
+      - ./src/transformers:/app/transformers
+    ports:
+      - "8040:8040"
+    networks:
+      - flashloan_net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # ============================================
+  # RISK MANAGEMENT SYSTEM
+  # ============================================
+
+  risk-manager:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.risk
+    container_name: risk-manager
+    environment:
+      - SERVICE_NAME=risk-manager
+      - VAR_CONFIDENCE=0.99
+      - TAIL_RISK_THRESHOLD=0.05
+      - ANOMALY_CONTAMINATION=0.1
+      - REDIS_URL=redis://redis-cluster:6379
+      - POSTGRES_URL=postgresql://flashloan_user:${POSTGRES_PASSWORD}@postgres-master:5432/flashloan_db
+    volumes:
+      - ./src/risk:/app/risk
+    ports:
+      - "8050:8050"
+    networks:
+      - flashloan_net
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+
+  # ============================================
+  # HIGH-FREQUENCY EXECUTION LAYER
+  # ============================================
+
+  hft-executor:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.hft
+    environment:
+      - SERVICE_NAME=hft-executor
+      - EXECUTION_MODE=ultra_low_latency
+      - MAX_GAS_PRICE=${MAX_GAS_PRICE:-500}
+      - SLIPPAGE_TOLERANCE=0.005
+      - MEV_PROTECTION=flashbots
+      - REDIS_URL=redis://redis-cluster:6379
+    volumes:
+      - ./src/execution:/app/execution
+    networks:
+      - flashloan_net
+    deploy:
+      replicas: 10
+      update_config:
+        parallelism: 2
+        delay: 10s
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+    sysctls:
+      - net.core.rmem_max=134217728
+      - net.core.wmem_max=134217728
+      - net.ipv4.tcp_rmem=4096 87380 134217728
+      - net.ipv4.tcp_wmem=4096 65536 134217728
+
+  # ============================================
+  # GITHUB INTEGRATION SERVICES
+  # ============================================
+
+  github-coordinator:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.github
+    container_name: github-coordinator
+    environment:
+      - SERVICE_NAME=github-coordinator
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - REDIS_URL=redis://redis-cluster:6379
+      - POSTGRES_URL=postgresql://flashloan_user:${POSTGRES_PASSWORD}@postgres-master:5432/flashloan_db
+    volumes:
+      - github_workspace:/app/workspace
+      - ./src/github:/app/github
+    ports:
+      - "8060:8060"
+    networks:
+      - flashloan_net
+
+  code-generation-agent:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.github
+    container_name: code-generation-agent
+    environment:
+      - SERVICE_NAME=code-generation-agent
+      - AGENT_TYPE=code_generation
+      - COORDINATOR_URL=http://github-coordinator:8060
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - REDIS_URL=redis://redis-cluster:6379
+    volumes:
+      - github_workspace:/app/workspace
+      - ./src/github:/app/github
+    ports:
+      - "8061:8061"
+    networks:
+      - flashloan_net
+    depends_on:
+      - github-coordinator
+
+  # ============================================
+  # LANGCHAIN AGENTS (HIERARCHICAL)
+  # ============================================
+
+  # Strategic Layer
+  market-intelligence-director:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.langchain-agent
+    container_name: market-intelligence-director
+    environment:
+      - AGENT_NAME=market-intelligence-director
+      - AGENT_ROLE=strategic
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - REDIS_URL=redis://redis-cluster:6379
+      - ORCHESTRATOR_URL=http://langchain-orchestrator:8000
+    volumes:
+      - agent_memory:/app/memory
+      - ./src/agents/strategic:/app/agents
+    ports:
+      - "8100:8100"
+    networks:
+      - flashloan_net
+
+  risk-management-chief:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.langchain-agent
+    container_name: risk-management-chief
+    environment:
+      - AGENT_NAME=risk-management-chief
+      - AGENT_ROLE=strategic
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - REDIS_URL=redis://redis-cluster:6379
+      - ORCHESTRATOR_URL=http://langchain-orchestrator:8000
+    volumes:
+      - agent_memory:/app/memory
+      - ./src/agents/strategic:/app/agents
+    ports:
+      - "8101:8101"
+    networks:
+      - flashloan_net
+
+  # Tactical Layer - DEX Squadron
+  dex-analyst-1:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.langchain-agent
+    container_name: dex-analyst-1
+    environment:
+      - AGENT_NAME=dex-analyst-1
+      - AGENT_ROLE=tactical
+      - SPECIALIZATION=uniswap_v3
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - REDIS_URL=redis://redis-cluster:6379
+      - ORCHESTRATOR_URL=http://langchain-orchestrator:8000
+    volumes:
+      - agent_memory:/app/memory
+      - ./src/agents/tactical:/app/agents
+    networks:
+      - flashloan_net
+    deploy:
+      replicas: 5
+
+  # MEV Protection Unit
+  mev-protection-agent:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.langchain-agent
+    container_name: mev-protection-agent
+    environment:
+      - AGENT_NAME=mev-protection-agent
+      - AGENT_ROLE=tactical
+      - SPECIALIZATION=flashbots
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - REDIS_URL=redis://redis-cluster:6379
+      - ORCHESTRATOR_URL=http://langchain-orchestrator:8000
+    volumes:
+      - agent_memory:/app/memory
+      - ./src/agents/tactical:/app/agents
+    networks:
+      - flashloan_net
+    deploy:
+      replicas: 3
+
+  # ============================================
+  # LOAD BALANCER
+  # ============================================
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-lb
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - flashloan_net
+    depends_on:
+      - langchain-orchestrator
+      - quantum-decision-engine
+      - swarm-coordinator
+
+# ============================================
+# HEALTHCHECK DEFINITIONS
+# ============================================
+
+healthcheck:
+  langchain-orchestrator:
+    test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 40s
+
+  redis-cluster:
+    test: ["CMD", "redis-cli", "ping"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+
+  postgres-master:
+    test: ["CMD-SHELL", "pg_isready -U flashloan_user"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+
+# ============================================
+# DEPLOYMENT CONFIGURATION
+# ============================================
+
+configs:
+  prometheus_config:
+    file: ./monitoring/prometheus.yml
+  grafana_dashboards:
+    file: ./monitoring/grafana/dashboards/flash-loan-dashboard.json
+  nginx_config:
+    file: ./nginx/nginx.conf
+
+secrets:
+  openai_api_key:
+    external: true
+  github_token:
+    external: true
+  postgres_password:
+    external: true

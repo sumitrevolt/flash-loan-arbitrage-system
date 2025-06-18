@@ -1,0 +1,89 @@
+{
+  "timestamp": "2025-06-16T08:25:14.442784",
+  "services_status": {
+    "infrastructure": {
+      "langchain-postgres": {
+        "status": "running",
+        "ports": [
+          "5432/tcp"
+        ],
+        "image": "postgres:15-alpine"
+      },
+      "langchain-redis": {
+        "status": "running",
+        "ports": [
+          "6379/tcp"
+        ],
+        "image": "redis:7-alpine"
+      },
+      "langchain-rabbitmq": {
+        "status": "running",
+        "ports": [
+          "15671/tcp",
+          "15672/tcp",
+          "15691/tcp",
+          "15692/tcp",
+          "25672/tcp",
+          "4369/tcp",
+          "5671/tcp",
+          "5672/tcp"
+        ],
+        "image": "rabbitmq:3-management"
+      },
+      "flash-loan-mcp-coordinator": {
+        "status": "running",
+        "ports": [
+          "9000/tcp"
+        ],
+        "image": "flashloan-mcp-coordinator:latest"
+      }
+    },
+    "mcp_servers": {
+      "price-oracle-mcp-server": {
+        "status": "restarting",
+        "ports": [],
+        "image": "node:18-alpine"
+      },
+      "enhanced-copilot-mcp-server": {
+        "status": "restarting",
+        "ports": [],
+        "image": "node:18-alpine"
+      },
+      "context7-mcp-server": {
+        "status": "restarting",
+        "ports": [],
+        "image": "node:18-alpine"
+      }
+    },
+    "ai_agents": {
+      "code-indexer-1": {
+        "status": "restarting",
+        "ports": [],
+        "image": "python:3.11-slim"
+      },
+      "aave-flash-loan-executor": {
+        "status": "restarting",
+        "ports": [],
+        "image": "python:3.11-slim"
+      }
+    },
+    "monitoring": {
+      "arbitrage-detector": {
+        "status": "restarting",
+        "ports": [],
+        "image": "python:3.11-slim"
+      },
+      "flash-loan-grafana": {
+        "status": "running",
+        "ports": [
+          "3000/tcp"
+        ],
+        "image": "grafana/grafana:latest"
+      }
+    }
+  },
+  "summary": {
+    "total_services": 11,
+    "running_services": 5
+  }
+}

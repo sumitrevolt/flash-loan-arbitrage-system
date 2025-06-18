@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # Core Infrastructure
+  redis:
+    image: redis:7.2-alpine
+    container_name: flash-loan-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - flash-loan-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Essential MCP Servers (without port conflicts)
+  mcp-connection-test:
+    build: .
+    command: python mcp_servers/mcp_connection_test.py
+    environment:
+      - MCP_SERVER_TYPE=mcp-connection-test
+      - MCP_SERVER_NAME=mcp-connection-test
+      - MCP_PORT=8000
+    ports:
+      - "8000:8000"
+    networks:
+      - flash-loan-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  mcp-aave-flash-loan:
+    build: .
+    command: python mcp_servers/aave/aave_flash_loan_mcp_server.py
+    environment:
+      - MCP_SERVER_TYPE=aave-flash-loan-mcp-server
+      - MCP_SERVER_NAME=aave-flash-loan-mcp-server
+      - MCP_PORT=8003
+      - POLYGON_RPC_URL=${POLYGON_RPC_URL:-}
+      - AAVE_POOL_ADDRESS=${AAVE_POOL_ADDRESS:-}
+      - PRIVATE_KEY=${PRIVATE_KEY:-}
+    ports:
+      - "8003:8003"
+    networks:
+      - flash-loan-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # Single agent for testing
+  agent-main:
+    build: .
+    command: python ai_agent/agent.py
+    environment:
+      - AGENT_ROLE=main-agent
+      - AGENT_ID=1
+      - AGENT_PORT=8032
+    ports:
+      - "8032:8032"
+    networks:
+      - flash-loan-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+    driver: local
+
+networks:
+  flash-loan-network:
+    driver: bridge

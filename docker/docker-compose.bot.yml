@@ -1,0 +1,22 @@
+version: "3.9"
+
+networks:
+  mcpnet:
+    external: false
+
+services:
+  discord_bot:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/bot/Dockerfile.discord-bot
+    container_name: mcp-discord-bot
+    environment:
+      # set these in .env or CI secret store
+      DISCORD_BOT_TOKEN: "${DISCORD_BOT_TOKEN}"
+      MCP_COORD_URL: "http://mcp-master-coordinator:3000"
+      DISCORD_METRICS_CHANNEL_ID: "${DISCORD_METRICS_CHANNEL_ID:-}"
+    depends_on:
+      - mcp-master-coordinator
+    networks:
+      - mcpnet
+    restart: unless-stopped

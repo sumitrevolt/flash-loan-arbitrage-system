@@ -1,0 +1,55 @@
+# ------------------------------------------------------------
+# Generic Python Service Dockerfile
+# Base: python:3.11-slim
+# ------------------------------------------------------------
+FROM python:3.11-slim AS base
+
+ARG APP_DIR=/app
+WORKDIR ${APP_DIR}
+
+# Install common system dependencies
+# git is included for potential pip installs from git repositories
+# build-essential, libssl-dev, libffi-dev, python3-dev are for compiling some Python packages
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+        gcc \
+        git \
+        curl \
+        build-essential \
+        libssl-dev \
+        libffi-dev \
+        python3-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy requirements.txt first to leverage Docker cache
+# Assumes requirements.txt is at the root of the build context (project root)
+COPY requirements.txt ${APP_DIR}/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the entire application code
+# Assumes the build context is the project root
+COPY . ${APP_DIR}
+
+# Set common environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    LOG_LEVEL=INFO
+
+# Default command - expects PYTHON_SCRIPT_PATH to be set in docker-compose
+# This variable should contain the path to the python script to run,
+# e.g., mcp_servers/my_server.py or agents/my_agent.py
+# For scripts that are modules, like `python -m agents.base_agent`,
+# the PYTHON_SCRIPT_PATH could be `agents.base_agent` and CMD could be `sh -c "python -m $PYTHON_SCRIPT_PATH"`
+# For now, sticking to direct script execution.
+CMD ["sh", "-c", "python $PYTHON_SCRIPT_PATH"]
+
+# Consider adding a non-root user for better security later
+# RUN useradd -m -u 1000 appuser && chown -R appuser:appuser ${APP_DIR}
+# USER appuser
+
+# Consider adding a generic HEALTHCHECK if applicable,
+# or expect it to be configured per-service in docker-compose.
+# Example:
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+# CMD curl -f http://localhost:${SERVICE_PORT:-8000}/health || exit 1
+# (SERVICE_PORT would need to be passed as an ARG or ENV)

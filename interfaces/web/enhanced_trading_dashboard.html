@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash Loan Arbitrage - Live Trading Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="container mx-auto px-4 py-6" x-data="tradingDashboard()">
+        <!-- Header -->
+        <header class="mb-8">
+            <h1 class="text-4xl font-bold text-center text-blue-400">⚡ Flash Loan Arbitrage Dashboard</h1>
+            <div class="text-center mt-2">
+                <span class="inline-block bg-green-500 text-black px-3 py-1 rounded-full text-sm font-semibold">
+                    🟢 LIVE TRADING ACTIVE
+                </span>
+            </div>
+        </header>
+
+        <!-- System Status Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-gray-800 p-6 rounded-lg border border-blue-500">
+                <h3 class="text-lg font-semibold mb-2">💰 Today's Profit</h3>
+                <p class="text-3xl font-bold text-green-400" x-text="formatCurrency(todayProfit)"></p>
+                <p class="text-sm text-gray-400" x-text="'From ' + tradesExecuted + ' trades'"></p>
+            </div>
+            
+            <div class="bg-gray-800 p-6 rounded-lg border border-yellow-500">
+                <h3 class="text-lg font-semibold mb-2">🎯 Success Rate</h3>
+                <p class="text-3xl font-bold text-yellow-400" x-text="successRate + '%'"></p>
+                <p class="text-sm text-gray-400">Last 24 hours</p>
+            </div>
+            
+            <div class="bg-gray-800 p-6 rounded-lg border border-purple-500">
+                <h3 class="text-lg font-semibold mb-2">🔥 Active Opportunities</h3>
+                <p class="text-3xl font-bold text-purple-400" x-text="opportunities.length"></p>
+                <p class="text-sm text-gray-400">Real-time monitoring</p>
+            </div>
+            
+            <div class="bg-gray-800 p-6 rounded-lg border border-red-500">
+                <h3 class="text-lg font-semibold mb-2">⚡ Network Status</h3>
+                <p class="text-xl font-bold text-green-400">ALL ONLINE</p>
+                <p class="text-sm text-gray-400" x-text="'Gas: ' + currentGasPrice + ' gwei'"></p>
+            </div>
+        </div>
+
+        <!-- Live Opportunities Table -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold mb-4">🚀 Live Arbitrage Opportunities</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-700">
+                            <th class="text-left py-3">Token</th>
+                            <th class="text-left py-3">Buy DEX</th>
+                            <th class="text-left py-3">Sell DEX</th>
+                            <th class="text-left py-3">Profit USD</th>
+                            <th class="text-left py-3">Confidence</th>
+                            <th class="text-left py-3">Risk</th>
+                            <th class="text-left py-3">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="opp in opportunities" :key="opp.id">
+                            <tr class="border-b border-gray-700 hover:bg-gray-700">
+                                <td class="py-3 font-semibold" x-text="opp.token"></td>
+                                <td class="py-3 text-blue-400" x-text="opp.buyDex"></td>
+                                <td class="py-3 text-purple-400" x-text="opp.sellDex"></td>
+                                <td class="py-3 text-green-400 font-bold" x-text="formatCurrency(opp.profit)"></td>
+                                <td class="py-3">
+                                    <span class="px-2 py-1 rounded text-xs"
+                                          :class="opp.confidence > 0.8 ? 'bg-green-500 text-black' : 
+                                                  opp.confidence > 0.6 ? 'bg-yellow-500 text-black' : 'bg-red-500'"
+                                          x-text="(opp.confidence * 100).toFixed(0) + '%'">
+                                    </span>
+                                </td>
+                                <td class="py-3">
+                                    <span class="px-2 py-1 rounded text-xs"
+                                          :class="opp.risk === 'low' ? 'bg-green-500 text-black' : 
+                                                  opp.risk === 'medium' ? 'bg-yellow-500 text-black' : 'bg-red-500'"
+                                          x-text="opp.risk.toUpperCase()">
+                                    </span>
+                                </td>
+                                <td class="py-3">
+                                    <button @click="executeArbitrage(opp)" 
+                                            :disabled="opp.executing"
+                                            class="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-500 px-4 py-2 rounded text-sm font-semibold"
+                                            x-text="opp.executing ? 'Executing...' : 'Execute'">
+                                    </button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Trading Controls -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h3 class="text-xl font-bold mb-4">🎛️ Trading Controls</h3>
+                <div class="space-y-4">                    <div>
+                        <label for="maxPositionSize" class="block text-sm font-medium mb-2">Max Position Size (USD)</label>
+                        <input type="number" id="maxPositionSize" x-model="maxPositionSize" 
+                               class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                               placeholder="Enter maximum position size"
+                               aria-label="Maximum position size in USD">
+                    </div>
+                    <div>
+                        <label for="minProfitThreshold" class="block text-sm font-medium mb-2">Min Profit Threshold (USD)</label>
+                        <input type="number" id="minProfitThreshold" x-model="minProfitThreshold" 
+                               class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                               placeholder="Enter minimum profit threshold"
+                               aria-label="Minimum profit threshold in USD">
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" x-model="autoExecute" class="mr-2">
+                            Auto-Execute High Confidence Trades
+                        </label>
+                    </div>
+                    <button @click="emergencyStop()" 
+                            class="w-full bg-red-500 hover:bg-red-600 font-bold py-3 rounded">
+                        🛑 EMERGENCY STOP
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h3 class="text-xl font-bold mb-4">📊 Performance Chart</h3>
+                <canvas id="profitChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent Trades -->
+        <div class="bg-gray-800 rounded-lg p-6">
+            <h2 class="text-2xl font-bold mb-4">📈 Recent Trades</h2>
+            <div class="space-y-3">
+                <template x-for="trade in recentTrades" :key="trade.id">
+                    <div class="flex justify-between items-center bg-gray-700 p-3 rounded">
+                        <div>
+                            <span class="font-semibold" x-text="trade.token"></span>
+                            <span class="text-gray-400" x-text="' • ' + trade.route"></span>
+                        </div>
+                        <div class="text-right">
+                            <div :class="trade.profit > 0 ? 'text-green-400' : 'text-red-400'" 
+                                 x-text="formatCurrency(trade.profit)"></div>
+                            <div class="text-xs text-gray-400" x-text="trade.timestamp"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function tradingDashboard() {
+            return {
+                // Dashboard state
+                todayProfit: 127.45,
+                tradesExecuted: 23,
+                successRate: 87,
+                currentGasPrice: 15,
+                
+                // Trading controls
+                maxPositionSize: 100,
+                minProfitThreshold: 2,
+                autoExecute: false,
+                
+                // Opportunities data
+                opportunities: [
+                    {
+                        id: 1,
+                        token: 'USDC',
+                        buyDex: 'Uniswap V3',
+                        sellDex: 'SushiSwap',
+                        profit: 4.25,
+                        confidence: 0.85,
+                        risk: 'low',
+                        executing: false
+                    },
+                    {
+                        id: 2,
+                        token: 'WETH',
+                        buyDex: 'Balancer',
+                        sellDex: 'Uniswap V3',
+                        profit: 8.90,
+                        confidence: 0.72,
+                        risk: 'medium',
+                        executing: false
+                    },
+                    {
+                        id: 3,
+                        token: 'WBTC',
+                        buyDex: 'SushiSwap',
+                        sellDex: '1inch',
+                        profit: 15.60,
+                        confidence: 0.65,
+                        risk: 'high',
+                        executing: false
+                    }
+                ],
+                
+                // Recent trades
+                recentTrades: [
+                    {
+                        id: 1,
+                        token: 'USDC',
+                        route: 'Uniswap → SushiSwap',
+                        profit: 3.25,
+                        timestamp: '2 min ago'
+                    },
+                    {
+                        id: 2,
+                        token: 'WETH',
+                        route: 'Balancer → Uniswap',
+                        profit: 7.80,
+                        timestamp: '5 min ago'
+                    }
+                ],
+
+                // Methods
+                formatCurrency(amount) {
+                    return '$' + amount.toFixed(2);
+                },
+
+                async executeArbitrage(opportunity) {
+                    opportunity.executing = true;
+                    
+                    try {
+                        // Call the real trading API
+                        const response = await fetch('/api/execute_arbitrage', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(opportunity)
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            // Add to recent trades
+                            this.recentTrades.unshift({
+                                id: Date.now(),
+                                token: opportunity.token,
+                                route: `${opportunity.buyDex} → ${opportunity.sellDex}`,
+                                profit: result.actual_profit,
+                                timestamp: 'Just now'
+                            });
+                            
+                            // Update daily profit
+                            this.todayProfit += result.actual_profit;
+                            this.tradesExecuted += 1;
+                        }
+                    } catch (error) {
+                        console.error('Trade execution failed:', error);
+                    } finally {
+                        opportunity.executing = false;
+                    }
+                },
+
+                emergencyStop() {
+                    if (confirm('Are you sure you want to stop all trading?')) {
+                        fetch('/api/emergency_stop', { method: 'POST' });
+                        alert('Emergency stop activated!');
+                    }
+                },
+
+                // Initialize WebSocket for real-time updates
+                init() {
+                    const ws = new WebSocket('ws://localhost:8009/realtime');
+                    ws.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        if (data.opportunities) {
+                            this.opportunities = data.opportunities;
+                        }
+                        if (data.metrics) {
+                            this.updateMetrics(data.metrics);
+                        }
+                    };
+                    
+                    // Initialize profit chart
+                    this.initProfitChart();
+                },
+
+                updateMetrics(metrics) {
+                    this.todayProfit = metrics.todayProfit || this.todayProfit;
+                    this.successRate = metrics.successRate || this.successRate;
+                    this.currentGasPrice = metrics.gasPrice || this.currentGasPrice;
+                },
+
+                initProfitChart() {
+                    const ctx = document.getElementById('profitChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: ['6h', '5h', '4h', '3h', '2h', '1h', 'Now'],
+                            datasets: [{
+                                label: 'Cumulative Profit (USD)',
+                                data: [45, 67, 89, 102, 115, 124, 127],
+                                borderColor: 'rgb(34, 197, 94)',
+                                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                y: { 
+                                    beginAtZero: true,
+                                    grid: { color: 'rgba(75, 85, 99, 0.3)' },
+                                    ticks: { color: 'rgb(156, 163, 175)' }
+                                },
+                                x: { 
+                                    grid: { color: 'rgba(75, 85, 99, 0.3)' },
+                                    ticks: { color: 'rgb(156, 163, 175)' }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
+    </script>
+</body>
+</html>

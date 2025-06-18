@@ -1,0 +1,93 @@
+{
+  "name": "github-copilot-mcp-extension",
+  "displayName": "GitHub Copilot MCP Integration", 
+  "description": "Extension to integrate GitHub Copilot with MCP servers running in Docker",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "GitHub Copilot MCP Integration",
+      "properties": {
+        "copilotMcp.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable MCP server integration with GitHub Copilot"
+        },
+        "copilotMcp.bridgePort": {
+          "type": "number",
+          "default": 8888,
+          "description": "Port for the MCP bridge server"
+        },
+        "copilotMcp.servers": {
+          "type": "object",
+          "default": {
+            "flash_loan_blockchain": "http://localhost:8101",
+            "defi_analyzer": "http://localhost:8102", 
+            "flash_loan": "http://localhost:8103",
+            "arbitrage": "http://localhost:8104",
+            "liquidity": "http://localhost:8105",
+            "price_feed": "http://localhost:8106",
+            "risk_manager": "http://localhost:8107",
+            "portfolio": "http://localhost:8108",
+            "api_client": "http://localhost:8109",
+            "database": "http://localhost:8110",
+            "cache_manager": "http://localhost:8111",
+            "file_processor": "http://localhost:8112",
+            "notification": "http://localhost:8113",
+            "monitoring": "http://localhost:8114",
+            "security": "http://localhost:8115",
+            "data_analyzer": "http://localhost:8116",
+            "web_scraper": "http://localhost:8117",
+            "task_queue": "http://localhost:8118",
+            "filesystem": "http://localhost:8119",
+            "coordinator": "http://localhost:8120"
+          },
+          "description": "MCP server endpoints"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "copilotMcp.startBridge",
+        "title": "Start MCP Bridge",
+        "category": "Copilot MCP"
+      },
+      {
+        "command": "copilotMcp.stopBridge", 
+        "title": "Stop MCP Bridge",
+        "category": "Copilot MCP"
+      },
+      {
+        "command": "copilotMcp.listServers",
+        "title": "List Available MCP Servers",
+        "category": "Copilot MCP"
+      },
+      {
+        "command": "copilotMcp.testConnection",
+        "title": "Test MCP Server Connections",
+        "category": "Copilot MCP"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "ws": "^8.13.0",
+    "axios": "^1.4.0"
+  }
+}

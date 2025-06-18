@@ -1,0 +1,40 @@
+{
+  "mcpServers": {
+    "docker-flash-loan": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "claude-mcp-flash-loan",
+        "python",
+        "working_flash_loan_mcp.py"
+      ],
+      "env": {
+        "DOCKER_MODE": "true"
+      }
+    },
+    "docker-price-monitor": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "claude-mcp-price-monitor",
+        "python",
+        "real_time_price_mcp_server.py"
+      ],
+      "env": {
+        "DOCKER_MODE": "true"
+      }
+    },
+    "docker-aave": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "claude-mcp-aave",
+        "python",
+        "aave_flash_loan_mcp_server.py"
+      ],
+      "env": {
+        "DOCKER_MODE": "true"
+      }
+    }
+  }
+}

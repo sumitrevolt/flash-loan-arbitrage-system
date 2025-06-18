@@ -1,0 +1,667 @@
+version: '3.8'
+
+networks:
+  flashloan_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+  grafana_data:
+  prometheus_data:
+  ollama_data:
+
+services:
+  # ====== INFRASTRUCTURE SERVICES ======
+  redis:
+    image: redis:7-alpine
+    container_name: flashloan_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass flashloan_redis_pass
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: flashloan_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: flashloan
+      RABBITMQ_DEFAULT_PASS: flashloan_pass
+      RABBITMQ_DEFAULT_VHOST: flashloan
+      RABBITMQ_ERLANG_COOKIE: flashloan_cookie
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: flashloan_postgres
+    environment:
+      POSTGRES_DB: flashloan
+      POSTGRES_USER: flashloan
+      POSTGRES_PASSWORD: flashloan_pass
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d flashloan -U flashloan"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: flashloan_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - flashloan_network
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_HOST=0.0.0.0
+    restart: unless-stopped
+
+  # ====== MONITORING SERVICES ======
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: flashloan_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: flashloan_grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  # ====== CORE MCP SERVERS ======
+  mcp_price_feed:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_price_feed
+    environment:
+      - SERVER_TYPE=price_feed
+      - PORT=8100
+      - REDIS_URL=redis://:flashloan_redis_pass@flashloan_redis:6379/0
+      - RABBITMQ_URL=amqp://flashloan:flashloan_pass@flashloan_rabbitmq:5672/flashloan
+      - POSTGRES_URL=postgresql://flashloan:flashloan_pass@flashloan_postgres:5432/flashloan
+      - POLYGON_RPC_URL=${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      - LOG_LEVEL=INFO
+    ports:
+      - "8100:8100"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp_arbitrage_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_arbitrage_server
+    environment:
+      - SERVER_TYPE=arbitrage
+      - PORT=8101
+      - REDIS_URL=redis://:flashloan_redis_pass@flashloan_redis:6379/0
+      - RABBITMQ_URL=amqp://flashloan:flashloan_pass@flashloan_rabbitmq:5672/flashloan
+      - POSTGRES_URL=postgresql://flashloan:flashloan_pass@flashloan_postgres:5432/flashloan
+      - POLYGON_RPC_URL=${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      - LOG_LEVEL=INFO
+    ports:
+      - "8101:8101"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8101/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp_flash_loan_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_flash_loan_server
+    environment:
+      - SERVER_TYPE=flash_loan
+      - PORT=8102
+      - REDIS_URL=redis://:flashloan_redis_pass@flashloan_redis:6379/0
+      - RABBITMQ_URL=amqp://flashloan:flashloan_pass@flashloan_rabbitmq:5672/flashloan
+      - POSTGRES_URL=postgresql://flashloan:flashloan_pass@flashloan_postgres:5432/flashloan
+      - POLYGON_RPC_URL=${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      - ARBITRAGE_PRIVATE_KEY=${ARBITRAGE_PRIVATE_KEY:-}
+      - CONTRACT_ADDRESS=${CONTRACT_ADDRESS:-0x35791D283Ec6eeF6C7687026CaF026C5F84C7c15}
+      - LOG_LEVEL=INFO
+    ports:
+      - "8102:8102"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8102/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp_dex_aggregator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_dex_aggregator
+    environment:
+      - SERVER_TYPE=dex_aggregator
+      - PORT=8103
+      - REDIS_URL=redis://:flashloan_redis_pass@flashloan_redis:6379/0
+      - RABBITMQ_URL=amqp://flashloan:flashloan_pass@flashloan_rabbitmq:5672/flashloan
+      - POSTGRES_URL=postgresql://flashloan:flashloan_pass@flashloan_postgres:5432/flashloan
+      - POLYGON_RPC_URL=${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      - LOG_LEVEL=INFO
+    ports:
+      - "8103:8103"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8103/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp_risk_manager:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_risk_manager
+    environment:
+      - SERVER_TYPE=risk_manager
+      - PORT=8104
+      - REDIS_URL=redis://:flashloan_redis_pass@flashloan_redis:6379/0
+      - RABBITMQ_URL=amqp://flashloan:flashloan_pass@flashloan_rabbitmq:5672/flashloan
+      - POSTGRES_URL=postgresql://flashloan:flashloan_pass@flashloan_postgres:5432/flashloan
+      - POLYGON_RPC_URL=${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      - MIN_PROFIT_USD=${MIN_PROFIT_USD:-3.0}
+      - MAX_PROFIT_USD=${MAX_PROFIT_USD:-30.0}
+      - MAX_GAS_PRICE_GWEI=${MAX_GAS_PRICE_GWEI:-50.0}
+      - LOG_LEVEL=INFO
+    ports:
+      - "8104:8104"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8104/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ====== AI AGENTS ======
+  ai_agent_arbitrage_detector:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_arbitrage_detector
+    environment:
+      - AGENT_TYPE=arbitrage_detector
+      - AGENT_NAME=arbitrage_detector
+      - PORT=9001
+      - REDIS_URL=redis://:flashloan_redis_pass@flashloan_redis:6379/0
+      - RABBITMQ_URL=amqp://flashloan:flashloan_pass@flashloan_rabbitmq:5672/flashloan
+      - MCP_ARBITRAGE_URL=http://mcp_arbitrage_server:8101
+      - MCP_PRICE_FEED_URL=http://mcp_price_feed:8100
+      - MCP_DEX_AGGREGATOR_URL=http://mcp_dex_aggregator:8103
+      - LOG_LEVEL=INFO
+    ports:
+      - "9001:9001"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mcp_arbitrage_server:
+        condition: service_healthy
+      mcp_price_feed:
+        condition: service_healthy
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  ai_agent_risk_manager:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_risk_manager
+    environment:
+      - AGENT_TYPE=risk_manager
+      - AGENT_NAME=risk_manager
+      - PORT=9002
+      - REDIS_URL=redis://:flashloan_redis_pass@flashloan_redis:6379/0
+      - RABBITMQ_URL=amqp://flashloan:flashloan_pass@flashloan_rabbitmq:5672/flashloan
+      - MCP_RISK_MANAGER_URL=http://mcp_risk_manager:8104
+      - LOG_LEVEL=INFO
+    ports:
+      - "9002:9002"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mcp_risk_manager:
+        condition: service_healthy
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  ai_agent_flash_loan_optimizer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_flash_loan_optimizer
+    environment:
+      - AGENT_TYPE=flash_loan_optimizer
+      - AGENT_NAME=flash_loan_optimizer
+      - PORT=9003
+      - REDIS_URL=redis://:flashloan_redis_pass@flashloan_redis:6379/0
+      - RABBITMQ_URL=amqp://flashloan:flashloan_pass@flashloan_rabbitmq:5672/flashloan
+      - MCP_FLASH_LOAN_URL=http://mcp_flash_loan_server:8102
+      - MCP_PRICE_FEED_URL=http://mcp_price_feed:8100
+      - LOG_LEVEL=INFO
+    ports:
+      - "9003:9003"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mcp_flash_loan_server:
+        condition: service_healthy
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  ai_agent_transaction_executor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_transaction_executor
+    environment:
+      - AGENT_TYPE=transaction_executor
+      - AGENT_NAME=transaction_executor
+      - PORT=9004
+      - REDIS_URL=redis://:flashloan_redis_pass@flashloan_redis:6379/0
+      - RABBITMQ_URL=amqp://flashloan:flashloan_pass@flashloan_rabbitmq:5672/flashloan
+      - MCP_FLASH_LOAN_URL=http://mcp_flash_loan_server:8102
+      - ARBITRAGE_PRIVATE_KEY=${ARBITRAGE_PRIVATE_KEY:-}
+      - LOG_LEVEL=INFO
+    ports:
+      - "9004:9004"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mcp_flash_loan_server:
+        condition: service_healthy
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  ai_agent_market_analyzer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_market_analyzer
+    environment:
+      - AGENT_TYPE=market_analyzer
+      - AGENT_NAME=market_analyzer
+      - PORT=9005
+      - REDIS_URL=redis://:flashloan_redis_pass@flashloan_redis:6379/0
+      - RABBITMQ_URL=amqp://flashloan:flashloan_pass@flashloan_rabbitmq:5672/flashloan
+      - MCP_PRICE_FEED_URL=http://mcp_price_feed:8100
+      - MCP_DEX_AGGREGATOR_URL=http://mcp_dex_aggregator:8103
+      - LOG_LEVEL=INFO
+    ports:
+      - "9005:9005"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mcp_price_feed:
+        condition: service_healthy
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ====== LANGCHAIN COORDINATION ======
+  langchain_coordinator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.langchain
+    container_name: langchain_coordinator
+    environment:
+      - COORDINATOR_TYPE=langchain
+      - PORT=8001
+      - REDIS_URL=redis://:flashloan_redis_pass@flashloan_redis:6379/0
+      - RABBITMQ_URL=amqp://flashloan:flashloan_pass@flashloan_rabbitmq:5672/flashloan
+      - POSTGRES_URL=postgresql://flashloan:flashloan_pass@flashloan_postgres:5432/flashloan
+      - OLLAMA_HOST=http://flashloan_ollama:11434
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - LOG_LEVEL=INFO
+    ports:
+      - "8001:8001"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ====== AUTOGEN SYSTEM ======
+  autogen_system:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.autogen
+    container_name: autogen_system
+    environment:
+      - AUTOGEN_TYPE=multi_agent
+      - PORT=8002
+      - REDIS_URL=redis://:flashloan_redis_pass@flashloan_redis:6379/0
+      - RABBITMQ_URL=amqp://flashloan:flashloan_pass@flashloan_rabbitmq:5672/flashloan
+      - POSTGRES_URL=postgresql://flashloan:flashloan_pass@flashloan_postgres:5432/flashloan
+      - OLLAMA_HOST=http://flashloan_ollama:11434
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - LOG_LEVEL=INFO
+    ports:
+      - "8002:8002"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ====== MASTER COORDINATION ORCHESTRATOR ======
+  master_orchestrator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.coordination
+    container_name: master_orchestrator
+    environment:
+      - ORCHESTRATOR_TYPE=master
+      - PORT=8000
+      - REDIS_URL=redis://:flashloan_redis_pass@flashloan_redis:6379/0
+      - RABBITMQ_URL=amqp://flashloan:flashloan_pass@flashloan_rabbitmq:5672/flashloan
+      - POSTGRES_URL=postgresql://flashloan:flashloan_pass@flashloan_postgres:5432/flashloan
+      - POLYGON_RPC_URL=${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      - ARBITRAGE_PRIVATE_KEY=${ARBITRAGE_PRIVATE_KEY:-}
+      - CONTRACT_ADDRESS=${CONTRACT_ADDRESS:-0x35791D283Ec6eeF6C7687026CaF026C5F84C7c15}
+      - MIN_PROFIT_USD=${MIN_PROFIT_USD:-3.0}
+      - MAX_PROFIT_USD=${MAX_PROFIT_USD:-30.0}
+      - MAX_GAS_PRICE_GWEI=${MAX_GAS_PRICE_GWEI:-50.0}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - LOG_LEVEL=INFO
+      # MCP Server URLs
+      - MCP_PRICE_FEED_URL=http://mcp_price_feed:8100
+      - MCP_ARBITRAGE_URL=http://mcp_arbitrage_server:8101
+      - MCP_FLASH_LOAN_URL=http://mcp_flash_loan_server:8102
+      - MCP_DEX_AGGREGATOR_URL=http://mcp_dex_aggregator:8103
+      - MCP_RISK_MANAGER_URL=http://mcp_risk_manager:8104
+      # AI Agent URLs
+      - AI_AGENT_ARBITRAGE_DETECTOR_URL=http://ai_agent_arbitrage_detector:9001
+      - AI_AGENT_RISK_MANAGER_URL=http://ai_agent_risk_manager:9002
+      - AI_AGENT_FLASH_LOAN_OPTIMIZER_URL=http://ai_agent_flash_loan_optimizer:9003
+      - AI_AGENT_TRANSACTION_EXECUTOR_URL=http://ai_agent_transaction_executor:9004
+      - AI_AGENT_MARKET_ANALYZER_URL=http://ai_agent_market_analyzer:9005
+      # Coordination URLs
+      - LANGCHAIN_COORDINATOR_URL=http://langchain_coordinator:8001
+      - AUTOGEN_SYSTEM_URL=http://autogen_system:8002
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      mcp_price_feed:
+        condition: service_healthy
+      mcp_arbitrage_server:
+        condition: service_healthy
+      mcp_flash_loan_server:
+        condition: service_healthy
+      langchain_coordinator:
+        condition: service_healthy
+      autogen_system:
+        condition: service_healthy
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ====== SELF-HEALING AGENT ======
+  self_healing_agent:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.self-healing
+    container_name: self_healing_agent
+    environment:
+      - AGENT_TYPE=self_healing
+      - AGENT_NAME=self_healing_agent
+      - PORT=8300
+      - REDIS_URL=redis://:flashloan_redis_pass@flashloan_redis:6379/0
+      - RABBITMQ_URL=amqp://flashloan:flashloan_pass@flashloan_rabbitmq:5672/flashloan
+      - LOG_LEVEL=INFO
+    ports:
+      - "8300:8300"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8300/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    privileged: true
+
+  # ====== DASHBOARD AND MONITORING ======
+  coordination_dashboard:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dashboard
+    container_name: coordination_dashboard
+    environment:
+      - DASHBOARD_TYPE=coordination
+      - PORT=8080
+      - MASTER_ORCHESTRATOR_URL=http://master_orchestrator:8000
+      - PROMETHEUS_URL=http://flashloan_prometheus:9090
+      - GRAFANA_URL=http://flashloan_grafana:3000
+    ports:
+      - "8080:8080"
+    depends_on:
+      - master_orchestrator
+      - prometheus
+      - grafana
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  # ====== HEALTH MONITOR ======
+  health_monitor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.monitor
+    container_name: health_monitor
+    environment:
+      - MONITOR_TYPE=health
+      - PORT=8400
+      - REDIS_URL=redis://:flashloan_redis_pass@flashloan_redis:6379/0
+      - RABBITMQ_URL=amqp://flashloan:flashloan_pass@flashloan_rabbitmq:5672/flashloan
+      - MASTER_ORCHESTRATOR_URL=http://master_orchestrator:8000
+      - SELF_HEALING_AGENT_URL=http://self_healing_agent:8300
+    ports:
+      - "8400:8400"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      master_orchestrator:
+        condition: service_healthy
+      self_healing_agent:
+        condition: service_healthy
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8400/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped

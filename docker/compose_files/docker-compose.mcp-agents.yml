@@ -1,0 +1,124 @@
+version: "3.9"
+
+networks:
+  mcpnet:
+    external: false
+
+services:
+  # ========== CODE-INDEXER AGENTS ==========
+  code_indexer_1:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/agents/Dockerfile.mcp-agent
+      args: {AGENT_TYPE: code_indexer, AGENT_ID: 1}
+    container_name: agent-code-indexer-1
+    environment:
+      MCP_ROLE: code_indexer
+      AGENT_ID: 1
+      MCP_SERVER_SCRIPT: mcp_agents/code_indexer_agent.py
+    ports: ["3101:3000"]
+    depends_on: [rabbitmq]
+    networks: [mcpnet]
+    restart: unless-stopped
+
+  code_indexer_2:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/agents/Dockerfile.mcp-agent
+      args: {AGENT_TYPE: code_indexer, AGENT_ID: 2}
+    container_name: agent-code-indexer-2
+    environment: {MCP_ROLE: code_indexer, AGENT_ID: 2, MCP_SERVER_SCRIPT: mcp_agents/code_indexer_agent.py}
+    ports: ["3102:3000"]
+    depends_on: [rabbitmq]
+    networks: [mcpnet]
+    restart: unless-stopped
+
+  code_indexer_3:
+    build: {context: ../.., dockerfile: docker/dockerfiles/agents/Dockerfile.mcp-agent, args: {AGENT_TYPE: code_indexer, AGENT_ID: 3}}
+    container_name: agent-code-indexer-3
+    environment: {MCP_ROLE: code_indexer, AGENT_ID: 3, MCP_SERVER_SCRIPT: mcp_agents/code_indexer_agent.py}
+    ports: ["3103:3000"]
+    depends_on: [rabbitmq]
+    networks: [mcpnet]
+    restart: unless-stopped
+
+  code_indexer_4:
+    build: {context: ../.., dockerfile: docker/dockerfiles/agents/Dockerfile.mcp-agent, args: {AGENT_TYPE: code_indexer, AGENT_ID: 4}}
+    container_name: agent-code-indexer-4
+    environment: {MCP_ROLE: code_indexer, AGENT_ID: 4, MCP_SERVER_SCRIPT: mcp_agents/code_indexer_agent.py}
+    ports: ["3104:3000"]
+    depends_on: [rabbitmq]
+    networks: [mcpnet]
+    restart: unless-stopped
+
+  code_indexer_5:
+    build: {context: ../.., dockerfile: docker/dockerfiles/agents/Dockerfile.mcp-agent, args: {AGENT_TYPE: code_indexer, AGENT_ID: 5}}
+    container_name: agent-code-indexer-5
+    environment: {MCP_ROLE: code_indexer, AGENT_ID: 5, MCP_SERVER_SCRIPT: mcp_agents/code_indexer_agent.py}
+    ports: ["3105:3000"]
+    depends_on: [rabbitmq]
+    networks: [mcpnet]
+    restart: unless-stopped
+
+  # ========== BUILDER AGENT ==========
+  builder_1:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/agents/Dockerfile.mcp-agent
+      args: {AGENT_TYPE: builder, AGENT_ID: 1}
+    container_name: agent-builder-1
+    environment: {MCP_ROLE: builder, AGENT_ID: 1, MCP_SERVER_SCRIPT: mcp_agents/builder_agent.py}
+    ports: ["3106:3000"]
+    depends_on: [rabbitmq]
+    networks: [mcpnet]
+    restart: unless-stopped
+
+  # ========== EXECUTOR AGENTS ==========
+  executor_1:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/agents/Dockerfile.mcp-agent
+      args: {AGENT_TYPE: executor, AGENT_ID: 1}
+    container_name: agent-executor-1
+    environment: {MCP_ROLE: executor, AGENT_ID: 1, MCP_SERVER_SCRIPT: mcp_agents/executor_agent.py}
+    ports: ["3107:3000"]
+    depends_on: [rabbitmq]
+    networks: [mcpnet]
+    restart: unless-stopped
+
+  executor_2:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/agents/Dockerfile.mcp-agent
+      args: {AGENT_TYPE: executor, AGENT_ID: 2}
+    container_name: agent-executor-2
+    environment: {MCP_ROLE: executor, AGENT_ID: 2, MCP_SERVER_SCRIPT: mcp_agents/executor_agent.py}
+    ports: ["3108:3000"]
+    depends_on: [rabbitmq]
+    networks: [mcpnet]
+    restart: unless-stopped
+
+  # ========== AI-PLANNER AGENTS ==========
+  ai_planner_1:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/agents/Dockerfile.mcp-agent
+      args: {AGENT_TYPE: ai_planner, AGENT_ID: 1}
+    container_name: agent-ai-planner-1
+    environment: {MCP_ROLE: ai_planner, AGENT_ID: 1, MCP_SERVER_SCRIPT: mcp_agents/ai_planner_agent.py}
+    ports: ["3109:3000"]
+    depends_on: [rabbitmq]
+    networks: [mcpnet]
+    restart: unless-stopped
+
+  ai_planner_2:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/agents/Dockerfile.mcp-agent
+      args: {AGENT_TYPE: ai_planner, AGENT_ID: 2}
+    container_name: agent-ai-planner-2
+    environment: {MCP_ROLE: ai_planner, AGENT_ID: 2, MCP_SERVER_SCRIPT: mcp_agents/ai_planner_agent.py}
+    ports: ["3110:3000"]
+    depends_on: [rabbitmq]
+    networks: [mcpnet]
+    restart: unless-stopped

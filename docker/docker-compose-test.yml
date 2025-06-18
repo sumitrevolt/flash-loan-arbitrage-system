@@ -1,0 +1,161 @@
+networks:
+  coordination_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+
+services:
+  # Infrastructure Services
+  redis:
+    image: redis:7-alpine
+    container_name: coordination_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - coordination_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: coordination_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: coordination
+      RABBITMQ_DEFAULT_PASS: coordination_pass
+      RABBITMQ_DEFAULT_VHOST: coordination
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - coordination_network
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: coordination_postgres
+    environment:
+      POSTGRES_DB: coordination
+      POSTGRES_USER: coordination
+      POSTGRES_PASSWORD: coordination_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - coordination_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d coordination -U coordination"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Simple MCP Server - Price Feed
+  mcp_price_feed:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_price_feed
+    environment:
+      - SERVER_TYPE=price_feed
+      - PORT=8100
+      - REDIS_URL=redis://coordination_redis:6379
+      - POLYGON_RPC_URL=${POLYGON_RPC_URL:-https://polygon-rpc.com}
+    ports:
+      - "8100:8100"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - coordination_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Simple AI Agent - Arbitrage Detector
+  agent_arbitrage_detector:
+    image: python:3.11-slim
+    container_name: agent_arbitrage_detector
+    environment:
+      - AGENT_TYPE=arbitrage_detector
+      - PORT=9001
+      - REDIS_URL=redis://coordination_redis:6379
+    ports:
+      - "9001:9001"
+    working_dir: /app
+    volumes:
+      - ../docker/entrypoints:/app/entrypoints
+    command: >
+      sh -c "pip install --no-cache-dir fastapi uvicorn redis && 
+             python entrypoints/ai_agent_entrypoint.py"
+    networks:
+      - coordination_network
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # Simple Dashboard
+  coordination_dashboard:
+    image: python:3.11-slim
+    container_name: coordination_dashboard
+    environment:
+      - REDIS_URL=redis://coordination_redis:6379
+      - PORT=8080
+    ports:
+      - "8080:8080"
+    working_dir: /app
+    volumes:
+      - ../docker/entrypoints:/app/entrypoints
+    command: >
+      sh -c "pip install --no-cache-dir fastapi uvicorn redis && 
+             python entrypoints/coordination_dashboard.py"
+    networks:
+      - coordination_network
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # Main Coordination System
+  coordination_orchestrator:
+    image: python:3.11-slim
+    container_name: coordination_orchestrator
+    environment:
+      - REDIS_URL=redis://coordination_redis:6379
+      - RABBITMQ_URL=amqp://coordination:coordination_pass@coordination_rabbitmq:5672/coordination
+      - LOG_LEVEL=INFO
+      - PORT=8000
+    ports:
+      - "8000:8000"
+    working_dir: /app
+    volumes:
+      - ../docker/entrypoints:/app/entrypoints
+    command: >
+      sh -c "pip install --no-cache-dir fastapi uvicorn redis aiohttp && 
+             python entrypoints/coordination_orchestrator.py"
+    networks:
+      - coordination_network
+    depends_on:
+      - redis
+      - rabbitmq
+      - mcp_price_feed
+      - agent_arbitrage_detector
+    restart: unless-stopped

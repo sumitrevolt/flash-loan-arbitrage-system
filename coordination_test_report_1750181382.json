@@ -1,0 +1,261 @@
+{
+  "test_summary": {
+    "total_tests": 38,
+    "successful_tests": 4,
+    "failed_tests": 34,
+    "success_rate": "10.5%",
+    "timestamp": "2025-06-17T22:59:42.728227"
+  },
+  "categorized_results": {
+    "health_checks": [
+      {
+        "service": "orchestrator",
+        "status": "error",
+        "url": "http://localhost:8000",
+        "error": "Cannot connect to host localhost:8000 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "service": "langchain",
+        "status": "error",
+        "url": "http://localhost:8001",
+        "error": "Cannot connect to host localhost:8001 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "service": "autogen",
+        "status": "error",
+        "url": "http://localhost:8002",
+        "error": "Cannot connect to host localhost:8002 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "service": "dashboard",
+        "status": "error",
+        "url": "http://localhost:8080",
+        "error": "Server disconnected"
+      },
+      {
+        "service": "price_feed",
+        "status": "healthy",
+        "url": "http://localhost:8100",
+        "response": {
+          "status": "healthy",
+          "timestamp": "2025-06-17T17:29:22.211972",
+          "service": "mcp-auth-manager",
+          "type": "authentication & authorization",
+          "port": 8100
+        }
+      },
+      {
+        "service": "flash_loan",
+        "status": "healthy",
+        "url": "http://localhost:8101",
+        "response": {
+          "status": "healthy",
+          "timestamp": "2025-06-17T17:29:22.211873",
+          "service": "mcp-blockchain",
+          "type": "blockchain integration",
+          "port": 8101
+        }
+      },
+      {
+        "service": "dex_aggregator",
+        "status": "healthy",
+        "url": "http://localhost:8102",
+        "response": {
+          "status": "healthy",
+          "timestamp": "2025-06-17T17:29:22.211963",
+          "service": "mcp-defi-analyzer",
+          "type": "defi protocol analysis",
+          "port": 8102
+        }
+      },
+      {
+        "service": "evm_interaction",
+        "status": "healthy",
+        "url": "http://localhost:8103",
+        "response": {
+          "status": "healthy",
+          "timestamp": "2025-06-17T17:29:22.211902",
+          "service": "mcp-flash-loan",
+          "type": "flash loan core logic",
+          "port": 8103
+        }
+      },
+      {
+        "service": "arbitrage_detector",
+        "status": "error",
+        "url": "http://localhost:9001",
+        "error": "Cannot connect to host localhost:9001 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "service": "risk_manager",
+        "status": "error",
+        "url": "http://localhost:9002",
+        "error": "Cannot connect to host localhost:9002 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "service": "flash_loan_optimizer",
+        "status": "error",
+        "url": "http://localhost:9003",
+        "error": "Cannot connect to host localhost:9003 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "service": "transaction_executor",
+        "status": "error",
+        "url": "http://localhost:9004",
+        "error": "Cannot connect to host localhost:9004 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "service": "market_analyzer",
+        "status": "error",
+        "url": "http://localhost:9005",
+        "error": "Cannot connect to host localhost:9005 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "service": "route_optimizer",
+        "status": "error",
+        "url": "http://localhost:9006",
+        "error": "Cannot connect to host localhost:9006 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "service": "gas_optimizer",
+        "status": "error",
+        "url": "http://localhost:9007",
+        "error": "Cannot connect to host localhost:9007 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "service": "liquidity_monitor",
+        "status": "error",
+        "url": "http://localhost:9008",
+        "error": "Cannot connect to host localhost:9008 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "service": "security_analyst",
+        "status": "error",
+        "url": "http://localhost:9009",
+        "error": "Cannot connect to host localhost:9009 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "service": "compliance_checker",
+        "status": "error",
+        "url": "http://localhost:9010",
+        "error": "Cannot connect to host localhost:9010 ssl:default [The remote computer refused the network connection]"
+      }
+    ],
+    "coordination_tasks": [
+      {
+        "task": "Analyze arbitrage opportunities between QuickSwap and SushiSwap",
+        "status": "error",
+        "error": "Cannot connect to host localhost:8000 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "task": "Optimize flash loan parameters for USDC-WETH arbitrage",
+        "status": "error",
+        "error": "Cannot connect to host localhost:8000 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "task": "Assess risk factors for $5000 flash loan on Polygon",
+        "status": "error",
+        "error": "Cannot connect to host localhost:8000 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "task": "Monitor liquidity changes in major DEX pools",
+        "status": "error",
+        "error": "Cannot connect to host localhost:8000 ssl:default [The remote computer refused the network connection]"
+      }
+    ],
+    "langchain_tests": [
+      {
+        "service": "langchain_coordinator",
+        "status": "error",
+        "error": "Cannot connect to host localhost:8001 ssl:default [The remote computer refused the network connection]"
+      }
+    ],
+    "autogen_tests": [
+      {
+        "service": "autogen_system",
+        "status": "error",
+        "error": "Cannot connect to host localhost:8002 ssl:default [The remote computer refused the network connection]"
+      }
+    ],
+    "mcp_server_tests": [
+      {
+        "server": "price_feed",
+        "status": "no_valid_endpoint",
+        "url": "http://localhost:8100"
+      },
+      {
+        "server": "flash_loan",
+        "status": "no_valid_endpoint",
+        "url": "http://localhost:8101"
+      },
+      {
+        "server": "dex_aggregator",
+        "status": "no_valid_endpoint",
+        "url": "http://localhost:8102"
+      },
+      {
+        "server": "evm_interaction",
+        "status": "no_valid_endpoint",
+        "url": "http://localhost:8103"
+      }
+    ],
+    "agent_tests": [
+      {
+        "agent": "arbitrage_detector",
+        "status": "error",
+        "error": "Cannot connect to host localhost:9001 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "agent": "risk_manager",
+        "status": "error",
+        "error": "Cannot connect to host localhost:9002 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "agent": "flash_loan_optimizer",
+        "status": "error",
+        "error": "Cannot connect to host localhost:9003 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "agent": "transaction_executor",
+        "status": "error",
+        "error": "Cannot connect to host localhost:9004 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "agent": "market_analyzer",
+        "status": "error",
+        "error": "Cannot connect to host localhost:9005 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "agent": "route_optimizer",
+        "status": "error",
+        "error": "Cannot connect to host localhost:9006 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "agent": "gas_optimizer",
+        "status": "error",
+        "error": "Cannot connect to host localhost:9007 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "agent": "liquidity_monitor",
+        "status": "error",
+        "error": "Cannot connect to host localhost:9008 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "agent": "security_analyst",
+        "status": "error",
+        "error": "Cannot connect to host localhost:9009 ssl:default [The remote computer refused the network connection]"
+      },
+      {
+        "agent": "compliance_checker",
+        "status": "error",
+        "error": "Cannot connect to host localhost:9010 ssl:default [The remote computer refused the network connection]"
+      }
+    ]
+  },
+  "recommendations": [
+    "Some services are not responding properly. Check Docker containers and logs.",
+    "Coordination tasks are failing. Verify MCP server and agent connectivity.",
+    "LangChain coordinator has issues. Check Ollama service and model availability.",
+    "AutoGen system has issues. Verify API keys and service configuration."
+  ]
+}

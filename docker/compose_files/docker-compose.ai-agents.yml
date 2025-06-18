@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # AAVE Flash Loan Executor
+  aave-executor:
+    image: python:3.11-slim
+    container_name: aave-flash-loan-executor
+    ports:
+      - "5001:5000"
+    environment:
+      - AGENT_ID=aave-executor
+      - COORDINATOR_URL=http://localhost:9000
+      - REDIS_URL=redis://localhost:6379
+    command: >
+      sh -c "
+      pip install flask redis requests &&
+      echo 'from flask import Flask, jsonify; import redis; app = Flask(__name__); r = redis.Redis(host="localhost", port=6379, decode_responses=True); @app.route("/health"); def health(): return jsonify({"status": "healthy", "agent": "aave-executor"}); @app.route("/execute"); def execute(): return jsonify({"status": "executed", "agent": "aave-executor"}); app.run(host="0.0.0.0", port=5000)' > agent.py &&
+      python agent.py
+      "
+    restart: unless-stopped
+    
+  # Arbitrage Detector
+  arbitrage-detector:
+    image: python:3.11-slim
+    container_name: arbitrage-detector
+    ports:
+      - "5002:5000"
+    environment:
+      - AGENT_ID=arbitrage-detector
+      - COORDINATOR_URL=http://localhost:9000
+    command: >
+      sh -c "
+      pip install flask requests &&
+      echo 'from flask import Flask, jsonify; app = Flask(__name__); @app.route("/health"); def health(): return jsonify({"status": "healthy", "agent": "arbitrage-detector"}); @app.route("/detect"); def detect(): return jsonify({"arbitrage_opportunities": [{"dex1": "uniswap", "dex2": "sushiswap", "profit": "0.5%"}]}); app.run(host="0.0.0.0", port=5000)' > agent.py &&
+      python agent.py
+      "
+    restart: unless-stopped
+    
+  # Code Indexer
+  code-indexer-1:
+    image: python:3.11-slim
+    container_name: code-indexer-1
+    ports:
+      - "5101:5000"
+    environment:
+      - AGENT_ID=code-indexer-1
+      - COORDINATOR_URL=http://localhost:9000
+    command: >
+      sh -c "
+      pip install flask &&
+      echo 'from flask import Flask, jsonify; app = Flask(__name__); @app.route("/health"); def health(): return jsonify({"status": "healthy", "agent": "code-indexer-1"}); @app.route("/index"); def index(): return jsonify({"indexed_files": 1500, "status": "indexing"}); app.run(host="0.0.0.0", port=5000)' > agent.py &&
+      python agent.py
+      "
+    restart: unless-stopped

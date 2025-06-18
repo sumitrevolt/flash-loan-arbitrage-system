@@ -1,0 +1,227 @@
+# Automated Execution Coordinator Configuration
+
+execution:
+  min_profit_threshold_usd: 100
+  max_gas_price_gwei: 300
+  slippage_tolerance: 0.005
+  execution_timeout_seconds: 30
+  max_concurrent_executions: 5
+  retry_attempts: 3
+  
+  # Strategy parameters
+  strategies:
+    arbitrage:
+      enabled: true
+      min_spread_percentage: 0.5
+      max_position_size_usd: 50000
+    
+    liquidation:
+      enabled: true
+      min_discount_percentage: 3.0
+      gas_buffer_multiplier: 1.5
+    
+    sandwich:
+      enabled: false  # MEV protection active
+      min_profit_usd: 500
+    
+    flash_loan_arbitrage:
+      enabled: true
+      min_profit_percentage: 1.0
+      max_loan_amount_usd: 1000000
+
+# MCP Server Configuration
+mcp_servers:
+  market_data:
+    host: localhost
+    port: 8100
+    capabilities:
+      - price_feed
+      - liquidity_data
+      - volume_analysis
+      - orderbook_depth
+      - whale_tracking
+    
+  flash_loan:
+    host: localhost
+    port: 8101
+    capabilities:
+      - aave
+      - compound
+      - dydx
+      - balancer
+      - maker
+    
+  dex_aggregator:
+    host: localhost
+    port: 8102
+    capabilities:
+      - uniswap_v2
+      - uniswap_v3
+      - sushiswap
+      - curve
+      - balancer
+      - pancakeswap
+      - 1inch
+    
+  risk_analyzer:
+    host: localhost
+    port: 8103
+    capabilities:
+      - var_calculation
+      - liquidity_risk
+      - impermanent_loss
+      - correlation_analysis
+      - black_swan_detection
+    
+  gas_optimizer:
+    host: localhost
+    port: 8104
+    capabilities:
+      - gas_estimation
+      - priority_fee
+      - flashbots_bundle
+      - eip1559_optimization
+      - gas_token_usage
+    
+  mev_protector:
+    host: localhost
+    port: 8105
+    capabilities:
+      - private_mempool
+      - flashbots
+      - eden_network
+      - architech
+      - bundle_creation
+    
+  profit_calculator:
+    host: localhost
+    port: 8106
+    capabilities:
+      - net_profit_calculation
+      - fee_optimization
+      - tax_optimization
+      - yield_aggregation
+    
+  execution_engine:
+    host: localhost
+    port: 8107
+    capabilities:
+      - smart_routing
+      - atomic_execution
+      - rollback
+      - multi_chain
+      - cross_dex_execution
+
+# Monitoring Configuration
+monitoring:
+  health_check_interval_seconds: 10
+  metrics_port: 9090
+  alert_webhook: ${ALERT_WEBHOOK_URL}
+  
+  thresholds:
+    min_success_rate: 0.7
+    max_failure_streak: 5
+    min_profit_per_hour_usd: 1000
+    max_gas_price_alert_gwei: 500
+    
+  dashboards:
+    grafana_url: http://localhost:3000
+    prometheus_url: http://localhost:9090
+    jaeger_url: http://localhost:16686
+
+# Redis Configuration
+redis:
+  host: localhost
+  port: 6379
+  db: 0
+  password: ${REDIS_PASSWORD}
+  
+  cache_ttl:
+    market_data_seconds: 5
+    risk_metrics_seconds: 30
+    gas_prices_seconds: 10
+    execution_results_seconds: 3600
+
+# Agent Coordination
+agents:
+  strategic_layer:
+    market_intelligence_director:
+      priority: 1
+      max_concurrent_tasks: 10
+      
+    risk_management_chief:
+      priority: 1
+      max_concurrent_tasks: 5
+      
+    execution_commander:
+      priority: 1
+      max_concurrent_tasks: 20
+      
+    profit_maximization_strategist:
+      priority: 1
+      max_concurrent_tasks: 10
+  
+  tactical_layer:
+    dex_analysis_squadron:
+      agents: 5
+      priority: 2
+      max_concurrent_tasks: 50
+      
+    mev_protection_unit:
+      agents: 3
+      priority: 2
+      max_concurrent_tasks: 20
+      
+    gas_optimization_team:
+      agents: 3
+      priority: 2
+      max_concurrent_tasks: 30
+  
+  operational_layer:
+    price_monitoring_swarm:
+      agents: 10
+      priority: 3
+      max_concurrent_tasks: 100
+      
+    transaction_execution_fleet:
+      agents: 10
+      priority: 3
+      max_concurrent_tasks: 50
+      
+    risk_assessment_brigade:
+      agents: 5
+      priority: 3
+      max_concurrent_tasks: 30
+
+# Performance Optimization
+optimization:
+  enable_gpu_acceleration: true
+  enable_quantum_decisions: true
+  enable_swarm_intelligence: true
+  enable_ml_predictions: true
+  
+  model_parameters:
+    transformer_layers: 6
+    attention_heads: 8
+    model_dimension: 512
+    prediction_horizon: 100
+    
+  reinforcement_learning:
+    algorithm: PPO
+    learning_rate: 0.0003
+    batch_size: 64
+    update_epochs: 10
+
+# Security Configuration
+security:
+  enable_encryption: true
+  enable_rate_limiting: true
+  max_requests_per_minute: 1000
+  
+  private_key_management:
+    use_hsm: false
+    key_rotation_days: 30
+    
+  api_keys:
+    require_jwt: true
+    token_expiry_hours: 24

@@ -1,0 +1,1058 @@
+services:
+  langchain-postgres:
+    image: postgres:15-alpine
+    environment:
+    - POSTGRES_DB=langchain
+    - POSTGRES_USER=langchain
+    - POSTGRES_PASSWORD=langchain123
+    ports:
+    - 5432:5432
+    volumes:
+    - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U langchain
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  langchain-redis:
+    image: redis:7-alpine
+    ports:
+    - 6379:6379
+    volumes:
+    - redis_data:/data
+    healthcheck:
+      test:
+      - CMD
+      - redis-cli
+      - ping
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  langchain-rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    environment:
+    - RABBITMQ_DEFAULT_USER=langchain
+    - RABBITMQ_DEFAULT_PASS=langchain123
+    ports:
+    - 5672:5672
+    - 15672:15672
+    volumes:
+    - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test:
+      - CMD
+      - rabbitmq-diagnostics
+      - ping
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  flash-loan-mcp:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=4001
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4001:4001
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        pip install flask requests web3 sqlalchemy redis\
+      \ pika psycopg2-binary &&\n                        cat > app.py << 'EOF'\nfrom\
+      \ flask import Flask, jsonify\nimport os\nimport time\n\napp = Flask(__name__)\n\
+      port = 4001\n\n@app.route('/health')\ndef health():\n    return jsonify({\n\
+      \        \"status\": \"healthy\",\n        \"service\": \"flash-loan-mcp\",\n\
+      \        \"port\": 4001\n    })\n\n@app.route('/status')\ndef status():\n  \
+      \  return jsonify({\n        \"name\": \"flash-loan-mcp\",\n        \"port\"\
+      : 4001,\n        \"uptime\": time.time(),\n        \"timestamp\": time.strftime(\"\
+      %Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n    print(f'flash-loan-mcp\
+      \ starting on port 4001')\n    app.run(host='0.0.0.0', port=4001)\nEOF\n   \
+      \                     python app.py\n                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4001/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  web3-provider-mcp:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=4002
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4002:4002
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        pip install flask requests web3 sqlalchemy redis\
+      \ pika psycopg2-binary &&\n                        cat > app.py << 'EOF'\nfrom\
+      \ flask import Flask, jsonify\nimport os\nimport time\n\napp = Flask(__name__)\n\
+      port = 4002\n\n@app.route('/health')\ndef health():\n    return jsonify({\n\
+      \        \"status\": \"healthy\",\n        \"service\": \"web3-provider-mcp\"\
+      ,\n        \"port\": 4002\n    })\n\n@app.route('/status')\ndef status():\n\
+      \    return jsonify({\n        \"name\": \"web3-provider-mcp\",\n        \"\
+      port\": 4002,\n        \"uptime\": time.time(),\n        \"timestamp\": time.strftime(\"\
+      %Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n    print(f'web3-provider-mcp\
+      \ starting on port 4002')\n    app.run(host='0.0.0.0', port=4002)\nEOF\n   \
+      \                     python app.py\n                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4002/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  dex-price-server:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=4003
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4003:4003
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        pip install flask requests web3 sqlalchemy redis\
+      \ pika psycopg2-binary &&\n                        cat > app.py << 'EOF'\nfrom\
+      \ flask import Flask, jsonify\nimport os\nimport time\n\napp = Flask(__name__)\n\
+      port = 4003\n\n@app.route('/health')\ndef health():\n    return jsonify({\n\
+      \        \"status\": \"healthy\",\n        \"service\": \"dex-price-server\"\
+      ,\n        \"port\": 4003\n    })\n\n@app.route('/status')\ndef status():\n\
+      \    return jsonify({\n        \"name\": \"dex-price-server\",\n        \"port\"\
+      : 4003,\n        \"uptime\": time.time(),\n        \"timestamp\": time.strftime(\"\
+      %Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n    print(f'dex-price-server\
+      \ starting on port 4003')\n    app.run(host='0.0.0.0', port=4003)\nEOF\n   \
+      \                     python app.py\n                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4003/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  arbitrage-detector-mcp:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=4004
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4004:4004
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        pip install flask requests web3 sqlalchemy redis\
+      \ pika psycopg2-binary &&\n                        cat > app.py << 'EOF'\nfrom\
+      \ flask import Flask, jsonify\nimport os\nimport time\n\napp = Flask(__name__)\n\
+      port = 4004\n\n@app.route('/health')\ndef health():\n    return jsonify({\n\
+      \        \"status\": \"healthy\",\n        \"service\": \"arbitrage-detector-mcp\"\
+      ,\n        \"port\": 4004\n    })\n\n@app.route('/status')\ndef status():\n\
+      \    return jsonify({\n        \"name\": \"arbitrage-detector-mcp\",\n     \
+      \   \"port\": 4004,\n        \"uptime\": time.time(),\n        \"timestamp\"\
+      : time.strftime(\"%Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n\
+      \    print(f'arbitrage-detector-mcp starting on port 4004')\n    app.run(host='0.0.0.0',\
+      \ port=4004)\nEOF\n                        python app.py\n                 \
+      \       "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4004/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  foundry-integration-mcp:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=4005
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4005:4005
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        pip install flask requests web3 sqlalchemy redis\
+      \ pika psycopg2-binary &&\n                        cat > app.py << 'EOF'\nfrom\
+      \ flask import Flask, jsonify\nimport os\nimport time\n\napp = Flask(__name__)\n\
+      port = 4005\n\n@app.route('/health')\ndef health():\n    return jsonify({\n\
+      \        \"status\": \"healthy\",\n        \"service\": \"foundry-integration-mcp\"\
+      ,\n        \"port\": 4005\n    })\n\n@app.route('/status')\ndef status():\n\
+      \    return jsonify({\n        \"name\": \"foundry-integration-mcp\",\n    \
+      \    \"port\": 4005,\n        \"uptime\": time.time(),\n        \"timestamp\"\
+      : time.strftime(\"%Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n\
+      \    print(f'foundry-integration-mcp starting on port 4005')\n    app.run(host='0.0.0.0',\
+      \ port=4005)\nEOF\n                        python app.py\n                 \
+      \       "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4005/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  evm-mcp-server:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=4006
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4006:4006
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        pip install flask requests web3 sqlalchemy redis\
+      \ pika psycopg2-binary &&\n                        cat > app.py << 'EOF'\nfrom\
+      \ flask import Flask, jsonify\nimport os\nimport time\n\napp = Flask(__name__)\n\
+      port = 4006\n\n@app.route('/health')\ndef health():\n    return jsonify({\n\
+      \        \"status\": \"healthy\",\n        \"service\": \"evm-mcp-server\",\n\
+      \        \"port\": 4006\n    })\n\n@app.route('/status')\ndef status():\n  \
+      \  return jsonify({\n        \"name\": \"evm-mcp-server\",\n        \"port\"\
+      : 4006,\n        \"uptime\": time.time(),\n        \"timestamp\": time.strftime(\"\
+      %Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n    print(f'evm-mcp-server\
+      \ starting on port 4006')\n    app.run(host='0.0.0.0', port=4006)\nEOF\n   \
+      \                     python app.py\n                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4006/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  matic-mcp-server:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=4007
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4007:4007
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        pip install flask requests web3 sqlalchemy redis\
+      \ pika psycopg2-binary &&\n                        cat > app.py << 'EOF'\nfrom\
+      \ flask import Flask, jsonify\nimport os\nimport time\n\napp = Flask(__name__)\n\
+      port = 4007\n\n@app.route('/health')\ndef health():\n    return jsonify({\n\
+      \        \"status\": \"healthy\",\n        \"service\": \"matic-mcp-server\"\
+      ,\n        \"port\": 4007\n    })\n\n@app.route('/status')\ndef status():\n\
+      \    return jsonify({\n        \"name\": \"matic-mcp-server\",\n        \"port\"\
+      : 4007,\n        \"uptime\": time.time(),\n        \"timestamp\": time.strftime(\"\
+      %Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n    print(f'matic-mcp-server\
+      \ starting on port 4007')\n    app.run(host='0.0.0.0', port=4007)\nEOF\n   \
+      \                     python app.py\n                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4007/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  github-mcp-server:
+    image: node:18-alpine
+    working_dir: /app
+    environment:
+    - NODE_ENV=production
+    - PORT=4008
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4008:4008
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        npm init -y &&\n                        npm install\
+      \ express @modelcontextprotocol/sdk github-api &&\n                        cat\
+      \ > server.js << 'EOF'\nconst express = require('express');\nconst app = express();\n\
+      const port = 4008;\n\napp.use(express.json());\n\napp.get('/health', (req, res)\
+      \ => {\n    res.json({ status: 'healthy', service: 'github-mcp-server', port:\
+      \ 4008 });\n});\n\napp.get('/status', (req, res) => {\n    res.json({ \n   \
+      \     name: 'github-mcp-server',\n        port: 4008,\n        uptime: process.uptime(),\n\
+      \        timestamp: new Date().toISOString()\n    });\n});\n\napp.listen(port,\
+      \ '0.0.0.0', () => {\n    console.log('github-mcp-server running on port 4008');\n\
+      });\nEOF\n                        node server.js\n                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget -q --spider http://localhost:4008/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  context7-mcp-server:
+    image: node:18-alpine
+    working_dir: /app
+    environment:
+    - NODE_ENV=production
+    - PORT=4009
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4009:4009
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        npm init -y &&\n                        npm install\
+      \ express @modelcontextprotocol/sdk github-api &&\n                        cat\
+      \ > server.js << 'EOF'\nconst express = require('express');\nconst app = express();\n\
+      const port = 4009;\n\napp.use(express.json());\n\napp.get('/health', (req, res)\
+      \ => {\n    res.json({ status: 'healthy', service: 'context7-mcp-server', port:\
+      \ 4009 });\n});\n\napp.get('/status', (req, res) => {\n    res.json({ \n   \
+      \     name: 'context7-mcp-server',\n        port: 4009,\n        uptime: process.uptime(),\n\
+      \        timestamp: new Date().toISOString()\n    });\n});\n\napp.listen(port,\
+      \ '0.0.0.0', () => {\n    console.log('context7-mcp-server running on port 4009');\n\
+      });\nEOF\n                        node server.js\n                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget -q --spider http://localhost:4009/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  enhanced-copilot-mcp-server:
+    image: node:18-alpine
+    working_dir: /app
+    environment:
+    - NODE_ENV=production
+    - PORT=4010
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4010:4010
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        npm init -y &&\n                        npm install\
+      \ express @modelcontextprotocol/sdk github-api &&\n                        cat\
+      \ > server.js << 'EOF'\nconst express = require('express');\nconst app = express();\n\
+      const port = 4010;\n\napp.use(express.json());\n\napp.get('/health', (req, res)\
+      \ => {\n    res.json({ status: 'healthy', service: 'enhanced-copilot-mcp-server',\
+      \ port: 4010 });\n});\n\napp.get('/status', (req, res) => {\n    res.json({\
+      \ \n        name: 'enhanced-copilot-mcp-server',\n        port: 4010,\n    \
+      \    uptime: process.uptime(),\n        timestamp: new Date().toISOString()\n\
+      \    });\n});\n\napp.listen(port, '0.0.0.0', () => {\n    console.log('enhanced-copilot-mcp-server\
+      \ running on port 4010');\n});\nEOF\n                        node server.js\n\
+      \                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget -q --spider http://localhost:4010/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  price-oracle-mcp-server:
+    image: node:18-alpine
+    working_dir: /app
+    environment:
+    - NODE_ENV=production
+    - PORT=4011
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4011:4011
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        npm init -y &&\n                        npm install\
+      \ express @modelcontextprotocol/sdk github-api &&\n                        cat\
+      \ > server.js << 'EOF'\nconst express = require('express');\nconst app = express();\n\
+      const port = 4011;\n\napp.use(express.json());\n\napp.get('/health', (req, res)\
+      \ => {\n    res.json({ status: 'healthy', service: 'price-oracle-mcp-server',\
+      \ port: 4011 });\n});\n\napp.get('/status', (req, res) => {\n    res.json({\
+      \ \n        name: 'price-oracle-mcp-server',\n        port: 4011,\n        uptime:\
+      \ process.uptime(),\n        timestamp: new Date().toISOString()\n    });\n\
+      });\n\napp.listen(port, '0.0.0.0', () => {\n    console.log('price-oracle-mcp-server\
+      \ running on port 4011');\n});\nEOF\n                        node server.js\n\
+      \                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget -q --spider http://localhost:4011/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  dex-services-mcp:
+    image: node:18-alpine
+    working_dir: /app
+    environment:
+    - NODE_ENV=production
+    - PORT=4012
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4012:4012
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        npm init -y &&\n                        npm install\
+      \ express @modelcontextprotocol/sdk github-api &&\n                        cat\
+      \ > server.js << 'EOF'\nconst express = require('express');\nconst app = express();\n\
+      const port = 4012;\n\napp.use(express.json());\n\napp.get('/health', (req, res)\
+      \ => {\n    res.json({ status: 'healthy', service: 'dex-services-mcp', port:\
+      \ 4012 });\n});\n\napp.get('/status', (req, res) => {\n    res.json({ \n   \
+      \     name: 'dex-services-mcp',\n        port: 4012,\n        uptime: process.uptime(),\n\
+      \        timestamp: new Date().toISOString()\n    });\n});\n\napp.listen(port,\
+      \ '0.0.0.0', () => {\n    console.log('dex-services-mcp running on port 4012');\n\
+      });\nEOF\n                        node server.js\n                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget -q --spider http://localhost:4012/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  notification-service:
+    image: node:18-alpine
+    working_dir: /app
+    environment:
+    - NODE_ENV=production
+    - PORT=4013
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4013:4013
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        npm init -y &&\n                        npm install\
+      \ express @modelcontextprotocol/sdk github-api &&\n                        cat\
+      \ > server.js << 'EOF'\nconst express = require('express');\nconst app = express();\n\
+      const port = 4013;\n\napp.use(express.json());\n\napp.get('/health', (req, res)\
+      \ => {\n    res.json({ status: 'healthy', service: 'notification-service', port:\
+      \ 4013 });\n});\n\napp.get('/status', (req, res) => {\n    res.json({ \n   \
+      \     name: 'notification-service',\n        port: 4013,\n        uptime: process.uptime(),\n\
+      \        timestamp: new Date().toISOString()\n    });\n});\n\napp.listen(port,\
+      \ '0.0.0.0', () => {\n    console.log('notification-service running on port\
+      \ 4013');\n});\nEOF\n                        node server.js\n              \
+      \          "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget -q --spider http://localhost:4013/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  audit-logger:
+    image: node:18-alpine
+    working_dir: /app
+    environment:
+    - NODE_ENV=production
+    - PORT=4014
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4014:4014
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        npm init -y &&\n                        npm install\
+      \ express @modelcontextprotocol/sdk github-api &&\n                        cat\
+      \ > server.js << 'EOF'\nconst express = require('express');\nconst app = express();\n\
+      const port = 4014;\n\napp.use(express.json());\n\napp.get('/health', (req, res)\
+      \ => {\n    res.json({ status: 'healthy', service: 'audit-logger', port: 4014\
+      \ });\n});\n\napp.get('/status', (req, res) => {\n    res.json({ \n        name:\
+      \ 'audit-logger',\n        port: 4014,\n        uptime: process.uptime(),\n\
+      \        timestamp: new Date().toISOString()\n    });\n});\n\napp.listen(port,\
+      \ '0.0.0.0', () => {\n    console.log('audit-logger running on port 4014');\n\
+      });\nEOF\n                        node server.js\n                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget -q --spider http://localhost:4014/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  liquidity-monitor:
+    image: node:18-alpine
+    working_dir: /app
+    environment:
+    - NODE_ENV=production
+    - PORT=4015
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4015:4015
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        npm init -y &&\n                        npm install\
+      \ express @modelcontextprotocol/sdk github-api &&\n                        cat\
+      \ > server.js << 'EOF'\nconst express = require('express');\nconst app = express();\n\
+      const port = 4015;\n\napp.use(express.json());\n\napp.get('/health', (req, res)\
+      \ => {\n    res.json({ status: 'healthy', service: 'liquidity-monitor', port:\
+      \ 4015 });\n});\n\napp.get('/status', (req, res) => {\n    res.json({ \n   \
+      \     name: 'liquidity-monitor',\n        port: 4015,\n        uptime: process.uptime(),\n\
+      \        timestamp: new Date().toISOString()\n    });\n});\n\napp.listen(port,\
+      \ '0.0.0.0', () => {\n    console.log('liquidity-monitor running on port 4015');\n\
+      });\nEOF\n                        node server.js\n                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget -q --spider http://localhost:4015/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  market-data-feed:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=4016
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4016:4016
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        pip install flask requests web3 sqlalchemy redis\
+      \ pika psycopg2-binary &&\n                        cat > app.py << 'EOF'\nfrom\
+      \ flask import Flask, jsonify\nimport os\nimport time\n\napp = Flask(__name__)\n\
+      port = 4016\n\n@app.route('/health')\ndef health():\n    return jsonify({\n\
+      \        \"status\": \"healthy\",\n        \"service\": \"market-data-feed\"\
+      ,\n        \"port\": 4016\n    })\n\n@app.route('/status')\ndef status():\n\
+      \    return jsonify({\n        \"name\": \"market-data-feed\",\n        \"port\"\
+      : 4016,\n        \"uptime\": time.time(),\n        \"timestamp\": time.strftime(\"\
+      %Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n    print(f'market-data-feed\
+      \ starting on port 4016')\n    app.run(host='0.0.0.0', port=4016)\nEOF\n   \
+      \                     python app.py\n                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4016/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  risk-manager:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=4017
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4017:4017
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        pip install flask requests web3 sqlalchemy redis\
+      \ pika psycopg2-binary &&\n                        cat > app.py << 'EOF'\nfrom\
+      \ flask import Flask, jsonify\nimport os\nimport time\n\napp = Flask(__name__)\n\
+      port = 4017\n\n@app.route('/health')\ndef health():\n    return jsonify({\n\
+      \        \"status\": \"healthy\",\n        \"service\": \"risk-manager\",\n\
+      \        \"port\": 4017\n    })\n\n@app.route('/status')\ndef status():\n  \
+      \  return jsonify({\n        \"name\": \"risk-manager\",\n        \"port\":\
+      \ 4017,\n        \"uptime\": time.time(),\n        \"timestamp\": time.strftime(\"\
+      %Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n    print(f'risk-manager\
+      \ starting on port 4017')\n    app.run(host='0.0.0.0', port=4017)\nEOF\n   \
+      \                     python app.py\n                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4017/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  performance-monitor:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=4018
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4018:4018
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        pip install flask requests web3 sqlalchemy redis\
+      \ pika psycopg2-binary &&\n                        cat > app.py << 'EOF'\nfrom\
+      \ flask import Flask, jsonify\nimport os\nimport time\n\napp = Flask(__name__)\n\
+      port = 4018\n\n@app.route('/health')\ndef health():\n    return jsonify({\n\
+      \        \"status\": \"healthy\",\n        \"service\": \"performance-monitor\"\
+      ,\n        \"port\": 4018\n    })\n\n@app.route('/status')\ndef status():\n\
+      \    return jsonify({\n        \"name\": \"performance-monitor\",\n        \"\
+      port\": 4018,\n        \"uptime\": time.time(),\n        \"timestamp\": time.strftime(\"\
+      %Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n    print(f'performance-monitor\
+      \ starting on port 4018')\n    app.run(host='0.0.0.0', port=4018)\nEOF\n   \
+      \                     python app.py\n                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4018/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  analytics-engine:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=4019
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4019:4019
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        pip install flask requests web3 sqlalchemy redis\
+      \ pika psycopg2-binary &&\n                        cat > app.py << 'EOF'\nfrom\
+      \ flask import Flask, jsonify\nimport os\nimport time\n\napp = Flask(__name__)\n\
+      port = 4019\n\n@app.route('/health')\ndef health():\n    return jsonify({\n\
+      \        \"status\": \"healthy\",\n        \"service\": \"analytics-engine\"\
+      ,\n        \"port\": 4019\n    })\n\n@app.route('/status')\ndef status():\n\
+      \    return jsonify({\n        \"name\": \"analytics-engine\",\n        \"port\"\
+      : 4019,\n        \"uptime\": time.time(),\n        \"timestamp\": time.strftime(\"\
+      %Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n    print(f'analytics-engine\
+      \ starting on port 4019')\n    app.run(host='0.0.0.0', port=4019)\nEOF\n   \
+      \                     python app.py\n                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4019/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  code-indexer:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=4020
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4020:4020
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        pip install flask requests web3 sqlalchemy redis\
+      \ pika psycopg2-binary &&\n                        cat > app.py << 'EOF'\nfrom\
+      \ flask import Flask, jsonify\nimport os\nimport time\n\napp = Flask(__name__)\n\
+      port = 4020\n\n@app.route('/health')\ndef health():\n    return jsonify({\n\
+      \        \"status\": \"healthy\",\n        \"service\": \"code-indexer\",\n\
+      \        \"port\": 4020\n    })\n\n@app.route('/status')\ndef status():\n  \
+      \  return jsonify({\n        \"name\": \"code-indexer\",\n        \"port\":\
+      \ 4020,\n        \"uptime\": time.time(),\n        \"timestamp\": time.strftime(\"\
+      %Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n    print(f'code-indexer\
+      \ starting on port 4020')\n    app.run(host='0.0.0.0', port=4020)\nEOF\n   \
+      \                     python app.py\n                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4020/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  health-checker:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=4021
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 4021:4021
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                        pip install flask requests web3 sqlalchemy redis\
+      \ pika psycopg2-binary &&\n                        cat > app.py << 'EOF'\nfrom\
+      \ flask import Flask, jsonify\nimport os\nimport time\n\napp = Flask(__name__)\n\
+      port = 4021\n\n@app.route('/health')\ndef health():\n    return jsonify({\n\
+      \        \"status\": \"healthy\",\n        \"service\": \"health-checker\",\n\
+      \        \"port\": 4021\n    })\n\n@app.route('/status')\ndef status():\n  \
+      \  return jsonify({\n        \"name\": \"health-checker\",\n        \"port\"\
+      : 4021,\n        \"uptime\": time.time(),\n        \"timestamp\": time.strftime(\"\
+      %Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n    print(f'health-checker\
+      \ starting on port 4021')\n    app.run(host='0.0.0.0', port=4021)\nEOF\n   \
+      \                     python app.py\n                        "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4021/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  coordinator-agent:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=5001
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 5001:5001
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                    pip install flask requests langchain openai anthropic\
+      \ &&\n                    cat > agent.py << 'EOF'\nfrom flask import Flask,\
+      \ jsonify\nimport os\nimport time\n\napp = Flask(__name__)\nport = 5001\n\n\
+      @app.route('/health')\ndef health():\n    return jsonify({\n        \"status\"\
+      : \"healthy\",\n        \"agent\": \"coordinator-agent\",\n        \"port\"\
+      : 5001\n    })\n\n@app.route('/status')\ndef status():\n    return jsonify({\n\
+      \        \"name\": \"coordinator-agent\",\n        \"type\": \"ai_agent\",\n\
+      \        \"port\": 5001,\n        \"uptime\": time.time(),\n        \"timestamp\"\
+      : time.strftime(\"%Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n\
+      \    print(f'coordinator-agent starting on port 5001')\n    app.run(host='0.0.0.0',\
+      \ port=5001)\nEOF\n                    python agent.py\n                    "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:5001/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  arbitrage-agent:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=5002
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 5002:5002
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                    pip install flask requests langchain openai anthropic\
+      \ &&\n                    cat > agent.py << 'EOF'\nfrom flask import Flask,\
+      \ jsonify\nimport os\nimport time\n\napp = Flask(__name__)\nport = 5002\n\n\
+      @app.route('/health')\ndef health():\n    return jsonify({\n        \"status\"\
+      : \"healthy\",\n        \"agent\": \"arbitrage-agent\",\n        \"port\": 5002\n\
+      \    })\n\n@app.route('/status')\ndef status():\n    return jsonify({\n    \
+      \    \"name\": \"arbitrage-agent\",\n        \"type\": \"ai_agent\",\n     \
+      \   \"port\": 5002,\n        \"uptime\": time.time(),\n        \"timestamp\"\
+      : time.strftime(\"%Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n\
+      \    print(f'arbitrage-agent starting on port 5002')\n    app.run(host='0.0.0.0',\
+      \ port=5002)\nEOF\n                    python agent.py\n                    "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:5002/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  monitoring-agent:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=5003
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 5003:5003
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                    pip install flask requests langchain openai anthropic\
+      \ &&\n                    cat > agent.py << 'EOF'\nfrom flask import Flask,\
+      \ jsonify\nimport os\nimport time\n\napp = Flask(__name__)\nport = 5003\n\n\
+      @app.route('/health')\ndef health():\n    return jsonify({\n        \"status\"\
+      : \"healthy\",\n        \"agent\": \"monitoring-agent\",\n        \"port\":\
+      \ 5003\n    })\n\n@app.route('/status')\ndef status():\n    return jsonify({\n\
+      \        \"name\": \"monitoring-agent\",\n        \"type\": \"ai_agent\",\n\
+      \        \"port\": 5003,\n        \"uptime\": time.time(),\n        \"timestamp\"\
+      : time.strftime(\"%Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n\
+      \    print(f'monitoring-agent starting on port 5003')\n    app.run(host='0.0.0.0',\
+      \ port=5003)\nEOF\n                    python agent.py\n                    "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:5003/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  builder-agent:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=5004
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 5004:5004
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                    pip install flask requests langchain openai anthropic\
+      \ &&\n                    cat > agent.py << 'EOF'\nfrom flask import Flask,\
+      \ jsonify\nimport os\nimport time\n\napp = Flask(__name__)\nport = 5004\n\n\
+      @app.route('/health')\ndef health():\n    return jsonify({\n        \"status\"\
+      : \"healthy\",\n        \"agent\": \"builder-agent\",\n        \"port\": 5004\n\
+      \    })\n\n@app.route('/status')\ndef status():\n    return jsonify({\n    \
+      \    \"name\": \"builder-agent\",\n        \"type\": \"ai_agent\",\n       \
+      \ \"port\": 5004,\n        \"uptime\": time.time(),\n        \"timestamp\":\
+      \ time.strftime(\"%Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n\
+      \    print(f'builder-agent starting on port 5004')\n    app.run(host='0.0.0.0',\
+      \ port=5004)\nEOF\n                    python agent.py\n                    "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:5004/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  aave-executor:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=5005
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 5005:5005
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                    pip install flask requests langchain openai anthropic\
+      \ &&\n                    cat > agent.py << 'EOF'\nfrom flask import Flask,\
+      \ jsonify\nimport os\nimport time\n\napp = Flask(__name__)\nport = 5005\n\n\
+      @app.route('/health')\ndef health():\n    return jsonify({\n        \"status\"\
+      : \"healthy\",\n        \"agent\": \"aave-executor\",\n        \"port\": 5005\n\
+      \    })\n\n@app.route('/status')\ndef status():\n    return jsonify({\n    \
+      \    \"name\": \"aave-executor\",\n        \"type\": \"ai_agent\",\n       \
+      \ \"port\": 5005,\n        \"uptime\": time.time(),\n        \"timestamp\":\
+      \ time.strftime(\"%Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n\
+      \    print(f'aave-executor starting on port 5005')\n    app.run(host='0.0.0.0',\
+      \ port=5005)\nEOF\n                    python agent.py\n                    "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:5005/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  contract-executor:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+    - PORT=5006
+    - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    - POSTGRES_URL=postgresql://langchain:langchain123@langchain-postgres:5432/langchain
+    - REDIS_URL=redis://langchain-redis:6379
+    - RABBITMQ_URL=amqp://langchain:langchain123@langchain-rabbitmq:5672
+    ports:
+    - 5006:5006
+    depends_on:
+    - langchain-postgres
+    - langchain-redis
+    - langchain-rabbitmq
+    command:
+    - sh
+    - -c
+    - "\n                    pip install flask requests langchain openai anthropic\
+      \ &&\n                    cat > agent.py << 'EOF'\nfrom flask import Flask,\
+      \ jsonify\nimport os\nimport time\n\napp = Flask(__name__)\nport = 5006\n\n\
+      @app.route('/health')\ndef health():\n    return jsonify({\n        \"status\"\
+      : \"healthy\",\n        \"agent\": \"contract-executor\",\n        \"port\"\
+      : 5006\n    })\n\n@app.route('/status')\ndef status():\n    return jsonify({\n\
+      \        \"name\": \"contract-executor\",\n        \"type\": \"ai_agent\",\n\
+      \        \"port\": 5006,\n        \"uptime\": time.time(),\n        \"timestamp\"\
+      : time.strftime(\"%Y-%m-%d %H:%M:%S\")\n    })\n\nif __name__ == '__main__':\n\
+      \    print(f'contract-executor starting on port 5006')\n    app.run(host='0.0.0.0',\
+      \ port=5006)\nEOF\n                    python agent.py\n                    "
+    restart: unless-stopped
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:5006/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+volumes:
+  postgres_data: {}
+  redis_data: {}
+  rabbitmq_data: {}

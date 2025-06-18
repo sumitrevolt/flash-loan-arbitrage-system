@@ -1,0 +1,3146 @@
+# Auto-generated Docker Compose file for Complete MCP System
+# Generated with all 81 MCP servers and 8 AI agents
+# Use: docker-compose -f docker/docker-compose-complete.yml up -d
+
+networks:
+  coordination_network:
+    driver: bridge
+volumes:
+  postgres_data: null
+  redis_data: null
+  rabbitmq_data: null
+  grafana_data: null
+  prometheus_data: null
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: coordination_redis
+    ports:
+    - 6379:6379
+    volumes:
+    - redis_data:/data
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - redis-cli
+      - ping
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: coordination_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: coordination
+      RABBITMQ_DEFAULT_PASS: coordination_pass
+      RABBITMQ_DEFAULT_VHOST: coordination
+    ports:
+    - 5672:5672
+    - 15672:15672
+    volumes:
+    - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - rabbitmqctl
+      - status
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+  postgres:
+    image: postgres:15-alpine
+    container_name: coordination_postgres
+    environment:
+      POSTGRES_DB: coordination
+      POSTGRES_USER: coordination
+      POSTGRES_PASSWORD: coordination_pass
+    ports:
+    - 5432:5432
+    volumes:
+    - postgres_data:/var/lib/postgresql/data
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -d coordination -U coordination
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: coordination_prometheus
+    ports:
+    - 9090:9090
+    volumes:
+    - prometheus_data:/prometheus
+    networks:
+    - coordination_network
+    restart: unless-stopped
+  grafana:
+    image: grafana/grafana:latest
+    container_name: coordination_grafana
+    ports:
+    - 3000:3000
+    volumes:
+    - grafana_data:/var/lib/grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    networks:
+    - coordination_network
+    restart: unless-stopped
+  mcp_mcp_server_trainer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_server_trainer
+    environment:
+      SERVER_TYPE: mcp_server_trainer
+      PORT: '8047'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8047:8047
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8047/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_enhanced_mcp_server_manager:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_enhanced_mcp_server_manager
+    environment:
+      SERVER_TYPE: enhanced_mcp_server_manager
+      PORT: '8049'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8049:8049
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8049/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_aave_flash_loan_mcp_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_aave_flash_loan_mcp_server
+    environment:
+      SERVER_TYPE: aave_flash_loan_mcp_server
+      PORT: '8053'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8053:8053
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8053/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_clean_context7_mcp_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_clean_context7_mcp_server
+    environment:
+      SERVER_TYPE: clean_context7_mcp_server
+      PORT: '8057'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8057:8057
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8057/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_clean_matic_mcp_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_clean_matic_mcp_server
+    environment:
+      SERVER_TYPE: clean_matic_mcp_server
+      PORT: '8058'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8058:8058
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8058/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_copilot_mcp_mcp_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_copilot_mcp_mcp_server
+    environment:
+      SERVER_TYPE: copilot_mcp_mcp_server
+      PORT: '8059'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8059:8059
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8059/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_dex_aggregator_mcp_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_dex_aggregator_mcp_server
+    environment:
+      SERVER_TYPE: dex_aggregator_mcp_server
+      PORT: '8062'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8062:8062
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8062/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_evm_mcp_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_evm_mcp_server
+    environment:
+      SERVER_TYPE: evm_mcp_server
+      PORT: '8065'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8065:8065
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8065/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_fix_all_local_mcp_servers:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_fix_all_local_mcp_servers
+    environment:
+      SERVER_TYPE: fix_all_local_mcp_servers
+      PORT: '8066'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8066:8066
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8066/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_flash_loan_mcp_mcp_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_flash_loan_mcp_mcp_server
+    environment:
+      SERVER_TYPE: flash_loan_mcp_mcp_server
+      PORT: '8067'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8067:8067
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8067/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_foundry_mcp_mcp_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_foundry_mcp_mcp_server
+    environment:
+      SERVER_TYPE: foundry_mcp_mcp_server
+      PORT: '8068'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8068:8068
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8068/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_identify_mcp_servers:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_identify_mcp_servers
+    environment:
+      SERVER_TYPE: identify_mcp_servers
+      PORT: '8069'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8069:8069
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8069/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_api_client_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_api_client_server
+    environment:
+      SERVER_TYPE: mcp_api_client_server
+      PORT: '8072'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8072:8072
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8072/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_arbitrage_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_arbitrage_server
+    environment:
+      SERVER_TYPE: mcp_arbitrage_server
+      PORT: '8073'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8073:8073
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8073/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_auth_manager_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_auth_manager_server
+    environment:
+      SERVER_TYPE: mcp_auth_manager_server
+      PORT: '8074'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8074:8074
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8074/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_blockchain_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_blockchain_server
+    environment:
+      SERVER_TYPE: mcp_blockchain_server
+      PORT: '8075'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8075:8075
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8075/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_cache_manager_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_cache_manager_server
+    environment:
+      SERVER_TYPE: mcp_cache_manager_server
+      PORT: '8076'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8076:8076
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8076/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_coordinator_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_coordinator_server
+    environment:
+      SERVER_TYPE: mcp_coordinator_server
+      PORT: '8077'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8077:8077
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8077/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_database_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_database_server
+    environment:
+      SERVER_TYPE: mcp_database_server
+      PORT: '8079'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8079:8079
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8079/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_data_analyzer_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_data_analyzer_server
+    environment:
+      SERVER_TYPE: mcp_data_analyzer_server
+      PORT: '8080'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8080:8080
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8080/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_defi_analyzer_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_defi_analyzer_server
+    environment:
+      SERVER_TYPE: mcp_defi_analyzer_server
+      PORT: '8081'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8081:8081
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8081/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_filesystem_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_filesystem_server
+    environment:
+      SERVER_TYPE: mcp_filesystem_server
+      PORT: '8083'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8083:8083
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8083/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_file_processor_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_file_processor_server
+    environment:
+      SERVER_TYPE: mcp_file_processor_server
+      PORT: '8084'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8084:8084
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8084/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_flash_loan_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_flash_loan_server
+    environment:
+      SERVER_TYPE: mcp_flash_loan_server
+      PORT: '8085'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8085:8085
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8085/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_liquidity_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_liquidity_server
+    environment:
+      SERVER_TYPE: mcp_liquidity_server
+      PORT: '8087'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8087:8087
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8087/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_monitoring_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_monitoring_server
+    environment:
+      SERVER_TYPE: mcp_monitoring_server
+      PORT: '8088'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8088:8088
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8088/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_notification_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_notification_server
+    environment:
+      SERVER_TYPE: mcp_notification_server
+      PORT: '8089'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8089:8089
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8089/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_portfolio_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_portfolio_server
+    environment:
+      SERVER_TYPE: mcp_portfolio_server
+      PORT: '8090'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8090:8090
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8090/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_price_feed_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_price_feed_server
+    environment:
+      SERVER_TYPE: mcp_price_feed_server
+      PORT: '8091'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8091:8091
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8091/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_risk_manager_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_risk_manager_server
+    environment:
+      SERVER_TYPE: mcp_risk_manager_server
+      PORT: '8094'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8094:8094
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8094/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_security_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_security_server
+    environment:
+      SERVER_TYPE: mcp_security_server
+      PORT: '8095'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8095:8095
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8095/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_server
+    environment:
+      SERVER_TYPE: mcp_server
+      PORT: '8096'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8096:8096
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8096/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_server_base:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_server_base
+    environment:
+      SERVER_TYPE: mcp_server_base
+      PORT: '8097'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8097:8097
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8097/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_server_manager:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_server_manager
+    environment:
+      SERVER_TYPE: mcp_server_manager
+      PORT: '8098'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8098:8098
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8098/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_server_template:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_server_template
+    environment:
+      SERVER_TYPE: mcp_server_template
+      PORT: '8099'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8099:8099
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8099/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_task_queue_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_task_queue_server
+    environment:
+      SERVER_TYPE: mcp_task_queue_server
+      PORT: '8102'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8102:8102
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8102/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_web_scraper_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_web_scraper_server
+    environment:
+      SERVER_TYPE: mcp_web_scraper_server
+      PORT: '8103'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8103:8103
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8103/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_minimal-mcp-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_minimal-mcp-server
+    environment:
+      SERVER_TYPE: minimal-mcp-server
+      PORT: '8104'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8104:8104
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8104/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_monitoring_mcp_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_monitoring_mcp_server
+    environment:
+      SERVER_TYPE: monitoring_mcp_server
+      PORT: '8105'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8105:8105
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8105/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_organize_mcp_servers:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_organize_mcp_servers
+    environment:
+      SERVER_TYPE: organize_mcp_servers
+      PORT: '8107'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8107:8107
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8107/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_profit_optimizer_mcp_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_profit_optimizer_mcp_server
+    environment:
+      SERVER_TYPE: profit_optimizer_mcp_server
+      PORT: '8108'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8108:8108
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8108/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_real_time_price_mcp_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_real_time_price_mcp_server
+    environment:
+      SERVER_TYPE: real_time_price_mcp_server
+      PORT: '8110'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8110:8110
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8110/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_risk_management_mcp_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_risk_management_mcp_server
+    environment:
+      SERVER_TYPE: risk_management_mcp_server
+      PORT: '8111'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8111:8111
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8111/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_simple_mcp_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_simple_mcp_server
+    environment:
+      SERVER_TYPE: simple_mcp_server
+      PORT: '8112'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8112:8112
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8112/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_start_mcp_servers:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_start_mcp_servers
+    environment:
+      SERVER_TYPE: start_mcp_servers
+      PORT: '8114'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8114:8114
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8114/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_training_mcp_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_training_mcp_server
+    environment:
+      SERVER_TYPE: training_mcp_server
+      PORT: '8115'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8115:8115
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8115/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_working_mcp_server_template:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_working_mcp_server_template
+    environment:
+      SERVER_TYPE: working_mcp_server_template
+      PORT: '8124'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8124:8124
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8124/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_complete_langchain_mcp_integration:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_complete_langchain_mcp_integration
+    environment:
+      SERVER_TYPE: complete_langchain_mcp_integration
+      PORT: '8048'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8048:8048
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8048/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_langchain_mcp_orchestrator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_langchain_mcp_orchestrator
+    environment:
+      SERVER_TYPE: langchain_mcp_orchestrator
+      PORT: '8050'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8050:8050
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8050/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_status_check:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_status_check
+    environment:
+      SERVER_TYPE: mcp_status_check
+      PORT: '8051'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8051:8051
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8051/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_simple_mcp_orchestrator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_simple_mcp_orchestrator
+    environment:
+      SERVER_TYPE: simple_mcp_orchestrator
+      PORT: '8052'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8052:8052
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8052/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_autodiscover_mcp_agents:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_autodiscover_mcp_agents
+    environment:
+      SERVER_TYPE: autodiscover_mcp_agents
+      PORT: '8054'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8054:8054
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8054/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_check-mcp-status:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_check-mcp-status
+    environment:
+      SERVER_TYPE: check-mcp-status
+      PORT: '8055'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8055:8055
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8055/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_check_mcp_status:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_check_mcp_status
+    environment:
+      SERVER_TYPE: check_mcp_status
+      PORT: '8056'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8056:8056
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8056/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_create_final_unified_mcp_manager:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_create_final_unified_mcp_manager
+    environment:
+      SERVER_TYPE: create_final_unified_mcp_manager
+      PORT: '8060'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8060:8060
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8060/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_dashboard_enhanced_mcp_dashboard_with_chat:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_dashboard_enhanced_mcp_dashboard_with_chat
+    environment:
+      SERVER_TYPE: dashboard_enhanced_mcp_dashboard_with_chat
+      PORT: '8061'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8061:8061
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8061/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_discord_mcp_bot:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_discord_mcp_bot
+    environment:
+      SERVER_TYPE: discord_mcp_bot
+      PORT: '8063'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8063:8063
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8063/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_enhanced_mcp_dashboard_with_chat:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_enhanced_mcp_dashboard_with_chat
+    environment:
+      SERVER_TYPE: enhanced_mcp_dashboard_with_chat
+      PORT: '8064'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8064:8064
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8064/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp-health-check:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp-health-check
+    environment:
+      SERVER_TYPE: mcp-health-check
+      PORT: '8070'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8070:8070
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8070/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp-stability-report:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp-stability-report
+    environment:
+      SERVER_TYPE: mcp-stability-report
+      PORT: '8071'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8071:8071
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8071/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_dashboard:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_dashboard
+    environment:
+      SERVER_TYPE: mcp_dashboard
+      PORT: '8078'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8078:8078
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8078/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_enhanced_coordinator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_enhanced_coordinator
+    environment:
+      SERVER_TYPE: mcp_enhanced_coordinator
+      PORT: '8082'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8082:8082
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8082/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_integration_bridge:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_integration_bridge
+    environment:
+      SERVER_TYPE: mcp_integration_bridge
+      PORT: '8086'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8086:8086
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8086/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_project_organizer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_project_organizer
+    environment:
+      SERVER_TYPE: mcp_project_organizer
+      PORT: '8092'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8092:8092
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8092/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_project_organizer_fixed:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_project_organizer_fixed
+    environment:
+      SERVER_TYPE: mcp_project_organizer_fixed
+      PORT: '8093'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8093:8093
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8093/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_shared_utilities:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_shared_utilities
+    environment:
+      SERVER_TYPE: mcp_shared_utilities
+      PORT: '8100'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8100:8100
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8100/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_simple_startup:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_simple_startup
+    environment:
+      SERVER_TYPE: mcp_simple_startup
+      PORT: '8101'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8101:8101
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8101/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_online_mcp_coordinator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_online_mcp_coordinator
+    environment:
+      SERVER_TYPE: online_mcp_coordinator
+      PORT: '8106'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8106:8106
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8106/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_quick_mcp_check:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_quick_mcp_check
+    environment:
+      SERVER_TYPE: quick_mcp_check
+      PORT: '8109'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8109:8109
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8109/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_simplified_mcp_coordinator_fixed:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_simplified_mcp_coordinator_fixed
+    environment:
+      SERVER_TYPE: simplified_mcp_coordinator_fixed
+      PORT: '8113'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8113:8113
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8113/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_unified_mcp_coordinator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_unified_mcp_coordinator
+    environment:
+      SERVER_TYPE: unified_mcp_coordinator
+      PORT: '8116'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8116:8116
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8116/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_unified_mcp_coordinator_20250617_143120:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_unified_mcp_coordinator_20250617_143120
+    environment:
+      SERVER_TYPE: unified_mcp_coordinator_20250617_143120
+      PORT: '8117'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8117:8117
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8117/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_unified_mcp_integration_manager:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_unified_mcp_integration_manager
+    environment:
+      SERVER_TYPE: unified_mcp_integration_manager
+      PORT: '8118'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8118:8118
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8118/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_unified_mcp_manager:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_unified_mcp_manager
+    environment:
+      SERVER_TYPE: unified_mcp_manager
+      PORT: '8119'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8119:8119
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8119/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_unified_mcp_orchestration_manager:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_unified_mcp_orchestration_manager
+    environment:
+      SERVER_TYPE: unified_mcp_orchestration_manager
+      PORT: '8120'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8120:8120
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8120/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_verify_mcp_organization:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_verify_mcp_organization
+    environment:
+      SERVER_TYPE: verify_mcp_organization
+      PORT: '8121'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8121:8121
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8121/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_verify_mcp_system:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_verify_mcp_system
+    environment:
+      SERVER_TYPE: verify_mcp_system
+      PORT: '8122'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8122:8122
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8122/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_working_flash_loan_mcp:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_working_flash_loan_mcp
+    environment:
+      SERVER_TYPE: working_flash_loan_mcp
+      PORT: '8123'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8123:8123
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8123/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_connection_test:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_connection_test
+    environment:
+      SERVER_TYPE: mcp_connection_test
+      PORT: '8125'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8125:8125
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8125/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_dependency_test:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_dependency_test
+    environment:
+      SERVER_TYPE: mcp_dependency_test
+      PORT: '8126'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8126:8126
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8126/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  mcp_mcp_training_coordinator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_mcp_training_coordinator
+    environment:
+      SERVER_TYPE: mcp_training_coordinator
+      PORT: '8127'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+    ports:
+    - 8127:8127
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8127/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  ai_agent_flash_loan_optimizer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_flash_loan_optimizer
+    environment:
+      AGENT_TYPE: flash_loan_optimizer
+      AGENT_NAME: flash_loan_optimizer
+      PORT: '9001'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+    ports:
+    - 9001:9001
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:9001/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  ai_agent_risk_manager:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_risk_manager
+    environment:
+      AGENT_TYPE: risk_manager
+      AGENT_NAME: risk_manager
+      PORT: '9002'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+    ports:
+    - 9002:9002
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:9002/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  ai_agent_arbitrage_detector:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_arbitrage_detector
+    environment:
+      AGENT_TYPE: arbitrage_detector
+      AGENT_NAME: arbitrage_detector
+      PORT: '9003'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+    ports:
+    - 9003:9003
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:9003/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  ai_agent_transaction_executor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_transaction_executor
+    environment:
+      AGENT_TYPE: transaction_executor
+      AGENT_NAME: transaction_executor
+      PORT: '9004'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+    ports:
+    - 9004:9004
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:9004/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  ai_agent_market_analyzer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_market_analyzer
+    environment:
+      AGENT_TYPE: market_analyzer
+      AGENT_NAME: market_analyzer
+      PORT: '9005'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+    ports:
+    - 9005:9005
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:9005/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  ai_agent_route_optimizer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_route_optimizer
+    environment:
+      AGENT_TYPE: route_optimizer
+      AGENT_NAME: route_optimizer
+      PORT: '9006'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+    ports:
+    - 9006:9006
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:9006/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  ai_agent_compliance_checker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_compliance_checker
+    environment:
+      AGENT_TYPE: compliance_checker
+      AGENT_NAME: compliance_checker
+      PORT: '9007'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+    ports:
+    - 9007:9007
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:9007/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  ai_agent_security_analyst:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_security_analyst
+    environment:
+      AGENT_TYPE: security_analyst
+      AGENT_NAME: security_analyst
+      PORT: '9008'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+    ports:
+    - 9008:9008
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:9008/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  ai_agent_gas_optimizer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_gas_optimizer
+    environment:
+      AGENT_TYPE: gas_optimizer
+      AGENT_NAME: gas_optimizer
+      PORT: '9009'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+    ports:
+    - 9009:9009
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:9009/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  ai_agent_liquidity_monitor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_liquidity_monitor
+    environment:
+      AGENT_TYPE: liquidity_monitor
+      AGENT_NAME: liquidity_monitor
+      PORT: '9010'
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+    ports:
+    - 9010:9010
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:9010/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+  ai_agent_self_healing:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.self-healing
+    container_name: ai_agent_self_healing
+    environment:
+      AGENT_TYPE: self_healing
+      AGENT_NAME: self_healing_agent
+      PORT: '8300'
+      REDIS_URL: redis://coordination_redis:6379
+    ports:
+    - 8300:8300
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8300/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    privileged: true
+  coordination_system:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.coordination
+    container_name: coordination_system
+    environment:
+      REDIS_URL: redis://coordination_redis:6379
+      POSTGRES_URL: postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      RABBITMQ_URL: amqp://coordination:coordination_pass@coordination_rabbitmq:5672/coordination
+      POLYGON_RPC_URL: ${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      ARBITRAGE_PRIVATE_KEY: ${ARBITRAGE_PRIVATE_KEY:-}
+      MCP_MCP_SERVER_TRAINER_URL: http://mcp_mcp_server_trainer:8047
+      MCP_ENHANCED_MCP_SERVER_MANAGER_URL: http://mcp_enhanced_mcp_server_manager:8049
+      MCP_AAVE_FLASH_LOAN_MCP_SERVER_URL: http://mcp_aave_flash_loan_mcp_server:8053
+      MCP_CLEAN_CONTEXT7_MCP_SERVER_URL: http://mcp_clean_context7_mcp_server:8057
+      MCP_CLEAN_MATIC_MCP_SERVER_URL: http://mcp_clean_matic_mcp_server:8058
+      MCP_COPILOT_MCP_MCP_SERVER_URL: http://mcp_copilot_mcp_mcp_server:8059
+      MCP_DEX_AGGREGATOR_MCP_SERVER_URL: http://mcp_dex_aggregator_mcp_server:8062
+      MCP_EVM_MCP_SERVER_URL: http://mcp_evm_mcp_server:8065
+      MCP_FIX_ALL_LOCAL_MCP_SERVERS_URL: http://mcp_fix_all_local_mcp_servers:8066
+      MCP_FLASH_LOAN_MCP_MCP_SERVER_URL: http://mcp_flash_loan_mcp_mcp_server:8067
+      MCP_FOUNDRY_MCP_MCP_SERVER_URL: http://mcp_foundry_mcp_mcp_server:8068
+      MCP_IDENTIFY_MCP_SERVERS_URL: http://mcp_identify_mcp_servers:8069
+      MCP_MCP_API_CLIENT_SERVER_URL: http://mcp_mcp_api_client_server:8072
+      MCP_MCP_ARBITRAGE_SERVER_URL: http://mcp_mcp_arbitrage_server:8073
+      MCP_MCP_AUTH_MANAGER_SERVER_URL: http://mcp_mcp_auth_manager_server:8074
+      MCP_MCP_BLOCKCHAIN_SERVER_URL: http://mcp_mcp_blockchain_server:8075
+      MCP_MCP_CACHE_MANAGER_SERVER_URL: http://mcp_mcp_cache_manager_server:8076
+      MCP_MCP_COORDINATOR_SERVER_URL: http://mcp_mcp_coordinator_server:8077
+      MCP_MCP_DATABASE_SERVER_URL: http://mcp_mcp_database_server:8079
+      MCP_MCP_DATA_ANALYZER_SERVER_URL: http://mcp_mcp_data_analyzer_server:8080
+      MCP_MCP_DEFI_ANALYZER_SERVER_URL: http://mcp_mcp_defi_analyzer_server:8081
+      MCP_MCP_FILESYSTEM_SERVER_URL: http://mcp_mcp_filesystem_server:8083
+      MCP_MCP_FILE_PROCESSOR_SERVER_URL: http://mcp_mcp_file_processor_server:8084
+      MCP_MCP_FLASH_LOAN_SERVER_URL: http://mcp_mcp_flash_loan_server:8085
+      MCP_MCP_LIQUIDITY_SERVER_URL: http://mcp_mcp_liquidity_server:8087
+      MCP_MCP_MONITORING_SERVER_URL: http://mcp_mcp_monitoring_server:8088
+      MCP_MCP_NOTIFICATION_SERVER_URL: http://mcp_mcp_notification_server:8089
+      MCP_MCP_PORTFOLIO_SERVER_URL: http://mcp_mcp_portfolio_server:8090
+      MCP_MCP_PRICE_FEED_SERVER_URL: http://mcp_mcp_price_feed_server:8091
+      MCP_MCP_RISK_MANAGER_SERVER_URL: http://mcp_mcp_risk_manager_server:8094
+      MCP_MCP_SECURITY_SERVER_URL: http://mcp_mcp_security_server:8095
+      MCP_MCP_SERVER_URL: http://mcp_mcp_server:8096
+      MCP_MCP_SERVER_BASE_URL: http://mcp_mcp_server_base:8097
+      MCP_MCP_SERVER_MANAGER_URL: http://mcp_mcp_server_manager:8098
+      MCP_MCP_SERVER_TEMPLATE_URL: http://mcp_mcp_server_template:8099
+      MCP_MCP_TASK_QUEUE_SERVER_URL: http://mcp_mcp_task_queue_server:8102
+      MCP_MCP_WEB_SCRAPER_SERVER_URL: http://mcp_mcp_web_scraper_server:8103
+      MCP_MINIMAL-MCP-SERVER_URL: http://mcp_minimal-mcp-server:8104
+      MCP_MONITORING_MCP_SERVER_URL: http://mcp_monitoring_mcp_server:8105
+      MCP_ORGANIZE_MCP_SERVERS_URL: http://mcp_organize_mcp_servers:8107
+      MCP_PROFIT_OPTIMIZER_MCP_SERVER_URL: http://mcp_profit_optimizer_mcp_server:8108
+      MCP_REAL_TIME_PRICE_MCP_SERVER_URL: http://mcp_real_time_price_mcp_server:8110
+      MCP_RISK_MANAGEMENT_MCP_SERVER_URL: http://mcp_risk_management_mcp_server:8111
+      MCP_SIMPLE_MCP_SERVER_URL: http://mcp_simple_mcp_server:8112
+      MCP_START_MCP_SERVERS_URL: http://mcp_start_mcp_servers:8114
+      MCP_TRAINING_MCP_SERVER_URL: http://mcp_training_mcp_server:8115
+      MCP_WORKING_MCP_SERVER_TEMPLATE_URL: http://mcp_working_mcp_server_template:8124
+      MCP_COMPLETE_LANGCHAIN_MCP_INTEGRATION_URL: http://mcp_complete_langchain_mcp_integration:8048
+      MCP_LANGCHAIN_MCP_ORCHESTRATOR_URL: http://mcp_langchain_mcp_orchestrator:8050
+      MCP_MCP_STATUS_CHECK_URL: http://mcp_mcp_status_check:8051
+      MCP_SIMPLE_MCP_ORCHESTRATOR_URL: http://mcp_simple_mcp_orchestrator:8052
+      MCP_AUTODISCOVER_MCP_AGENTS_URL: http://mcp_autodiscover_mcp_agents:8054
+      MCP_CHECK-MCP-STATUS_URL: http://mcp_check-mcp-status:8055
+      MCP_CHECK_MCP_STATUS_URL: http://mcp_check_mcp_status:8056
+      MCP_CREATE_FINAL_UNIFIED_MCP_MANAGER_URL: http://mcp_create_final_unified_mcp_manager:8060
+      MCP_DASHBOARD_ENHANCED_MCP_DASHBOARD_WITH_CHAT_URL: http://mcp_dashboard_enhanced_mcp_dashboard_with_chat:8061
+      MCP_DISCORD_MCP_BOT_URL: http://mcp_discord_mcp_bot:8063
+      MCP_ENHANCED_MCP_DASHBOARD_WITH_CHAT_URL: http://mcp_enhanced_mcp_dashboard_with_chat:8064
+      MCP_MCP-HEALTH-CHECK_URL: http://mcp_mcp-health-check:8070
+      MCP_MCP-STABILITY-REPORT_URL: http://mcp_mcp-stability-report:8071
+      MCP_MCP_DASHBOARD_URL: http://mcp_mcp_dashboard:8078
+      MCP_MCP_ENHANCED_COORDINATOR_URL: http://mcp_mcp_enhanced_coordinator:8082
+      MCP_MCP_INTEGRATION_BRIDGE_URL: http://mcp_mcp_integration_bridge:8086
+      MCP_MCP_PROJECT_ORGANIZER_URL: http://mcp_mcp_project_organizer:8092
+      MCP_MCP_PROJECT_ORGANIZER_FIXED_URL: http://mcp_mcp_project_organizer_fixed:8093
+      MCP_MCP_SHARED_UTILITIES_URL: http://mcp_mcp_shared_utilities:8100
+      MCP_MCP_SIMPLE_STARTUP_URL: http://mcp_mcp_simple_startup:8101
+      MCP_ONLINE_MCP_COORDINATOR_URL: http://mcp_online_mcp_coordinator:8106
+      MCP_QUICK_MCP_CHECK_URL: http://mcp_quick_mcp_check:8109
+      MCP_SIMPLIFIED_MCP_COORDINATOR_FIXED_URL: http://mcp_simplified_mcp_coordinator_fixed:8113
+      MCP_UNIFIED_MCP_COORDINATOR_URL: http://mcp_unified_mcp_coordinator:8116
+      MCP_UNIFIED_MCP_COORDINATOR_20250617_143120_URL: http://mcp_unified_mcp_coordinator_20250617_143120:8117
+      MCP_UNIFIED_MCP_INTEGRATION_MANAGER_URL: http://mcp_unified_mcp_integration_manager:8118
+      MCP_UNIFIED_MCP_MANAGER_URL: http://mcp_unified_mcp_manager:8119
+      MCP_UNIFIED_MCP_ORCHESTRATION_MANAGER_URL: http://mcp_unified_mcp_orchestration_manager:8120
+      MCP_VERIFY_MCP_ORGANIZATION_URL: http://mcp_verify_mcp_organization:8121
+      MCP_VERIFY_MCP_SYSTEM_URL: http://mcp_verify_mcp_system:8122
+      MCP_WORKING_FLASH_LOAN_MCP_URL: http://mcp_working_flash_loan_mcp:8123
+      MCP_MCP_CONNECTION_TEST_URL: http://mcp_mcp_connection_test:8125
+      MCP_MCP_DEPENDENCY_TEST_URL: http://mcp_mcp_dependency_test:8126
+      MCP_MCP_TRAINING_COORDINATOR_URL: http://mcp_mcp_training_coordinator:8127
+      AI_AGENT_FLASH_LOAN_OPTIMIZER_URL: http://ai_agent_flash_loan_optimizer:9001
+      AI_AGENT_RISK_MANAGER_URL: http://ai_agent_risk_manager:9002
+      AI_AGENT_ARBITRAGE_DETECTOR_URL: http://ai_agent_arbitrage_detector:9003
+      AI_AGENT_TRANSACTION_EXECUTOR_URL: http://ai_agent_transaction_executor:9004
+      AI_AGENT_MARKET_ANALYZER_URL: http://ai_agent_market_analyzer:9005
+      AI_AGENT_ROUTE_OPTIMIZER_URL: http://ai_agent_route_optimizer:9006
+      AI_AGENT_COMPLIANCE_CHECKER_URL: http://ai_agent_compliance_checker:9007
+      AI_AGENT_SECURITY_ANALYST_URL: http://ai_agent_security_analyst:9008
+      AI_AGENT_GAS_OPTIMIZER_URL: http://ai_agent_gas_optimizer:9009
+      AI_AGENT_LIQUIDITY_MONITOR_URL: http://ai_agent_liquidity_monitor:9010
+      AI_AGENT_SELF_HEALING_URL: http://ai_agent_self_healing:8300
+    ports:
+    - 8000:8000
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ai_agent_self_healing:
+        condition: service_healthy
+    networks:
+    - coordination_network
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8000/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+  dashboard:
+    image: nginx:alpine
+    container_name: coordination_dashboard
+    ports:
+    - 8080:80
+    depends_on:
+    - coordination_system
+    networks:
+    - coordination_network
+    restart: unless-stopped

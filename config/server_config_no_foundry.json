@@ -1,0 +1,105 @@
+{
+  "server": {
+    "name": "foundry-mcp-server",
+    "version": "1.0.0",
+    "description": "Foundry MCP Server for Flash Loan Arbitrage Integration (No Foundry Mode)",
+    "transport": {
+      "type": "stdio"
+    },
+    "logging": {
+      "level": "INFO",
+      "file": "logs/mcp_server.log",
+      "max_size_mb": 10,
+      "backup_count": 5
+    }
+  },
+  "foundry": {
+    "enabled": false,
+    "forge_path": "",
+    "cast_path": "",
+    "anvil_path": "",
+    "workspace_root": "../",
+    "contracts_dir": "contracts_deploy",
+    "artifacts_dir": "artifacts_deploy",
+    "cache_dir": "cache",
+    "lib_dir": "lib",
+    "foundry_toml": "foundry.toml"
+  },
+  "integration": {
+    "hardhat_config_path": "../hardhat.config.js",
+    "python_modules": [
+      "src.flash_loan.core",
+      "src.flash_loan.utils",
+      "src.blockchain",
+      "src.utils"
+    ],
+    "event_bus": {
+      "enabled": false,
+      "redis_url": "redis://localhost:6379",
+      "channel_prefix": "foundry_mcp"
+    },
+    "sync_configs": false,
+    "auto_deploy": false
+  },
+  "security": {
+    "slither": {
+      "enabled": false,
+      "config_file": "slither.config.json",
+      "severity_threshold": "medium"
+    },
+    "mythx": {
+      "enabled": false,
+      "api_key": "${MYTHX_API_KEY}",
+      "mode": "quick"
+    },
+    "dependency_scan": {
+      "npm_audit": true,
+      "pip_audit": true,
+      "snyk": false
+    }
+  },
+  "maintenance": {
+    "duplicate_detection": {
+      "enabled": true,
+      "exclude_patterns": [
+        "*.log",
+        "*.cache",
+        "node_modules/*",
+        ".git/*",
+        "__pycache__/*"
+      ],
+      "auto_remove": false
+    },
+    "cleanup": {
+      "cache_cleanup": true,
+      "old_artifacts": true,
+      "temp_files": true,
+      "max_age_days": 7
+    }
+  },
+  "networks": {
+    "polygon": {
+      "rpc_url": "https://polygon.gateway.tenderly.co",
+      "chain_id": 137,
+      "explorer_url": "https://polygonscan.com",
+      "gas_price_gwei": 200
+    },
+    "mumbai": {
+      "rpc_url": "https://rpc-mumbai.maticvigil.com",
+      "chain_id": 80001,
+      "explorer_url": "https://mumbai.polygonscan.com",
+      "gas_price_gwei": 5
+    }
+  },
+  "tools": {
+    "forge_compile": {
+      "enabled": false
+    },
+    "maintenance": {
+      "enabled": true
+    },
+    "file_operations": {
+      "enabled": true
+    }
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "organization_timestamp": "2025-06-16T14:36:02.383572",
+  "active_services": {
+    "mcp_servers": [
+      {
+        "name": "aave_flash_loan_mcp_server",
+        "type": "flash_loan",
+        "port": 3
+      },
+      {
+        "name": "clean_context7_mcp_server",
+        "type": "unknown",
+        "port": 8001
+      },
+      {
+        "name": "clean_context7_mcp_server.py",
+        "type": "unknown",
+        "port": 8001
+      },
+      {
+        "name": "clean_matic_mcp_server",
+        "type": "unknown",
+        "port": 8000
+      },
+      {
+        "name": "copilot_mcp_mcp_server",
+        "type": "unknown",
+        "port": 8000
+      },
+      {
+        "name": "copilot_mcp_mcp_server.py",
+        "type": "unknown",
+        "port": 8000
+      },
+      {
+        "name": "evm_mcp_server",
+        "type": "unknown",
+        "port": 8003
+      },
+      {
+        "name": "evm_mcp_server.py",
+        "type": "unknown",
+        "port": 8003
+      },
+      {
+        "name": "fix_all_local_mcp_servers",
+        "type": "unknown",
+        "port": 8000
+      },
+      {
+        "name": "flash_loan_mcp_mcp_server",
+        "type": "flash_loan",
+        "port": 8000
+      },
+      {
+        "name": "foundry_mcp_mcp_server",
+        "type": "unknown",
+        "port": 8000
+      },
+      {
+        "name": "foundry_mcp_mcp_server.py",
+        "type": "unknown",
+        "port": 8000
+      },
+      {
+        "name": "identify_mcp_servers",
+        "type": "unknown",
+        "port": 0
+      },
+      {
+        "name": "mcp_server_entrypoint",
+        "type": "unknown",
+        "port": 2
+      },
+      {
+        "name": "mcp_server_manager",
+        "type": "unknown",
+        "port": 8000
+      },
+      {
+        "name": "mcp_server_manager.py",
+        "type": "unknown",
+        "port": 8000
+      },
+      {
+        "name": "mcp_server_template",
+        "type": "unknown",
+        "port": 8000
+      },
+      {
+        "name": "mcp_server_template.py",
+        "type": "unknown",
+        "port": 8000
+      },
+      {
+        "name": "organize_mcp_servers",
+        "type": "unknown",
+        "port": 8000
+      },
+      {
+        "name": "real_time_price_mcp_server",
+        "type": "unknown",
+        "port": 3
+      },
+      {
+        "name": "simple_mcp_server",
+        "type": "unknown",
+        "port": 8000
+      },
+      {
+        "name": "start_mcp_servers",
+        "type": "unknown",
+        "port": 8000
+      },
+      {
+        "name": "start_mcp_servers.py",
+        "type": "unknown",
+        "port": 8000
+      },
+      {
+        "name": "training_mcp_server",
+        "type": "unknown",
+        "port": 3010
+      },
+      {
+        "name": "unified_mcp_server",
+        "type": "unknown",
+        "port": 1
+      },
+      {
+        "name": "working_mcp_server_template",
+        "type": "unknown",
+        "port": 8000
+      },
+      {
+        "name": "working_mcp_server_template.py",
+        "type": "unknown",
+        "port": 8000
+      }
+    ],
+    "ai_agents": []
+  },
+  "removed_duplicates": {
+    "mcp_servers": [],
+    "ai_agents": []
+  }
+}

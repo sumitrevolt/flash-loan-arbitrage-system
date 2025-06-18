@@ -1,0 +1,15 @@
+{
+    "mcpServers": {
+        "github-copilot": {
+            "command": "npx",
+            "args": [
+                "@modelcontextprotocol/server-github",
+                "--github-token",
+                "${GITHUB_TOKEN}"
+            ],
+            "env": {
+                "GITHUB_TOKEN": "${env:GITHUB_TOKEN}"
+            }
+        }
+    }
+}

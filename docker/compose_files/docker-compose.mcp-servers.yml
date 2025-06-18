@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # Context7 MCP Server
+  context7-mcp:
+    image: node:18-alpine
+    container_name: context7-mcp-server
+    ports:
+      - "4001:4000"
+    environment:
+      - MCP_SERVER_ID=context7-mcp
+      - COORDINATOR_URL=http://localhost:9000
+      - REDIS_URL=redis://localhost:6379
+    command: >
+      sh -c "
+      npm init -y &&
+      npm install express cors &&
+      echo 'const express = require("express"); const app = express(); app.use(express.json()); app.get("/health", (req, res) => res.json({status: "healthy", service: "context7-mcp"})); app.listen(4000, () => console.log("Context7 MCP Server running on port 4000"));' > server.js &&
+      node server.js
+      "
+    restart: unless-stopped
+    
+  # Enhanced Copilot MCP Server  
+  enhanced-copilot-mcp:
+    image: node:18-alpine
+    container_name: enhanced-copilot-mcp-server
+    ports:
+      - "4002:4000"
+    environment:
+      - MCP_SERVER_ID=enhanced-copilot-mcp
+      - COORDINATOR_URL=http://localhost:9000
+    command: >
+      sh -c "
+      npm init -y &&
+      npm install express cors &&
+      echo 'const express = require("express"); const app = express(); app.use(express.json()); app.get("/health", (req, res) => res.json({status: "healthy", service: "enhanced-copilot-mcp"})); app.listen(4000, () => console.log("Enhanced Copilot MCP Server running on port 4000"));' > server.js &&
+      node server.js
+      "
+    restart: unless-stopped
+    
+  # Price Oracle MCP Server
+  price-oracle-mcp:
+    image: node:18-alpine
+    container_name: price-oracle-mcp-server
+    ports:
+      - "4007:4000"
+    environment:
+      - MCP_SERVER_ID=price-oracle-mcp
+      - COORDINATOR_URL=http://localhost:9000
+    command: >
+      sh -c "
+      npm init -y &&
+      npm install express cors axios &&
+      echo 'const express = require("express"); const app = express(); app.use(express.json()); app.get("/health", (req, res) => res.json({status: "healthy", service: "price-oracle-mcp"})); app.get("/price/:token", (req, res) => res.json({token: req.params.token, price: Math.random() * 1000})); app.listen(4000, () => console.log("Price Oracle MCP Server running on port 4000"));' > server.js &&
+      node server.js
+      "
+    restart: unless-stopped

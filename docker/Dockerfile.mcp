@@ -1,0 +1,140 @@
+# Generic Dockerfile for MCP Servers with Coordination Support
+FROM python:3.11-slim
+
+ARG SERVER_NAME
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    make \
+    libffi-dev \
+    libssl-dev \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install Python dependencies
+COPY requirements-complete.txt .
+RUN pip install --no-cache-dir -r requirements-complete.txt
+
+# Copy MCP server code and entrypoint
+COPY docker/entrypoints/mcp_server_entrypoint.py .
+COPY enhanced_mcp_price_feed_server.py .
+COPY compatible_enhanced_mcp_price_feed_server.py .
+COPY unified_mcp_config.json .
+
+# Create generic entrypoint for MCP servers
+RUN echo '#!/usr/bin/env python3\n\
+import os\n\
+import importlib.util\n\
+import sys\n\
+import uvicorn\n\
+from pathlib import Path\n\
+\n\
+def main():\n\
+    server_name = os.getenv("SERVER_NAME", "enhanced_mcp_price_feed_server")\n\
+    port = int(os.getenv("PORT", 8000))\n\
+    \n\
+    # Try to find the server file\n\
+    server_files = [\n\
+        f"{server_name}.py",\n\
+        f"mcp_servers/{server_name}.py",\n\
+        "enhanced_mcp_price_feed_server.py"\n\
+    ]\n\
+    \n\
+    server_file = None\n\
+    for file_path in server_files:\n\
+        if Path(file_path).exists():\n\
+            server_file = file_path\n\
+            break\n\
+    \n\
+    if not server_file:\n\
+        print(f"No server file found for {server_name}")\n\
+        sys.exit(1)\n\
+    \n\
+    try:\n\
+        spec = importlib.util.spec_from_file_location(server_name, server_file)\n\
+        module = importlib.util.module_from_spec(spec)\n\
+        spec.loader.exec_module(module)\n\
+        \n\
+        if hasattr(module, "main"):\n\
+            module.main()\n\
+        elif hasattr(module, "app"):\n\
+            uvicorn.run(module.app, host="0.0.0.0", port=port)\n\
+        else:\n\
+            print(f"No main() or app found in {server_file}")\n\
+            sys.exit(1)\n\
+    except Exception as e:\n\
+        print(f"Error loading server {server_name}: {e}")\n\
+        sys.exit(1)\n\
+\n\
+if __name__ == "__main__":\n\
+    main()\n\
+' > /app/entrypoint.py
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV SERVER_NAME=${SERVER_NAME}
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
+
+# Expose port (will be set by environment)
+EXPOSE ${PORT:-8000}
+
+# Run the server
+CMD ["python", "entrypoint.py"]
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir \
+    fastapi==0.104.1 \
+    uvicorn[standard]==0.24.0 \
+    pydantic==2.5.0 \
+    redis==5.0.1 \
+    psycopg2-binary==2.9.9 \
+    asyncio-mqtt==0.13.0 \
+    websockets==12.0 \
+    aiohttp==3.9.1 \
+    requests==2.31.0 \
+    numpy==1.24.3 \
+    pandas==2.0.3 \
+    web3==6.15.1 \    langchain==0.1.5 \
+    langchain-community==0.0.20 \
+    langchain-core==0.1.12 \
+    langchain-experimental==0.0.50 \
+    python-dotenv==1.0.0 \
+    httpx==0.26.0 \
+    aiodns==3.1.1 \
+    aiofiles==23.2.1
+
+# Install additional requirements if they exist
+RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
+
+# Copy application code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/data /app/temp
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV MCP_SERVER_HOST=0.0.0.0
+ENV MCP_SERVER_PORT=8000
+ENV LOG_LEVEL=INFO
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${MCP_SERVER_PORT}/health || exit 1
+
+# Expose port
+EXPOSE 8000
+
+# Default command - can be overridden by docker-compose
+CMD ["python", "mcp_server_entrypoint.py"]

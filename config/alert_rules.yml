@@ -1,0 +1,47 @@
+groups:
+  - name: flash-loan-alerts
+    rules:
+      - alert: FlashLoanSystemDown
+        expr: up{job="flash-loan-system"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Flash Loan System is down"
+          description: "Flash Loan System has been down for more than 1 minute"
+
+      - alert: HighArbitrageOpportunities
+        expr: flash_loan_arbitrage_opportunities_total > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of arbitrage opportunities"
+          description: "More than 10 arbitrage opportunities detected in 5 minutes"
+
+      - alert: FoundryMCPServerDown
+        expr: up{job="foundry-mcp-server"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Foundry MCP Server is down"
+          description: "Foundry MCP Server has been down for more than 2 minutes"
+
+      - alert: DatabaseConnectionFailed
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection failed"
+          description: "PostgreSQL database is unreachable"
+
+      - alert: RedisConnectionFailed
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis connection failed"
+          description: "Redis cache is unreachable"

@@ -1,0 +1,8 @@
+{
+  "timestamp": "2025-06-02T17:59:14.775311",
+  "system_status": "running",
+  "services": {
+    "price_fetcher": "running",
+    "arbitrage_bot": "running"
+  }
+}

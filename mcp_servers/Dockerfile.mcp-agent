@@ -1,0 +1,34 @@
+# ------------------------------------------------------------
+# Generic MCP Agent Dockerfile
+# Builds lightweight Python container for any agent role
+# Base: Python 3.11 slim (≈60 MB)
+# ------------------------------------------------------------
+FROM python:3.11-slim AS base
+
+# ----- Arguments -----
+ARG AGENT_TYPE=generic
+ARG AGENT_ID=0
+ARG APP_DIR=/app
+
+# ----- System deps -----
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends gcc git && \
+    rm -rf /var/lib/apt/lists/*
+
+# ----- Python -----
+WORKDIR ${APP_DIR}
+COPY requirements.txt ${APP_DIR}/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# ----- Copy code -----
+COPY . ${APP_DIR}
+
+# ----- Environment -----
+ENV PYTHONUNBUFFERED=1 \
+    AGENT_TYPE=${AGENT_TYPE} \
+    AGENT_ID=${AGENT_ID} \
+    LOG_LEVEL=INFO
+
+# ----- Entrypoint -----
+# Each agent script resolves by AGENT_TYPE ‑- e.g. code_indexer -> mcp_agents/code_indexer_agent.py
+ENTRYPOINT ["python", "-m", "mcp_agents.entrypoint"]

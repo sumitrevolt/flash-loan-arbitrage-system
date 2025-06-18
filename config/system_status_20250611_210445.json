@@ -1,0 +1,72 @@
+{
+  "timestamp": "2025-06-11 21:04:45",
+  "mcp_servers": {
+    "github": {
+      "configured": true,
+      "file_exists": false,
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ]
+    },
+    "sequential-thinking": {
+      "configured": true,
+      "file_exists": false,
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    },
+    "filesystem": {
+      "configured": true,
+      "file_exists": false,
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "c:\\Users\\Ratanshila\\Documents\\flash loan"
+      ]
+    },
+    "context7": {
+      "configured": true,
+      "file_exists": true,
+      "command": "python",
+      "args": [
+        "mcp_servers/ai_integration/clean_context7_mcp_server.py"
+      ],
+      "file_path": "mcp_servers/ai_integration/clean_context7_mcp_server.py"
+    },
+    "matic": {
+      "configured": true,
+      "file_exists": true,
+      "command": "python",
+      "args": [
+        "mcp_servers/blockchain_integration/clean_matic_mcp_server.py"
+      ],
+      "file_path": "mcp_servers/blockchain_integration/clean_matic_mcp_server.py"
+    }
+  },
+  "flash_loan_system": {
+    "optimized_arbitrage_bot_v2.py": {
+      "exists": true,
+      "path": "optimized_arbitrage_bot_v2.py"
+    },
+    "dex_integrations.py": {
+      "exists": true,
+      "path": "dex_integrations.py"
+    },
+    "config.py": {
+      "exists": true,
+      "path": "config.py"
+    },
+    "mcp_servers/unified_mcp_coordinator.py/unified_mcp_coordinator.py": {
+      "exists": true,
+      "path": "mcp_servers/unified_mcp_coordinator.py/unified_mcp_coordinator.py"
+    }
+  },
+  "recommendations": [
+    "All systems are properly configured"
+  ]
+}

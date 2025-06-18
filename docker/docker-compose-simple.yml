@@ -1,0 +1,274 @@
+networks:
+  coordination_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+  coordination_logs:
+
+services:
+  # Infrastructure Services
+  redis:
+    image: redis:7-alpine
+    container_name: coordination_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      coordination_network:
+        ipv4_address: 172.20.0.10
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: coordination_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: coordination
+      RABBITMQ_DEFAULT_PASS: coordination_pass
+      RABBITMQ_DEFAULT_VHOST: coordination
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      coordination_network:
+        ipv4_address: 172.20.0.11
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: coordination_postgres
+    environment:
+      POSTGRES_DB: coordination
+      POSTGRES_USER: coordination
+      POSTGRES_PASSWORD: coordination_pass
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      coordination_network:
+        ipv4_address: 172.20.0.12
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d coordination -U coordination"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Ollama for Local LLM
+  ollama:
+    image: ollama/ollama:latest
+    container_name: coordination_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./models:/root/.ollama
+    networks:
+      coordination_network:
+        ipv4_address: 172.20.0.30
+    restart: unless-stopped
+
+  # Simplified MCP Server - Price Feed
+  mcp_price_feed:
+    image: python:3.11-slim
+    container_name: mcp_price_feed
+    environment:
+      - SERVER_TYPE=price_feed
+      - PORT=8100
+      - REDIS_URL=redis://coordination_redis:6379
+      - POLYGON_RPC_URL=${POLYGON_RPC_URL:-https://polygon-rpc.com}
+    ports:
+      - "8100:8100"
+    volumes:
+      - ./enhanced_mcp_price_feed_server.py:/app/server.py
+      - ./requirements-coordination.txt:/app/requirements.txt
+    working_dir: /app
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.txt && 
+             python -c 'import uvicorn; from fastapi import FastAPI; app = FastAPI(); app.add_api_route(\"/health\", lambda: {\"status\": \"healthy\", \"service\": \"mcp_price_feed\"}); uvicorn.run(app, host=\"0.0.0.0\", port=8100)'"
+    networks:
+      coordination_network:
+        ipv4_address: 172.20.1.1
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # Simplified AI Agent - Arbitrage Detector
+  agent_arbitrage_detector:
+    image: python:3.11-slim
+    container_name: agent_arbitrage_detector
+    environment:
+      - AGENT_TYPE=arbitrage_detector
+      - PORT=9001
+      - REDIS_URL=redis://coordination_redis:6379
+      - RABBITMQ_URL=amqp://coordination:coordination_pass@coordination_rabbitmq:5672/coordination
+    ports:
+      - "9001:9001"
+    volumes:
+      - ./requirements-coordination.txt:/app/requirements.txt
+    working_dir: /app
+    command: >
+      sh -c "pip install --no-cache-dir fastapi uvicorn redis pika && 
+             python -c 'import uvicorn; from fastapi import FastAPI; app = FastAPI(); app.add_api_route(\"/health\", lambda: {\"status\": \"healthy\", \"agent_type\": \"arbitrage_detector\"}); app.add_api_route(\"/coordinate\", lambda: {\"status\": \"completed\", \"agent\": \"arbitrage_detector\", \"result\": \"Arbitrage opportunities analyzed\"}, methods=[\"POST\"]); uvicorn.run(app, host=\"0.0.0.0\", port=9001)'"
+    networks:
+      coordination_network:
+        ipv4_address: 172.20.2.1
+    depends_on:
+      - redis
+      - rabbitmq
+    restart: unless-stopped
+
+  # Simple Dashboard
+  coordination_dashboard:
+    image: python:3.11-slim
+    container_name: coordination_dashboard
+    environment:
+      - REDIS_URL=redis://coordination_redis:6379
+      - POSTGRES_URL=postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./requirements-coordination.txt:/app/requirements.txt
+    working_dir: /app
+    command: >
+      sh -c "pip install --no-cache-dir fastapi uvicorn redis psycopg2-binary && 
+             python -c 'import uvicorn; from fastapi import FastAPI; from fastapi.responses import HTMLResponse; app = FastAPI(); app.add_api_route(\"/\", lambda: HTMLResponse(\"<h1>Coordination Dashboard</h1><p>System Status: Active</p><p><a href=\\\"http://localhost:8100/health\\\">MCP Server Health</a></p><p><a href=\\\"http://localhost:9001/health\\\">Agent Health</a></p>\"), methods=[\"GET\"]); app.add_api_route(\"/health\", lambda: {\"status\": \"healthy\", \"dashboard\": \"active\"}); uvicorn.run(app, host=\"0.0.0.0\", port=8080)'"
+    networks:
+      coordination_network:
+        ipv4_address: 172.20.0.40
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+
+  # Main Coordination System (Simplified)
+  coordination_orchestrator:
+    image: python:3.11-slim
+    container_name: coordination_orchestrator
+    environment:
+      - REDIS_URL=redis://coordination_redis:6379
+      - RABBITMQ_URL=amqp://coordination:coordination_pass@coordination_rabbitmq:5672/coordination
+      - POSTGRES_URL=postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      - LANGCHAIN_ENABLED=true
+      - AUTOGEN_ENABLED=false
+      - MCP_SERVERS_COUNT=1
+      - AI_AGENTS_COUNT=1
+      - LOG_LEVEL=INFO
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./docker_coordination_system.py:/app/coordinator.py
+      - ./requirements-coordination.txt:/app/requirements.txt
+    working_dir: /app
+    command: >
+      sh -c "pip install --no-cache-dir fastapi uvicorn redis pika aiohttp && 
+             python -c 'import uvicorn; from fastapi import FastAPI; app = FastAPI(); app.add_api_route(\"/health\", lambda: {\"status\": \"healthy\", \"orchestrator\": \"active\"}); app.add_api_route(\"/coordinate\", lambda task: {\"status\": \"success\", \"task\": task, \"result\": \"Coordination completed\"}, methods=[\"POST\"]); uvicorn.run(app, host=\"0.0.0.0\", port=8000)'"
+    networks:
+      coordination_network:
+        ipv4_address: 172.20.0.20
+    depends_on:
+      - redis
+      - rabbitmq
+      - postgres
+    restart: unless-stopped
+  postgres:
+    image: postgres:15-alpine
+    container_name: flash-loan-postgres
+    environment:
+      - POSTGRES_DB=flash_loan_db
+      - POSTGRES_USER=flash_loan
+      - POSTGRES_PASSWORD=flash_loan_secure_123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - flash-loan-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flash_loan -d flash_loan_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MCP Coordinator
+  mcp-coordinator:
+    build:
+      context: .
+      dockerfile: docker/dockerfiles/mcp-coordinator-fixed.dockerfile
+    container_name: flash-loan-mcp-coordinator
+    environment:
+      - MCP_MODE=production
+      - LOG_LEVEL=INFO
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://flash_loan:flash_loan_secure_123@postgres:5432/flash_loan_db
+    ports:
+      - "9000:9000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./mcp_servers:/app/mcp_servers:ro
+      - ./logs:/app/logs
+      - ./config:/app/config:ro
+    networks:
+      - flash-loan-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Aave Flash Loan MCP Server
+  aave-flash-loan-mcp:
+    build:
+      context: .
+      dockerfile: docker/mcp/Dockerfile.aave
+    container_name: flash-loan-aave-mcp
+    environment:
+      - MCP_MODE=production
+      - LOG_LEVEL=INFO
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8903:8903"
+    depends_on:
+      - redis
+    volumes:
+      - ./mcp_servers:/app/mcp_servers:ro
+      - ./logs:/app/logs
+    networks:
+      - flash-loan-network
+    restart: unless-stopped
+
+networks:
+  flash-loan-network:
+    driver: bridge
+    name: flash-loan-network
+
+volumes:
+  redis-data:
+    name: flash-loan-redis-data
+  postgres-data:
+    name: flash-loan-postgres-data

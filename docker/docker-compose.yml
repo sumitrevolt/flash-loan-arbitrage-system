@@ -1,0 +1,74 @@
+version: '3.8'
+
+networks:
+  flashloan-network:
+    driver: bridge
+
+volumes:
+  flashloan-logs:
+  flashloan-data:
+
+services:
+  # Main Orchestrator
+  orchestrator:
+    build: ./containers/orchestrator
+    container_name: flashloan-orchestrator
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8080:8080"
+    volumes:
+      - flashloan-logs:/app/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    depends_on:
+      - mcp-servers
+      - agents
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MCP Servers
+  mcp-servers:
+    build: ./containers/mcp_servers
+    container_name: flashloan-mcp-servers
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8000:8000"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Agent System
+  agents:
+    build: ./containers/agents
+    container_name: flashloan-agents
+    networks:
+      - flashloan-network
+    environment:
+      - GITHUB_TOKEN=your_actual_github_token_here
+      - OPENAI_API_KEY=
+    ports:
+      - "8001:8001"
+    volumes:
+      - flashloan-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

@@ -1,0 +1,60 @@
+{
+  "name": "flash-loan",
+  "version": "1.0.0",
+  "main": "debug-env.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "devDependencies": {
+    "@aave/core-v3": "^1.19.3",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.12",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-etherscan": "^3.1.8",
+    "@openzeppelin/contracts": "^5.3.0",
+    "@uniswap/v2-periphery": "^1.1.0-beta.0",
+    "@uniswap/v3-periphery": "^1.4.4",
+    "chai": "^5.2.0",
+    "dotenv": "^16.5.0",
+    "ethers": "^5.8.0",
+    "hardhat": "^2.24.3",
+    "hardhat-gas-reporter": "^2.3.0",
+    "mocha": "^11.6.0",
+    "solidity-coverage": "^0.8.16"
+  },
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "deploy": "npx hardhat run scripts/deploy.js --network polygon",
+    "deploy:ai": "npx hardhat run scripts/ai-deploy.js --network polygon",
+    "deploy:mumbai": "npx hardhat run scripts/deploy.js --network mumbai",
+    "verify": "npx hardhat run scripts/verify.js --network polygon",
+    "setup": "npx hardhat run scripts/setup.js --network polygon",
+    "setup:mcp": "npx hardhat run scripts/mcp-setup.js --network polygon",
+    "organize": "python simple_project_organizer.py",
+    "clean": "npx hardhat clean",
+    "coverage": "npx hardhat coverage",
+    "gas-report": "REPORT_GAS=true npx hardhat test",
+    "flatten": "npx hardhat flatten contracts/FlashLoanArbitrageFixed.sol > flattened.sol",
+    "node": "npx hardhat node --fork https://polygon-rpc.com",
+    "console": "npx hardhat console --network polygon",
+    "full-deploy": "npm run compile && npm run deploy:ai && echo 'Remember to verify and setup your contract!'",
+    "health-check": "npx hardhat run scripts/health-check.js --network polygon",
+    "start:mcp": "python -m mcp_servers.unified_mcp_coordinator",
+    "start:ai": "python -m ai_agents.flash_loan_optimizer",
+    "deploy:all": "npm run compile && npm run deploy:ai && npm run setup:mcp",
+    "test:all": "npm run test && python -m pytest src/tests/",
+    "lint:fix": "python -m flake8 --max-line-length=120 src/ && eslint src/ --fix",
+    "health:check": "curl http://localhost:9001/health"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "ws": "^8.14.0",
+    "express": "^4.18.0",
+    "cors": "^2.8.5"
+  }
+}

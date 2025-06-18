@@ -1,0 +1,140 @@
+{
+  "mcpServers": {
+    "flash_loan_enhanced_copilot": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\ai_integration\\working_enhanced_copilot_mcp_server.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    },
+    "context7_clean": {
+      "command": "python", 
+      "args": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\ai_integration\\clean_context7_mcp_server.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    },
+    "flash_loan_blockchain": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\blockchain_integration\\working_flash_loan_mcp.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    },
+    "matic_mcp_server": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\blockchain_integration\\clean_matic_mcp_server.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    },
+    "evm_mcp_server": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\blockchain_integration\\evm-mcp-server\\evm_mcp_server.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    },
+    "price_oracle_mcp_server": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\data_providers\\price-oracle-mcp-server\\price_oracle_mcp_server.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    },
+    "master_coordinator": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\orchestration\\mcp_master_coordinator_server.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    },
+    "token_scanner": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\market_analysis\\mcp_token_scanner_server.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    },
+    "arbitrage_detector": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\market_analysis\\mcp_arbitrage_detector_server.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    },
+    "sentiment_monitor": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\market_analysis\\mcp_sentiment_monitor_server.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    },
+    "flash_loan_strategist": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\execution\\mcp_flash_loan_strategist_server.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    },
+    "contract_executor": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\execution\\mcp_contract_executor_server.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    },
+    "transaction_optimizer": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\execution\\mcp_transaction_optimizer_server.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    },
+    "risk_manager": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\risk_management\\mcp_risk_manager_server.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    },
+    "logger_auditor": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\risk_management\\mcp_logger_auditor_server.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    },
+    "dashboard_server": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\ui\\mcp_dashboard_server.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    },
+    "unified_flash_loan": {
+      "command": "python",
+      "args": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\execution\\working_unified_flash_loan_mcp_server.py"
+      ],
+      "disabled": false,
+      "alwaysAllow": []
+    }
+  }
+}

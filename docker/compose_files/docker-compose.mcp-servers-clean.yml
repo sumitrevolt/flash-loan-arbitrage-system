@@ -1,0 +1,309 @@
+version: "3.9"
+
+networks:
+  mcpnet:
+    external: true
+
+services:
+  # ===== MCP ORCHESTRATION SERVERS =====
+  master_coordinator:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-master-coordinator
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/orchestration/mcp_master_coordinator_server.py
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://mcp_admin:mcp_secure_2025@rabbitmq:5672
+    ports:
+      - "3000:3000"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  enhanced_coordinator:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-enhanced-coordinator
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/orchestration/mcp_enhanced_coordinator.py
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://mcp_admin:mcp_secure_2025@rabbitmq:5672
+    ports:
+      - "3001:3001"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  unified_coordinator:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-unified-coordinator
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/orchestration/unified_mcp_coordinator.py
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://mcp_admin:mcp_secure_2025@rabbitmq:5672
+    ports:
+      - "3002:3002"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  # ===== MARKET ANALYSIS SERVERS =====
+  token_scanner:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-token-scanner
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/market_analysis/mcp_token_scanner.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3003:3003"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  dex_monitor:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-dex-monitor
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/market_analysis/mcp_dex_monitor.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3004:3004"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  arbitrage_detector:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-arbitrage-detector
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/market_analysis/mcp_arbitrage_detector.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3005:3005"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  price_tracker:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-price-tracker
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/market_analysis/mcp_price_tracker.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3006:3006"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  # ===== BLOCKCHAIN INTEGRATION SERVERS =====
+  evm_integrator:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-evm-integrator
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/blockchain_integration/mcp_evm_integrator.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3007:3007"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  transaction_manager:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-transaction-manager
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/blockchain_integration/mcp_transaction_manager.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3008:3008"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  block_monitor:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-block-monitor
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/blockchain_integration/mcp_block_monitor.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3009:3009"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  gas_optimizer:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-gas-optimizer
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/blockchain_integration/mcp_gas_optimizer.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3010:3010"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  contract_deployer:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-contract-deployer
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/blockchain_integration/mcp_contract_deployer.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3011:3011"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  wallet_manager:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-wallet-manager
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/blockchain_integration/mcp_wallet_manager.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3012:3012"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  # ===== AI INTEGRATION SERVERS =====
+  agent_manager:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-agent-manager
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/ai_integration/mcp_agent_manager.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3013:3013"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  task_distributor:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-task-distributor
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/ai_integration/mcp_task_distributor.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3014:3014"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  context_manager:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-context-manager
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/ai_integration/mcp_context_manager.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3015:3015"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  conversation_handler:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-conversation-handler
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/ai_integration/mcp_conversation_handler.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3016:3016"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  model_coordinator:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-model-coordinator
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/ai_integration/mcp_model_coordinator.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3017:3017"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  # ===== DATA PROVIDER SERVERS =====
+  data_aggregator:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-data-aggregator
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/data_providers/mcp_data_aggregator.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3018:3018"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  api_gateway:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-api-gateway
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/data_providers/mcp_api_gateway.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3019:3019"
+    networks:
+      - mcpnet
+    restart: unless-stopped
+
+  # ===== UTILITY SERVERS =====
+  health_monitor:
+    build:
+      context: ../..
+      dockerfile: docker/dockerfiles/servers/Dockerfile.mcp-server
+    container_name: mcp-health-monitor
+    environment:
+      - MCP_SERVER_SCRIPT=mcp_servers/utils/mcp_health_monitor.py
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3020:3020"
+    networks:
+      - mcpnet
+    restart: unless-stopped

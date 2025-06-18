@@ -1,0 +1,238 @@
+{
+  "servers": {
+    "matic_mcp": {
+      "name": "Matic MCP Server",
+      "type": "python",
+      "path": "mcp_servers/blockchain_integration/matic-mcp-server/matic_mcp_server.py",
+      "port": 8001,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["MATIC_API_KEY", "MATIC_NODE_URL"]
+      }
+    },
+    "foundry_mcp": {
+      "name": "Foundry MCP Server",
+      "type": "python",
+      "path": "mcp_servers/foundry_integration/foundry-mcp-server/working_enhanced_foundry_mcp_server.py",
+      "port": 8002,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["FOUNDRY_PATH", "FOUNDRY_CONFIG"]
+      }
+    },
+    "evm_mcp": {
+      "name": "EVM MCP Server",
+      "type": "python",
+      "path": "mcp_servers/blockchain_integration/evm-mcp-server/evm_mcp_server.py",
+      "port": 8003,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["EVM_NODE_URL", "EVM_API_KEY"]
+      }
+    },
+    "copilot_mcp": {
+      "name": "Copilot MCP Server",
+      "type": "python",
+      "path": "mcp_servers/ai_integration/working_enhanced_copilot_mcp_server.py",
+      "port": 8004,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["COPILOT_LOG_LEVEL"]
+      }
+    },
+    "flash_loan_mcp": {
+      "name": "Flash Loan MCP Server",
+      "type": "python",
+      "path": "mcp_servers/execution/working_unified_flash_loan_mcp_server.py",
+      "port": 8005,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["FLASH_LOAN_CONFIG"]
+      }
+    },
+    "price_oracle_mcp": {
+      "name": "Price Oracle MCP Server",
+      "type": "python",
+      "path": "mcp_servers/data_providers/price-oracle-mcp-server/price_oracle_mcp_server.py",
+      "port": 8006,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["PRICE_ORACLE_CONFIG"]
+      }
+    },
+    "context7_mcp": {
+      "name": "Context7 MCP Server",
+      "type": "python",
+      "path": "mcp_servers/ai_integration/context7-mcp-server/context7_mcp_server.py",
+      "port": 8007,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["CONTEXT7_API_KEY"]
+      }
+    },
+    "risk_management_mcp": {
+      "name": "Risk Management MCP Server",
+      "type": "python",
+      "path": "mcp_servers/risk_management/mcp_risk_manager_server.py",
+      "port": 8008,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["RISK_CONFIG"]
+      }
+    },
+    "task_manager_mcp": {
+      "name": "Task Manager MCP Server",
+      "type": "typescript",
+      "path": "mcp_servers/task_management/mcp-taskmanager/index.ts",
+      "port": 8009,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["TASK_MANAGER_CONFIG"]
+      }
+    },
+    "mcp_logger_auditor": {
+      "name": "MCP Logger Auditor Server",
+      "type": "python",
+      "path": "mcp_logger_auditor_server.py",
+      "port": 8010,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["AUDIT_CONFIG"]
+      }
+    },
+    "minimal_mcp": {
+      "name": "Minimal MCP Server",
+      "type": "python",
+      "path": "minimal-mcp-server.py",
+      "port": 8011,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["MINIMAL_CONFIG"]
+      }
+    },
+    "enhanced_mcp_dashboard": {
+      "name": "Enhanced MCP Dashboard",
+      "type": "python",
+      "path": "enhanced_mcp_dashboard_with_chat.py",
+      "port": 8012,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["DASHBOARD_CONFIG"]
+      }
+    },
+    "ui_dashboard_mcp": {
+      "name": "UI Dashboard MCP Server",
+      "type": "python",
+      "path": "mcp_servers/ui/mcp_dashboard_server.py",
+      "port": 8013,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["UI_CONFIG"]
+      }
+    },
+    "dex_services_mcp": {
+      "name": "DEX Services MCP Server",
+      "type": "python",
+      "path": "mcp_servers/dex_services/dex_price_mcp_server.py",
+      "port": 8014,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["DEX_CONFIG"]
+      }
+    },
+    "market_analysis_arbitrage": {
+      "name": "Market Analysis Arbitrage Detector",
+      "type": "python",
+      "path": "mcp_servers/market_analysis/mcp_arbitrage_detector_server.py",
+      "port": 8015,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["ARBITRAGE_CONFIG"]
+      }
+    },
+    "market_analysis_liquidity": {
+      "name": "Market Analysis Liquidity Monitor",
+      "type": "python",
+      "path": "mcp_servers/market_analysis/mcp_liquidity_monitor_server.py",
+      "port": 8016,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["LIQUIDITY_CONFIG"]
+      }
+    },
+    "market_analysis_token_scanner": {
+      "name": "Market Analysis Token Scanner",
+      "type": "python",
+      "path": "mcp_servers/market_analysis/mcp_token_scanner_server.py",
+      "port": 8017,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["TOKEN_SCANNER_CONFIG"]
+      }
+    },
+    "contract_executor_mcp": {
+      "name": "Contract Executor MCP Server",
+      "type": "python",
+      "path": "mcp_servers/execution/mcp_contract_executor_server.py",
+      "port": 8018,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["CONTRACT_EXECUTOR_CONFIG"]
+      }
+    },
+    "flash_loan_strategist": {
+      "name": "Flash Loan Strategist MCP Server",
+      "type": "python",
+      "path": "mcp_servers/execution/mcp_flash_loan_strategist_server.py",
+      "port": 8019,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["STRATEGIST_CONFIG"]
+      }
+    },
+    "transaction_optimizer": {
+      "name": "Transaction Optimizer MCP Server",
+      "type": "python",
+      "path": "mcp_servers/execution/mcp_transaction_optimizer_server.py",
+      "port": 8020,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["OPTIMIZER_CONFIG"]
+      }
+    },
+    "production_mcp": {
+      "name": "Production MCP Server",
+      "type": "python",
+      "path": "mcp_servers/production/enhanced_production_mcp_server_v2.py",
+      "port": 8021,
+      "enabled": true,
+      "dependencies": [],
+      "environment_variables": {
+        "optional": ["PRODUCTION_CONFIG"]
+      }
+    }
+  },
+  "global_configuration": {
+    "health_check_interval": 30
+  }
+}

@@ -1,0 +1,514 @@
+{
+  "organization_date": "2025-06-17T14:31:26.240027",
+  "summary": {
+    "duplicates_removed": 152,
+    "syntax_errors_fixed": 0,
+    "files_organized": 0,
+    "mcp_servers_integrated": 101,
+    "ai_agents_integrated": 87
+  },
+  "duplicates_found": {
+    "d41d8cd98f00b204e9800998ecf8427e": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.env.deployment.example",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.env.SECURITY_WARNING",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\QUICK_DEPLOYMENT_GUIDE.md",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_internal\\operations\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_internal\\operations\\build\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_internal\\resolution\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_internal\\resolution\\legacy\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_internal\\resolution\\resolvelib\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_internal\\utils\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\chardet\\cli\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\chardet\\metadata\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\resolvelib\\compat\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\urllib3\\contrib\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\urllib3\\contrib\\_securetransport\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\urllib3\\packages\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\urllib3\\packages\\backports\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip-23.2.1.dist-info\\REQUESTED",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\jaraco\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\jaraco\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools-65.5.0.dist-info\\REQUESTED",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\complete-mcp-launcher.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\complete_mcp_langchain_system.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\corrected-mcp-launcher.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\deploy_contract_runner.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\deploy_flash_loan_contract.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\direct-infrastructure-fix-v2.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\direct-infrastructure-fix.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\emergency_wallet_check.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\execute_flash_loan_arbitrage.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\execute_flash_loan_arbitrage_production.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\final_manual_verification_solution.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\langchain-all-services-config.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\langchain-docker-fixer.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\langchain-project-organizer.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\manual_deployment_guide.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\MANUAL_VERIFICATION_FINAL_GUIDE.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\mcp-system-status-report.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\quick-mcp-restart.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\requirements_deployment.txt",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\secure_deployment_guide.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\simple_contract_deployer.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\ultimate_contract_verifier.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\core\\aave_flash_loan_profit_target.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\core\\aave_flash_loan_real_prices.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\docker\\docker-compose.optimized.yml",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\docker\\docker-container-fixer.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\docker\\dockerfiles\\mcp-server.dockerfile",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\docker\\entrypoints\\mcp-entrypoint.sh",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\docs\\COMPLETE_SYSTEM_README.md",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\docs\\test.txt",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\training_logs\\training_summary_20250617_001408.txt"
+    ],
+    "7acafe408d6d5dd64238fd689638b177": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\packaging\\specifiers.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\packaging\\specifiers.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\packaging\\specifiers.py"
+    ],
+    "e38b04681f4e31b77b316c978f6749bd": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\packaging\\tags.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\packaging\\tags.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\packaging\\tags.py"
+    ],
+    "359296260a63d16f5149ccdd7ae70762": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\packaging\\utils.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\packaging\\utils.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\packaging\\utils.py"
+    ],
+    "8fb00e724a7af8d0b43fa3365fd3eff0": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\packaging\\version.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\packaging\\version.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\packaging\\version.py"
+    ],
+    "80df840e0ac823fa34bcfa543296ba35": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\packaging\\_manylinux.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\packaging\\_manylinux.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\packaging\\_manylinux.py"
+    ],
+    "0210636ea49cabb88154105b88045e64": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\packaging\\_musllinux.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\packaging\\_musllinux.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\packaging\\_musllinux.py"
+    ],
+    "de664fedc083927d3d084f416190d876": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\packaging\\_structures.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\packaging\\_structures.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\packaging\\_structures.py"
+    ],
+    "68d5fc8a7ddb919bb241078b4e4db9cc": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\packaging\\__about__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\packaging\\__about__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\packaging\\__about__.py"
+    ],
+    "b85796f8d9d4e7556c6ad5ec9f0c5371": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\packaging\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\packaging\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\packaging\\__init__.py"
+    ],
+    "f67cd21bfa4c3aff92f17e6d06373ccc": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\tomli\\_parser.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\tomli\\_parser.py"
+    ],
+    "0111df35a25a503e0247f50838d35aea": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\tomli\\_re.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\tomli\\_re.py"
+    ],
+    "19a32b713392e66bac544e73f025b2cb": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\tomli\\_types.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\tomli\\_types.py"
+    ],
+    "eb1b063b57daf5569fbf24247a217fb9": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\tomli\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\tomli\\__init__.py"
+    ],
+    "365c9bfeb7d89244f2ce01c1de44cb85": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip-23.2.1.dist-info\\INSTALLER",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip-23.2.1.dist-info\\top_level.txt",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools-65.5.0.dist-info\\INSTALLER"
+    ],
+    "873640dc68df8f121d1bd22159a2e1f0": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\zipp.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\zipp.py"
+    ],
+    "7a25905adcf7c212ab22d1d79b8a374a": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\importlib_resources\\abc.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\importlib_resources\\abc.py"
+    ],
+    "5ecff1f9333d545bf3c3eefb61db9a38": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\importlib_resources\\readers.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\importlib_resources\\readers.py"
+    ],
+    "cf67edb2351a32e123eb7f958ec392f4": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\importlib_resources\\simple.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\importlib_resources\\simple.py"
+    ],
+    "aa3c6d5daf94f3d647f8235d963c9f6e": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\importlib_resources\\_adapters.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\importlib_resources\\_adapters.py"
+    ],
+    "4586d6fdb430345247aa1f33b12596a8": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\importlib_resources\\_common.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\importlib_resources\\_common.py"
+    ],
+    "3dde5bf9f0dead64ad7d7b81246a48ec": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\importlib_resources\\_compat.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\importlib_resources\\_compat.py"
+    ],
+    "19609edde4368b4204be41e3f2ddc980": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\importlib_resources\\_itertools.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\importlib_resources\\_itertools.py"
+    ],
+    "2d6e64dd74e9bba9f6daa4d2c189a778": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\importlib_resources\\_legacy.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\importlib_resources\\_legacy.py"
+    ],
+    "548187b89c8ff20bcccaf047b58e5168": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\importlib_resources\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\importlib_resources\\__init__.py"
+    ],
+    "75e722bf6745e4737f4178ead5c35a59": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\jaraco\\context.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\jaraco\\context.py"
+    ],
+    "146786b5a4aada43d8288351dc8ef13e": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\pyparsing\\actions.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\pyparsing\\actions.py"
+    ],
+    "0120420547c1fcfef162005c34d72753": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\pyparsing\\common.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\pyparsing\\common.py"
+    ],
+    "4d5ead9e8640267157f07cef2440eca0": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\pyparsing\\core.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\pyparsing\\core.py"
+    ],
+    "f1f31bb05d818ebbc7cad0eac3c6364c": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\pyparsing\\exceptions.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\pyparsing\\exceptions.py"
+    ],
+    "74ecbf6fbfa002c53e5aafc144b62c57": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\pyparsing\\helpers.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\pyparsing\\helpers.py"
+    ],
+    "96e34a817b72247caed38833a8382a82": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\pyparsing\\results.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\pyparsing\\results.py"
+    ],
+    "5e9b66d292513af743fe21b61f00463d": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\pyparsing\\testing.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\pyparsing\\testing.py"
+    ],
+    "c9b7c7bbc75393e592411b5f900b5372": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\pyparsing\\unicode.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\pyparsing\\unicode.py"
+    ],
+    "e2b2a33736ac783f177601797818720f": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\pyparsing\\util.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\pyparsing\\util.py"
+    ],
+    "1fe62ca1511d5199bb7e31cd55b7573e": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\pyparsing\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\pyparsing\\__init__.py"
+    ],
+    "e59c7a1262814f730211bfbc4fea6534": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pkg_resources\\_vendor\\pyparsing\\diagram\\__init__.py",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\_vendor\\pyparsing\\diagram\\__init__.py"
+    ],
+    "a32a382b8a5a906e03a83b4f3e5b7a9b": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\cli-32.exe",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\cli.exe"
+    ],
+    "e97c622b03fb2a2598bf019fbbe29f2c": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\gui-32.exe",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\setuptools\\gui.exe"
+    ],
+    "3fac7247b1f297ba8e341bcfeb82a9c9": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Scripts\\pip.exe",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Scripts\\pip3.11.exe",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Scripts\\pip3.exe"
+    ],
+    "46aecf4fab5e2499c4452d82e9c7fa2e": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\artifacts\\@aave\\core-v3\\contracts\\flashloan\\base\\FlashLoanSimpleReceiverBase.sol\\FlashLoanSimpleReceiverBase.dbg.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\artifacts\\@aave\\core-v3\\contracts\\flashloan\\interfaces\\IFlashLoanSimpleReceiver.sol\\IFlashLoanSimpleReceiver.dbg.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\artifacts\\@uniswap\\v3-core\\contracts\\interfaces\\callback\\IUniswapV3SwapCallback.sol\\IUniswapV3SwapCallback.dbg.json"
+    ],
+    "11ecc40bb46efcb20749a7fab818fb81": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\artifacts\\@aave\\core-v3\\contracts\\interfaces\\IPool.sol\\IPool.dbg.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\artifacts\\@aave\\core-v3\\contracts\\interfaces\\IPoolAddressesProvider.sol\\IPoolAddressesProvider.dbg.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\artifacts\\@openzeppelin\\contracts\\token\\ERC20\\IERC20.sol\\IERC20.dbg.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\artifacts\\@uniswap\\v2-periphery\\contracts\\interfaces\\IUniswapV2Router01.sol\\IUniswapV2Router01.dbg.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\artifacts\\@uniswap\\v2-periphery\\contracts\\interfaces\\IUniswapV2Router02.sol\\IUniswapV2Router02.dbg.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\artifacts\\@uniswap\\v3-periphery\\contracts\\interfaces\\IQuoter.sol\\IQuoter.dbg.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\artifacts\\@uniswap\\v3-periphery\\contracts\\interfaces\\ISwapRouter.sol\\ISwapRouter.dbg.json"
+    ],
+    "83c895136be08f0fbf5bf0748f26e72b": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\artifacts\\@openzeppelin\\contracts\\access\\Ownable.sol\\Ownable.dbg.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\artifacts\\@openzeppelin\\contracts\\utils\\Context.sol\\Context.dbg.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\artifacts\\@openzeppelin\\contracts\\utils\\Pausable.sol\\Pausable.dbg.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\artifacts\\@openzeppelin\\contracts\\utils\\ReentrancyGuard.sol\\ReentrancyGuard.dbg.json"
+    ],
+    "e1ad5a5b07da01a09ad1e07c9dc2ba3d": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\010414de9e874c2de0517befb7af71ba93fab7a0a7e49751eee191e34696927d.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\09d5087f0a18d1b2c937ee5e1fa8e4f96c2702d0b9f64cb5c1f4cf71b94c0797.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\124fe58548dfa98dc4b88a1ded906ddd11e92cdd8e2d7cedae4dd82c1c678276.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\506f717389f219e4c5e2eef2d6de2d41d14db5ea6ec8aab08a84771346483c78.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\58c6fb4d975df1ef0aab1f71e0d86fb78b525bbe3bb3a863b29e794c3148f336.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\6af503b5733696ea3750ed76b1a98a80afe4415fea6dbc106d6d09fe6e54b98a.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\6c97acc087adb3b4c4869f46bf733b3c6a308879b6830cfa7e7451b2512373d7.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\8886034edadb0624f4ac4597cea25e9f66108735241d4ba448dd4e91ccc5bbbb.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\95edc3e052dc6fad2c43b09044b079224a235d02aa8a9af97560e5ff61fe09a2.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\a878653469be5988482c47a712b208d42bb00387b3446341fe7dac894e819b1f.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\bf03510df5a02c824e7dc940ff7256685cb83968ad0eff50442b18cf8bef1112.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\c0b47e22828e1d857e59eb590fa19a966da11c6e503cf0f15437cc1d991c5df9.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\d2323b1b275961a2e7c781091fac9583b9a84f64c5350e6244896fcc2053c948.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\d253e7476c35095a2378b8a85ece8248462a1acfaf881cbdccfc27f2e0d9e124.json"
+    ],
+    "4a4b7054acd06d1bc57cced4fe8286f4": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\01ba341da2094f50b3d5d411bc469bea2c7cb52f2473e7c771be5768310ff984.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\a1beac86a86ff7b7bbf6c3e6cbe1cfc8652af4071a9b50880d8812286c04515a.json"
+    ],
+    "b40e04e5521af903100b73660b4de3c8": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\044d2454a41bd6da54a2d319efb0641fd433579eca9e55224f9a2dd09d96f2c7.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\12c9ccf815d3d369d68edaea7295e1a0dfe4ade642cda9df180fe57f28bf68d7.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\1cbf352742f4db3aa806e2cc42c3dd277372fdbbbf0b3dae6a32922d7b51e4c3.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\21762131ab99da252671e0522a8e7bdeea0760fd4452d1bf1a559429dc3f37e1.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\3859fe1096509296757e532f2203c07176c7f9951ded95b788e7b308ff4819d4.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\499332a8bb301223c891c8e1a3f61fc4c8ebd21dc0606f94ba97fc92787ab43a.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\49c885a003c9e9ac8fecd01534195e0dc58c0eab5c6eba3e4ea74868e6e51e0b.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\4a22addb5bbb0d13a1e3f6a8f37c4c0e93384f754959d21730ae4cbd074c4d65.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\54df791b0dd357ac9eb5df3d9457e67bbc8f406d4f48b8f8e57636552102bbd3.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\5ead7f1356759e853652f61ee3f652be43f02e4f2187d936465634800e2694f3.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\69eb68cd9062e4674ab40027554fc4c9112caf3dbb903e116c38b37be806170b.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\83ba39d3f422e85575dd6eb6a283621dcc1100782ae3a6440068efc2b240880d.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\8778ca4f289d3a745ebae7adb086c5c770c83737ae234324bb05fe311966d6c2.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\a4488017df250104bd4b5d84a5bd20097eb32700417c94d51064c06465dbb33d.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\a48369964357a972dea631672d154671f9e1595cc5b360c02f8afaa6cd3478e1.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\ba441d948cce7cfb0f3866f0a41f56ec470f78b2a42e7d4a283b514540b17003.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\bf1eb829e489f788321d239b549169cf270d0db947c52f4ac556a3d5b32f4a65.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\cc94ee20f070308cf9a60e940532c4f0c9e0f6b3f5cd3736f158e50700a30b6c.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\cf274660fc6b39d0a98f9e244cdcfb510cc18847acd8a6ac33b6b7b1def33786.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\cf34b85fb02050b2a35c504eaec78f8fcbc5bd94612182a188eb1e4d45134d3c.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\de488fcfcea2bf10689db2666de46a46cfc7626bd72912540f3d5a3352741f3b.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\e4766cd2b615af22922b8938eb21e5ff819c3730e047775fed3d36e101cec029.json"
+    ],
+    "c2059d5d59d8af909fc2348c5b36d385": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\470301436d8bdf0e9ac28f33a05da66135cd405782cb5ccf32280807f44b0988.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\cache\\hardhat-network-fork\\rpc_cache\\polygon-rpc.com\\137\\d3a82d836830a407ac02daa053abdf7964e71d94e7c030e3b5acd2217fd57dd8.json"
+    ],
+    "0f55a0d6dae42bc331b8eca9f25b59fe": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\config\\package_20210527204913.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\config\\package_20210527204925.json"
+    ],
+    "9d2b065026410d08ec4fcbc1e098a830": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\config\\package_20210527205145.json",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\config\\package_20210527205156.json"
+    ],
+    "472535f6169700346e02e26e41673236": [
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\docs\\README_20210527214323.md",
+      "C:\\Users\\Ratanshila\\Documents\\flash loan\\docs\\README_20210527214408.md"
+    ]
+  },
+  "syntax_fixes": [],
+  "mcp_servers": [
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\complete-mcp-launcher.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\complete_mcp_langchain_system.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\copilot_mcp_client.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\copilot_mcp_demo.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\corrected-mcp-launcher.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\final_mcp_deployment_summary.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\master_langchain_mcp_organizer.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\mcp-system-status-report.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\mcp_bridge.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\mcp_contract_verifier.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\mcp_powered_deployment_system.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\optimized_deployment_with_mcp.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\quick-mcp-restart.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\robust_mcp_deployment.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\simple_mcp_trainer.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\simplified_mcp_organizer.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\train_aave_mcp_system.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\train_all_mcp_servers.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\backups\\pre_merge_20250613_091821\\simple_mcp_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-api-client\\mcp_api_client_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-arbitrage\\mcp_arbitrage_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-auth-manager\\mcp_auth_manager_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-blockchain\\mcp_blockchain_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-cache-manager\\mcp_cache_manager_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-coordinator\\mcp_coordinator_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-coordinator\\server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-data-analyzer\\mcp_data_analyzer_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-database\\mcp_database_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-defi-analyzer\\mcp_defi_analyzer_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-file-processor\\mcp_file_processor_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-filesystem\\mcp_filesystem_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-flash-loan\\mcp_flash_loan_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-liquidity\\mcp_liquidity_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-monitoring\\mcp_monitoring_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-notification\\mcp_notification_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-portfolio\\mcp_portfolio_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-price-feed\\mcp_price_feed_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-risk-manager\\mcp_risk_manager_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-security\\mcp_security_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-task-queue\\mcp_task_queue_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp-web-scraper\\mcp_web_scraper_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp_servers\\mcp_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp_servers\\mcp_server_base.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp_servers\\mcp_server_template.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\mcp_servers\\server_implementations\\__init__.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\aave_flash_loan_mcp_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\autodiscover_mcp_agents.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\check-mcp-status.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\check_mcp_status.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\clean_context7_mcp_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\clean_matic_mcp_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\copilot_mcp_mcp_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\create_final_unified_mcp_manager.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\dashboard_enhanced_mcp_dashboard_with_chat.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\dex_aggregator_mcp_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\discord_mcp_bot.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\enhanced_mcp_dashboard_with_chat.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\evm_mcp_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\fix_all_local_mcp_servers.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\flash_loan_mcp_mcp_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\foundry_mcp_mcp_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\identify_mcp_servers.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp-health-check.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp-stability-report.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_connection_test.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_dashboard.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_dependency_test.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_enhanced_coordinator.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_integration_bridge.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_project_organizer.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_project_organizer_fixed.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_server_manager.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_shared_utilities.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_simple_startup.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\minimal-mcp-server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\monitoring_mcp_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\online_mcp_coordinator.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\organize_mcp_servers.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\profit_optimizer_mcp_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\quick_mcp_check.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\real_time_price_mcp_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\risk_management_mcp_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\simplified_mcp_coordinator_fixed.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\start_mcp_servers.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\training_mcp_server.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\unified_mcp_coordinator.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\unified_mcp_integration_manager.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\unified_mcp_manager.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\unified_mcp_orchestration_manager.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\verify_mcp_organization.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\verify_mcp_system.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\working_flash_loan_mcp.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\working_mcp_server_template.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\langchain_coordinators\\mcp_server_trainer.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_integrators\\complete_langchain_mcp_integration.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_integrators\\enhanced_mcp_server_manager.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_integrators\\langchain_mcp_orchestrator.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_integrators\\mcp_status_check.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_integrators\\simple_mcp_orchestrator.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\unified_mcp_coordinator.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\training\\mcp_training_coordinator.py"
+  ],
+  "ai_agents": [
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\__main__.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_internal\\main.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_internal\\cli\\main.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_internal\\cli\\main_parser.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\certifi\\__main__.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\chardet\\langthaimodel.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\distro\\__main__.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\platformdirs\\__main__.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\pygments\\__main__.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\rich\\constrain.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\rich\\containers.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\rich\\__main__.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\tenacity\\wait.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\.venv\\Lib\\site-packages\\pip\\_vendor\\urllib3\\util\\wait.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\automated_retraining_scheduler.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\check_training_status.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\container_monitor.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\enhanced_langchain_orchestrator.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\fixed_langchain_builder.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\langchain-all-services-config.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\langchain-docker-fixer.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\langchain-project-organizer.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\langchain_complete_builder.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\langchain_docker_orchestrator.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\langchain_system_launcher.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\launch_enhanced_langchain_system.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\robust_langchain_builder.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\simple_aave_trainer.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\simple_langchain_deploy.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\archive\\training_summary.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\backups\\langchain_organize_20250616_075651\\docker\\health_check.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\agent-analyzer\\agent_analyzer_agent.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\agent-arbitrage-bot\\agent_arbitrage_bot_agent.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\agent-coordinator\\agent_coordinator_agent.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\agent-data-collector\\agent_data_collector_agent.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\agent-executor\\agent_executor_agent.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\agent-healer\\agent_healer_agent.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\agent-liquidity-manager\\agent_liquidity_manager_agent.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\agent-monitor\\agent_monitor_agent.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\agent-reporter\\agent_reporter_agent.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\agent-risk-manager\\agent_risk_manager_agent.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\agents\\agent.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\agents\\agent_template.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\orchestrator\\coordination_manager.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\orchestrator\\enhanced_orchestrator.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\orchestrator\\error_handler.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\orchestrator\\github_integration.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\orchestrator\\langchain_orchestrator_robust.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\orchestrator\\orchestrator_app.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\orchestrator\\persistent_orchestrator.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\containers\\orchestrator\\robust_orchestrator.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\core\\main.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\docker\\docker-container-fixer.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\scripts\\start_training.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\scripts\\automation\\advanced_multichain_deployer.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\scripts\\automation\\automated_langchain_deployer.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\scripts\\automation\\automated_langchain_deployer_windows.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\scripts\\automation\\automated_langchain_project_fixer.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\scripts\\automation\\automated_langchain_project_fixer_clean.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\scripts\\automation\\complete_ai_enhanced_system_fixed.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\scripts\\automation\\langchain-system-fix.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\scripts\\automation\\langchain_quick_fix.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\scripts\\automation\\postgresql_langchain_setup.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\scripts\\automation\\quick-langchain-fix.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\ai_agents\\master_coordinator.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\langchain_coordinators\\github_copilot_trainer.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\langchain_coordinators\\langchain_final_coordinator.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\langchain_coordinators\\langchain_final_coordinator_fixed.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\langchain_coordinators\\langchain_master_coordinator.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\langchain_coordinators\\master_langchain_system.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\langchain_coordinators\\multi_agent_terminal_coordinator.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\langchain_coordinators\\run_langchain_master.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\langchain_coordinators\\simple-langchain-coordinator.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\langchain_coordinators\\ultimate_langchain_coordinator.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\tools\\advanced_ai_agents.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\tools\\complete_ai_enhanced_system.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\tools\\complete_ai_enhanced_system_type_safe.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\tools\\enhanced_ai_agents.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\tools\\enhanced_ai_agents_v2.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\tools\\enhanced_ai_system.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\tools\\langchain_duplicate_merger.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\tools\\langchain_postgresql_test.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\tools\\langchain_system_status.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\tools\\live_blockchain_verification.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\tools\\project_organizer_langchain.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\tools\\system_repair.py",
+    "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\tools\\__main__.py"
+  ],
+  "recommendations": [
+    "Run 'npm install' to install new dependencies",
+    "Update .env file with required environment variables",
+    "Test MCP servers with 'npm run start:mcp'",
+    "Test AI agents with 'npm run start:ai'",
+    "Run full deployment with 'npm run deploy:all'"
+  ]
+}

@@ -1,0 +1,165 @@
+{
+  "organization_date": "2025-06-16T12:24:32.532342",
+  "project_root": "c:\\Users\\Ratanshila\\Documents\\flash loan",
+  "organized_root": "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project",
+  "summary": {
+    "total_files_scanned": 6699,
+    "unique_files": 939,
+    "duplicate_sets": 1404,
+    "files_removed": 4356,
+    "files_kept": 1404,
+    "space_saved_mb": 66.39829540252686
+  },
+  "categories": {
+    "core_coordinators": {
+      "files": 43,
+      "target_dir": "mcp_servers/coordinator"
+    },
+    "mcp_servers": {
+      "files": 108,
+      "target_dir": "mcp_servers"
+    },
+    "trading_models": {
+      "files": 9,
+      "target_dir": "core/models"
+    },
+    "monitoring": {
+      "files": 74,
+      "target_dir": "monitoring"
+    },
+    "scripts": {
+      "files": 34,
+      "target_dir": "scripts"
+    },
+    "tests": {
+      "files": 18,
+      "target_dir": "tests"
+    },
+    "utilities": {
+      "files": 0,
+      "target_dir": "utilities"
+    },
+    "config": {
+      "files": 4781,
+      "target_dir": "config"
+    },
+    "documentation": {
+      "files": 1172,
+      "target_dir": "docs"
+    }
+  },
+  "duplicate_details": [
+    {
+      "reason": "Content hash: 14af260a...",
+      "files": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\automated_langchain_deployer.py",
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\automated_langchain_deployer.py"
+      ],
+      "kept": "c:\\Users\\Ratanshila\\Documents\\flash loan\\automated_langchain_deployer.py",
+      "removed": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\automated_langchain_deployer.py"
+      ]
+    },
+    {
+      "reason": "Content hash: ff176ceb...",
+      "files": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\automated_langchain_deployer_windows.py",
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\automated_langchain_deployer_windows.py"
+      ],
+      "kept": "c:\\Users\\Ratanshila\\Documents\\flash loan\\automated_langchain_deployer_windows.py",
+      "removed": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\automated_langchain_deployer_windows.py"
+      ]
+    },
+    {
+      "reason": "Content hash: 59a65404...",
+      "files": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\automated_langchain_project_fixer.py",
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\automated_langchain_project_fixer.py"
+      ],
+      "kept": "c:\\Users\\Ratanshila\\Documents\\flash loan\\automated_langchain_project_fixer.py",
+      "removed": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\automated_langchain_project_fixer.py"
+      ]
+    },
+    {
+      "reason": "Content hash: d551bf13...",
+      "files": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\automated_langchain_project_fixer_backup.py",
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\backup_duplicates\\automated_langchain_project_fixer_broken.py",
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\automated_langchain_project_fixer_backup.py"
+      ],
+      "kept": "c:\\Users\\Ratanshila\\Documents\\flash loan\\automated_langchain_project_fixer_backup.py",
+      "removed": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\backup_duplicates\\automated_langchain_project_fixer_broken.py",
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\automated_langchain_project_fixer_backup.py"
+      ]
+    },
+    {
+      "reason": "Content hash: 421df5d0...",
+      "files": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\automated_langchain_project_fixer_clean.py",
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\automated_langchain_project_fixer_clean.py"
+      ],
+      "kept": "c:\\Users\\Ratanshila\\Documents\\flash loan\\automated_langchain_project_fixer_clean.py",
+      "removed": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\automated_langchain_project_fixer_clean.py"
+      ]
+    },
+    {
+      "reason": "Content hash: 57381716...",
+      "files": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\complete_langchain_mcp_integration.py",
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\mcp_servers\\complete_langchain_mcp_integration.py"
+      ],
+      "kept": "c:\\Users\\Ratanshila\\Documents\\flash loan\\complete_langchain_mcp_integration.py",
+      "removed": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\mcp_servers\\complete_langchain_mcp_integration.py"
+      ]
+    },
+    {
+      "reason": "Content hash: d080d16f...",
+      "files": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\comprehensive_system_verifier.py",
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\comprehensive_system_verifier.py"
+      ],
+      "kept": "c:\\Users\\Ratanshila\\Documents\\flash loan\\comprehensive_system_verifier.py",
+      "removed": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\comprehensive_system_verifier.py"
+      ]
+    },
+    {
+      "reason": "Content hash: ee56f61f...",
+      "files": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\coordination_summary.py",
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\coordination_summary.py"
+      ],
+      "kept": "c:\\Users\\Ratanshila\\Documents\\flash loan\\coordination_summary.py",
+      "removed": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\coordination_summary.py"
+      ]
+    },
+    {
+      "reason": "Content hash: 2f8f7f5b...",
+      "files": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\demo_github_copilot_agents.py",
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\demo_github_copilot_agents.py"
+      ],
+      "kept": "c:\\Users\\Ratanshila\\Documents\\flash loan\\demo_github_copilot_agents.py",
+      "removed": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\demo_github_copilot_agents.py"
+      ]
+    },
+    {
+      "reason": "Content hash: 459e0436...",
+      "files": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\diagnose_github_token.py",
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\diagnose_github_token.py"
+      ],
+      "kept": "c:\\Users\\Ratanshila\\Documents\\flash loan\\diagnose_github_token.py",
+      "removed": [
+        "c:\\Users\\Ratanshila\\Documents\\flash loan\\organized_project\\utilities\\other\\diagnose_github_token.py"
+      ]
+    }
+  ]
+}

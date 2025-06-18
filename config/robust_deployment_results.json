@@ -1,0 +1,19 @@
+{
+  "started_at": "2025-06-17T10:07:35.099719",
+  "deployment": {
+    "success": false,
+    "error": "Deployment transaction failed"
+  },
+  "verification": {},
+  "mcp_servers": [
+    {
+      "pid": 25848,
+      "running": true
+    },
+    {
+      "pid": 17204,
+      "running": true
+    }
+  ],
+  "final_status": "deployment_failed"
+}

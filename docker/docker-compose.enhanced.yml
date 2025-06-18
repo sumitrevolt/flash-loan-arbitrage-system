@@ -1,0 +1,818 @@
+networks:
+  langchain_network:
+    driver: bridge
+    ipam:
+      config:
+      - subnet: 172.20.0.0/16
+services:
+  analytics-engine:
+    container_name: langchain-analytics-engine
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4013'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: analytics-engine
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4013/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4013:4013
+    restart: unless-stopped
+  arbitrage-detector-mcp:
+    container_name: langchain-arbitrage-detector-mcp
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4004'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: arbitrage-detector-mcp
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4004/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4004:4004
+    restart: unless-stopped
+  audit-logger:
+    container_name: langchain-audit-logger
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4018'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: audit-logger
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4018/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4018:4018
+    restart: unless-stopped
+  code-indexer:
+    container_name: langchain-code-indexer
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4021'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: code-indexer
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4021/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4021:4021
+    restart: unless-stopped
+  context7-mcp-server:
+    container_name: langchain-context7-mcp-server
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4009'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: context7-mcp-server
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4009/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4009:4009
+    restart: unless-stopped
+  dex-price-server:
+    container_name: langchain-dex-price-server
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4003'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: dex-price-server
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4003/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4003:4003
+    restart: unless-stopped
+  dex-services-mcp:
+    container_name: langchain-dex-services-mcp
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4012'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: dex-services-mcp
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4012/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4012:4012
+    restart: unless-stopped
+  enhanced-copilot-mcp-server:
+    container_name: langchain-enhanced-copilot-mcp-server
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4010'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: enhanced-copilot-mcp-server
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4010/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4010:4010
+    restart: unless-stopped
+  evm-mcp-server:
+    container_name: langchain-evm-mcp-server
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4006'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: evm-mcp-server
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4006/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4006:4006
+    restart: unless-stopped
+  flash-loan-mcp:
+    container_name: langchain-flash-loan-mcp
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4001'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: flash-loan-mcp
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4001/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4001:4001
+    restart: unless-stopped
+  foundry-integration-mcp:
+    container_name: langchain-foundry-integration-mcp
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4005'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: foundry-integration-mcp
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4005/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4005:4005
+    restart: unless-stopped
+  github-mcp-server:
+    container_name: langchain-github-mcp-server
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4008'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: github-mcp-server
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4008/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4008:4008
+    restart: unless-stopped
+  health-checker:
+    container_name: langchain-health-checker
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4020'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: health-checker
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4020/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4020:4020
+    restart: unless-stopped
+  liquidity-monitor:
+    container_name: langchain-liquidity-monitor
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4015'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: liquidity-monitor
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4015/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4015:4015
+    restart: unless-stopped
+  market-data-feed:
+    container_name: langchain-market-data-feed
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4016'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: market-data-feed
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4016/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4016:4016
+    restart: unless-stopped
+  matic-mcp-server:
+    container_name: langchain-matic-mcp-server
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4007'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: matic-mcp-server
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4007/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4007:4007
+    restart: unless-stopped
+  notification-service:
+    container_name: langchain-notification-service
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4019'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: notification-service
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4019/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4019:4019
+    restart: unless-stopped
+  performance-monitor:
+    container_name: langchain-performance-monitor
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4017'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: performance-monitor
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4017/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4017:4017
+    restart: unless-stopped
+  postgres:
+    container_name: langchain-postgres
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1g
+    environment:
+      POSTGRES_DB: langchain
+      POSTGRES_PASSWORD: langchain123
+      POSTGRES_USER: langchain
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:5432/ || exit 1
+      timeout: 10s
+    image: postgres:15-alpine
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 5432:5432
+    restart: unless-stopped
+    volumes:
+    - postgres_data:/var/lib/postgresql/data
+  price-oracle-mcp-server:
+    container_name: langchain-price-oracle-mcp-server
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4011'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: price-oracle-mcp-server
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4011/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4011:4011
+    restart: unless-stopped
+  rabbitmq:
+    container_name: langchain-rabbitmq
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512m
+    environment:
+      RABBITMQ_DEFAULT_PASS: langchain123
+      RABBITMQ_DEFAULT_USER: langchain
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:5672/ || exit 1
+      timeout: 10s
+    image: rabbitmq:3.12-management-alpine
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 5672:5672
+    restart: unless-stopped
+    volumes:
+    - rabbitmq_data:/var/lib/rabbitmq
+  redis:
+    container_name: langchain-redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256m
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4000/ || exit 1
+      timeout: 10s
+    image: redis:7-alpine
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4000:4000
+    restart: unless-stopped
+    volumes:
+    - redis_data:/data
+  risk-manager:
+    container_name: langchain-risk-manager
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4014'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: risk-manager
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4014/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4014:4014
+    restart: unless-stopped
+  web3-provider-mcp:
+    container_name: langchain-web3-provider-mcp
+    depends_on:
+    - postgres
+    - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 256m
+    environment:
+      PORT: '4002'
+      POSTGRES_URL: postgresql://langchain:langchain123@postgres:5432/langchain
+      REDIS_URL: redis://redis:6379
+      SERVICE_NAME: web3-provider-mcp
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test:
+      - CMD-SHELL
+      - curl -f http://localhost:4002/health || exit 1
+      timeout: 10s
+    image: langchain-mcp:latest
+    logging:
+      driver: json-file
+      options:
+        max-file: '3'
+        max-size: 10m
+    networks:
+    - langchain_network
+    ports:
+    - 4002:4002
+    restart: unless-stopped
+version: '3.8'
+volumes:
+  postgres_data: {}
+  rabbitmq_data: {}
+  redis_data: {}
+  shared_logs: {}

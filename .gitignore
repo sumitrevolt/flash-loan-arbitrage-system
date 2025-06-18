@@ -1,0 +1,50 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dependencies
+venv/
+.venv/
+node_modules/
+
+# Deployment files
+deployments.json
+
+# Test coverage
+coverage/
+coverage.json
+
+# Typechain
+typechain/
+typechain-types/
+
+# MCP Server artifacts
+mcp_servers/*/dist/
+mcp_servers/*/node_modules/
+mcp_servers/*/*.log
+
+# Duplicate directories to ignore
+mcp_servers_organized/
+mcp_server/
+infrastructure/mcp_servers/
+
+# Task manager data
+tasks.json
+**/tasks.json

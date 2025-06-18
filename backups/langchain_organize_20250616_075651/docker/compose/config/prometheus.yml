@@ -1,0 +1,54 @@
+# Prometheus configuration for optimized Flash Loan Arbitrage System
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Infrastructure monitoring
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+
+  - job_name: 'rabbitmq'
+    static_configs:
+      - targets: ['rabbitmq:15692']
+
+  # MCP Services monitoring
+  - job_name: 'mcp-coordinator'
+    static_configs:
+      - targets: ['mcp-coordinator:3000']
+    metrics_path: '/metrics'
+
+  - job_name: 'mcp-arbitrage-detector'
+    static_configs:
+      - targets: ['mcp-arbitrage-detector:3001']
+    metrics_path: '/metrics'
+
+  - job_name: 'mcp-flash-loan-executor'
+    static_configs:
+      - targets: ['mcp-flash-loan-executor:3002']
+    metrics_path: '/metrics'
+
+  - job_name: 'mcp-risk-manager'
+    static_configs:
+      - targets: ['mcp-risk-manager:3003']
+    metrics_path: '/metrics'
+
+  - job_name: 'mcp-dex-monitor'
+    static_configs:
+      - targets: ['mcp-dex-monitor:3004']
+    metrics_path: '/metrics'
+
+  - job_name: 'mcp-dashboard'
+    static_configs:
+      - targets: ['mcp-dashboard:8080']
+    metrics_path: '/metrics'

@@ -1,0 +1,282 @@
+# Fixed Docker Compose for Claude Integration
+version: '3.8'
+
+networks:
+  claude-network:
+    driver: bridge
+
+volumes:
+  claude_data:
+  postgres_data:
+  redis_data:
+  logs_data:
+  ai_agent_data:
+
+services:
+  # Infrastructure Services
+  redis:
+    image: redis:7-alpine
+    container_name: claude-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - claude-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: claude-postgres
+    environment:
+      POSTGRES_DB: claude_flashloan
+      POSTGRES_USER: claude
+      POSTGRES_PASSWORD: claude123
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - claude-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U claude"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Simplified Claude Bridge (Node.js only)
+  claude-bridge-simple: # Consider renaming this service if it's the primary bridge
+    image: node:18-alpine # Consider updating to node:20-alpine if vulnerabilities persist
+    container_name: claude-bridge-simple
+    working_dir: /app
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://claude:claude123@postgres:5432/claude_flashloan
+      - LOG_LEVEL=info
+      # MCP_SERVERS_CONFIG should point to a config file with paths relative to /app
+      - MCP_SERVERS_CONFIG=/app/config/claude_mcp_config.json
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount the claude-bridge-server.js
+      - ./claude-bridge-server.js:/app/claude-bridge-server.js:ro 
+      # Mount the config directory
+      - ./config:/app/config:ro
+      # Mount package.json if needed for npm install step
+      - ./package.json:/app/package.json:ro 
+      - logs_data:/app/logs
+    networks:
+      - claude-network
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    # Ensure dependencies like express, redis, ws are in package.json or install them
+    command: >
+      sh -c "npm install && node claude-bridge-server.js"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Python MCP Servers (separate containers)
+  mcp-flash-loan:
+    image: python:3.11-alpine
+    container_name: claude-mcp-flash-loan
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app
+      - MCP_PORT=8901
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://claude:claude123@postgres:5432/claude_flashloan
+      - POLYGON_RPC_URL=https://polygon-rpc.com # Should be an env var
+      - LOG_LEVEL=info
+    ports:
+      - "8901:8901"
+    volumes:
+      - ./working_flash_loan_mcp.py:/app/working_flash_loan_mcp.py:ro # Ensure this path is correct
+      - ./requirements.txt:/app/requirements.txt:ro # Ensure this path is correct
+      - ./utils:/app/utils:ro # Ensure this path is correct
+      - logs_data:/app/logs
+    networks:
+      - claude-network
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+    command: >
+      sh -c "pip install --break-system-packages -r requirements.txt && python working_flash_loan_mcp.py"
+
+  mcp-price-monitor:
+    image: python:3.11-alpine
+    container_name: claude-mcp-price
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app
+      - MCP_PORT=8902
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=info
+    ports:
+      - "8902:8902"
+    volumes:
+      - ./mcp_servers/pricing/real_time_price_mcp_server.py:/app/server.py:ro
+      - ./requirements.txt:/app/requirements.txt:ro
+      - ./utils:/app/utils:ro
+      - logs_data:/app/logs
+    networks:
+      - claude-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+    command: >
+      sh -c "pip install --break-system-packages -r requirements.txt && python server.py"
+
+  mcp-aave:
+    image: python:3.11-alpine
+    container_name: claude-mcp-aave
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app
+      - MCP_PORT=8903
+      - POSTGRES_URL=postgresql://claude:claude123@postgres:5432/claude_flashloan
+      - AAVE_POOL_ADDRESS=0x794a61358D6845594F94dc1DB02A252b5b4814aD # Should be an env var
+      - LOG_LEVEL=info
+    ports:
+      - "8903:8903"
+    volumes:
+      - ./mcp_servers/aave/aave_flash_loan_mcp_server.py:/app/server.py:ro
+      - ./requirements.txt:/app/requirements.txt:ro
+      - ./utils:/app/utils:ro
+      - logs_data:/app/logs
+    networks:
+      - claude-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    command: >
+      sh -c "pip install --break-system-packages -r requirements.txt && python server.py"
+
+  # Simple AI Agent
+  ai-coordinator:
+    image: python:3.11-alpine
+    container_name: claude-ai-coordinator
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app
+      - AGENT_ROLE=coordinator
+      - AGENT_PORT=7000
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=info
+    ports:
+      - "7000:7000"
+    volumes:
+      - ./ai_agent/unified_agent.py:/app/agent.py:ro # Ensure this path is correct
+      - ./requirements.txt:/app/requirements.txt:ro
+      - ./utils:/app/utils:ro
+      - logs_data:/app/logs
+    networks:
+      - claude-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+    command: >
+      sh -c "pip install --break-system-packages -r requirements.txt && python agent.py"
+
+  # Web UI (optional)
+  claude-web:
+    image: nginx:alpine
+    container_name: claude-web-simple-ui # Renamed container_name to avoid conflict
+    ports:
+      - "3000:80" # This port conflicts with claude-web-ui. Consider changing one. For now, leaving as is.
+    volumes:
+      - ./web-ui:/usr/share/nginx/html:ro # Ensure this path exists or remove service
+    networks:
+      - claude-network
+    restart: unless-stopped
+
+  # Trading Strategy AI Agent
+  ai-agent-trading:
+    build:
+      context: .
+      dockerfile: docker/ai/Dockerfile.trading-agent
+    container_name: claude-ai-trading
+    environment:
+      - AGENT_ROLE=trading_strategist
+      - AGENT_PORT=7002
+      - REDIS_URL=redis://redis:6379
+      - MCP_COORDINATOR_URL=http://mcp-coordinator:8900
+    ports:
+      - "7002:7002"
+    volumes:
+      - ai_agent_data:/app/data
+      - logs_data:/app/logs
+    networks:
+      - claude-network
+    depends_on:
+      - ai-agent-coordinator
+    restart: unless-stopped
+
+  # Claude Web Interface
+  claude-web-ui:
+    build:
+      context: .
+      dockerfile: docker/claude/Dockerfile.web-ui
+    container_name: claude-web-ui
+    environment:
+      - CLAUDE_BRIDGE_URL=http://claude-desktop-bridge:8080
+      - MCP_COORDINATOR_URL=http://mcp-coordinator:8900
+      - AI_COORDINATOR_URL=http://ai-agent-coordinator:7000
+    ports:
+      - "3000:3000" # Note: If claude-web is also on port 3000 on the host, this will conflict.
+    volumes:
+      - logs_data:/app/logs
+    networks:
+      - claude-network
+    depends_on:
+      - claude-bridge-simple
+      - ai-coordinator
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Monitoring and Metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: claude-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - claude-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: claude-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - ./monitoring/grafana:/var/lib/grafana
+    networks:
+      - claude-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped

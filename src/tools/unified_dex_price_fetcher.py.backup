@@ -1,0 +1,238 @@
+"""
+Unified DEX Price Fetcher - Real-time prices only, no fallbacks
+Consolidates all DEX price fetching functionality
+"""
+
+import logging
+from typing import Dict, Optional
+from web3 import Web3
+
+logger = logging.getLogger(__name__)
+
+class UnifiedDEXPriceFetcher:
+    """Unified system for fetching real-time DEX prices from blockchain"""
+    
+    def __init__(self, web3: Web3):
+        self.web3 = web3
+        self.logger = logger
+        
+        # Token addresses on Polygon
+        self.token_addresses = {
+            'WMATIC': '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
+            'USDC': '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
+            'USDT': '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
+            'DAI': '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063',
+            'WETH': '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619',
+            'WBTC': '0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6',
+            'LINK': '0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39',
+            'UNI': '0xb33EaAd8d922B1083446DC23f610c2567fB5180f',
+            'AAVE': '0xD6DF932A45C0f255f85145f286eA0b292B21C90B',
+            'CRV': '0x172370d5Cd63279eFa6d502DAB29171933a610AF',
+            'SUSHI': '0x0b3F868E0BE5597D5DB7fEB59E1CADBb0fdDa50a',
+            'BAL': '0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3'
+        }
+        
+        # Token decimals
+        self.token_decimals = {
+            'WMATIC': 18, 'USDC': 6, 'USDT': 6, 'DAI': 18,
+            'WETH': 18, 'WBTC': 8, 'LINK': 18, 'UNI': 18,
+            'AAVE': 18, 'CRV': 18, 'SUSHI': 18, 'BAL': 18
+        }
+        
+        # DEX routers
+        self.dex_routers = {
+            'quickswap': '0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff',
+            'sushiswap': '0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506',
+            'uniswapv3': '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
+            'balancer': '0xBA12222222228d8Ba445958a75a0704d566BF2C8',
+            'curve': '0x445FE580eF8d70FF569aB36e80c647af338db351'
+        }
+        
+        # UniswapV3 quoter
+        self.uniswap_v3_quoter = '0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6'
+        
+        # Router ABI for V2 style DEXes
+        self.router_abi: list[dict[str, object]] = [
+            {
+                "inputs": [
+                    {"internalType": "uint256", "name": "amountIn", "type": "uint256"},
+                    {"internalType": "address[]", "name": "path", "type": "address[]"}
+                ],
+                "name": "getAmountsOut",
+                "outputs": [{"internalType": "uint256[]", "name": "amounts", "type": "uint256[]"}],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ]
+        
+        # UniswapV3 quoter ABI
+        self.quoter_abi: list[dict[str, object]] = [
+            {
+                "inputs": [
+                    {"internalType": "address", "name": "tokenIn", "type": "address"},
+                    {"internalType": "address", "name": "tokenOut", "type": "address"},
+                    {"internalType": "uint24", "name": "fee", "type": "uint24"},
+                    {"internalType": "uint256", "name": "amountIn", "type": "uint256"},
+                    {"internalType": "uint160", "name": "sqrtPriceLimitX96", "type": "uint160"}
+                ],
+                "name": "quoteExactInputSingle",
+                "outputs": [{"internalType": "uint256", "name": "amountOut", "type": "uint256"}],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }
+        ]
+        
+    async def get_token_price_v2(self, token_in: str, token_out: str, amount_in: int, dex_name: str) -> Optional[float]:
+        """Get real-time price from V2 DEX"""
+        try:
+            if dex_name not in self.dex_routers:
+                self.logger.warning(f"Unknown DEX: {dex_name}")
+                return None
+                
+            router_address = self.dex_routers[dex_name]
+            router = self.web3.eth.contract(
+                address=Web3.to_checksum_address(router_address),
+                abi=self.router_abi
+            )
+            
+            path = [
+                Web3.to_checksum_address(token_in),
+                Web3.to_checksum_address(token_out)
+            ]
+            
+            amounts = router.functions.getAmountsOut(amount_in, path).call()
+            return float(amounts[-1])
+            
+        except Exception as e:
+            self.logger.debug(f"V2 price fetch failed for {dex_name}: {e}")
+            return None
+    
+    async def get_token_price_v3(self, token_in: str, token_out: str, amount_in: int, fee: int = 3000) -> Optional[float]:
+        """Get real-time price from Uniswap V3"""
+        try:
+            quoter = self.web3.eth.contract(
+                address=Web3.to_checksum_address(self.uniswap_v3_quoter),
+                abi=self.quoter_abi
+            )
+            
+            amount_out = quoter.functions.quoteExactInputSingle(
+                Web3.to_checksum_address(token_in),
+                Web3.to_checksum_address(token_out),
+                fee,
+                amount_in,
+                0
+            ).call()
+            
+            return float(amount_out)
+            
+        except Exception as e:
+            self.logger.debug(f"V3 price fetch failed: {e}")
+            return None
+    
+    async def get_price_in_usdc(self, token_symbol: str, dex_name: str) -> Optional[float]:
+        """Get token price in USDC from specific DEX"""
+        try:
+            if token_symbol == 'USDC':
+                return 1.0
+                
+            if token_symbol not in self.token_addresses:
+                self.logger.warning(f"Unknown token: {token_symbol}")
+                return None
+                
+            token_address = self.token_addresses[token_symbol]
+            usdc_address = self.token_addresses['USDC']
+            decimals = self.token_decimals[token_symbol]
+            
+            # Amount to check (1 token)
+            amount_in = 10 ** decimals
+            
+            # Normalize DEX name
+            dex_name = dex_name.lower()
+            
+            # Get price based on DEX type
+            if dex_name == 'uniswapv3':
+                # Try different fee tiers
+                for fee in [500, 3000, 10000]:
+                    amount_out = await self.get_token_price_v3(
+                        token_address, 
+                        usdc_address, 
+                        amount_in, 
+                        fee
+                    )
+                    if amount_out and amount_out > 0:
+                        price = amount_out / (10 ** 6)  # USDC has 6 decimals
+                        self.logger.info(f"Real-time price for {token_symbol} on UniswapV3 (fee {fee}): ${price:.6f}")
+                        return price
+            else:
+                # V2 style DEX
+                amount_out = await self.get_token_price_v2(
+                    token_address,
+                    usdc_address,
+                    amount_in,
+                    dex_name
+                )
+                if amount_out and amount_out > 0:
+                    price = amount_out / (10 ** 6)  # USDC has 6 decimals
+                    self.logger.info(f"Real-time price for {token_symbol} on {dex_name}: ${price:.6f}")
+                    return price
+                    
+            self.logger.warning(f"Could not get real-time price for {token_symbol} on {dex_name}")
+            return None
+            
+        except Exception as e:
+            self.logger.error(f"Error getting price for {token_symbol} on {dex_name}: {e}")
+            return None
+    
+    async def get_all_dex_prices(self, token_symbol: str) -> Dict[str, float]:
+        """Get token prices from all DEXes"""
+        prices: Dict[str, float] = {}
+        
+        for dex_name in self.dex_routers.keys():
+            price = await self.get_price_in_usdc(token_symbol, dex_name)
+            if price and price > 0:
+                prices[dex_name] = price
+                
+        return prices
+    
+    async def get_price_pair(self, token_a: str, token_b: str, dex_name: str) -> Optional[float]:
+        """Get exchange rate between two tokens on a specific DEX"""
+        try:
+            if token_a not in self.token_addresses or token_b not in self.token_addresses:
+                return None
+                
+            token_a_address = self.token_addresses[token_a]
+            token_b_address = self.token_addresses[token_b]
+            decimals_a = self.token_decimals[token_a]
+            decimals_b = self.token_decimals[token_b]
+            
+            amount_in = 10 ** decimals_a
+            
+            dex_name = dex_name.lower()
+            
+            if dex_name == 'uniswapv3':
+                for fee in [500, 3000, 10000]:
+                    amount_out = await self.get_token_price_v3(
+                        token_a_address,
+                        token_b_address,
+                        amount_in,
+                        fee
+                    )
+                    if amount_out and amount_out > 0:
+                        rate = amount_out / (10 ** decimals_b)
+                        return rate
+            else:
+                amount_out = await self.get_token_price_v2(
+                    token_a_address,
+                    token_b_address,
+                    amount_in,
+                    dex_name
+                )
+                if amount_out and amount_out > 0:
+                    rate = amount_out / (10 ** decimals_b)
+                    return rate
+                    
+            return None
+            
+        except Exception as e:
+            self.logger.error(f"Error getting pair price {token_a}/{token_b} on {dex_name}: {e}")
+            return None

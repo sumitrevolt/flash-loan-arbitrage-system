@@ -1,0 +1,45 @@
+== Info:   Trying 127.0.0.1:8000...
+== Info: Connected to 127.0.0.1 (127.0.0.1) port 8000
+== Info: using HTTP/1.x
+=> Send header, 134 bytes (0x86)
+0000: POST /chat HTTP/1.1
+0015: Host: 127.0.0.1:8000
+002b: User-Agent: curl/8.12.1
+0044: Accept: */*
+0051: Content-Type: application/json
+0071: Content-Length: 2
+0084: 
+=> Send data, 2 bytes (0x2)
+0000: {\
+== Info: upload completely sent off: 2 bytes
+<= Recv header, 36 bytes (0x24)
+0000: HTTP/1.1 500 Internal Server Error
+<= Recv header, 47 bytes (0x2f)
+0000: Content-Type: application/json; charset=utf-8
+<= Recv header, 21 bytes (0x15)
+0000: Content-Length: 130
+<= Recv header, 37 bytes (0x25)
+0000: Date: Fri, 06 Jun 2025 09:53:58 GMT
+<= Recv header, 36 bytes (0x24)
+0000: Server: Python/3.11 aiohttp/3.12.7
+<= Recv header, 2 bytes (0x2)
+0000: 
+<= Recv data, 130 bytes (0x82)
+0000: {"success": false, "error": "Chat processing failed: Expecting p
+0040: roperty name enclosed in double quotes: line 1 column 2 (char 1)
+0080: "}
+== Info: Connection #0 to host 127.0.0.1 left intact
+== Info: URL rejected: Port number was not a decimal number between 0 and 65535
+== Info: closing connection #-1
+== Info: Could not resolve host: is
+== Info: shutting down connection #1
+== Info: Could not resolve host: missing
+== Info: shutting down connection #2
+== Info: Could not resolve host: in
+== Info: shutting down connection #3
+== Info: Could not resolve host: the
+== Info: shutting down connection #4
+== Info: Could not resolve host: current
+== Info: shutting down connection #5
+== Info: Could not resolve host: project
+== Info: shutting down connection #6

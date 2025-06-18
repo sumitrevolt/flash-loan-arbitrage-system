@@ -1,0 +1,328 @@
+networks:
+  coordination_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+  grafana_data:
+  prometheus_data:
+
+services:
+  # ====== INFRASTRUCTURE SERVICES ======
+  redis:
+    image: redis:7-alpine
+    container_name: coordination_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - coordination_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: coordination_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: coordination
+      RABBITMQ_DEFAULT_PASS: coordination_pass
+      RABBITMQ_DEFAULT_VHOST: coordination
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - coordination_network
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: coordination_postgres
+    environment:
+      POSTGRES_DB: coordination
+      POSTGRES_USER: coordination
+      POSTGRES_PASSWORD: coordination_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - coordination_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d coordination -U coordination"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ====== MONITORING SERVICES ======
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: coordination_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+    networks:
+      - coordination_network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: coordination_grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - coordination_network
+    restart: unless-stopped
+
+  # ====== MCP SERVERS ======
+  mcp_price_feed:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_price_feed
+    environment:
+      - SERVER_TYPE=price_feed
+      - PORT=8100
+      - REDIS_URL=redis://coordination_redis:6379
+      - POLYGON_RPC_URL=${POLYGON_RPC_URL:-https://polygon-rpc.com}
+    ports:
+      - "8100:8100"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - coordination_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp_arbitrage_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_arbitrage_server
+    environment:
+      - SERVER_TYPE=arbitrage
+      - PORT=8101
+      - REDIS_URL=redis://coordination_redis:6379
+      - POLYGON_RPC_URL=${POLYGON_RPC_URL:-https://polygon-rpc.com}
+    ports:
+      - "8101:8101"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - coordination_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8101/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp_flash_loan_server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-enhanced
+    container_name: mcp_flash_loan_server
+    environment:
+      - SERVER_TYPE=flash_loan
+      - PORT=8102
+      - REDIS_URL=redis://coordination_redis:6379
+      - POLYGON_RPC_URL=${POLYGON_RPC_URL:-https://polygon-rpc.com}
+    ports:
+      - "8102:8102"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - coordination_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8102/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ====== AI AGENTS ======
+  ai_agent_flash_loan_optimizer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_flash_loan_optimizer
+    environment:
+      - AGENT_TYPE=flash_loan_optimizer
+      - AGENT_NAME=flash_loan_optimizer
+      - PORT=9001
+      - REDIS_URL=redis://coordination_redis:6379
+      - MCP_FLASH_LOAN_URL=http://mcp_flash_loan_server:8102
+      - MCP_PRICE_FEED_URL=http://mcp_price_feed:8100
+    ports:
+      - "9001:9001"
+    depends_on:
+      redis:
+        condition: service_healthy
+      mcp_flash_loan_server:
+        condition: service_healthy
+    networks:
+      - coordination_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  ai_agent_risk_manager:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_risk_manager
+    environment:
+      - AGENT_TYPE=risk_management
+      - AGENT_NAME=risk_manager
+      - PORT=9002
+      - REDIS_URL=redis://coordination_redis:6379
+    ports:
+      - "9002:9002"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - coordination_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  ai_agent_arbitrage_detector:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.agent
+    container_name: ai_agent_arbitrage_detector
+    environment:
+      - AGENT_TYPE=arbitrage
+      - AGENT_NAME=arbitrage_detector
+      - PORT=9003
+      - REDIS_URL=redis://coordination_redis:6379
+      - MCP_ARBITRAGE_URL=http://mcp_arbitrage_server:8101
+    ports:
+      - "9003:9003"
+    depends_on:
+      redis:
+        condition: service_healthy
+      mcp_arbitrage_server:
+        condition: service_healthy
+    networks:
+      - coordination_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ====== SELF-HEALING AGENT ======
+  ai_agent_self_healing:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.self-healing
+    container_name: ai_agent_self_healing
+    environment:
+      - AGENT_TYPE=self_healing
+      - AGENT_NAME=self_healing_agent
+      - PORT=8300
+      - REDIS_URL=redis://coordination_redis:6379
+    ports:
+      - "8300:8300"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - coordination_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8300/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    privileged: true
+
+  # ====== MAIN COORDINATION SYSTEM ======
+  coordination_system:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.coordination
+    container_name: coordination_system
+    environment:
+      - REDIS_URL=redis://coordination_redis:6379
+      - POSTGRES_URL=postgresql://coordination:coordination_pass@coordination_postgres:5432/coordination
+      - RABBITMQ_URL=amqp://coordination:coordination_pass@coordination_rabbitmq:5672/coordination
+      - POLYGON_RPC_URL=${POLYGON_RPC_URL:-https://polygon-rpc.com}
+      - ARBITRAGE_PRIVATE_KEY=${ARBITRAGE_PRIVATE_KEY:-}
+      # MCP Server URLs
+      - MCP_PRICE_FEED_URL=http://mcp_price_feed:8100
+      - MCP_ARBITRAGE_URL=http://mcp_arbitrage_server:8101
+      - MCP_FLASH_LOAN_URL=http://mcp_flash_loan_server:8102
+      # AI Agent URLs
+      - AI_AGENT_FLASH_LOAN_OPTIMIZER_URL=http://ai_agent_flash_loan_optimizer:9001
+      - AI_AGENT_RISK_MANAGER_URL=http://ai_agent_risk_manager:9002
+      - AI_AGENT_ARBITRAGE_DETECTOR_URL=http://ai_agent_arbitrage_detector:9003
+      - AI_AGENT_SELF_HEALING_URL=http://ai_agent_self_healing:8300
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ai_agent_self_healing:
+        condition: service_healthy
+    networks:
+      - coordination_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ====== DASHBOARD ======
+  dashboard:
+    image: nginx:alpine
+    container_name: coordination_dashboard
+    ports:
+      - "8080:80"
+    depends_on:
+      - coordination_system
+    networks:
+      - coordination_network
+    restart: unless-stopped

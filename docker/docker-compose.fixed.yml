@@ -1,0 +1,146 @@
+version: '3.8'
+
+services:
+  # Infrastructure Services
+  redis:
+    image: redis:7-alpine
+    container_name: mcp-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mcp_network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: mcp-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: mcp_coordination
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mcp_network
+    restart: unless-stopped
+
+  # MCP Servers
+  mcp-aave-flash-loan:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp
+    container_name: mcp-aave-flash-loan
+    ports:
+      - "8001:8000"
+    environment:
+      MCP_SERVER_NAME: aave-flash-loan
+      MCP_SERVER_PORT: "8000"
+      REDIS_URL: redis://redis:6379
+    volumes:
+      - ../mcp_servers:/app/mcp_servers
+      - shared_logs:/app/logs
+    networks:
+      - mcp_network
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+
+  mcp-flash-loan:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp
+    container_name: mcp-flash-loan
+    ports:
+      - "8002:8000"
+    environment:
+      MCP_SERVER_NAME: flash-loan
+      MCP_SERVER_PORT: "8000"
+      REDIS_URL: redis://redis:6379
+    volumes:
+      - ../mcp_servers:/app/mcp_servers
+      - shared_logs:/app/logs
+    networks:
+      - mcp_network
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+
+  mcp-github:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp
+    container_name: mcp-github
+    ports:
+      - "8003:8000"
+    environment:
+      MCP_SERVER_NAME: github
+      MCP_SERVER_PORT: "8000"
+      REDIS_URL: redis://redis:6379
+    volumes:
+      - ../mcp_servers:/app/mcp_servers
+      - shared_logs:/app/logs
+    networks:
+      - mcp_network
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+
+  mcp-dex-arbitrage:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp
+    container_name: mcp-dex-arbitrage
+    ports:
+      - "8004:8000"
+    environment:
+      MCP_SERVER_NAME: dex-arbitrage
+      MCP_SERVER_PORT: "8000"
+      REDIS_URL: redis://redis:6379
+    volumes:
+      - ../mcp_servers:/app/mcp_servers
+      - shared_logs:/app/logs
+    networks:
+      - mcp_network
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+
+  # Monitoring & Management Dashboard
+  mcp-coordinator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp
+    container_name: mcp-coordinator
+    ports:
+      - "8080:8000"
+    environment:
+      MCP_SERVER_NAME: coordinator
+      MCP_SERVER_PORT: "8000"
+      REDIS_URL: redis://redis:6379
+      COORDINATOR_MODE: "true"
+    volumes:
+      - ../:/app
+      - shared_logs:/app/logs
+    networks:
+      - mcp_network
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  postgres_data:
+  shared_logs:
+
+networks:
+  mcp_network:
+    driver: bridge

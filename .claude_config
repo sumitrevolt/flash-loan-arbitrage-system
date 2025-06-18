@@ -1,0 +1,100 @@
+# Claude Configuration for Flash Loan Arbitrage System
+
+## Project Overview
+This is a comprehensive flash loan arbitrage system built with:
+- Aave Protocol integration for flash loans
+- Multi-DEX price monitoring and arbitrage detection
+- Real-time price feeds and analysis
+- Model Context Protocol (MCP) servers for AI integration
+- Blockchain interaction capabilities
+
+## Key Components
+
+### MCP Servers
+- **flash-loan-arbitrage**: Main arbitrage detection and execution
+- **flash-loan-system**: Core flash loan system management
+- **minimal-flash-loan**: Lightweight flash loan operations
+- **context7-integration**: AI context integration
+- **matic-blockchain**: Polygon/Matic blockchain interactions
+- **aave-flash-loan**: Aave protocol specific operations
+- **real-time-price**: Real-time cryptocurrency price monitoring
+
+### Core Directories
+- `/mcp_servers/`: All MCP server implementations
+- `/src/`: Source code for core functionality
+- `/scripts/`: Utility and deployment scripts
+- `/config/`: Configuration files
+- `/tests/`: Test suites
+- `/docs/`: Documentation
+
+### Main Technologies
+- Python 3.11+
+- Web3.py for blockchain interaction
+- Aave Protocol V3
+- Multiple DEX integrations (Uniswap, SushiSwap, etc.)
+- Real-time WebSocket connections for price feeds
+- Docker containerization
+- PostgreSQL for data storage
+
+## Development Guidelines
+
+### Code Style
+- Follow PEP 8 for Python code
+- Use type hints consistently
+- Implement proper error handling and logging
+- Add comprehensive docstrings for all functions and classes
+
+### Architecture Patterns
+- MCP (Model Context Protocol) for AI integration
+- Async/await patterns for concurrent operations
+- Factory pattern for creating different arbitrage strategies
+- Observer pattern for price monitoring
+- Strategy pattern for different DEX integrations
+
+### Security Considerations
+- Never expose private keys in code
+- Use environment variables for sensitive data
+- Implement proper input validation
+- Add rate limiting for API calls
+- Use secure RPC endpoints
+
+### Testing
+- Unit tests for all core functions
+- Integration tests for blockchain interactions
+- Mock external APIs for consistent testing
+- Test both successful and failure scenarios
+
+## Common Operations
+
+### Running MCP Servers
+```bash
+python simple_mcp_server.py
+python working_flash_loan_mcp.py
+python mcp_servers/pricing/real_time_price_mcp_server.py
+```
+
+### Environment Setup
+- Install Python 3.11+
+- Install required packages: `pip install -r requirements.txt`
+- Set up environment variables for API keys and RPC URLs
+- Configure database connections
+
+### Deployment
+- Use Docker compose for local development
+- Configure proper networking for container communication
+- Set up monitoring and logging
+- Implement health checks for all services
+
+## Key Files to Understand
+- `working_flash_loan_mcp.py`: Main flash loan MCP server
+- `mcp_servers/pricing/real_time_price_mcp_server.py`: Price monitoring
+- `mcp_servers/aave/aave_flash_loan_mcp_server.py`: Aave integration
+- `docker-compose.yml`: Container orchestration
+- `package.json`: Node.js dependencies for frontend components
+
+## AI Integration Notes
+- The system uses MCP for AI-human collaboration
+- Each MCP server exposes specific tools and resources
+- Real-time data feeds provide context for decision making
+- AI agents can trigger arbitrage opportunities
+- Historical data analysis for strategy optimization

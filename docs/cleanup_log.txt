@@ -1,0 +1,24 @@
+﻿Duplicate Files Cleanup Log
+==========================
+Date: 06/12/2025 23:28:15
+
+Files moved to backup:
+- enhanced_ai_agents.py
+- enhanced_ai_agents_v2.py
+- advanced_ai_agents.py
+- complete_ai_enhanced_system.py
+- complete_ai_enhanced_system_fixed.py
+- complete_ai_enhanced_system_type_safe.py
+- enhanced_mcp_dashboard_with_chat.py
+- generate_full_docker_compose.py
+- generate_full_docker_compose_fixed.py
+- fix_all_servers.py
+- fix_all_local_mcp_servers.py
+- fix_health_check.py
+- advanced_mcp_server_repair.py
+- enhanced_dex_arbitrage_monitor_11_tokens.py
+- enhanced_dex_monitor_final.py
+- enhanced_dex_calculations_dashboard.py
+- enhanced_dex_price_calculator.py
+
+These files have been consolidated into the organized project structure.

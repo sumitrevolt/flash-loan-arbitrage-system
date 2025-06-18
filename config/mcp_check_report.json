@@ -1,0 +1,217 @@
+{
+  "workspace_path": "C:\\Users\\Ratanshila\\Documents\\flash loan",
+  "timestamp": "07-06-2025",
+  "servers": [
+    {
+      "server": "CHECK_MCP_SERVERS_STATUS",
+      "type": "python",
+      "issues": []
+    },
+    {
+      "server": "enhanced_production_mcp_server_v2",
+      "type": "python",
+      "issues": []
+    },
+    {
+      "server": "mcp_server_checker",
+      "type": "python",
+      "issues": []
+    },
+    {
+      "server": "mcp_server_checker_fixed",
+      "type": "python",
+      "issues": []
+    },
+    {
+      "server": "mcp_server_coordinator",
+      "type": "python",
+      "issues": []
+    },
+    {
+      "server": "working_enhanced_copilot_mcp_server",
+      "type": "python",
+      "issues": []
+    },
+    {
+      "server": "working_enhanced_foundry_mcp_server",
+      "type": "python",
+      "issues": []
+    },
+    {
+      "server": "working_unified_flash_loan_mcp_server",
+      "type": "python",
+      "issues": []
+    },
+    {
+      "server": "start_all_mcp_servers",
+      "type": "python",
+      "issues": []
+    },
+    {
+      "server": "TaskManager-MCP",
+      "type": "typescript",
+      "issues": []
+    },
+    {
+      "server": "TaskManager-MCP",
+      "type": "typescript",
+      "issues": []
+    }
+  ],
+  "config_files": {
+    "production_config.json": "C:\\Users\\Ratanshila\\Documents\\flash loan\\production_config.json",
+    "unified_config.json": "C:\\Users\\Ratanshila\\Documents\\flash loan\\unified_config.json",
+    "deployment_config.json": "C:\\Users\\Ratanshila\\Documents\\flash loan\\deployment_config.json"
+  },
+  "environment": {
+    "required": {
+      "POLYGON_RPC_URL": false,
+      "PRIVATE_KEY": false
+    },
+    "optional": {
+      "ETHERSCAN_API_KEY": false,
+      "INFURA_PROJECT_ID": false,
+      "ALCHEMY_API_KEY": false
+    }
+  },
+  "directory_structure": {
+    "mcp": true,
+    "core": true,
+    "config": true,
+    "logs": true,
+    "scripts": true
+  },
+  "ports": {
+    "3001": "available",
+    "3002": "available",
+    "3003": "available",
+    "8000": "available",
+    "8001": "available",
+    "8007": "available"
+  },
+  "summary": {
+    "total_servers_found": 11,
+    "total_issues": 19,
+    "errors": 15,
+    "warnings": 4,
+    "config_files_found": 3,
+    "python_servers": 9,
+    "typescript_servers": 2
+  },
+  "issues": [
+    {
+      "server": "CHECK_MCP_SERVERS_STATUS",
+      "type": "FILE_READ_ERROR",
+      "description": "Could not read server file: 'charmap' codec can't decode byte 0x9d in position 1854: character maps to <undefined>",
+      "severity": "ERROR"
+    },
+    {
+      "server": "enhanced_production_mcp_server_v2",
+      "type": "FILE_READ_ERROR",
+      "description": "Could not read server file: 'charmap' codec can't decode byte 0x9d in position 13722: character maps to <undefined>",
+      "severity": "ERROR"
+    },
+    {
+      "server": "mcp_server_checker",
+      "type": "FILE_READ_ERROR",
+      "description": "Could not read server file: 'charmap' codec can't decode byte 0x8d in position 11978: character maps to <undefined>",
+      "severity": "ERROR"
+    },
+    {
+      "server": "mcp_server_checker_fixed",
+      "type": "FILE_READ_ERROR",
+      "description": "Could not read server file: 'charmap' codec can't decode byte 0x8d in position 12081: character maps to <undefined>",
+      "severity": "ERROR"
+    },
+    {
+      "server": "mcp_server_coordinator",
+      "type": "FILE_READ_ERROR",
+      "description": "Could not read server file: 'charmap' codec can't decode byte 0x9d in position 3065: character maps to <undefined>",
+      "severity": "ERROR"
+    },
+    {
+      "server": "working_enhanced_copilot_mcp_server",
+      "type": "FILE_READ_ERROR",
+      "description": "Could not read server file: 'charmap' codec can't decode byte 0x8d in position 5675: character maps to <undefined>",
+      "severity": "ERROR"
+    },
+    {
+      "server": "working_enhanced_foundry_mcp_server",
+      "type": "FILE_READ_ERROR",
+      "description": "Could not read server file: 'charmap' codec can't decode byte 0x8d in position 6562: character maps to <undefined>",
+      "severity": "ERROR"
+    },
+    {
+      "server": "working_unified_flash_loan_mcp_server",
+      "type": "FILE_READ_ERROR",
+      "description": "Could not read server file: 'charmap' codec can't decode byte 0x90 in position 6164: character maps to <undefined>",
+      "severity": "ERROR"
+    },
+    {
+      "server": "TaskManager-MCP",
+      "type": "MISSING_DEPENDENCIES",
+      "description": "node_modules directory not found - run 'npm install'",
+      "severity": "ERROR"
+    },
+    {
+      "server": "TaskManager-MCP",
+      "type": "MISSING_BUILD",
+      "description": "dist/ directory not found - run 'npm run build'",
+      "severity": "ERROR"
+    },
+    {
+      "server": "TaskManager-MCP",
+      "type": "MISSING_BUILD",
+      "description": "Built index.js not found - run 'npm run build'",
+      "severity": "ERROR"
+    },
+    {
+      "server": "TaskManager-MCP",
+      "type": "MISSING_FILE",
+      "description": "README documentation: C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp\\flash-loan-arbitrage-mcp\\README.md",
+      "severity": "ERROR"
+    },
+    {
+      "server": "TaskManager-MCP",
+      "type": "MISSING_FILE",
+      "description": "README documentation: C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp\\mcp-taskmanager\\README.md",
+      "severity": "ERROR"
+    },
+    {
+      "server": "CONFIG",
+      "type": "MISSING_FILE",
+      "description": "Main MCP configuration file not found: unified_mcp_config.json",
+      "severity": "WARNING"
+    },
+    {
+      "server": "GLOBAL",
+      "type": "MISSING_ENV_VAR",
+      "description": "Required environment variable 'POLYGON_RPC_URL' not set",
+      "severity": "ERROR"
+    },
+    {
+      "server": "GLOBAL",
+      "type": "MISSING_ENV_VAR",
+      "description": "Required environment variable 'PRIVATE_KEY' not set",
+      "severity": "ERROR"
+    },
+    {
+      "server": "GLOBAL",
+      "type": "MISSING_ENV_VAR",
+      "description": "Optional environment variable 'ETHERSCAN_API_KEY' not set",
+      "severity": "WARNING"
+    },
+    {
+      "server": "GLOBAL",
+      "type": "MISSING_ENV_VAR",
+      "description": "Optional environment variable 'INFURA_PROJECT_ID' not set",
+      "severity": "WARNING"
+    },
+    {
+      "server": "GLOBAL",
+      "type": "MISSING_ENV_VAR",
+      "description": "Optional environment variable 'ALCHEMY_API_KEY' not set",
+      "severity": "WARNING"
+    }
+  ]
+}

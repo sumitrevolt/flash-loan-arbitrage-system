@@ -1,0 +1,575 @@
+{
+  "servers": {
+    "mcp_server_trainer": {
+      "name": "mcp_server_trainer",
+      "type": "python",
+      "path": "mcp_servers/mcp_server_trainer.py",
+      "port": 8047,
+      "enabled": true
+    },
+    "enhanced_mcp_server_manager": {
+      "name": "enhanced_mcp_server_manager",
+      "type": "python",
+      "path": "mcp_servers/enhanced_mcp_server_manager.py",
+      "port": 8049,
+      "enabled": true
+    },
+    "aave_flash_loan_mcp_server": {
+      "name": "aave_flash_loan_mcp_server",
+      "type": "python",
+      "path": "mcp_servers/aave_flash_loan_mcp_server.py",
+      "port": 8053,
+      "enabled": true
+    },
+    "clean_context7_mcp_server": {
+      "name": "clean_context7_mcp_server",
+      "type": "python",
+      "path": "mcp_servers/clean_context7_mcp_server.py",
+      "port": 8057,
+      "enabled": true
+    },
+    "clean_matic_mcp_server": {
+      "name": "clean_matic_mcp_server",
+      "type": "python",
+      "path": "mcp_servers/clean_matic_mcp_server.py",
+      "port": 8058,
+      "enabled": true
+    },
+    "copilot_mcp_mcp_server": {
+      "name": "copilot_mcp_mcp_server",
+      "type": "python",
+      "path": "mcp_servers/copilot_mcp_mcp_server.py",
+      "port": 8059,
+      "enabled": true
+    },
+    "dex_aggregator_mcp_server": {
+      "name": "dex_aggregator_mcp_server",
+      "type": "python",
+      "path": "mcp_servers/dex_aggregator_mcp_server.py",
+      "port": 8062,
+      "enabled": true
+    },
+    "evm_mcp_server": {
+      "name": "evm_mcp_server",
+      "type": "python",
+      "path": "mcp_servers/evm_mcp_server.py",
+      "port": 8065,
+      "enabled": true
+    },
+    "fix_all_local_mcp_servers": {
+      "name": "fix_all_local_mcp_servers",
+      "type": "python",
+      "path": "mcp_servers/fix_all_local_mcp_servers.py",
+      "port": 8066,
+      "enabled": true
+    },
+    "flash_loan_mcp_mcp_server": {
+      "name": "flash_loan_mcp_mcp_server",
+      "type": "python",
+      "path": "mcp_servers/flash_loan_mcp_mcp_server.py",
+      "port": 8067,
+      "enabled": true
+    },
+    "foundry_mcp_mcp_server": {
+      "name": "foundry_mcp_mcp_server",
+      "type": "python",
+      "path": "mcp_servers/foundry_mcp_mcp_server.py",
+      "port": 8068,
+      "enabled": true
+    },
+    "identify_mcp_servers": {
+      "name": "identify_mcp_servers",
+      "type": "python",
+      "path": "mcp_servers/identify_mcp_servers.py",
+      "port": 8069,
+      "enabled": true
+    },
+    "mcp_api_client_server": {
+      "name": "mcp_api_client_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_api_client_server.py",
+      "port": 8072,
+      "enabled": true
+    },
+    "mcp_arbitrage_server": {
+      "name": "mcp_arbitrage_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_arbitrage_server.py",
+      "port": 8073,
+      "enabled": true
+    },
+    "mcp_auth_manager_server": {
+      "name": "mcp_auth_manager_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_auth_manager_server.py",
+      "port": 8074,
+      "enabled": true
+    },
+    "mcp_blockchain_server": {
+      "name": "mcp_blockchain_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_blockchain_server.py",
+      "port": 8075,
+      "enabled": true
+    },
+    "mcp_cache_manager_server": {
+      "name": "mcp_cache_manager_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_cache_manager_server.py",
+      "port": 8076,
+      "enabled": true
+    },
+    "mcp_coordinator_server": {
+      "name": "mcp_coordinator_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_coordinator_server.py",
+      "port": 8077,
+      "enabled": true
+    },
+    "mcp_database_server": {
+      "name": "mcp_database_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_database_server.py",
+      "port": 8079,
+      "enabled": true
+    },
+    "mcp_data_analyzer_server": {
+      "name": "mcp_data_analyzer_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_data_analyzer_server.py",
+      "port": 8080,
+      "enabled": true
+    },
+    "mcp_defi_analyzer_server": {
+      "name": "mcp_defi_analyzer_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_defi_analyzer_server.py",
+      "port": 8081,
+      "enabled": true
+    },
+    "mcp_filesystem_server": {
+      "name": "mcp_filesystem_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_filesystem_server.py",
+      "port": 8083,
+      "enabled": true
+    },
+    "mcp_file_processor_server": {
+      "name": "mcp_file_processor_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_file_processor_server.py",
+      "port": 8084,
+      "enabled": true
+    },
+    "mcp_flash_loan_server": {
+      "name": "mcp_flash_loan_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_flash_loan_server.py",
+      "port": 8085,
+      "enabled": true
+    },
+    "mcp_liquidity_server": {
+      "name": "mcp_liquidity_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_liquidity_server.py",
+      "port": 8087,
+      "enabled": true
+    },
+    "mcp_monitoring_server": {
+      "name": "mcp_monitoring_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_monitoring_server.py",
+      "port": 8088,
+      "enabled": true
+    },
+    "mcp_notification_server": {
+      "name": "mcp_notification_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_notification_server.py",
+      "port": 8089,
+      "enabled": true
+    },
+    "mcp_portfolio_server": {
+      "name": "mcp_portfolio_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_portfolio_server.py",
+      "port": 8090,
+      "enabled": true
+    },
+    "mcp_price_feed_server": {
+      "name": "mcp_price_feed_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_price_feed_server.py",
+      "port": 8091,
+      "enabled": true
+    },
+    "mcp_risk_manager_server": {
+      "name": "mcp_risk_manager_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_risk_manager_server.py",
+      "port": 8094,
+      "enabled": true
+    },
+    "mcp_security_server": {
+      "name": "mcp_security_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_security_server.py",
+      "port": 8095,
+      "enabled": true
+    },
+    "mcp_server": {
+      "name": "mcp_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_server.py",
+      "port": 8096,
+      "enabled": true
+    },
+    "mcp_server_base": {
+      "name": "mcp_server_base",
+      "type": "python",
+      "path": "mcp_servers/mcp_server_base.py",
+      "port": 8097,
+      "enabled": true
+    },
+    "mcp_server_manager": {
+      "name": "mcp_server_manager",
+      "type": "python",
+      "path": "mcp_servers/mcp_server_manager.py",
+      "port": 8098,
+      "enabled": true
+    },
+    "mcp_server_template": {
+      "name": "mcp_server_template",
+      "type": "python",
+      "path": "mcp_servers/mcp_server_template.py",
+      "port": 8099,
+      "enabled": true
+    },
+    "mcp_task_queue_server": {
+      "name": "mcp_task_queue_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_task_queue_server.py",
+      "port": 8102,
+      "enabled": true
+    },
+    "mcp_web_scraper_server": {
+      "name": "mcp_web_scraper_server",
+      "type": "python",
+      "path": "mcp_servers/mcp_web_scraper_server.py",
+      "port": 8103,
+      "enabled": true
+    },
+    "minimal-mcp-server": {
+      "name": "minimal-mcp-server",
+      "type": "python",
+      "path": "mcp_servers/minimal-mcp-server.py",
+      "port": 8104,
+      "enabled": true
+    },
+    "monitoring_mcp_server": {
+      "name": "monitoring_mcp_server",
+      "type": "python",
+      "path": "mcp_servers/monitoring_mcp_server.py",
+      "port": 8105,
+      "enabled": true
+    },
+    "organize_mcp_servers": {
+      "name": "organize_mcp_servers",
+      "type": "python",
+      "path": "mcp_servers/organize_mcp_servers.py",
+      "port": 8107,
+      "enabled": true
+    },
+    "profit_optimizer_mcp_server": {
+      "name": "profit_optimizer_mcp_server",
+      "type": "python",
+      "path": "mcp_servers/profit_optimizer_mcp_server.py",
+      "port": 8108,
+      "enabled": true
+    },
+    "real_time_price_mcp_server": {
+      "name": "real_time_price_mcp_server",
+      "type": "python",
+      "path": "mcp_servers/real_time_price_mcp_server.py",
+      "port": 8110,
+      "enabled": true
+    },
+    "risk_management_mcp_server": {
+      "name": "risk_management_mcp_server",
+      "type": "python",
+      "path": "mcp_servers/risk_management_mcp_server.py",
+      "port": 8111,
+      "enabled": true
+    },
+    "simple_mcp_server": {
+      "name": "simple_mcp_server",
+      "type": "python",
+      "path": "mcp_servers/simple_mcp_server.py",
+      "port": 8112,
+      "enabled": true
+    },
+    "start_mcp_servers": {
+      "name": "start_mcp_servers",
+      "type": "python",
+      "path": "mcp_servers/start_mcp_servers.py",
+      "port": 8114,
+      "enabled": true
+    },
+    "training_mcp_server": {
+      "name": "training_mcp_server",
+      "type": "python",
+      "path": "mcp_servers/training_mcp_server.py",
+      "port": 8115,
+      "enabled": true
+    },
+    "working_mcp_server_template": {
+      "name": "working_mcp_server_template",
+      "type": "python",
+      "path": "mcp_servers/working_mcp_server_template.py",
+      "port": 8124,
+      "enabled": true
+    },
+    "complete_langchain_mcp_integration": {
+      "name": "complete_langchain_mcp_integration",
+      "type": "python",
+      "path": "mcp_servers/complete_langchain_mcp_integration.py",
+      "port": 8048,
+      "enabled": true
+    },
+    "langchain_mcp_orchestrator": {
+      "name": "langchain_mcp_orchestrator",
+      "type": "python",
+      "path": "mcp_servers/langchain_mcp_orchestrator.py",
+      "port": 8050,
+      "enabled": true
+    },
+    "mcp_status_check": {
+      "name": "mcp_status_check",
+      "type": "python",
+      "path": "mcp_servers/mcp_status_check.py",
+      "port": 8051,
+      "enabled": true
+    },
+    "simple_mcp_orchestrator": {
+      "name": "simple_mcp_orchestrator",
+      "type": "python",
+      "path": "mcp_servers/simple_mcp_orchestrator.py",
+      "port": 8052,
+      "enabled": true
+    },
+    "autodiscover_mcp_agents": {
+      "name": "autodiscover_mcp_agents",
+      "type": "python",
+      "path": "mcp_servers/autodiscover_mcp_agents.py",
+      "port": 8054,
+      "enabled": true
+    },
+    "check-mcp-status": {
+      "name": "check-mcp-status",
+      "type": "python",
+      "path": "mcp_servers/check-mcp-status.py",
+      "port": 8055,
+      "enabled": true
+    },
+    "check_mcp_status": {
+      "name": "check_mcp_status",
+      "type": "python",
+      "path": "mcp_servers/check_mcp_status.py",
+      "port": 8056,
+      "enabled": true
+    },
+    "create_final_unified_mcp_manager": {
+      "name": "create_final_unified_mcp_manager",
+      "type": "python",
+      "path": "mcp_servers/create_final_unified_mcp_manager.py",
+      "port": 8060,
+      "enabled": true
+    },
+    "dashboard_enhanced_mcp_dashboard_with_chat": {
+      "name": "dashboard_enhanced_mcp_dashboard_with_chat",
+      "type": "python",
+      "path": "mcp_servers/dashboard_enhanced_mcp_dashboard_with_chat.py",
+      "port": 8061,
+      "enabled": true
+    },
+    "discord_mcp_bot": {
+      "name": "discord_mcp_bot",
+      "type": "python",
+      "path": "mcp_servers/discord_mcp_bot.py",
+      "port": 8063,
+      "enabled": true
+    },
+    "enhanced_mcp_dashboard_with_chat": {
+      "name": "enhanced_mcp_dashboard_with_chat",
+      "type": "python",
+      "path": "mcp_servers/enhanced_mcp_dashboard_with_chat.py",
+      "port": 8064,
+      "enabled": true
+    },
+    "mcp-health-check": {
+      "name": "mcp-health-check",
+      "type": "python",
+      "path": "mcp_servers/mcp-health-check.py",
+      "port": 8070,
+      "enabled": true
+    },
+    "mcp-stability-report": {
+      "name": "mcp-stability-report",
+      "type": "python",
+      "path": "mcp_servers/mcp-stability-report.py",
+      "port": 8071,
+      "enabled": true
+    },
+    "mcp_dashboard": {
+      "name": "mcp_dashboard",
+      "type": "python",
+      "path": "mcp_servers/mcp_dashboard.py",
+      "port": 8078,
+      "enabled": true
+    },
+    "mcp_enhanced_coordinator": {
+      "name": "mcp_enhanced_coordinator",
+      "type": "python",
+      "path": "mcp_servers/mcp_enhanced_coordinator.py",
+      "port": 8082,
+      "enabled": true
+    },
+    "mcp_integration_bridge": {
+      "name": "mcp_integration_bridge",
+      "type": "python",
+      "path": "mcp_servers/mcp_integration_bridge.py",
+      "port": 8086,
+      "enabled": true
+    },
+    "mcp_project_organizer": {
+      "name": "mcp_project_organizer",
+      "type": "python",
+      "path": "mcp_servers/mcp_project_organizer.py",
+      "port": 8092,
+      "enabled": true
+    },
+    "mcp_project_organizer_fixed": {
+      "name": "mcp_project_organizer_fixed",
+      "type": "python",
+      "path": "mcp_servers/mcp_project_organizer_fixed.py",
+      "port": 8093,
+      "enabled": true
+    },
+    "mcp_shared_utilities": {
+      "name": "mcp_shared_utilities",
+      "type": "python",
+      "path": "mcp_servers/mcp_shared_utilities.py",
+      "port": 8100,
+      "enabled": true
+    },
+    "mcp_simple_startup": {
+      "name": "mcp_simple_startup",
+      "type": "python",
+      "path": "mcp_servers/mcp_simple_startup.py",
+      "port": 8101,
+      "enabled": true
+    },
+    "online_mcp_coordinator": {
+      "name": "online_mcp_coordinator",
+      "type": "python",
+      "path": "mcp_servers/online_mcp_coordinator.py",
+      "port": 8106,
+      "enabled": true
+    },
+    "quick_mcp_check": {
+      "name": "quick_mcp_check",
+      "type": "python",
+      "path": "mcp_servers/quick_mcp_check.py",
+      "port": 8109,
+      "enabled": true
+    },
+    "simplified_mcp_coordinator_fixed": {
+      "name": "simplified_mcp_coordinator_fixed",
+      "type": "python",
+      "path": "mcp_servers/simplified_mcp_coordinator_fixed.py",
+      "port": 8113,
+      "enabled": true
+    },
+    "unified_mcp_coordinator": {
+      "name": "unified_mcp_coordinator",
+      "type": "python",
+      "path": "mcp_servers/unified_mcp_coordinator.py",
+      "port": 8116,
+      "enabled": true
+    },
+    "unified_mcp_coordinator_20250617_143120": {
+      "name": "unified_mcp_coordinator_20250617_143120",
+      "type": "python",
+      "path": "mcp_servers/unified_mcp_coordinator_20250617_143120.py",
+      "port": 8117,
+      "enabled": true
+    },
+    "unified_mcp_integration_manager": {
+      "name": "unified_mcp_integration_manager",
+      "type": "python",
+      "path": "mcp_servers/unified_mcp_integration_manager.py",
+      "port": 8118,
+      "enabled": true
+    },
+    "unified_mcp_manager": {
+      "name": "unified_mcp_manager",
+      "type": "python",
+      "path": "mcp_servers/unified_mcp_manager.py",
+      "port": 8119,
+      "enabled": true
+    },
+    "unified_mcp_orchestration_manager": {
+      "name": "unified_mcp_orchestration_manager",
+      "type": "python",
+      "path": "mcp_servers/unified_mcp_orchestration_manager.py",
+      "port": 8120,
+      "enabled": true
+    },
+    "verify_mcp_organization": {
+      "name": "verify_mcp_organization",
+      "type": "python",
+      "path": "mcp_servers/verify_mcp_organization.py",
+      "port": 8121,
+      "enabled": true
+    },
+    "verify_mcp_system": {
+      "name": "verify_mcp_system",
+      "type": "python",
+      "path": "mcp_servers/verify_mcp_system.py",
+      "port": 8122,
+      "enabled": true
+    },
+    "working_flash_loan_mcp": {
+      "name": "working_flash_loan_mcp",
+      "type": "python",
+      "path": "mcp_servers/working_flash_loan_mcp.py",
+      "port": 8123,
+      "enabled": true
+    },
+    "mcp_connection_test": {
+      "name": "mcp_connection_test",
+      "type": "python",
+      "path": "mcp_servers/mcp_connection_test.py",
+      "port": 8125,
+      "enabled": true
+    },
+    "mcp_dependency_test": {
+      "name": "mcp_dependency_test",
+      "type": "python",
+      "path": "mcp_servers/mcp_dependency_test.py",
+      "port": 8126,
+      "enabled": true
+    },
+    "mcp_training_coordinator": {
+      "name": "mcp_training_coordinator",
+      "type": "python",
+      "path": "mcp_servers/mcp_training_coordinator.py",
+      "port": 8127,
+      "enabled": true
+    }
+  },
+  "global_configuration": {
+    "health_check_interval": 30,
+    "auto_restart": true
+  }
+}

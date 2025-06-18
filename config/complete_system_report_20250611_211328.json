@@ -1,0 +1,82 @@
+{
+  "generated_at": "2025-06-11T21:13:28.733467",
+  "system_uptime_seconds": 16.215273,
+  "total_servers_configured": 8,
+  "successfully_started": 8,
+  "success_rate": 100.0,
+  "server_details": {
+    "context7_clean": {
+      "status": "running",
+      "started_at": "2025-06-11T21:13:12.532220",
+      "pid": 15252,
+      "command": "C:\\Program Files\\Python311\\python.exe mcp_servers/ai_integration/clean_context7_mcp_server.py"
+    },
+    "matic_clean": {
+      "status": "running",
+      "started_at": "2025-06-11T21:13:14.558609",
+      "pid": 2604,
+      "command": "C:\\Program Files\\Python311\\python.exe mcp_servers/blockchain_integration/clean_matic_mcp_server.py"
+    },
+    "minimal-mcp": {
+      "status": "running",
+      "started_at": "2025-06-11T21:13:16.583188",
+      "pid": 13376,
+      "command": "C:\\Program Files\\Python311\\python.exe minimal-mcp-server.py"
+    },
+    "simple-flash-loan": {
+      "status": "running",
+      "started_at": "2025-06-11T21:13:18.611732",
+      "pid": 30800,
+      "command": "C:\\Program Files\\Python311\\python.exe simple_mcp_server.py"
+    },
+    "context7": {
+      "status": "running",
+      "started_at": "2025-06-11T21:13:20.634562",
+      "pid": 15052,
+      "command": "C:\\Program Files\\Python311\\python.exe mcp_servers/ai_integration/clean_context7_mcp_server.py"
+    },
+    "matic": {
+      "status": "running",
+      "started_at": "2025-06-11T21:13:22.657300",
+      "pid": 10136,
+      "command": "C:\\Program Files\\Python311\\python.exe mcp_servers/blockchain_integration/clean_matic_mcp_server.py"
+    },
+    "flash-loan-system": {
+      "status": "running",
+      "started_at": "2025-06-11T21:13:24.688676",
+      "pid": 1952,
+      "command": "C:\\Program Files\\Python311\\python.exe working_flash_loan_mcp.py"
+    },
+    "simple-server": {
+      "status": "running",
+      "started_at": "2025-06-11T21:13:26.722176",
+      "pid": 10908,
+      "command": "C:\\Program Files\\Python311\\python.exe simple_mcp_server.py"
+    }
+  },
+  "flash_loan_integration": {
+    "file_status": {
+      "optimized_arbitrage_bot_v2.py": {
+        "exists": true,
+        "size": 34449
+      },
+      "dex_integrations.py": {
+        "exists": true,
+        "size": 37728
+      },
+      "config.py": {
+        "exists": true,
+        "size": 17374
+      }
+    },
+    "mcp_servers": [
+      "simple-flash-loan",
+      "flash-loan-system"
+    ],
+    "integration_ready": true
+  },
+  "next_steps": [
+    "All MCP servers are running - system is fully operational",
+    "Ready for flash loan arbitrage operations"
+  ]
+}

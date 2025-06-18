@@ -1,0 +1,351 @@
+{
+  "servers": {
+    "server": {
+      "name": "foundry-mcp-server",
+      "version": "1.0.0",
+      "description": "Foundry MCP Server for Flash Loan Arbitrage Integration (No Foundry Mode)",
+      "transport": {
+        "type": "stdio"
+      },
+      "logging": {
+        "level": "INFO",
+        "file": "logs/mcp_server.log",
+        "max_size_mb": 10,
+        "backup_count": 5
+      }
+    },
+    "networks": {
+      "polygon": {
+        "rpc_url": "https://polygon.gateway.tenderly.co",
+        "chain_id": 137,
+        "explorer_url": "https://polygonscan.com",
+        "gas_price_gwei": 200
+      },
+      "mumbai": {
+        "rpc_url": "https://rpc-mumbai.maticvigil.com",
+        "chain_id": 80001,
+        "explorer_url": "https://mumbai.polygonscan.com",
+        "gas_price_gwei": 5
+      }
+    },
+    "foundry": {
+      "enabled": false,
+      "forge_path": "",
+      "cast_path": "",
+      "anvil_path": "",
+      "workspace_root": "../",
+      "contracts_dir": "contracts_deploy",
+      "artifacts_dir": "artifacts_deploy",
+      "cache_dir": "cache",
+      "lib_dir": "lib",
+      "foundry_toml": "foundry.toml"
+    },
+    "arbitrage": {
+      "min_profit_threshold": 0.001,
+      "max_gas_price": 50,
+      "slippage_tolerance": 0.01
+    },
+    "cache": {
+      "duration": 0,
+      "enabled": false,
+      "allow_fallback_cache": false
+    },
+    "logging": {
+      "level": "INFO",
+      "file": "unified_mcp_server.log"
+    },
+    "integration": {
+      "hardhat_config_path": "../hardhat.config.js",
+      "python_modules": [
+        "src.flash_loan.core",
+        "src.flash_loan.utils",
+        "src.blockchain",
+        "src.utils"
+      ],
+      "event_bus": {
+        "enabled": false,
+        "redis_url": "redis://localhost:6379",
+        "channel_prefix": "foundry_mcp"
+      },
+      "sync_configs": false,
+      "auto_deploy": false
+    },
+    "security": {
+      "slither": {
+        "enabled": false,
+        "config_file": "slither.config.json",
+        "severity_threshold": "medium"
+      },
+      "mythx": {
+        "enabled": false,
+        "api_key": "${MYTHX_API_KEY}",
+        "mode": "quick"
+      },
+      "dependency_scan": {
+        "npm_audit": true,
+        "pip_audit": true,
+        "snyk": false
+      }
+    },
+    "maintenance": {
+      "duplicate_detection": {
+        "enabled": true,
+        "exclude_patterns": [
+          "*.log",
+          "*.cache",
+          "node_modules/*",
+          ".git/*",
+          "__pycache__/*"
+        ],
+        "auto_remove": false
+      },
+      "cleanup": {
+        "cache_cleanup": true,
+        "old_artifacts": true,
+        "temp_files": true,
+        "max_age_days": 7
+      }
+    },
+    "tools": {
+      "forge_compile": {
+        "enabled": false
+      },
+      "maintenance": {
+        "enabled": true
+      },
+      "file_operations": {
+        "enabled": true
+      }
+    }
+  },
+  "database": {},
+  "api": {},
+  "logging": {},
+  "security": {},
+  "wallet_address": "0xaCd9a5B2438EF62bc7b725c574cDb23bf8D0314D",
+  "private_key_env_var": "PRIVATE_KEY",
+  "network": "polygon",
+  "rpc_url": "https://polygon-rpc.com",
+  "gas_limit": 500000,
+  "gas_price_multiplier": 1.1,
+  "max_gas_price_gwei": 200,
+  "transaction_timeout": 300,
+  "confirmation_blocks": 1,
+  "retry_attempts": 3,
+  "backup_rpc_urls": [
+    "https://rpc-mainnet.matic.network",
+    "https://matic-mainnet.chainstacklabs.com",
+    "https://rpc-mainnet.maticvigil.com"
+  ],
+  "version": "1.0.0",
+  "created_at": "2024-10-01T12:00:00Z",
+  "deployment": {
+    "enabled": true,
+    "flash_loan_arbitrage": true,
+    "liquidity_pool_arbitrage": false,
+    "contract_address": "0x153dDf13D58397740c40E9D1a6e183A8c0F36c32",
+    "min_profit_usd": 8.0,
+    "max_trade_size_usd": 1100.0,
+    "gas_limit": 500000,
+    "slippage_tolerance": 0.025,
+    "scan_interval_seconds": 2,
+    "real_time_mode": true,
+    "simulation_mode": false,
+    "use_live_data_only": true
+  },
+  "arbitrage_contracts": {
+    "enabled": true,
+    "name": "PolygonFlashLoanArbitrage",
+    "description": "A smart contract for executing flash loan arbitrage on the Polygon network.",
+    "version": "1.0.0",
+    "author": "Your Name",
+    "email": "your.email@example.com",
+    "contract_address": "0x153dDf13D58397740c40E9D1a6e183A8c0F36c32",
+    "network": "polygon"
+  },
+  "tokens": {
+    "WMATIC": {
+      "address": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+      "decimals": 18,
+      "symbol": "WMATIC"
+    },
+    "USDC": {
+      "address": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+      "decimals": 6,
+      "symbol": "USDC"
+    },
+    "USDT": {
+      "address": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+      "decimals": 6,
+      "symbol": "USDT"
+    },
+    "DAI": {
+      "address": "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+      "decimals": 18,
+      "symbol": "DAI"
+    }
+  },
+  "dexes": {
+    "QuickSwap": {
+      "router": "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff",
+      "fee": 0.003,
+      "name": "QuickSwap"
+    },
+    "SushiSwap": {
+      "router": "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
+      "fee": 0.003,
+      "name": "SushiSwap"
+    }
+  },
+  "trading": {
+    "min_profit_usd": 10.0,
+    "max_slippage": 0.01,
+    "gas_limit": 300000,
+    "gas_price_gwei": 30
+  },
+  "risk_management": {
+    "max_daily_trades": 100,
+    "max_daily_loss": 1000.0,
+    "max_position_size": 10000.0
+  },
+  "aave": {
+    "pool_address": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+    "pool_data_provider": "0x69FA688f1Dc47d4B5d8029D5a35FB7a548310654",
+    "price_oracle": "0xb023e699F5a33916Ea823A16485e259257cA8Bd1",
+    "flash_loan_fee": 0.0005
+  },
+  "arbitrage_settings": {
+    "enabled": true,
+    "min_profit_threshold_usd": 5.0,
+    "max_trade_amount_usd": 1000.0,
+    "preferred_dexes": [
+      "quickswap",
+      "uniswap_v3",
+      "sushiswap"
+    ],
+    "gas_estimation_buffer": 1.2,
+    "slippage_tolerance": 0.02,
+    "execution_timeout_seconds": 30,
+    "retry_attempts": 3,
+    "circuit_breaker_enabled": true
+  },
+  "foundry_mcp_server": {
+    "enabled": true,
+    "host": "127.0.0.1",
+    "port": 8001,
+    "health_endpoint": "http://127.0.0.1:8001/health",
+    "real_time_data_endpoint": "ws://127.0.0.1:8001/ws/prices",
+    "auto_start": true,
+    "reconnect_interval": 5,
+    "max_reconnect_attempts": 10
+  },
+  "data_sources": {
+    "primary": "foundry_mcp_server",
+    "fallback": [],
+    "real_time_enabled": true,
+    "cache_duration_seconds": 30,
+    "price_update_interval": 1,
+    "allow_fallback_data": false,
+    "require_real_time_data": true
+  },
+  "monitoring": {
+    "enable_detailed_logging": true,
+    "enable_performance_metrics": true,
+    "enable_real_time_alerts": true,
+    "dashboard_enabled": true,
+    "webhook_url": "",
+    "telegram_bot_token": "",
+    "telegram_chat_id": ""
+  },
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IERC7579AccountConfig",
+  "sourceName": "contracts/interfaces/draft-IERC7579.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "accountId",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "accountImplementationId",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "encodedMode",
+          "type": "bytes32"
+        }
+      ],
+      "name": "supportsExecutionMode",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "moduleTypeId",
+          "type": "uint256"
+        }
+      ],
+      "name": "supportsModule",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {},
+  "SUBSCRIPTION_ID": null,
+  "RESOURCE_GROUP_NAME": null,
+  "STORAGE_ACCOUNT_NAME": null,
+  "FILE_SHARE_NAME": null,
+  "ACA_JOB_NAME": null,
+  "COMMANDS": [
+    "cd /mount",
+    "pip install -r ./setup/requirements.txt",
+    "huggingface-cli download meta-llama/Meta-Llama-3-8B --revision main --local-dir ./model-cache/meta-llama/Llama-v3-8b --local-dir-use-symlinks False --cache-dir ./cache/hfdownload",
+    "python3 ./finetuning/invoke_olive.py && find models/ -print | grep adapter/adapter"
+  ],
+  "ACA_APP_NAME": null,
+  "ACA_APP_ENDPOINT": null,
+  "compilerOptions": {
+    "target": "ES2022",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext"
+  },
+  "exclude": [
+    "node_modules"
+  ],
+  "include": [
+    "./**/*.ts"
+  ]
+}

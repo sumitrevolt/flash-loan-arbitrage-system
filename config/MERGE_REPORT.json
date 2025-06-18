@@ -1,0 +1,20 @@
+{
+  "merge_timestamp": "2025-06-13T09:33:25.965459",
+  "backup_location": "backups\\pre_merge_20250613_093325",
+  "summary": {
+    "files_preserved": 1,
+    "files_removed": 0,
+    "merge_operations": 1
+  },
+  "preserved_files": [
+    "project_organizer_fixed.py"
+  ],
+  "removed_files": [],
+  "merge_operations": [
+    {
+      "category": "project_organizers",
+      "kept": "project_organizer_fixed.py",
+      "removed": []
+    }
+  ]
+}

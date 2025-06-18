@@ -1,0 +1,12 @@
+{
+  "server_url": "http://localhost:8001",
+  "endpoints": {
+    "health": "/health",
+    "info": "/info",
+    "compile": "/forge/compile",
+    "test": "/forge/test"
+  },
+  "integration_mode": "production",
+  "auto_compile": true,
+  "test_on_compile": true
+}

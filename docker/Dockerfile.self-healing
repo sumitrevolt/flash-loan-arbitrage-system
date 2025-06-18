@@ -1,0 +1,44 @@
+# Dockerfile for Self-Healing AI Agent
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies including Docker CLI
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    git \
+    docker.io \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies for self-healing agent
+RUN pip install --no-cache-dir \
+    fastapi \
+    uvicorn[standard] \
+    docker \
+    redis \
+    aiohttp \
+    python-dotenv \
+    psutil \
+    prometheus-client
+
+# Copy self-healing agent entrypoint
+COPY docker/entrypoints/self_healing_agent.py .
+
+# Create necessary directories
+RUN mkdir -p /app/logs
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# Expose port
+EXPOSE 8300
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8300/health || exit 1
+
+# Run the self-healing agent
+CMD ["python", "self_healing_agent.py"]

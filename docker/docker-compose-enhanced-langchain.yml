@@ -1,0 +1,640 @@
+version: '3.8'
+
+services:
+  # Enhanced LangChain Orchestrator
+  orchestrator:
+    build:
+      context: ./containers/orchestrator
+      dockerfile: Dockerfile
+    container_name: langchain_orchestrator
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://postgres:postgres_password@postgres:5432/flashloan
+      - RABBITMQ_URL=amqp://rabbitmq:rabbitmq_password@rabbitmq:5672
+      - ORCHESTRATOR_MODE=enhanced
+      - AUTO_HEAL_ENABLED=true
+      - MCP_SERVERS_COUNT=21
+      - AGENTS_COUNT=10
+    volumes:
+      - ./enhanced_langchain_orchestrator.py:/app/enhanced_langchain_orchestrator.py
+      - ./auto_fix_orchestrator.py:/app/auto_fix_orchestrator.py
+      - ./logs:/app/logs
+      - ./data:/app/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - postgres
+      - rabbitmq
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+    command: python /app/enhanced_langchain_orchestrator.py
+
+  # Infrastructure Services
+  redis:
+    image: redis:7-alpine
+    container_name: fl_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: fl_postgres
+    environment:
+      POSTGRES_DB: flashloan
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d flashloan -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: fl_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbitmq
+      RABBITMQ_DEFAULT_PASS: rabbitmq_password
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - flashloan_network
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # 21 MCP Servers
+  mcp_server_01:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_01
+    environment:
+      - SERVER_TYPE=web_scraper
+      - SERVER_ID=01
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "9001:9000"
+    depends_on:
+      - redis
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_02:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_02
+    environment:
+      - SERVER_TYPE=database_manager
+      - SERVER_ID=02
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - POSTGRES_URL=postgresql://postgres:postgres_password@postgres:5432/flashloan
+    ports:
+      - "9002:9000"
+    depends_on:
+      - postgres
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_03:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_03
+    environment:
+      - SERVER_TYPE=file_manager
+      - SERVER_ID=03
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    ports:
+      - "9003:9000"
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_04:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_04
+    environment:
+      - SERVER_TYPE=api_gateway
+      - SERVER_ID=04
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    ports:
+      - "9004:9000"
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_05:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_05
+    environment:
+      - SERVER_TYPE=blockchain_monitor
+      - SERVER_ID=05
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    ports:
+      - "9005:9000"
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_06:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_06
+    environment:
+      - SERVER_TYPE=data_analyzer
+      - SERVER_ID=06
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "9006:9000"
+    depends_on:
+      - redis
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_07:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_07
+    environment:
+      - SERVER_TYPE=notification_service
+      - SERVER_ID=07
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - RABBITMQ_URL=amqp://rabbitmq:rabbitmq_password@rabbitmq:5672
+    ports:
+      - "9007:9000"
+    depends_on:
+      - rabbitmq
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_08:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_08
+    environment:
+      - SERVER_TYPE=security_scanner
+      - SERVER_ID=08
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    ports:
+      - "9008:9000"
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_09:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_09
+    environment:
+      - SERVER_TYPE=code_generator
+      - SERVER_ID=09
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    ports:
+      - "9009:9000"
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_10:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_10
+    environment:
+      - SERVER_TYPE=test_runner
+      - SERVER_ID=10
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    ports:
+      - "9010:9000"
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_11:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_11
+    environment:
+      - SERVER_TYPE=deployment_manager
+      - SERVER_ID=11
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    ports:
+      - "9011:9000"
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_12:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_12
+    environment:
+      - SERVER_TYPE=log_aggregator
+      - SERVER_ID=12
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "9012:9000"
+    depends_on:
+      - redis
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_13:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_13
+    environment:
+      - SERVER_TYPE=metrics_collector
+      - SERVER_ID=13
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    ports:
+      - "9013:9000"
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_14:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_14
+    environment:
+      - SERVER_TYPE=config_manager
+      - SERVER_ID=14
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    ports:
+      - "9014:9000"
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_15:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_15
+    environment:
+      - SERVER_TYPE=task_scheduler
+      - SERVER_ID=15
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "9015:9000"
+    depends_on:
+      - redis
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_16:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_16
+    environment:
+      - SERVER_TYPE=ml_trainer
+      - SERVER_ID=16
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    ports:
+      - "9016:9000"
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_17:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_17
+    environment:
+      - SERVER_TYPE=image_processor
+      - SERVER_ID=17
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    ports:
+      - "9017:9000"
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_18:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_18
+    environment:
+      - SERVER_TYPE=document_parser
+      - SERVER_ID=18
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    ports:
+      - "9018:9000"
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_19:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_19
+    environment:
+      - SERVER_TYPE=auth_service
+      - SERVER_ID=19
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "9019:9000"
+    depends_on:
+      - redis
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_20:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_20
+    environment:
+      - SERVER_TYPE=cache_manager
+      - SERVER_ID=20
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "9020:9000"
+    depends_on:
+      - redis
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  mcp_server_21:
+    build:
+      context: ./containers/mcp_servers
+      dockerfile: Dockerfile
+    container_name: mcp_server_21
+    environment:
+      - SERVER_TYPE=health_monitor
+      - SERVER_ID=21
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    ports:
+      - "9021:9000"
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  # 10 Agent Containers
+  agent_01:
+    build:
+      context: ./containers/agents
+      dockerfile: Dockerfile
+    container_name: langchain_agent_01
+    environment:
+      - AGENT_TYPE=coordinator
+      - AGENT_ID=01
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - ORCHESTRATOR_URL=http://orchestrator:8000
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - orchestrator
+      - redis
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  agent_02:
+    build:
+      context: ./containers/agents
+      dockerfile: Dockerfile
+    container_name: langchain_agent_02
+    environment:
+      - AGENT_TYPE=executor
+      - AGENT_ID=02
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - ORCHESTRATOR_URL=http://orchestrator:8000
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  agent_03:
+    build:
+      context: ./containers/agents
+      dockerfile: Dockerfile
+    container_name: langchain_agent_03
+    environment:
+      - AGENT_TYPE=monitor
+      - AGENT_ID=03
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - ORCHESTRATOR_URL=http://orchestrator:8000
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  agent_04:
+    build:
+      context: ./containers/agents
+      dockerfile: Dockerfile
+    container_name: langchain_agent_04
+    environment:
+      - AGENT_TYPE=analyzer
+      - AGENT_ID=04
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - ORCHESTRATOR_URL=http://orchestrator:8000
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  agent_05:
+    build:
+      context: ./containers/agents
+      dockerfile: Dockerfile
+    container_name: langchain_agent_05
+    environment:
+      - AGENT_TYPE=optimizer
+      - AGENT_ID=05
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - ORCHESTRATOR_URL=http://orchestrator:8000
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  agent_06:
+    build:
+      context: ./containers/agents
+      dockerfile: Dockerfile
+    container_name: langchain_agent_06
+    environment:
+      - AGENT_TYPE=validator
+      - AGENT_ID=06
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - ORCHESTRATOR_URL=http://orchestrator:8000
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  agent_07:
+    build:
+      context: ./containers/agents
+      dockerfile: Dockerfile
+    container_name: langchain_agent_07
+    environment:
+      - AGENT_TYPE=reporter
+      - AGENT_ID=07
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - ORCHESTRATOR_URL=http://orchestrator:8000
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  agent_08:
+    build:
+      context: ./containers/agents
+      dockerfile: Dockerfile
+    container_name: langchain_agent_08
+    environment:
+      - AGENT_TYPE=debugger
+      - AGENT_ID=08
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - ORCHESTRATOR_URL=http://orchestrator:8000
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  agent_09:
+    build:
+      context: ./containers/agents
+      dockerfile: Dockerfile
+    container_name: langchain_agent_09
+    environment:
+      - AGENT_TYPE=deployer
+      - AGENT_ID=09
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - ORCHESTRATOR_URL=http://orchestrator:8000
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+  agent_10:
+    build:
+      context: ./containers/agents
+      dockerfile: Dockerfile
+    container_name: langchain_agent_10
+    environment:
+      - AGENT_TYPE=healer
+      - AGENT_ID=10
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - ORCHESTRATOR_URL=http://orchestrator:8000
+    depends_on:
+      - orchestrator
+    networks:
+      - flashloan_network
+    restart: unless-stopped
+
+networks:
+  flashloan_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  logs:
+    driver: local
+  data:
+    driver: local

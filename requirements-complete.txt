@@ -1,0 +1,57 @@
+# Complete MCP System Requirements
+# All dependencies for the coordination system, MCP servers, and AI agents
+
+# Core Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+
+# Database and Storage
+redis==5.0.1
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.23
+
+# Message Queue and Communication
+pika==1.3.2
+asyncio-mqtt==0.13.0
+websockets==12.0
+aiohttp==3.9.1
+requests==2.31.0
+httpx==0.26.0
+
+# Blockchain and Web3
+web3==6.15.1
+eth-account==0.10.0
+eth-utils==2.3.1
+
+# AI and LangChain - Compatible versions (fixed dependency conflicts)
+langchain==0.2.17
+langchain-community==0.2.19
+langchain-core==0.2.43
+langchain-experimental==0.0.68
+openai==1.55.0
+
+# Data Processing
+numpy==1.24.3
+pandas==2.0.3
+
+# Async and Networking
+aiodns==3.1.1
+aiofiles==23.2.1
+
+# Configuration and Environment
+python-dotenv==1.0.0
+PyYAML==6.0.1
+
+# Development and Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+# System and Monitoring
+docker==6.1.3
+psutil==5.9.6
+
+# Utility
+click==8.1.7
+rich==13.7.0
+typer==0.9.0

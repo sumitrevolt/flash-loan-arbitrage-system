@@ -1,0 +1,17 @@
+{
+  "wallet_address": "0xaCd9a5B2438EF62bc7b725c574cDb23bf8D0314D",
+  "private_key_env_var": "PRIVATE_KEY",
+  "network": "polygon",
+  "rpc_url": "https://polygon-rpc.com",
+  "gas_limit": 500000,
+  "gas_price_multiplier": 1.1,
+  "max_gas_price_gwei": 200,
+  "transaction_timeout": 300,
+  "confirmation_blocks": 1,
+  "retry_attempts": 3,
+  "backup_rpc_urls": [
+    "https://rpc-mainnet.matic.network",
+    "https://matic-mainnet.chainstacklabs.com",
+    "https://rpc-mainnet.maticvigil.com"
+  ]
+}

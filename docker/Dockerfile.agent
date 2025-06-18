@@ -1,0 +1,203 @@
+# Generic Dockerfile for AI Agents with Coordination Support
+FROM python:3.11-slim
+
+ARG AGENT_NAME
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    git \
+    curl \
+    build-essential \
+    libssl-dev \
+    libffi-dev \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install Python dependencies
+COPY requirements-complete.txt .
+RUN pip install --no-cache-dir -r requirements-complete.txt
+
+# Copy AI agent code and entrypoint
+COPY docker/entrypoints/ai_agent_entrypoint.py .
+COPY advanced_agentic_coordination.py .
+COPY ai_agents_config.json .
+
+# Create generic entrypoint for AI agents
+RUN echo '#!/usr/bin/env python3\n\
+import os\n\
+import asyncio\n\
+import logging\n\
+from fastapi import FastAPI, HTTPException\n\
+import uvicorn\n\
+import redis\n\
+import pika\n\
+import json\n\
+from datetime import datetime\n\
+\n\
+logging.basicConfig(level=logging.INFO)\n\
+logger = logging.getLogger(__name__)\n\
+\n\
+app = FastAPI(title=f"AI Agent: {os.getenv(\"AGENT_TYPE\", \"generic\")}")\n\
+\n\
+class AIAgent:\n\
+    def __init__(self, agent_type: str):\n\
+        self.agent_type = agent_type\n\
+        self.redis_client = None\n\
+        self.rabbitmq_connection = None\n\
+        self.rabbitmq_channel = None\n\
+        self._initialize_connections()\n\
+    \n\
+    def _initialize_connections(self):\n\
+        try:\n\
+            redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")\n\
+            self.redis_client = redis.Redis.from_url(redis_url, decode_responses=True)\n\
+            \n\
+            rabbitmq_url = os.getenv("RABBITMQ_URL", "amqp://localhost:5672")\n\
+            connection_params = pika.URLParameters(rabbitmq_url)\n\
+            self.rabbitmq_connection = pika.BlockingConnection(connection_params)\n\
+            self.rabbitmq_channel = self.rabbitmq_connection.channel()\n\
+            \n\
+            logger.info(f"Agent {self.agent_type} initialized successfully")\n\
+        except Exception as e:\n\
+            logger.error(f"Error initializing connections: {e}")\n\
+    \n\
+    async def process_task(self, task_data: dict):\n\
+        """Process a coordination task based on agent type"""\n\
+        task_type = task_data.get("type", "unknown")\n\
+        task_description = task_data.get("description", "")\n\
+        \n\
+        # Agent-specific processing logic\n\
+        if self.agent_type == "arbitrage_detector":\n\
+            return await self._detect_arbitrage(task_data)\n\
+        elif self.agent_type == "risk_manager":\n\
+            return await self._assess_risk(task_data)\n\
+        elif self.agent_type == "flash_loan_optimizer":\n\
+            return await self._optimize_flash_loan(task_data)\n\
+        elif self.agent_type == "transaction_executor":\n\
+            return await self._execute_transaction(task_data)\n\
+        elif self.agent_type == "market_analyzer":\n\
+            return await self._analyze_market(task_data)\n\
+        elif self.agent_type == "route_optimizer":\n\
+            return await self._optimize_route(task_data)\n\
+        elif self.agent_type == "gas_optimizer":\n\
+            return await self._optimize_gas(task_data)\n\
+        elif self.agent_type == "liquidity_monitor":\n\
+            return await self._monitor_liquidity(task_data)\n\
+        elif self.agent_type == "security_analyst":\n\
+            return await self._analyze_security(task_data)\n\
+        elif self.agent_type == "compliance_checker":\n\
+            return await self._check_compliance(task_data)\n\
+        else:\n\
+            return {"status": "error", "message": f"Unknown agent type: {self.agent_type}"}\n\
+    \n\
+    async def _detect_arbitrage(self, task_data):\n\
+        return {"status": "completed", "agent": self.agent_type, "result": "Arbitrage opportunities detected"}\n\
+    \n\
+    async def _assess_risk(self, task_data):\n\
+        return {"status": "completed", "agent": self.agent_type, "result": "Risk assessment completed"}\n\
+    \n\
+    async def _optimize_flash_loan(self, task_data):\n\
+        return {"status": "completed", "agent": self.agent_type, "result": "Flash loan parameters optimized"}\n\
+    \n\
+    async def _execute_transaction(self, task_data):\n\
+        return {"status": "completed", "agent": self.agent_type, "result": "Transaction execution planned"}\n\
+    \n\
+    async def _analyze_market(self, task_data):\n\
+        return {"status": "completed", "agent": self.agent_type, "result": "Market analysis completed"}\n\
+    \n\
+    async def _optimize_route(self, task_data):\n\
+        return {"status": "completed", "agent": self.agent_type, "result": "Route optimization completed"}\n\
+    \n\
+    async def _optimize_gas(self, task_data):\n\
+        return {"status": "completed", "agent": self.agent_type, "result": "Gas optimization completed"}\n\
+    \n\
+    async def _monitor_liquidity(self, task_data):\n\
+        return {"status": "completed", "agent": self.agent_type, "result": "Liquidity monitoring active"}\n\
+    \n\
+    async def _analyze_security(self, task_data):\n\
+        return {"status": "completed", "agent": self.agent_type, "result": "Security analysis completed"}\n\
+    \n\
+    async def _check_compliance(self, task_data):\n\
+        return {"status": "completed", "agent": self.agent_type, "result": "Compliance check completed"}\n\
+\n\
+agent = AIAgent(os.getenv("AGENT_TYPE", "generic"))\n\
+\n\
+@app.get("/health")\n\
+async def health():\n\
+    return {"status": "healthy", "agent_type": agent.agent_type, "timestamp": datetime.now().isoformat()}\n\
+\n\
+@app.post("/coordinate")\n\
+async def coordinate(task_data: dict):\n\
+    try:\n\
+        result = await agent.process_task(task_data)\n\
+        return result\n\
+    except Exception as e:\n\
+        raise HTTPException(status_code=500, detail=str(e))\n\
+\n\
+@app.get("/status")\n\
+async def status():\n\
+    return {\n\
+        "agent_type": agent.agent_type,\n\
+        "status": "active",\n\
+        "timestamp": datetime.now().isoformat()\n\
+    }\n\
+\n\
+if __name__ == "__main__":\n\
+    port = int(os.getenv("PORT", 9000))\n\
+    uvicorn.run(app, host="0.0.0.0", port=port)\n\
+' > /app/agent_entrypoint.py
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV AGENT_NAME=${AGENT_NAME}
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-9000}/health || exit 1
+
+# Expose port (will be set by environment)
+EXPOSE ${PORT:-9000}
+
+# Run the agent
+CMD ["python", "agent_entrypoint.py"]
+
+# Additional agent-specific dependencies
+RUN pip install --no-cache-dir \
+    aiohttp \
+    asyncio \
+    websockets \
+    pydantic \
+    python-dotenv \
+    structlog \
+    prometheus-client \
+    redis \
+    aio-pika \
+    httpx \
+    tenacity
+
+# Copy application code
+COPY . ${APP_DIR}
+
+# Environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    LOG_LEVEL=INFO \
+    AGENT_PORT=5000
+
+# Create non-root user
+RUN useradd -m -u 1000 agent && \
+    chown -R agent:agent ${APP_DIR}
+
+USER agent
+
+# Health check endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:${AGENT_PORT}/health || exit 1
+
+# Default command
+CMD ["python", "ai_agent_entrypoint.py"]

@@ -1,0 +1,58 @@
+# Multi-stage build for Flash Loan Arbitrage System
+# Use the latest LTS version with security patches
+FROM node:22-alpine AS base
+
+# Install system dependencies with security updates
+RUN apk update && \
+    apk upgrade && \
+    apk add --no-cache \
+    python3 \
+    py3-pip \
+    curl \
+    git \
+    build-base \
+    dumb-init && \
+    rm -rf /var/cache/apk/*
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY requirements.txt ./
+
+# Install Node.js dependencies
+RUN npm ci --only=production
+
+# Install Python dependencies
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Copy source code
+COPY . .
+
+# Create non-root user with enhanced security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S arbitrage -u 1001 -G nodejs && \
+    mkdir -p /app/logs /app/data /tmp/app && \
+    chown -R arbitrage:nodejs /app && \
+    chmod -R 750 /app && \
+    chmod 1777 /tmp/app
+
+# Switch to non-root user
+USER arbitrage
+
+# Expose ports
+EXPOSE 3000 8900
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:3000/health || exit 1
+
+# Add security labels and metadata
+LABEL security.scan="enabled" \
+      security.non-root="true" \
+      security.read-only="supported" \
+      maintainer="arbitrage-bot@security.local"
+
+# Start the application with dumb-init for proper signal handling
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "server.js"]

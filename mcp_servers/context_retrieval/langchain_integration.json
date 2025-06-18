@@ -1,0 +1,9 @@
+{
+  "name": "context_retrieval",
+  "path": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\context_retrieval",
+  "enabled": true,
+  "langchain_integration": {
+    "tool_prefix": "context-retrieval",
+    "description": "Integration with context_retrieval MCP server"
+  }
+}
