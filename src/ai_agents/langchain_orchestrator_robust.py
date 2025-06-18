@@ -18,8 +18,10 @@ import aiohttp
 # This depends on how the project is structured and PYTHONPATH.
 try:
     from .code_analyzer_agent import CodeAnalyzerAgent
+     from .error_resolution_agent import ErrorResolutionAgent
 except ImportError:
     from ai_agents.code_analyzer_agent import CodeAnalyzerAgent # Fallback if src is in PYTHONPATH
+     from ai_agents.error_resolution_agent import ErrorResolutionAgent # Fallback
 
 # Configure logging first
 logging.basicConfig(
@@ -424,11 +426,24 @@ class RobustLangChainOrchestrator:
             logger.info("AIOHTTP client session initialized.")
             self.code_analyzer_agent = CodeAnalyzerAgent(session=self.aiohttp_session)
             logger.info("CodeAnalyzerAgent initialized.")
+
+             if self.aiohttp_session and not self.aiohttp_session.closed: # Ensure session is valid
+                 self.error_resolution_agent = ErrorResolutionAgent(session=self.aiohttp_session)
+                 logger.info("ErrorResolutionAgent initialized.")
+             else:
+                 self.error_resolution_agent = None
+                 logger.error("AIOHTTP session not available, ErrorResolutionAgent not initialized.")
+
         except Exception as e:
-            logger.error(f"Failed to initialize aiohttp session or CodeAnalyzerAgent: {e}")
-            self.aiohttp_session = None
-            self.code_analyzer_agent = None
-            # Depending on criticality, might want to raise an error or prevent startup
+             logger.error(f"Failed to initialize aiohttp session or core agents: {e}", exc_info=True)
+             if self.aiohttp_session and not self.aiohttp_session.closed:
+                 # If session is fine, but one agent failed, nullify them to prevent partial use.
+                 # This part of the logic might need adjustment based on how critical each agent is.
+                 pass # Keep session for other agents if possible, or handle more gracefully.
+
+             self.aiohttp_session = self.aiohttp_session if hasattr(self, 'aiohttp_session') else None
+             self.code_analyzer_agent = self.code_analyzer_agent if hasattr(self, 'code_analyzer_agent') else None
+             self.error_resolution_agent = None # Ensure it's None if its init (or prerequisite) failed
         
         logger.info("Robust LangChain Orchestrator initialized")
     
@@ -606,58 +621,66 @@ class RobustLangChainOrchestrator:
                             logger.info(f"Code analysis for {service_name}:\n{json.dumps(analysis_result, indent=2)}")
 
                             # LLM Suggestion Step
+                            llm_suggestion_response = None # Initialize for clarity
                             if analysis_result and analysis_result.get("file_access_status") == "success":
                                 code_snippet_for_llm = analysis_result.get("file_content_preview", "")
-                                # Consider using full content if available and not too large:
-                                # if 'full_content' in analysis_result: code_snippet_for_llm = analysis_result['full_content']
-
                                 error_messages_for_llm = []
                                 original_error_msg = task.get("error_details", {}).get("message", "")
-                                if original_error_msg:
-                                    error_messages_for_llm.append(f"Original error: {original_error_msg}")
-
+                                if original_error_msg: error_messages_for_llm.append(f"Original error: {original_error_msg}")
                                 linting_issues = analysis_result.get("linting_results", [])
-                                if linting_issues:
-                                    error_messages_for_llm.append("Linting issues found:\n" + "\n".join(linting_issues[:5]))
-
+                                if linting_issues: error_messages_for_llm.append("Linting issues found:\n" + "\n".join(linting_issues[:5]))
                                 combined_error_message = "\n".join(error_messages_for_llm) if error_messages_for_llm else "No specific error message captured."
 
-                                # Proceed if there's either a code snippet or a specific error message (not just the generic one)
-                                if code_snippet_for_llm or (combined_error_message and combined_error_message != "No specific error message captured."):
+                                if code_snippet_for_llm or (combined_error_message != "No specific error message captured."):
                                     llm_tool_payload = {
                                         "tool_name": "get_llm_code_suggestion",
                                         "arguments": {
-                                            "code_snippet": code_snippet_for_llm,
-                                            "error_message": combined_error_message,
-                                            "language": "python", # Assuming Python
-                                            "context": f"Error occurred in service '{service_name}'. Path: '{analysis_result.get('analyzed_file_path', 'N/A')}'. Log snippet (first 500 chars): {task.get('log_snippet', '')[:500]}"
+                                            "code_snippet": code_snippet_for_llm, "error_message": combined_error_message, "language": "python",
+                                            "context": f"Service: '{service_name}', Path: '{analysis_result.get('analyzed_file_path', 'N/A')}', Log: {task.get('log_snippet', '')[:500]}"
                                         }
                                     }
                                     logger.info(f"Requesting LLM code suggestion for {service_name} from {LLM_CODE_SUGGESTION_MCP_URL}")
                                     llm_suggestion_response = await self._call_mcp_tool(LLM_CODE_SUGGESTION_MCP_URL, llm_tool_payload)
-
                                     if llm_suggestion_response:
-                                        logger.info(f"LLM Code Suggestion raw response for {service_name}:\n{json.dumps(llm_suggestion_response, indent=2)}")
+                                        logger.info(f"LLM Code Suggestion for {service_name}:\n{json.dumps(llm_suggestion_response, indent=2)}")
                                         analysis_result["llm_suggestion_response"] = llm_suggestion_response
-                                    else:
-                                        logger.warning(f"Failed to get LLM suggestion or received empty response for {service_name}.")
-                                        analysis_result["llm_suggestion_response"] = {"status": "error", "message": "No response or empty response from LLM server."}
-                                else:
-                                    logger.info(f"Skipping LLM suggestion for {service_name} due to insufficient information (no code snippet and no specific error message).")
-                                    analysis_result["llm_suggestion_response"] = {"status": "skipped", "message": "Insufficient information for LLM."}
-                            else:
-                                logger.info(f"Skipping LLM suggestion for {service_name} as code analysis was not successful or file not accessed.")
-                                if analysis_result: # Ensure analysis_result exists before trying to update it
-                                   analysis_result["llm_suggestion_response"] = {"status": "skipped", "message": "Code analysis failed or file not accessed."}
+                                    else: # Tool call itself failed or returned None
+                                        logger.warning(f"LLM suggestion call failed or returned empty for {service_name}.")
+                                        analysis_result["llm_suggestion_response"] = {"status": "error", "message": "LLM suggestion call failed or no response."}
+                                else: # Skipped LLM call
+                                    logger.info(f"Skipping LLM suggestion for {service_name} due to insufficient info.")
+                                    analysis_result["llm_suggestion_response"] = {"status": "skipped", "message": "Insufficient info for LLM."}
+                            else: # Code analysis failed or file not accessed
+                                logger.info(f"Skipping LLM suggestion for {service_name} due to code analysis issues.")
+                                if analysis_result: analysis_result["llm_suggestion_response"] = {"status": "skipped", "message": "Code analysis failed."}
+                                else: analysis_result = {"llm_suggestion_response": {"status": "skipped", "message": "Code analysis result was None."}} # Should not happen if agent ran
 
-                            # Log final combined analysis result if desired, or rely on individual logs
-                            # logger.info(f"Final analysis with LLM attempt for {service_name}:\n{json.dumps(analysis_result, indent=2)}")
-                            self.state.tasks_completed += 1
-                        else:
+                            # Integrate ErrorResolutionAgent
+                            task['analyzed_file_path'] = analysis_result.get('analyzed_file_path')
+                            task['code_analyzer_output'] = analysis_result # ERA will get preview from 'file_content_preview' key
+
+                            if (hasattr(self, 'error_resolution_agent') and self.error_resolution_agent and
+                                    llm_suggestion_response and llm_suggestion_response.get("status") == "success" and
+                                    llm_suggestion_response.get("suggestion")):
+                                logger.info(f"Attempting automated code fix for {service_name} using ErrorResolutionAgent.")
+                                try:
+                                    fix_attempt_outcome = await self.error_resolution_agent.attempt_code_fix(task, llm_suggestion_response)
+                                    logger.info(f"Error Resolution Attempt outcome for {service_name}:\n{json.dumps(fix_attempt_outcome, indent=2)}")
+                                    task['fix_attempt_outcome'] = fix_attempt_outcome
+                                except Exception as era_exc:
+                                    logger.error(f"ErrorResolutionAgent execution failed for {service_name}: {era_exc}", exc_info=True)
+                                    task['fix_attempt_outcome'] = {"status": "agent_error", "message": f"ErrorResolutionAgent exception: {str(era_exc)}"}
+                            elif not (hasattr(self, 'error_resolution_agent') and self.error_resolution_agent):
+                                logger.warning(f"ErrorResolutionAgent not initialized. Skipping automated fix for {service_name}.")
+                            elif not (llm_suggestion_response and llm_suggestion_response.get("status") == "success" and llm_suggestion_response.get("suggestion")):
+                                logger.info(f"No valid LLM suggestion to attempt fix for {service_name}. LLM response: {json.dumps(llm_suggestion_response, indent=2)}")
+
+                            self.state.tasks_completed += 1 # Mark CODE_ERROR_REPORT task as completed by processor
+                        else: # CodeAnalyzerAgent not initialized
                             logger.error("CodeAnalyzerAgent not initialized. Cannot process CODE_ERROR_REPORT.")
                             self.state.tasks_failed += 1
-                    except Exception as e:
-                        logger.error(f"Error during code analysis or LLM suggestion for {service_name}: {e}", exc_info=True)
+                    except Exception as e: # Catch errors from CodeAnalyzerAgent call or subsequent logic
+                        logger.error(f"Error processing CODE_ERROR_REPORT for {service_name}: {e}", exc_info=True)
                         self.state.tasks_failed += 1
                 
                 # Existing task processing logic (example: agent tasks)
