@@ -27,6 +27,10 @@ volumes:
     name: flash-loan-models
   langchain_logs:
     name: flash-loan-logs
+  grafana_data:
+    name: flash-loan-grafana
+  prometheus_data:
+    name: flash-loan-prometheus
 
 services:
   # ============================================
@@ -145,6 +149,22 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      
+      # GitHub Copilot Pro Integration
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_COPILOT_API_KEY=${GITHUB_COPILOT_API_KEY}
+      - GITHUB_COPILOT_ENABLED=true
+      - GITHUB_COPILOT_MODEL=gpt-4-turbo-preview
+      - GITHUB_COPILOT_SUBSCRIPTION=pro
+      
+      # GitHub Copilot Features
+      - COPILOT_CODE_GENERATION=true
+      - COPILOT_CODE_REVIEW=true
+      - COPILOT_DOCUMENTATION=true
+      - COPILOT_TESTING=true
+      - COPILOT_REFACTORING=true
+      - COPILOT_SECURITY_SCAN=true
+      - COPILOT_PERFORMANCE_OPT=true
       
       # LangChain configuration
       - LLM_MODEL=gpt-4-turbo-preview
@@ -329,7 +349,6 @@ services:
   # ============================================
   # REVERSE PROXY & LOAD BALANCER
   # ============================================
-
   nginx:
     image: nginx:alpine
     container_name: flash-loan-nginx
@@ -346,9 +365,3 @@ services:
       - langchain-rag-service
       - langchain-code-interpreter
     restart: unless-stopped
-
-# Additional persistent volumes
-  grafana_data:
-    name: flash-loan-grafana
-  prometheus_data:
-    name: flash-loan-prometheus

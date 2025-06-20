@@ -44,6 +44,7 @@ from agents.execution_agent import ExecutionAgent
 from agents.monitoring_agent import MonitoringAgent
 from agents.rag_agent import RAGAgent
 from agents.code_interpreter_agent import CodeInterpreterAgent
+from agents.github_copilot_agent import GitHubCopilotProAgent
 from services.vector_store import VectorStoreService
 from services.memory_manager import MemoryManager
 from services.tool_registry import ToolRegistry
@@ -180,6 +181,11 @@ async def initialize_agents():
                 name="CodeInterpreterAgent",
                 memory_manager=system_state.memory_manager,
                 tool_registry=system_state.tool_registry
+            ),
+            "github_copilot": GitHubCopilotProAgent(
+                name="GitHubCopilotProAgent",
+                memory_manager=system_state.memory_manager,
+                tool_registry=system_state.tool_registry
             )
         }
         
@@ -220,6 +226,7 @@ async def initialize_coordination_graph():
         workflow.add_node("monitoring", system_state.agents["monitoring"].process)
         workflow.add_node("rag", system_state.agents["rag"].process)
         workflow.add_node("code_interpreter", system_state.agents["code_interpreter"].process)
+        workflow.add_node("github_copilot", system_state.agents["github_copilot"].process)
         
         # Define routing logic
         def route_agent(state: AgentState) -> str:
@@ -237,6 +244,7 @@ async def initialize_coordination_graph():
         workflow.add_edge("monitoring", "coordinator")
         workflow.add_edge("rag", "coordinator")
         workflow.add_edge("code_interpreter", "coordinator")
+        workflow.add_edge("github_copilot", "coordinator")
         
         # Compile the graph
         checkpointer = MemorySaver()
