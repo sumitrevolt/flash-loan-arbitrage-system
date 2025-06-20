@@ -1,0 +1,26 @@
+{
+  "total_attempts": 13,
+  "successful_repairs": [
+    "matic-mcp"
+  ],
+  "still_failing": [
+    "foundry-mcp",
+    "evm-mcp",
+    "copilot-mcp",
+    "flash-loan-mcp",
+    "price-oracle-mcp",
+    "context7-mcp",
+    "risk-management-mcp",
+    "task-manager-mcp",
+    "contract-executor-mcp",
+    "flash-loan-strategist",
+    "transaction-optimizer",
+    "production-mcp"
+  ],
+  "repair_summary": {
+    "repaired_count": 1,
+    "still_failing_count": 12,
+    "success_rate": 7.6923076923076925
+  },
+  "updated_config": "mcp_servers/config_files/ALL_WORKING_CONFIG.json"
+}

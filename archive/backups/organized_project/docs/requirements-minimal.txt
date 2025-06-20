@@ -1,0 +1,10 @@
+langchain
+langchain-community
+langchain-core
+numpy
+pandas
+aiohttp
+docker
+pyyaml
+python-dotenv
+asyncio

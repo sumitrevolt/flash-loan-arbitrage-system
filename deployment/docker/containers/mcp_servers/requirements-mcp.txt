@@ -1,0 +1,26 @@
+# Core dependencies
+aiohttp==3.9.3
+aioredis==2.0.1
+asyncpg==0.29.0
+python-dotenv==1.0.0
+
+# GitHub integration
+PyGithub==2.1.1
+github3.py==3.2.0
+requests==2.31.0
+
+# GitHub Copilot
+github-copilot-cli==1.0.0
+
+# Web3 and blockchain
+web3==6.11.1
+eth-account==0.9.0
+eth-keys==0.4.0
+
+# Monitoring
+prometheus-client==0.18.0
+grafana-api==1.0.7
+
+# Debugging
+ipdb==0.13.13
+rich==13.7.0

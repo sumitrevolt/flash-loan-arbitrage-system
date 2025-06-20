@@ -1,0 +1,261 @@
+{
+  "servers": {
+    "copilot_client": {
+      "name": "copilot_client",
+      "type": "python",
+      "path": "src/mcp_servers/copilot_mcp_client.py",
+      "port": 3000,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "copilot_client",
+        "PORT": "3000"
+      }
+    },
+    "copilot_demo": {
+      "name": "copilot_demo",
+      "type": "python",
+      "path": "src/mcp_servers/copilot_mcp_demo.py",
+      "port": 3001,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "copilot_demo",
+        "PORT": "3001"
+      }
+    },
+    "final_deployment_summary": {
+      "name": "final_deployment_summary",
+      "type": "python",
+      "path": "src/mcp_servers/final_mcp_deployment_summary.py",
+      "port": 3002,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "final_deployment_summary",
+        "PORT": "3002"
+      }
+    },
+    "master_langchain_organizer": {
+      "name": "master_langchain_organizer",
+      "type": "python",
+      "path": "src/mcp_servers/master_langchain_mcp_organizer.py",
+      "port": 3003,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "master_langchain_organizer",
+        "PORT": "3003"
+      }
+    },
+    "bridge": {
+      "name": "bridge",
+      "type": "python",
+      "path": "src/mcp_servers/mcp_bridge.py",
+      "port": 3004,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "bridge",
+        "PORT": "3004"
+      }
+    },
+    "contract_verifier": {
+      "name": "contract_verifier",
+      "type": "python",
+      "path": "src/mcp_servers/mcp_contract_verifier.py",
+      "port": 3005,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "contract_verifier",
+        "PORT": "3005"
+      }
+    },
+    "powered_deployment_system": {
+      "name": "powered_deployment_system",
+      "type": "python",
+      "path": "src/mcp_servers/mcp_powered_deployment_system.py",
+      "port": 3006,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "powered_deployment_system",
+        "PORT": "3006"
+      }
+    },
+    "optimized_deployment_with_mcp": {
+      "name": "optimized_deployment_with_mcp",
+      "type": "python",
+      "path": "src/mcp_servers/optimized_deployment_with_mcp.py",
+      "port": 3007,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "optimized_deployment_with_mcp",
+        "PORT": "3007"
+      }
+    },
+    "robust_deployment": {
+      "name": "robust_deployment",
+      "type": "python",
+      "path": "src/mcp_servers/robust_mcp_deployment.py",
+      "port": 3008,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "robust_deployment",
+        "PORT": "3008"
+      }
+    },
+    "simple_trainer": {
+      "name": "simple_trainer",
+      "type": "python",
+      "path": "src/mcp_servers/simple_mcp_trainer.py",
+      "port": 3009,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "simple_trainer",
+        "PORT": "3009"
+      }
+    },
+    "simplified_organizer": {
+      "name": "simplified_organizer",
+      "type": "python",
+      "path": "src/mcp_servers/simplified_mcp_organizer.py",
+      "port": 3010,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "simplified_organizer",
+        "PORT": "3010"
+      }
+    },
+    "train_aave_system": {
+      "name": "train_aave_system",
+      "type": "python",
+      "path": "src/mcp_servers/train_aave_mcp_system.py",
+      "port": 3011,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "train_aave_system",
+        "PORT": "3011"
+      }
+    },
+    "train_alls": {
+      "name": "train_alls",
+      "type": "python",
+      "path": "src/mcp_servers/train_all_mcp_servers.py",
+      "port": 3012,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "train_alls",
+        "PORT": "3012"
+      }
+    },
+    "server_trainer": {
+      "name": "server_trainer",
+      "type": "python",
+      "path": "src/mcp_servers/mcp_server_trainer.py",
+      "port": 3013,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "server_trainer",
+        "PORT": "3013"
+      }
+    },
+    "complete_langchain_integration": {
+      "name": "complete_langchain_integration",
+      "type": "python",
+      "path": "src/mcp_servers/complete_langchain_mcp_integration.py",
+      "port": 3014,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "complete_langchain_integration",
+        "PORT": "3014"
+      }
+    },
+    "enhanced_manager": {
+      "name": "enhanced_manager",
+      "type": "python",
+      "path": "src/mcp_servers/enhanced_mcp_server_manager.py",
+      "port": 3015,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "enhanced_manager",
+        "PORT": "3015"
+      }
+    },
+    "langchain_orchestrator": {
+      "name": "langchain_orchestrator",
+      "type": "python",
+      "path": "src/mcp_servers/langchain_mcp_orchestrator.py",
+      "port": 3016,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "langchain_orchestrator",
+        "PORT": "3016"
+      }
+    },
+    "status_check": {
+      "name": "status_check",
+      "type": "python",
+      "path": "src/mcp_servers/mcp_status_check.py",
+      "port": 3017,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "status_check",
+        "PORT": "3017"
+      }
+    },
+    "simple_orchestrator": {
+      "name": "simple_orchestrator",
+      "type": "python",
+      "path": "src/mcp_servers/simple_mcp_orchestrator.py",
+      "port": 3018,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "simple_orchestrator",
+        "PORT": "3018"
+      }
+    },
+    "unified_coordinator": {
+      "name": "unified_coordinator",
+      "type": "python",
+      "path": "src/mcp_servers/unified_mcp_coordinator.py",
+      "port": 3019,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "unified_coordinator",
+        "PORT": "3019"
+      }
+    },
+    "training_coordinator": {
+      "name": "training_coordinator",
+      "type": "python",
+      "path": "src/mcp_servers/mcp_training_coordinator.py",
+      "port": 3020,
+      "enabled": true,
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "training_coordinator",
+        "PORT": "3020"
+      }
+    }
+  },
+  "global_configuration": {
+    "health_check_interval": 30,
+    "auto_restart": true,
+    "log_level": "INFO"
+  }
+}

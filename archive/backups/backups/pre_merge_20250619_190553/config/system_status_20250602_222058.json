@@ -1,0 +1,42 @@
+{
+  "timestamp": "2025-06-02T22:20:58.326962",
+  "system_healthy": false,
+  "servers": {
+    "foundry": {
+      "name": "Foundry MCP Server",
+      "port": 8001,
+      "healthy": false,
+      "response_time": null,
+      "error": "aiodns needs a SelectorEventLoop on Windows. See more: https://github.com/saghul/aiodns/issues/86"
+    },
+    "evm": {
+      "name": "EVM MCP Server",
+      "port": 8002,
+      "healthy": false,
+      "response_time": null,
+      "error": "aiodns needs a SelectorEventLoop on Windows. See more: https://github.com/saghul/aiodns/issues/86"
+    },
+    "matic": {
+      "name": "Matic MCP Server",
+      "port": 8003,
+      "healthy": false,
+      "response_time": null,
+      "error": "aiodns needs a SelectorEventLoop on Windows. See more: https://github.com/saghul/aiodns/issues/86"
+    }
+  },
+  "overall_status": "Unhealthy",
+  "network": {
+    "polygon_mainnet": false,
+    "rpc_responsive": false,
+    "block_height": null,
+    "error": "aiodns needs a SelectorEventLoop on Windows. See more: https://github.com/saghul/aiodns/issues/86"
+  },
+  "config": {
+    "files_present": true,
+    "missing_files": [],
+    "config_valid": false,
+    "validation_errors": [
+      "Config validation error: Expecting value: line 1 column 1 (char 0)"
+    ]
+  }
+}

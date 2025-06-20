@@ -1,0 +1,766 @@
+{
+  "timestamp": "20250619_194651",
+  "original_structure": {
+    "-y": {
+      "type": "file",
+      "size": 5641
+    },
+    ".env": {
+      "type": "file",
+      "size": 764
+    },
+    ".env.deployment.example": {
+      "type": "file",
+      "size": 0
+    },
+    ".env.example": {
+      "type": "file",
+      "size": 695
+    },
+    ".env.jules": {
+      "type": "file",
+      "size": 0
+    },
+    ".env.production": {
+      "type": "file",
+      "size": 887
+    },
+    ".git": {
+      "type": "directory",
+      "files": 4801
+    },
+    ".github": {
+      "type": "directory",
+      "files": 4
+    },
+    ".gitignore": {
+      "type": "file",
+      "size": 689
+    },
+    ".roo": {
+      "type": "directory",
+      "files": 1
+    },
+    ".venv": {
+      "type": "directory",
+      "files": 1527
+    },
+    ".vscode": {
+      "type": "directory",
+      "files": 2
+    },
+    "abi": {
+      "type": "directory",
+      "files": 1
+    },
+    "activate_revenue_system.py": {
+      "type": "file",
+      "size": 16038
+    },
+    "admin_dashboard.py": {
+      "type": "file",
+      "size": 20137
+    },
+    "advanced_agentic_coordination.py": {
+      "type": "file",
+      "size": 101472
+    },
+    "advanced_agentic_coordination.py.bak": {
+      "type": "file",
+      "size": 101472
+    },
+    "ai_agent": {
+      "type": "directory",
+      "files": 9
+    },
+    "ai_agents": {
+      "type": "directory",
+      "files": 10
+    },
+    "ai_agents_config.json": {
+      "type": "file",
+      "size": 1086
+    },
+    "arbitrage_24_7.log": {
+      "type": "file",
+      "size": 116
+    },
+    "archive": {
+      "type": "directory",
+      "files": 315
+    },
+    "artifacts": {
+      "type": "directory",
+      "files": 64
+    },
+    "autogen.pyi": {
+      "type": "file",
+      "size": 1542
+    },
+    "backups": {
+      "type": "directory",
+      "files": 3351
+    },
+    "backup_duplicates": {
+      "type": "directory",
+      "files": 989
+    },
+    "benchmarks": {
+      "type": "directory",
+      "files": 1
+    },
+    "cache": {
+      "type": "directory",
+      "files": 37
+    },
+    "cleanup_backup": {
+      "type": "directory",
+      "files": 1
+    },
+    "cleanup_log_20250619_192833.txt": {
+      "type": "file",
+      "size": 92065
+    },
+    "compatible_enhanced_mcp_price_feed_server.py": {
+      "type": "file",
+      "size": 12428
+    },
+    "COMPLETE_SYSTEM_README.md": {
+      "type": "file",
+      "size": 15522
+    },
+    "complete_system_test.log": {
+      "type": "file",
+      "size": 1976
+    },
+    "complete_system_test_report.json": {
+      "type": "file",
+      "size": 5165
+    },
+    "comprehensive_duplicate_cleaner.py": {
+      "type": "file",
+      "size": 21917
+    },
+    "config": {
+      "type": "directory",
+      "files": 424
+    },
+    "configs": {
+      "type": "directory",
+      "files": 1
+    },
+    "containers": {
+      "type": "directory",
+      "files": 20
+    },
+    "coordination_launcher.log": {
+      "type": "file",
+      "size": 2184
+    },
+    "coordination_launcher.py": {
+      "type": "file",
+      "size": 23123
+    },
+    "COORDINATION_SYSTEM_README.md": {
+      "type": "file",
+      "size": 12215
+    },
+    "coordination_test_report_1750181382.json": {
+      "type": "file",
+      "size": 9633
+    },
+    "copilot-mcp-extension": {
+      "type": "directory",
+      "files": 1
+    },
+    "copilot_memory.db": {
+      "type": "file",
+      "size": 32768
+    },
+    "core": {
+      "type": "directory",
+      "files": 11
+    },
+    "count_servers.py": {
+      "type": "file",
+      "size": 677
+    },
+    "dashboard": {
+      "type": "directory",
+      "files": 1
+    },
+    "dashboard.py": {
+      "type": "file",
+      "size": 12682
+    },
+    "debug_env.py": {
+      "type": "file",
+      "size": 703
+    },
+    "deployment": {
+      "type": "directory",
+      "files": 0
+    },
+    "deployment_test.py": {
+      "type": "file",
+      "size": 5310
+    },
+    "direct_command_interface.py": {
+      "type": "file",
+      "size": 20771
+    },
+    "docker": {
+      "type": "directory",
+      "files": 73
+    },
+    "docker-compose.github-enhanced.yml": {
+      "type": "file",
+      "size": 6234
+    },
+    "docker-compose.production.yml": {
+      "type": "file",
+      "size": 1934
+    },
+    "docker-configs": {
+      "type": "directory",
+      "files": 3
+    },
+    "docker_arbitrage_24_7.log": {
+      "type": "file",
+      "size": 24864
+    },
+    "docker_arbitrage_orchestrator.py": {
+      "type": "file",
+      "size": 34100
+    },
+    "docker_coordination_system.py": {
+      "type": "file",
+      "size": 35978
+    },
+    "docker_health_checker.py": {
+      "type": "file",
+      "size": 12829
+    },
+    "DOCKER_MCP_VALIDATION_FIX_COMPLETE.md": {
+      "type": "file",
+      "size": 4297
+    },
+    "DOCKER_MCP_VALIDATION_ISSUE_RESOLVED.md": {
+      "type": "file",
+      "size": 6014
+    },
+    "docs": {
+      "type": "directory",
+      "files": 219
+    },
+    "enhanced_agentic_launcher.py": {
+      "type": "file",
+      "size": 18118
+    },
+    "enhanced_agentic_system.log": {
+      "type": "file",
+      "size": 0
+    },
+    "enhanced_bridge_api.py": {
+      "type": "file",
+      "size": 31126
+    },
+    "enhanced_mcp_price_feed_server.py": {
+      "type": "file",
+      "size": 15161
+    },
+    "enhanced_orchestrator_integration.py": {
+      "type": "file",
+      "size": 21783
+    },
+    "enhanced_revenue_activator.py": {
+      "type": "file",
+      "size": 31042
+    },
+    "ENHANCED_SYSTEM_COMPLETE.md": {
+      "type": "file",
+      "size": 10117
+    },
+    "enhanced_system_env": {
+      "type": "directory",
+      "files": 5523
+    },
+    "enhanced_system_launcher.py": {
+      "type": "file",
+      "size": 11976
+    },
+    "ENHANCED_SYSTEM_README.md": {
+      "type": "file",
+      "size": 10533
+    },
+    "FINAL_DEPLOYMENT_STATUS.md": {
+      "type": "file",
+      "size": 6191
+    },
+    "fix_docker_mcp_tool_validation.py": {
+      "type": "file",
+      "size": 8502
+    },
+    "fix_github_copilot_tool_limit.py": {
+      "type": "file",
+      "size": 12627
+    },
+    "fix_mcp_docker_server.md": {
+      "type": "file",
+      "size": 2183
+    },
+    "flash-loan-copilot-mcp.code-workspace": {
+      "type": "file",
+      "size": 3215
+    },
+    "generate_complete_compose.py": {
+      "type": "file",
+      "size": 15167
+    },
+    "github_copilot_optimization_summary.json": {
+      "type": "file",
+      "size": 1786
+    },
+    "GITHUB_INTEGRATION_COMPLETE.md": {
+      "type": "file",
+      "size": 7291
+    },
+    "github_integration_demo.py": {
+      "type": "file",
+      "size": 19050
+    },
+    "hardhat.config.js": {
+      "type": "file",
+      "size": 1508
+    },
+    "how_to_use_system.py": {
+      "type": "file",
+      "size": 15924
+    },
+    "IMPLEMENTATION_COMPLETE.md": {
+      "type": "file",
+      "size": 9762
+    },
+    "IMPLEMENTATION_SUCCESS_REPORT.md": {
+      "type": "file",
+      "size": 7161
+    },
+    "integrated_system_launcher.py": {
+      "type": "file",
+      "size": 10603
+    },
+    "interfaces": {
+      "type": "directory",
+      "files": 3
+    },
+    "jules_integration.py": {
+      "type": "file",
+      "size": 0
+    },
+    "JULES_INTEGRATION_COMPLETE.md": {
+      "type": "file",
+      "size": 0
+    },
+    "jules_launcher.py": {
+      "type": "file",
+      "size": 0
+    },
+    "langchain_command_system.py": {
+      "type": "file",
+      "size": 22403
+    },
+    "langchain_mcp_project_organizer.py": {
+      "type": "file",
+      "size": 34299
+    },
+    "launch_coordination_system.ps1": {
+      "type": "file",
+      "size": 10804
+    },
+    "launch_coordination_system_clean.ps1": {
+      "type": "file",
+      "size": 10804
+    },
+    "launch_enhanced_system.py": {
+      "type": "file",
+      "size": 3158
+    },
+    "launch_master_coordination_system.py": {
+      "type": "file",
+      "size": 21871
+    },
+    "launch_mcp_agent_bridge.ps1": {
+      "type": "file",
+      "size": 9438
+    },
+    "launch_mcp_agent_bridge_clean.ps1": {
+      "type": "file",
+      "size": 8513
+    },
+    "launch_streamlined_system.ps1": {
+      "type": "file",
+      "size": 2780
+    },
+    "logs": {
+      "type": "directory",
+      "files": 53
+    },
+    "master_coordination_launcher.log": {
+      "type": "file",
+      "size": 0
+    },
+    "master_coordination_system.py": {
+      "type": "file",
+      "size": 43427
+    },
+    "master_project_organizer.py": {
+      "type": "file",
+      "size": 23655
+    },
+    "MASTER_SYSTEM_COMPLETE.md": {
+      "type": "file",
+      "size": 11799
+    },
+    "mcp_agent_bridge.log": {
+      "type": "file",
+      "size": 0
+    },
+    "mcp_agent_bridge_api.py": {
+      "type": "file",
+      "size": 18752
+    },
+    "mcp_agent_bridge_startup.log": {
+      "type": "file",
+      "size": 0
+    },
+    "mcp_agent_connection_bridge.py": {
+      "type": "file",
+      "size": 26919
+    },
+    "mcp_servers": {
+      "type": "directory",
+      "files": 386
+    },
+    "models": {
+      "type": "directory",
+      "files": 3
+    },
+    "monitoring": {
+      "type": "directory",
+      "files": 2
+    },
+    "MULTI_MCP_SERVER_CONTAINER_PLAN.md": {
+      "type": "file",
+      "size": 24108
+    },
+    "MULTI_MCP_SYSTEM_USAGE_GUIDE.md": {
+      "type": "file",
+      "size": 7386
+    },
+    "node_modules": {
+      "type": "directory",
+      "files": 30955
+    },
+    "organized": {
+      "type": "directory",
+      "files": 0
+    },
+    "organized_project": {
+      "type": "directory",
+      "files": 830
+    },
+    "package.json": {
+      "type": "file",
+      "size": 2430
+    },
+    "production_arbitrage_system.py": {
+      "type": "file",
+      "size": 31468
+    },
+    "PRODUCTION_GUIDE.md": {
+      "type": "file",
+      "size": 5721
+    },
+    "project_organization.log": {
+      "type": "file",
+      "size": 38644
+    },
+    "PROJECT_ORGANIZATION_REPORT.md": {
+      "type": "file",
+      "size": 6854
+    },
+    "quick_system_launcher.py": {
+      "type": "file",
+      "size": 5536
+    },
+    "realtime_price_feed.py": {
+      "type": "file",
+      "size": 17282
+    },
+    "real_task_executor.py": {
+      "type": "file",
+      "size": 11610
+    },
+    "reorganization_backup_20250619_194651": {
+      "type": "directory",
+      "files": 0
+    },
+    "reorganize_project.py": {
+      "type": "file",
+      "size": 13754
+    },
+    "reports": {
+      "type": "directory",
+      "files": 4
+    },
+    "requirements-bridge.txt": {
+      "type": "file",
+      "size": 711
+    },
+    "requirements-complete-fixed.txt": {
+      "type": "file",
+      "size": 1135
+    },
+    "requirements-complete.txt": {
+      "type": "file",
+      "size": 1050
+    },
+    "requirements-coordination-fixed.txt": {
+      "type": "file",
+      "size": 1100
+    },
+    "requirements-coordination.txt": {
+      "type": "file",
+      "size": 1179
+    },
+    "requirements-flash-loan.txt": {
+      "type": "file",
+      "size": 214
+    },
+    "requirements-github-copilot-enhanced.txt": {
+      "type": "file",
+      "size": 585
+    },
+    "requirements-jules.txt": {
+      "type": "file",
+      "size": 0
+    },
+    "requirements-price-feed.txt": {
+      "type": "file",
+      "size": 161
+    },
+    "requirements-risk-management.txt": {
+      "type": "file",
+      "size": 157
+    },
+    "run_project_organizer.ps1": {
+      "type": "file",
+      "size": 6982
+    },
+    "run_project_organizer.py": {
+      "type": "file",
+      "size": 6814
+    },
+    "scripts": {
+      "type": "directory",
+      "files": 46
+    },
+    "self_healing_coordination_launcher.py": {
+      "type": "file",
+      "size": 16337
+    },
+    "self_healing_coordination_system.log": {
+      "type": "file",
+      "size": 318
+    },
+    "SELF_HEALING_SYSTEM_README.md": {
+      "type": "file",
+      "size": 8273
+    },
+    "setup_multi_mcp_containers.ps1": {
+      "type": "file",
+      "size": 6447
+    },
+    "setup_multi_mcp_containers.py": {
+      "type": "file",
+      "size": 17192
+    },
+    "show_usage.py": {
+      "type": "file",
+      "size": 4691
+    },
+    "simple_project_organizer.py": {
+      "type": "file",
+      "size": 15822
+    },
+    "SIMPLE_USAGE_GUIDE.md": {
+      "type": "file",
+      "size": 5696
+    },
+    "sql": {
+      "type": "directory",
+      "files": 1
+    },
+    "src": {
+      "type": "directory",
+      "files": 796
+    },
+    "start_24_7_arbitrage.py": {
+      "type": "file",
+      "size": 20078
+    },
+    "start_arbitrage_system.py": {
+      "type": "file",
+      "size": 7587
+    },
+    "start_enhanced_system.py": {
+      "type": "file",
+      "size": 6606
+    },
+    "start_mcp_agent_bridge.py": {
+      "type": "file",
+      "size": 9621
+    },
+    "streamlined_system.log": {
+      "type": "file",
+      "size": 0
+    },
+    "streamlined_system.py": {
+      "type": "file",
+      "size": 33389
+    },
+    "SYSTEM_FIXES_SUMMARY.md": {
+      "type": "file",
+      "size": 3780
+    },
+    "SYSTEM_READY_SUMMARY.md": {
+      "type": "file",
+      "size": 5212
+    },
+    "SYSTEM_RUNNING.md": {
+      "type": "file",
+      "size": 2215
+    },
+    "SYSTEM_SETUP_COMPLETE.md": {
+      "type": "file",
+      "size": 8643
+    },
+    "system_status_dashboard.py": {
+      "type": "file",
+      "size": 12416
+    },
+    "targeted_duplicate_cleaner.py": {
+      "type": "file",
+      "size": 13446
+    },
+    "TASK_ORCHESTRATION_COMPLETE.md": {
+      "type": "file",
+      "size": 11288
+    },
+    "task_orchestrator.py": {
+      "type": "file",
+      "size": 21166
+    },
+    "templates": {
+      "type": "directory",
+      "files": 4
+    },
+    "tests": {
+      "type": "directory",
+      "files": 4
+    },
+    "test_complete_system.py": {
+      "type": "file",
+      "size": 14718
+    },
+    "test_coordination_system.py": {
+      "type": "file",
+      "size": 19618
+    },
+    "test_discovery.py": {
+      "type": "file",
+      "size": 0
+    },
+    "test_docker_mcp_server.py": {
+      "type": "file",
+      "size": 4758
+    },
+    "test_fix.log": {
+      "type": "file",
+      "size": 517
+    },
+    "test_github_copilot_memory.py": {
+      "type": "file",
+      "size": 5892
+    },
+    "test_github_integration.py": {
+      "type": "file",
+      "size": 11479
+    },
+    "test_github_token.py": {
+      "type": "file",
+      "size": 1554
+    },
+    "test_mcp_server.py": {
+      "type": "file",
+      "size": 530
+    },
+    "test_memory_server.py": {
+      "type": "file",
+      "size": 6513
+    },
+    "test_self_healing_system.py": {
+      "type": "file",
+      "size": 10235
+    },
+    "training_data": {
+      "type": "directory",
+      "files": 2
+    },
+    "training_logs": {
+      "type": "directory",
+      "files": 1
+    },
+    "unicode_safe_logger.py": {
+      "type": "file",
+      "size": 7780
+    },
+    "unified_arbitrage_system.log": {
+      "type": "file",
+      "size": 0
+    },
+    "unified_mcp_config.json": {
+      "type": "file",
+      "size": 17337
+    },
+    "Untitled-1.txt": {
+      "type": "file",
+      "size": 24265
+    },
+    "update_compose_files.py": {
+      "type": "file",
+      "size": 1977
+    },
+    "validate_complete_system.py": {
+      "type": "file",
+      "size": 7101
+    },
+    "validate_fixes.py": {
+      "type": "file",
+      "size": 3865
+    },
+    "verify_github_integration.py": {
+      "type": "file",
+      "size": 8911
+    },
+    "vscode_extension": {
+      "type": "directory",
+      "files": 3
+    },
+    "__pycache__": {
+      "type": "directory",
+      "files": 6
+    }
+  },
+  "file_count": 50678
+}

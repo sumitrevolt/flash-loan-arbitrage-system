@@ -2,13 +2,11 @@
   "name": "arbitrage-command-center",
   "displayName": "Arbitrage Command Center",
   "description": "Direct command interface for MCP servers and AI agents",
-  "version": "1.0.0",
-  "engines": {
+  "version": "1.0.0",  "engines": {
     "vscode": "^1.85.0"
   },
   "categories": ["Other"],
   "activationEvents": [
-    "onCommand:arbitrage.openCommandCenter",
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
@@ -79,15 +77,15 @@
         {
           "command": "arbitrage.indexCodex",
           "when": "true"
-        }
-      ]
+        }      ]
     },
     "views": {
       "explorer": [
         {
           "id": "arbitrageCommandCenter",
           "name": "Arbitrage Command Center",
-          "when": "true"
+          "when": "true",
+          "icon": "$(graph-line)"
         }
       ]
     },
@@ -97,13 +95,13 @@
           "id": "arbitrage",
           "title": "Arbitrage System",
           "icon": "$(graph-line)"
-        }
-      ]
+        }      ]
     },
     "webviews": [
       {
         "viewType": "arbitrage.commandCenter",
-        "title": "Command Center"
+        "title": "Command Center",
+        "icon": "$(terminal)"
       }
     ]
   },

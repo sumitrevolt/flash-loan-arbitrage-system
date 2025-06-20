@@ -1,0 +1,73 @@
+{
+  "generated_at": "2025-06-11T21:07:47.685057",
+  "system_uptime_hours": 0.02,
+  "system_metrics": {
+    "python_servers": 2,
+    "nodejs_servers": 0,
+    "total_servers": 5,
+    "successful_starts": 2,
+    "failed_starts": 3,
+    "system_uptime": 64.411224
+  },
+  "mcp_servers": {
+    "github": {
+      "type": "nodejs",
+      "started_at": "2025-06-11T21:06:43.294260",
+      "running": false,
+      "pid": null,
+      "status": "configured_but_not_running"
+    },
+    "sequential-thinking": {
+      "type": "nodejs",
+      "started_at": "2025-06-11T21:06:43.311538",
+      "running": false,
+      "pid": null,
+      "status": "configured_but_not_running"
+    },
+    "filesystem": {
+      "type": "nodejs",
+      "started_at": "2025-06-11T21:06:43.331179",
+      "running": false,
+      "pid": null,
+      "status": "configured_but_not_running"
+    },
+    "context7": {
+      "type": "python",
+      "started_at": "2025-06-11T21:06:43.342449",
+      "running": false,
+      "pid": null,
+      "status": "stopped"
+    },
+    "matic": {
+      "type": "python",
+      "started_at": "2025-06-11T21:06:45.365562",
+      "running": false,
+      "pid": null,
+      "status": "stopped"
+    }
+  },
+  "flash_loan_integration": {
+    "optimized_arbitrage_bot_v2.py": {
+      "exists": true,
+      "size": 34449,
+      "path": "C:\\Users\\Ratanshila\\Documents\\flash loan\\optimized_arbitrage_bot_v2.py"
+    },
+    "dex_integrations.py": {
+      "exists": true,
+      "size": 37728,
+      "path": "C:\\Users\\Ratanshila\\Documents\\flash loan\\dex_integrations.py"
+    },
+    "config.py": {
+      "exists": true,
+      "size": 17374,
+      "path": "C:\\Users\\Ratanshila\\Documents\\flash loan\\config.py"
+    },
+    "syntax_valid": false,
+    "ready": true
+  },
+  "recommendations": [
+    "Only 2/5 MCP servers started - check failed servers",
+    "Python MCP servers working: 2",
+    "Node.js MCP servers need attention - consider using Python alternatives"
+  ]
+}

@@ -87,8 +87,7 @@
         "AGENT_PORT": "7001",
         "REDIS_URL": "redis://redis:6379"
       }
-    },
-    "trading-strategy-agent": {
+    },    "trading-strategy-agent": {
       "command": "python",
       "args": ["ai_agent/unified_agent.py"],
       "cwd": "/app",
@@ -98,7 +97,13 @@
         "AGENT_PORT": "7002",
         "REDIS_URL": "redis://redis:6379"
       }
+    },    "memory": {
+      "command": "C:\\Program Files\\nodejs\\npx.cmd",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ]
     }
   }
-} 
+}
 

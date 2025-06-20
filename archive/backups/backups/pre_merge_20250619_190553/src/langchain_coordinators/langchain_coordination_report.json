@@ -1,0 +1,61 @@
+{
+  "timestamp": "2025-06-16T08:46:07.529573",
+  "coordination_status": "COMPLETED",
+  "infrastructure": {
+    "redis": "Running",
+    "postgres": "Running",
+    "rabbitmq": "Running"
+  },
+  "services": {
+    "arbitrage-detector": {
+      "status": "running",
+      "image": "python:3.11-slim"
+    },
+    "aave-flash-loan-executor": {
+      "status": "running",
+      "image": "python:3.11-slim"
+    },
+    "code-indexer-1": {
+      "status": "running",
+      "image": "python:3.11-slim"
+    },
+    "context7-mcp-server": {
+      "status": "restarting",
+      "image": "node:18-alpine"
+    },
+    "enhanced-copilot-mcp-server": {
+      "status": "restarting",
+      "image": "node:18-alpine"
+    },
+    "price-oracle-mcp-server": {
+      "status": "restarting",
+      "image": "node:18-alpine"
+    },
+    "langchain-postgres": {
+      "status": "running",
+      "image": "postgres:15-alpine"
+    },
+    "langchain-redis": {
+      "status": "running",
+      "image": "redis:7-alpine"
+    },
+    "langchain-rabbitmq": {
+      "status": "running",
+      "image": "rabbitmq:3-management"
+    },
+    "flash-loan-grafana": {
+      "status": "running",
+      "image": "grafana/grafana:latest"
+    },
+    "flash-loan-mcp-coordinator": {
+      "status": "running",
+      "image": "flashloan-mcp-coordinator:latest"
+    }
+  },
+  "summary": {
+    "total_containers": 11,
+    "running_containers": 8,
+    "mcp_servers": 4,
+    "ai_agents": 3
+  }
+}

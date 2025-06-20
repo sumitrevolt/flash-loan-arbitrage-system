@@ -65,14 +65,12 @@ class LLMCodeSuggestionMCPServer:
                 logger.info(f"OpenAI client initialized with model {OPENAI_MODEL}.")
             except Exception as e:
                 logger.error(f"Failed to initialize OpenAI client: {e}")
-                self.openai_client = None # Ensure it's None if init fails
-        elif not OPENAI_API_KEY:
+                self.openai_client = None # Ensure it's None if init fails        elif not OPENAI_API_KEY:
             logger.warning("OPENAI_API_KEY not set. OpenAI functionality will be disabled.")
         elif not OPENAI_AVAILABLE: # OPENAI_AVAILABLE is False
              logger.warning("OpenAI library not installed. OpenAI functionality will be disabled.")
         else: # OpenAIClient is None (should be covered by not OPENAI_AVAILABLE)
             logger.warning("OpenAI client could not be imported. OpenAI functionality will be disabled.")
-
 
         self._setup_handlers()
 

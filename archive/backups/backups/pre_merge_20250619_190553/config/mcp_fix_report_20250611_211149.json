@@ -1,0 +1,45 @@
+{
+  "total_servers": 22,
+  "fixed_servers": [
+    "simple-flash-loan",
+    "github",
+    "sequential-thinking",
+    "filesystem",
+    "flash-loan-system"
+  ],
+  "working_servers": [
+    "minimal-mcp",
+    "simple-flash-loan",
+    "context7",
+    "matic",
+    "flash-loan-system",
+    "simple-server"
+  ],
+  "failed_servers": [
+    "matic-mcp - startup failed",
+    "foundry-mcp - startup failed",
+    "evm-mcp - startup failed",
+    "copilot-mcp - startup failed",
+    "flash-loan-mcp - startup failed",
+    "price-oracle-mcp - startup failed",
+    "context7-mcp - startup failed",
+    "risk-management-mcp - startup failed",
+    "task-manager-mcp - startup failed",
+    "contract-executor-mcp - startup failed",
+    "flash-loan-strategist - startup failed",
+    "transaction-optimizer - startup failed",
+    "production-mcp - startup failed",
+    "github - startup failed",
+    "sequential-thinking - startup failed",
+    "filesystem - startup failed"
+  ],
+  "created_files": [
+    "simple-flash-loan",
+    "github",
+    "sequential-thinking",
+    "filesystem",
+    "flash-loan-system"
+  ],
+  "syntax_fixes": [],
+  "unified_config": "mcp_servers/config_files/UNIFIED_WORKING_CONFIG.json"
+}

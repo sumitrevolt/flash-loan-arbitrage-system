@@ -1,0 +1,215 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "borrowToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "dex1",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "dex2",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "intermediateToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint24",
+        "name": "dex1Fee",
+        "type": "uint24"
+      },
+      {
+        "internalType": "uint24",
+        "name": "dex2Fee",
+        "type": "uint24"
+      },
+      {
+        "internalType": "uint256",
+        "name": "deadline",
+        "type": "uint256"
+      }
+    ],
+    "name": "executeArbitrage",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenFrom",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "tokenTo",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "dex1",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "dex2",
+        "type": "address"
+      },
+      {
+        "internalType": "uint24",
+        "name": "dex1Fee",
+        "type": "uint24"
+      },
+      {
+        "internalType": "uint24",
+        "name": "dex2Fee",
+        "type": "uint24"
+      },
+      {
+        "internalType": "uint256",
+        "name": "deadline",
+        "type": "uint256"
+      }
+    ],
+    "name": "executeDirectArbitrage",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "premium",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "initiator",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "params",
+        "type": "bytes"
+      }
+    ],
+    "name": "executeOperation",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      }
+    ],
+    "name": "withdrawToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "status",
+        "type": "bool"
+      }
+    ],
+    "name": "whitelistToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "whitelistedTokens",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+  ,
+  {
+    "inputs": [],
+    "name": "failedTransactionsCount",
+    "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maxFailedTransactions",
+    "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

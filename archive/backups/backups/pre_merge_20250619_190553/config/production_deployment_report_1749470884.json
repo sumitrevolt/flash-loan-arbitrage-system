@@ -1,0 +1,252 @@
+{
+  "timestamp": "2025-06-09T17:37:53.875811",
+  "steps": {
+    "mcp_fixes": {
+      "windows_aiodns_fix": {
+        "error": "'charmap' codec can't decode byte 0x9d in position 5068: character maps to <undefined>"
+      },
+      "environment_config_fix": {
+        "config_fixed": true,
+        "servers_updated": 5,
+        "fix_description": "Converted environment variable lists to string mappings"
+      },
+      "mcp_coordinator_fix": {
+        "coordinator_fixed": true,
+        "fix_description": "Updated configuration loading to handle environment variables correctly"
+      },
+      "server_startup_fix": {
+        "batch_files_updated": true,
+        "python_scripts_fixed": true,
+        "typescript_builds_verified": true
+      },
+      "success": true
+    },
+    "api_configuration": {
+      "web3_providers": {
+        "ethereum": {
+          "primary": "",
+          "backup": "",
+          "websocket": "",
+          "configured": false
+        },
+        "polygon": {
+          "primary": "https://polygon-rpc.com",
+          "backup": "https://polygon.gateway.tenderly.co",
+          "configured": true
+        },
+        "arbitrum": {
+          "primary": "",
+          "backup": "",
+          "configured": false
+        },
+        "optimism": {
+          "primary": "",
+          "backup": "",
+          "configured": false
+        }
+      },
+      "dex_apis": {
+        "oneinch": {
+          "api_key": false,
+          "endpoint": "https://api.1inch.io/v5.0/1"
+        },
+        "uniswap_v3": {
+          "subgraph": "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3",
+          "configured": true
+        },
+        "sushiswap": {
+          "subgraph": "https://api.thegraph.com/subgraphs/name/sushiswap/exchange",
+          "configured": true
+        },
+        "balancer": {
+          "subgraph": "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-v2",
+          "configured": true
+        },
+        "dextools": {
+          "api_key": false,
+          "endpoint": "https://www.dextools.io/shared/data/"
+        }
+      },
+      "monitoring_apis": {
+        "etherscan": {
+          "api_key": true,
+          "endpoint": "https://api.etherscan.io/api"
+        },
+        "polygonscan": {
+          "api_key": true,
+          "endpoint": "https://api.polygonscan.com/api"
+        },
+        "moralis": {
+          "api_key": false,
+          "endpoint": "https://deep-index.moralis.io/api/v2"
+        },
+        "coingecko": {
+          "api_key": false,
+          "endpoint": "https://api.coingecko.com/api/v3"
+        }
+      },
+      "validation": {
+        "web3_connection_test": {
+          "success": false,
+          "error": "No valid Web3 provider configured"
+        },
+        "dex_api_test": {
+          "success": true,
+          "subgraph_apis": "available"
+        },
+        "overall_status": "partial"
+      },
+      "success": true
+    },
+    "security_setup": {
+      "private_key_encryption": {
+        "encrypted": true,
+        "secure_storage_recommended": true
+      },
+      "api_key_encryption": {
+        "api_keys_secured": 1
+      },
+      "mev_protection": {
+        "flashbots_enabled": true,
+        "private_mempool": true,
+        "relay_url": "https://relay.flashbots.net"
+      },
+      "risk_management": {
+        "max_consecutive_failures": 5,
+        "max_daily_loss_usd": 1000.0,
+        "max_position_size_percent": 10.0,
+        "circuit_breaker_enabled": true,
+        "slippage_protection": true
+      },
+      "error_handling": {
+        "log_level": "DEBUG",
+        "log_rotation": true,
+        "error_alerts": true,
+        "performance_monitoring": true
+      },
+      "success": true
+    },
+    "server_startup": {
+      "servers_started": 0,
+      "total_servers": 5,
+      "startup_details": {
+        "taskmanager_mcp": {
+          "success": false,
+          "error": "TypeScript server not built"
+        },
+        "foundry_mcp": {
+          "success": false,
+          "error": "Python server file not found"
+        },
+        "copilot_mcp": {
+          "success": false,
+          "error": "Python server file not found"
+        },
+        "production_mcp": {
+          "success": false,
+          "error": "Python server file not found"
+        },
+        "flash_loan_mcp": {
+          "success": false,
+          "error": "TypeScript server not built"
+        }
+      },
+      "success": false
+    },
+    "health_validation": {
+      "mcp_servers": {
+        "healthy_servers": 0,
+        "total_servers": 5,
+        "server_details": {
+          "flash_loan_mcp": {
+            "status": "unreachable",
+            "error": "aiodns needs a SelectorEventLoop on Windows. See more: https://github.com/saghul/aiodns/issues/86"
+          },
+          "foundry_mcp": {
+            "status": "unreachable",
+            "error": "aiodns needs a SelectorEventLoop on Windows. See more: https://github.com/saghul/aiodns/issues/86"
+          },
+          "copilot_mcp": {
+            "status": "unreachable",
+            "error": "aiodns needs a SelectorEventLoop on Windows. See more: https://github.com/saghul/aiodns/issues/86"
+          },
+          "production_mcp": {
+            "status": "unreachable",
+            "error": "aiodns needs a SelectorEventLoop on Windows. See more: https://github.com/saghul/aiodns/issues/86"
+          },
+          "taskmanager_mcp": {
+            "status": "unreachable",
+            "error": "aiodns needs a SelectorEventLoop on Windows. See more: https://github.com/saghul/aiodns/issues/86"
+          }
+        },
+        "success": false
+      },
+      "api_connections": {
+        "web3_connection_test": {
+          "success": false,
+          "error": "No valid Web3 provider configured"
+        },
+        "dex_api_test": {
+          "success": true,
+          "subgraph_apis": "available"
+        },
+        "overall_status": "partial"
+      },
+      "security_status": {
+        "security_checks": {
+          "private_key_present": true,
+          "mev_protection_enabled": true,
+          "risk_limits_configured": false,
+          "secure_environment": false
+        },
+        "security_score": "2/4",
+        "secure": false
+      },
+      "configuration_status": {
+        "configuration_checks": {
+          "env_file_exists": true,
+          "mcp_config_exists": true,
+          "required_env_vars": false,
+          "log_directory_exists": true
+        },
+        "config_score": "3/4",
+        "valid": true
+      },
+      "overall_health": "poor"
+    },
+    "trading_enabled": {
+      "risk_management_enabled": {
+        "enabled": true,
+        "settings": {
+          "max_daily_loss": 1000.0,
+          "max_consecutive_failures": 5,
+          "max_position_size_percent": 10.0,
+          "min_profit_threshold": 25.0,
+          "max_slippage": 1.0
+        }
+      },
+      "circuit_breakers_active": {
+        "failure_threshold": 5,
+        "reset_timeout": 300,
+        "loss_threshold": 1000.0,
+        "active": true
+      },
+      "monitoring_enabled": {
+        "performance_monitoring": true,
+        "error_tracking": true,
+        "profit_loss_tracking": true,
+        "gas_optimization_tracking": true,
+        "mcp_server_monitoring": true
+      },
+      "trading_mode": {
+        "mode": "simulation",
+        "real_credentials": false,
+        "risk_management_active": true
+      },
+      "success": true
+    }
+  },
+  "overall_success": false,
+  "errors": [],
+  "warnings": []
+}

@@ -1,0 +1,12 @@
+{
+  "start_time": "2025-06-16T08:06:10.118830",
+  "backup_created": true,
+  "duplicates_found": 248,
+  "duplicates_merged": 250,
+  "files_organized": 187,
+  "directories_cleaned": 10,
+  "errors": [
+    "'status'"
+  ],
+  "status": "failed"
+}

@@ -1,0 +1,75 @@
+import asyncio\nimport discord
+import os
+import aiohttp
+import logging
+
+intents = discord.Intents.default()
+client = discord.Client(intents=intents)
+
+COMMANDING_URL = "http://commanding:8000"
+
+logging.basicConfig(level=logging.INFO)
+
+@client.event
+async def on_ready():
+    logging.info(f'Logged in as {client.user}')
+
+@client.event
+async def on_message(message):
+    if message.author == client.user:
+        return
+
+    if message.content.startswith('!status'):
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"{COMMANDING_URL}/status") as resp:
+                    data = await resp.text()
+            await message.channel.send(f"Status: {data}")
+        except Exception as e:
+            await message.channel.send(f"Error fetching status: {e}")
+            logging.error(f"Status error: {e}")
+
+    elif message.content.startswith('!command'):
+        parts = message.content.split()
+        if len(parts) < 3:
+            await message.channel.send("Usage: !command <target> <action>")
+            return
+        target, action = parts[1], parts[2]
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(f"{COMMANDING_URL}/command", json={"target": target, "action": action}) as resp:
+                    data = await resp.text()
+            await message.channel.send(f"Command result: {data}")
+        except Exception as e:
+            await message.channel.send(f"Error sending command: {e}")
+            logging.error(f"Command error: {e}")
+
+    elif message.content.startswith('!flashloan'):
+        # Usage: !flashloan <amount> <token_address>
+        parts = message.content.split()
+        if len(parts) < 3:
+            await message.channel.send("Usage: !flashloan <amount> <token_address>")
+            return
+        amount, token_address = parts[1], parts[2]
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(f"{COMMANDING_URL}/flashloan", json={"amount": amount, "token_address": token_address}) as resp:
+                    data = await resp.text()
+            await message.channel.send(f"Flashloan triggered: {data}")
+        except Exception as e:
+            await message.channel.send(f"Error triggering flashloan: {e}")
+            logging.error(f"Flashloan error: {e}")
+
+    elif message.content.startswith('!help'):
+        help_text = (
+            "**Available Commands:**\n"
+            "!status - Get system status\n"
+            "!command <target> <action> - Send command to agents/servers\n"
+            "!flashloan <amount> <token_address> - Trigger flashloan execution\n"
+            "!help - Show this help message"
+        )
+        await message.channel.send(help_text)
+
+if __name__ == '__main__':
+    TOKEN = os.getenv('DISCORD_TOKEN', 'YOUR_TOKEN_HERE')
+    client.run(TOKEN) 

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "flash-loan-simple": {
+      "command": "python",
+      "args": ["simple_mcp_server.py"]
+    },
+    "minimal-server": {
+      "command": "python", 
+      "args": ["minimal-mcp-server.py"]
+    }
+  }
+}

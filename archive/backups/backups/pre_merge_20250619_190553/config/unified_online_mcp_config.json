@@ -1,0 +1,90 @@
+{
+  "system_info": {
+    "name": "Flash Loan Arbitrage - Online MCP Integration",
+    "version": "2.0.0",
+    "description": "Streamlined configuration using working online MCP servers",
+    "created": "2025-01-11T21:35:00Z"
+  },
+  "online_mcp_servers": {
+    "github": {
+      "server_name": "github.com/modelcontextprotocol/servers/tree/main/src/github",
+      "description": "GitHub integration for code management and deployment",
+      "tools": [
+        "create_or_update_file",
+        "search_repositories",
+        "create_repository",
+        "get_file_contents",
+        "push_files",
+        "create_issue",
+        "create_pull_request",
+        "fork_repository",
+        "create_branch"
+      ],
+      "enabled": true,
+      "priority": "high"
+    },
+    "upstash_context7": {
+      "server_name": "@upstash/context7-mcp",
+      "description": "Context7 documentation and library information",
+      "tools": [
+        "resolve-library-id",
+        "get-library-docs"
+      ],
+      "enabled": true,
+      "priority": "medium"
+    },
+    "context7_clean": {
+      "server_name": "context7_clean",
+      "description": "Clean Context7 MCP server for documentation search",
+      "tools": [
+        "search_docs",
+        "get_library_info",
+        "health"
+      ],
+      "enabled": true,
+      "priority": "medium"
+    }
+  },
+  "flash_loan_integration": {
+    "supported_networks": [
+      "ethereum",
+      "polygon",
+      "arbitrum",
+      "optimism"
+    ],
+    "dex_integrations": [
+      "uniswap_v3",
+      "sushiswap",
+      "balancer",
+      "1inch"
+    ],
+    "risk_management": {
+      "min_profit_threshold_usd": 50,
+      "max_slippage_percent": 0.5,
+      "max_position_size_usd": 50000,
+      "liquidity_threshold_usd": 100000
+    }
+  },
+  "automation_config": {
+    "price_update_interval_seconds": 2,
+    "opportunity_scan_interval_seconds": 1,
+    "health_check_interval_seconds": 30,
+    "max_concurrent_opportunities": 5,
+    "enable_auto_execution": false,
+    "simulation_mode": true
+  },
+  "github_deployment_config": {
+    "repository_owner": "YOUR_GITHUB_USERNAME",
+    "repository_name": "flash-loan-arbitrage-bot",
+    "branch": "main",
+    "auto_commit": true,
+    "deployment_branch": "production"
+  },
+  "logging": {
+    "level": "INFO",
+    "file_path": "logs/online_mcp_system.log",
+    "enable_console": true,
+    "enable_file": true,
+    "max_file_size_mb": 100
+  }
+}

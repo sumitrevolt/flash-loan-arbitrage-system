@@ -1,0 +1,225 @@
+{
+  "started_at": "2025-06-17T11:25:07.608257",
+  "mcp_servers": {
+    "foundry": {
+      "pid": 416,
+      "running": true
+    },
+    "evm": {
+      "pid": 19604,
+      "running": true
+    },
+    "monitoring": {
+      "pid": 12732,
+      "running": true
+    },
+    "github": {
+      "pid": 25616,
+      "running": true
+    },
+    "context7": {
+      "pid": 26228,
+      "running": true
+    },
+    "aave": {
+      "pid": 9440,
+      "running": true
+    },
+    "dex": {
+      "pid": 15500,
+      "running": true
+    },
+    "risk": {
+      "pid": 17048,
+      "running": true
+    },
+    "profit": {
+      "pid": 6724,
+      "running": true
+    }
+  },
+  "langchain_agents": {
+    "verification_agent": {
+      "purpose": "Intelligent contract verification problem solving",
+      "capabilities": [
+        "bytecode_analysis",
+        "compiler_optimization",
+        "source_reconstruction"
+      ]
+    },
+    "blockchain_agent": {
+      "purpose": "Blockchain interaction and transaction management",
+      "capabilities": [
+        "transaction_building",
+        "gas_optimization",
+        "error_handling"
+      ]
+    },
+    "defi_agent": {
+      "purpose": "DeFi protocol integration and optimization",
+      "capabilities": [
+        "aave_integration",
+        "dex_routing",
+        "arbitrage_strategies"
+      ]
+    },
+    "monitoring_agent": {
+      "purpose": "System monitoring and performance tracking",
+      "capabilities": [
+        "real_time_monitoring",
+        "alert_management",
+        "performance_analysis"
+      ]
+    }
+  },
+  "verification": {
+    "success": false,
+    "error": "All intelligent verification attempts failed"
+  },
+  "aave_setup": {
+    "success": true,
+    "approvals": [
+      {
+        "token": "USDC",
+        "address": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+        "approved_for_aave": true,
+        "approved_for_flash_loan": true
+      },
+      {
+        "token": "USDT",
+        "address": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+        "approved_for_aave": true,
+        "approved_for_flash_loan": true
+      },
+      {
+        "token": "DAI",
+        "address": "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+        "approved_for_aave": true,
+        "approved_for_flash_loan": true
+      },
+      {
+        "token": "WETH",
+        "address": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
+        "approved_for_aave": true,
+        "approved_for_flash_loan": true
+      },
+      {
+        "token": "WMATIC",
+        "address": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+        "approved_for_aave": true,
+        "approved_for_flash_loan": true
+      }
+    ],
+    "aave_pool_connected": true
+  },
+  "token_whitelist": {
+    "success": true,
+    "whitelisted_tokens": [
+      {
+        "name": "USDC",
+        "address": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+        "decimals": 6,
+        "whitelisted": true,
+        "flash_loan_enabled": true,
+        "arbitrage_enabled": true,
+        "min_amount": 100,
+        "max_amount": 1000000
+      },
+      {
+        "name": "USDT",
+        "address": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+        "decimals": 6,
+        "whitelisted": true,
+        "flash_loan_enabled": true,
+        "arbitrage_enabled": true,
+        "min_amount": 100,
+        "max_amount": 1000000
+      },
+      {
+        "name": "DAI",
+        "address": "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+        "decimals": 18,
+        "whitelisted": true,
+        "flash_loan_enabled": true,
+        "arbitrage_enabled": true,
+        "min_amount": 1,
+        "max_amount": 1000000
+      },
+      {
+        "name": "WETH",
+        "address": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
+        "decimals": 18,
+        "whitelisted": true,
+        "flash_loan_enabled": true,
+        "arbitrage_enabled": true,
+        "min_amount": 1,
+        "max_amount": 1000000
+      },
+      {
+        "name": "WMATIC",
+        "address": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+        "decimals": 6,
+        "whitelisted": true,
+        "flash_loan_enabled": true,
+        "arbitrage_enabled": true,
+        "min_amount": 1,
+        "max_amount": 1000000
+      }
+    ],
+    "config_file": "token_whitelist_config.json"
+  },
+  "dex_integration": {
+    "success": true,
+    "dex_integrations": [
+      {
+        "name": "UNISWAP_V3",
+        "router_address": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+        "enabled": true,
+        "fee_tier": 0.3,
+        "supported_tokens": [
+          "USDC",
+          "USDT",
+          "DAI",
+          "WETH",
+          "WMATIC"
+        ],
+        "arbitrage_enabled": true,
+        "slippage_tolerance": 0.5
+      },
+      {
+        "name": "QUICKSWAP",
+        "router_address": "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff",
+        "enabled": true,
+        "fee_tier": 0.25,
+        "supported_tokens": [
+          "USDC",
+          "USDT",
+          "DAI",
+          "WETH",
+          "WMATIC"
+        ],
+        "arbitrage_enabled": true,
+        "slippage_tolerance": 0.5
+      },
+      {
+        "name": "SUSHISWAP",
+        "router_address": "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
+        "enabled": true,
+        "fee_tier": 0.25,
+        "supported_tokens": [
+          "USDC",
+          "USDT",
+          "DAI",
+          "WETH",
+          "WMATIC"
+        ],
+        "arbitrage_enabled": true,
+        "slippage_tolerance": 0.5
+      }
+    ],
+    "config_file": "dex_integration_config.json"
+  },
+  "arbitrage_script": "",
+  "final_status": "FAILED",
+  "error": "'charmap' codec can't encode character '\\U0001f680' in position 893: character maps to <undefined>"
+}

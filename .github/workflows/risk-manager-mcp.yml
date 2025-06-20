@@ -1,0 +1,52 @@
+
+
+# Risk Manager MCP Server CI/CD
+name: Risk Manager MCP Server CI/CD
+
+on:
+  push:
+    paths:
+      - 'mcp_servers/mcp_risk_manager_server.py'
+      - 'mcp_servers/risk_management/**'
+  pull_request:
+    paths:
+      - 'mcp_servers/mcp_risk_manager_server.py'
+
+jobs:
+  risk-manager-security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Python for Risk Analysis
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install Risk Management Dependencies
+      run: |
+        pip install numpy pandas scipy scikit-learn
+        pip install -r requirements-risk-management.txt
+    
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: python
+    
+    - name: Enhanced Security Scanning
+      uses: github/codeql-action/analyze@v3
+    
+    - name: Risk Model Validation
+      run: |
+        python tests/validate_risk_models.py
+        
+    - name: Stress Testing
+      run: |
+        python tests/stress_test_risk_manager.py
+    
+    - name: Deploy Risk Manager
+      if: github.ref == 'refs/heads/main'
+      run: |
+        docker build -t risk-manager-mcp:latest -f containers/mcp-risk-manager/Dockerfile .
+        docker-compose up risk-manager-mcp -d

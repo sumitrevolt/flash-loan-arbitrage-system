@@ -1,0 +1,307 @@
+services:
+  agent-agent:
+    build: .
+    command: python ai_agent\agent.py
+    environment:
+    - AGENT_ROLE=agent
+    - AGENT_ID=1
+    - AGENT_PORT=8032
+    ports:
+    - 8032:8032
+  agent-unified-agent:
+    build: .
+    command: python ai_agent\unified_agent.py
+    environment:
+    - AGENT_ROLE=unified-agent
+    - AGENT_ID=2
+    - AGENT_PORT=8033
+    ports:
+    - 8033:8033
+  mcp-aave-flash-loan-mcp-server:
+    build: .
+    command: python mcp_servers\aave\aave_flash_loan_mcp_server.py
+    environment:
+    - MCP_SERVER_TYPE=aave-flash-loan-mcp-server
+    - MCP_SERVER_NAME=aave-flash-loan-mcp-server
+    - MCP_PORT=8003
+    ports:
+    - 8003:8003
+  mcp-advanced-contract-analyzer:
+    build: .
+    command: python mcp_servers\foundry_integration\foundry-mcp-server\src\tools\advanced_contract_analyzer.py
+    environment:
+    - MCP_SERVER_TYPE=advanced-contract-analyzer
+    - MCP_SERVER_NAME=advanced-contract-analyzer
+    - MCP_PORT=8018
+    ports:
+    - 8018:8018
+  mcp-advanced-multichain-deployer:
+    build: .
+    command: python mcp_servers\foundry_integration\foundry-mcp-server\src\tools\advanced_multichain_deployer.py
+    environment:
+    - MCP_SERVER_TYPE=advanced-multichain-deployer
+    - MCP_SERVER_NAME=advanced-multichain-deployer
+    - MCP_PORT=8016
+    ports:
+    - 8016:8016
+  mcp-advanced-risk-manager:
+    build: .
+    command: python mcp_servers\foundry_integration\foundry-mcp-server\src\tools\advanced_risk_manager.py
+    environment:
+    - MCP_SERVER_TYPE=advanced-risk-manager
+    - MCP_SERVER_NAME=advanced-risk-manager
+    - MCP_PORT=8017
+    ports:
+    - 8017:8017
+  mcp-async-utils:
+    build: .
+    command: python mcp_servers\foundry_integration\foundry-mcp-server\src\utils\async_utils.py
+    environment:
+    - MCP_SERVER_TYPE=async-utils
+    - MCP_SERVER_NAME=async-utils
+    - MCP_PORT=8020
+    ports:
+    - 8020:8020
+  mcp-clean-context7-mcp-server:
+    build: .
+    command: python mcp_servers\ai_integration\clean_context7_mcp_server.py
+    environment:
+    - MCP_SERVER_TYPE=clean-context7-mcp-server
+    - MCP_SERVER_NAME=clean-context7-mcp-server
+    - MCP_PORT=8004
+    ports:
+    - 8004:8004
+  mcp-clean-matic-mcp-server:
+    build: .
+    command: python mcp_servers\blockchain_integration\clean_matic_mcp_server.py
+    environment:
+    - MCP_SERVER_TYPE=clean-matic-mcp-server
+    - MCP_SERVER_NAME=clean-matic-mcp-server
+    - MCP_PORT=8007
+    ports:
+    - 8007:8007
+  mcp-code-quality-checker-agent:
+    build: .
+    command: python mcp_servers\quality\code_quality_checker_agent.py
+    environment:
+    - MCP_SERVER_TYPE=code-quality-checker-agent
+    - MCP_SERVER_NAME=code-quality-checker-agent
+    - MCP_PORT=8028
+    ports:
+    - 8028:8028
+  mcp-compile-tool:
+    build: .
+    command: python mcp_servers\foundry_integration\foundry-mcp-server\src\tools\forge\compile_tool.py
+    environment:
+    - MCP_SERVER_TYPE=compile-tool
+    - MCP_SERVER_NAME=compile-tool
+    - MCP_PORT=8019
+    ports:
+    - 8019:8019
+  mcp-connection-manager:
+    build: .
+    command: python mcp_servers\foundry_integration\foundry-mcp-server\src\server\connection_manager.py
+    environment:
+    - MCP_SERVER_TYPE=connection-manager
+    - MCP_SERVER_NAME=connection-manager
+    - MCP_PORT=8012
+    ports:
+    - 8012:8012
+  mcp-create-final-unified-mcp-manager:
+    build: .
+    command: python mcp_servers\orchestration\create_final_unified_mcp_manager.py
+    environment:
+    - MCP_SERVER_TYPE=create-final-unified-mcp-manager
+    - MCP_SERVER_NAME=create-final-unified-mcp-manager
+    - MCP_PORT=8025
+    ports:
+    - 8025:8025
+  mcp-error-handler:
+    build: .
+    command: python mcp_servers\foundry_integration\foundry-mcp-server\src\server\error_handler.py
+    environment:
+    - MCP_SERVER_TYPE=error-handler
+    - MCP_SERVER_NAME=error-handler
+    - MCP_PORT=8013
+    ports:
+    - 8013:8013
+  mcp-event-system:
+    build: .
+    command: python mcp_servers\foundry_integration\foundry-mcp-server\src\bridge\event_system.py
+    environment:
+    - MCP_SERVER_TYPE=event-system
+    - MCP_SERVER_NAME=event-system
+    - MCP_PORT=8011
+    ports:
+    - 8011:8011
+  mcp-evm-mcp-server:
+    build: .
+    command: python mcp_servers\blockchain_integration\evm-mcp-server\evm_mcp_server.py
+    environment:
+    - MCP_SERVER_TYPE=evm-mcp-server
+    - MCP_SERVER_NAME=evm-mcp-server
+    - MCP_PORT=8008
+    ports:
+    - 8008:8008
+  mcp-logger:
+    build: .
+    command: python mcp_servers\foundry_integration\foundry-mcp-server\src\utils\logger.py
+    environment:
+    - MCP_SERVER_TYPE=logger
+    - MCP_SERVER_NAME=logger
+    - MCP_PORT=8021
+    ports:
+    - 8021:8021
+  mcp-mcp-connection-test:
+    build: .
+    command: python mcp_servers\mcp_connection_test.py
+    environment:
+    - MCP_SERVER_TYPE=mcp-connection-test
+    - MCP_SERVER_NAME=mcp-connection-test
+    - MCP_PORT=8000
+    ports:
+    - 8000:8000
+  mcp-mcp-dependency-test:
+    build: .
+    command: python mcp_servers\mcp_dependency_test.py
+    environment:
+    - MCP_SERVER_TYPE=mcp-dependency-test
+    - MCP_SERVER_NAME=mcp-dependency-test
+    - MCP_PORT=8001
+    ports:
+    - 8001:8001
+  mcp-mcp-enhanced-coordinator:
+    build: .
+    command: python mcp_servers\coordination\mcp_enhanced_coordinator.py
+    environment:
+    - MCP_SERVER_TYPE=mcp-enhanced-coordinator
+    - MCP_SERVER_NAME=mcp-enhanced-coordinator
+    - MCP_PORT=8009
+    ports:
+    - 8009:8009
+  mcp-mcp-integration-bridge:
+    build: .
+    command: python mcp_servers\coordination\mcp_integration_bridge.py
+    environment:
+    - MCP_SERVER_TYPE=mcp-integration-bridge
+    - MCP_SERVER_NAME=mcp-integration-bridge
+    - MCP_PORT=8010
+    ports:
+    - 8010:8010
+  mcp-mcp-server-template:
+    build: .
+    command: python mcp_servers\mcp_server_template.py
+    environment:
+    - MCP_SERVER_TYPE=mcp-server-template
+    - MCP_SERVER_NAME=mcp-server-template
+    - MCP_PORT=8002
+    ports:
+    - 8002:8002
+  mcp-mcp-shared-utilities:
+    build: .
+    command: python mcp_servers\utils\mcp_shared_utilities.py
+    environment:
+    - MCP_SERVER_TYPE=mcp-shared-utilities
+    - MCP_SERVER_NAME=mcp-shared-utilities
+    - MCP_PORT=8031
+    ports:
+    - 8031:8031
+  mcp-mcp-simple-startup:
+    build: .
+    command: python mcp_servers\scripts\mcp_simple_startup.py
+    environment:
+    - MCP_SERVER_TYPE=mcp-simple-startup
+    - MCP_SERVER_NAME=mcp-simple-startup
+    - MCP_PORT=8030
+    ports:
+    - 8030:8030
+  mcp-mcp-stability-report:
+    build: .
+    command: python mcp_servers\monitoring\mcp-stability-report.py
+    environment:
+    - MCP_SERVER_TYPE=mcp-stability-report
+    - MCP_SERVER_NAME=mcp-stability-report
+    - MCP_PORT=8022
+    ports:
+    - 8022:8022
+  mcp-quick-mcp-check:
+    build: .
+    command: python mcp_servers\monitoring\quick_mcp_check.py
+    environment:
+    - MCP_SERVER_TYPE=quick-mcp-check
+    - MCP_SERVER_NAME=quick-mcp-check
+    - MCP_PORT=8023
+    ports:
+    - 8023:8023
+  mcp-real-time-price-mcp-server:
+    build: .
+    command: python mcp_servers\pricing\real_time_price_mcp_server.py
+    environment:
+    - MCP_SERVER_TYPE=real-time-price-mcp-server
+    - MCP_SERVER_NAME=real-time-price-mcp-server
+    - MCP_PORT=8027
+    ports:
+    - 8027:8027
+  mcp-realtime-mev-protector:
+    build: .
+    command: python mcp_servers\foundry_integration\foundry-mcp-server\src\tools\realtime_mev_protector.py
+    environment:
+    - MCP_SERVER_TYPE=realtime-mev-protector
+    - MCP_SERVER_NAME=realtime-mev-protector
+    - MCP_PORT=8018
+    ports:
+    - 8018:8018
+  mcp-recovery-agent:
+    build: .
+    command: python mcp_servers\recovery\recovery_agent.py
+    environment:
+    - MCP_SERVER_TYPE=recovery-agent
+    - MCP_SERVER_NAME=recovery-agent
+    - MCP_PORT=8029
+    ports:
+    - 8029:8029
+  mcp-start-grok3:
+    build: .
+    command: python mcp_servers\ai_integration\start_grok3.py
+    environment:
+    - MCP_SERVER_TYPE=start-grok3
+    - MCP_SERVER_NAME=start-grok3
+    - MCP_PORT=8005
+    ports:
+    - 8005:8005
+  mcp-tool-registry:
+    build: .
+    command: python mcp_servers\foundry_integration\foundry-mcp-server\src\server\tool_registry.py
+    environment:
+    - MCP_SERVER_TYPE=tool-registry
+    - MCP_SERVER_NAME=tool-registry
+    - MCP_PORT=8014
+    ports:
+    - 8014:8014
+  mcp-unified-mcp-integration-manager:
+    build: .
+    command: python mcp_servers\orchestration\unified_mcp_integration_manager.py
+    environment:
+    - MCP_SERVER_TYPE=unified-mcp-integration-manager
+    - MCP_SERVER_NAME=unified-mcp-integration-manager
+    - MCP_PORT=8026
+    ports:
+    - 8026:8026
+  mcp-verify-mcp-organization:
+    build: .
+    command: python mcp_servers\monitoring\verify_mcp_organization.py
+    environment:
+    - MCP_SERVER_TYPE=verify-mcp-organization
+    - MCP_SERVER_NAME=verify-mcp-organization
+    - MCP_PORT=8024
+    ports:
+    - 8024:8024
+  mcp-working-enhanced-copilot-mcp-server:
+    build: .
+    command: python mcp_servers\ai_integration\working_enhanced_copilot_mcp_server.py
+    environment:
+    - MCP_SERVER_TYPE=working-enhanced-copilot-mcp-server
+    - MCP_SERVER_NAME=working-enhanced-copilot-mcp-server
+    - MCP_PORT=8006
+    ports:
+    - 8006:8006

@@ -1,0 +1,253 @@
+import asyncio\n"""
+Risk manager for the Flash Loan Arbitrage System.
+Assesses and manages risk for arbitrage opportunities.
+"""
+
+import os
+import json
+import logging
+import time
+from datetime import datetime, timedelta
+from decimal import Decimal
+from typing import Optional
+
+logger = logging.getLogger("RiskManager")
+
+class RiskManager:
+    """
+    Manages risk assessment for arbitrage opportunities.
+    """
+
+    def __init__(self):
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.config = {}
+        self.risk_threshold = 70
+        self.max_risk_score = 100
+        self.max_exposure = {}
+        self.current_exposure = {}
+        self.last_assessment_time = {}
+        self.trade_history = []  # Added trade history
+        self.risk_limits = {}  # Added risk limits
+
+    def initialize(self):
+        """Initialize the risk manager."""
+        self.logger.info("Initializing risk manager")
+        try:
+            config_path = os.path.join("config", "risk_manager_config.json")  # Use dedicated config
+            if not os.path.exists(config_path):
+                # Fallback to auto_executor_config if specific one doesn't exist
+                self.logger.warning(f"{config_path} not found, falling back to auto_executor_config.json")
+                config_path = os.path.join("config", "auto_executor_config.json")
+
+            with open(config_path, "r") as f:
+                self.config = json.load(f)
+
+            # Get risk parameters from the loaded config
+            self.risk_threshold = self.config.get("risk_threshold", 70)
+            self.max_risk_score = self.config.get("max_risk_score", 100)
+            self.max_exposure = self.config.get("max_exposure_usd", {})  # Expecting USD exposure limits
+            self.risk_limits = self.config.get("risk_limits", {  # Load general risk limits
+                "max_daily_volume_usd": 100000,
+                "max_daily_trades": 50,
+                "max_concurrent_trades": 5
+            })
+
+            # Initialize current exposure (can load from state if needed)
+            self.current_exposure = {}
+
+            # Load trade history (optional, depends on persistence needs)
+            self._load_trade_history()
+
+            # Create risk data directory if it doesn't exist
+            os.makedirs(os.path.join("data", "risk"), exist_ok=True)
+
+            self.logger.info("Risk manager initialized")
+            return True
+        except Exception as e:
+            self.logger.error(f"Failed to initialize risk manager: {e}", exc_info=True)
+            return False
+
+    async def check_opportunity(self, opportunity):
+        """
+        Assess the risk of executing a given arbitrage opportunity.
+        Handles opportunity as a dictionary.
+
+        Args:
+            opportunity (dict): Dictionary containing opportunity details.
+
+        Returns:
+            dict: Assessment result (e.g., {'approved': bool, 'reason': str})
+        """
+        try:
+            # Use .get() for safer dictionary access
+            token = opportunity.get('token')
+            buy_dex = opportunity.get('buy_dex')
+            sell_dex = opportunity.get('sell_dex')
+            profit_usd = opportunity.get('profit_usd', 0)
+            trade_size_usd = opportunity.get('trade_size_usd', self.config.get('default_trade_size_usd', 1000))  # Changed from 500
+
+            if not token:
+                self.logger.error("Opportunity missing 'token' key.")
+                return {'approved': False, 'reason': "Missing token information"}
+
+            # Basic Sanity Checks
+            if profit_usd <= 0:
+                return {'approved': False, 'reason': f"Non-positive profit: ${profit_usd:.2f}"}
+
+            # Risk Score Calculation
+            risk_score = 50  # Base score
+
+            if risk_score < self.risk_threshold:
+                reason = f"Risk score {risk_score} below threshold {self.risk_threshold}"
+                self.logger.warning(reason)
+                self._save_risk_assessment(opportunity, risk_score, approved=False, reason=reason)
+                return {'approved': False, 'reason': reason}
+
+            # Exposure Check (Using USD)
+            max_token_exposure = self.max_exposure.get(token, self.config.get('default_max_exposure_usd', 10000))
+            current_token_exposure = self.current_exposure.get(token, 0)
+
+            if current_token_exposure + trade_size_usd > max_token_exposure:
+                reason = f"Exposure for {token} (${current_token_exposure + trade_size_usd:.2f}) would exceed limit (${max_token_exposure:.2f})"
+                self.logger.warning(reason)
+                self._save_risk_assessment(opportunity, risk_score, approved=False, reason=reason)
+                return {'approved': False, 'reason': reason}
+
+            # General Limit Checks (Daily Volume, Trades)
+            if not await self._check_general_limits_async(trade_size_usd):
+                return {'approved': False, 'reason': "Exceeds general risk limits (volume/trades)"}
+
+            # If all checks pass
+            reason = f"Passed all checks (Score: {risk_score}, Exposure OK, Limits OK)"
+            self.logger.info(f"Risk assessment for {token} from {buy_dex} to {sell_dex}: Approved. {reason}")
+            self._save_risk_assessment(opportunity, risk_score, approved=True, reason=reason)
+            return {'approved': True, 'reason': reason}
+
+        except KeyError as e:
+            self.logger.error(f"KeyError assessing risk: Missing key '{e}'. Opportunity data: {opportunity}")
+            return {'approved': False, 'reason': f"Missing key in opportunity data: {e}"}
+        except Exception as e:
+            self.logger.error(f"Error assessing risk: {e}", exc_info=True)
+            return {'approved': False, 'reason': f"Internal error during risk assessment: {e}"}
+
+    async def _check_general_limits_async(self, trade_size_usd):
+        """Check against daily volume, trade count, etc. asynchronously."""
+        # This method is now async, ensure any I/O bound operations are awaited if necessary
+        # For now, assuming _check_general_limits logic is CPU-bound or already handles async I/O
+        return self._check_general_limits(trade_size_usd)
+
+    def _check_general_limits(self, trade_size_usd):
+        """Check against daily volume, trade count, etc."""
+        now = datetime.now()
+        one_day_ago = now - timedelta(days=1)
+
+        # Calculate daily volume
+        daily_volume = sum(Decimal(trade.get('trade_size_usd', 0)) for trade in self.trade_history
+                           if datetime.fromisoformat(trade["timestamp"]) > one_day_ago)
+
+        max_daily_volume = Decimal(self.risk_limits.get('max_daily_volume_usd', 100000))
+        if daily_volume + Decimal(trade_size_usd) > max_daily_volume:
+            self.logger.warning(f"Daily volume ${daily_volume + Decimal(trade_size_usd):.2f} would exceed maximum ${max_daily_volume:.2f}")
+            return False
+
+        # Check daily trades
+        daily_trades = sum(1 for trade in self.trade_history
+                           if datetime.fromisoformat(trade["timestamp"]) > one_day_ago)
+        max_daily_trades = self.risk_limits.get("max_daily_trades", 50)
+        if daily_trades >= max_daily_trades:
+            self.logger.warning(f"Daily trades {daily_trades} would exceed maximum {max_daily_trades}")
+            return False
+
+        return True
+
+    def record_trade(self, opportunity, success: bool, tx_hash: Optional[str] = None):
+        """Record a trade attempt and update exposure."""
+        try:
+            token = opportunity.get('token')
+            trade_size_usd = opportunity.get('trade_size_usd', self.config.get('default_trade_size_usd', 500))
+            timestamp = datetime.now().isoformat()
+
+            trade_record = {
+                "timestamp": timestamp,
+                "token": token,
+                "buy_dex": opportunity.get('buy_dex'),
+                "sell_dex": opportunity.get('sell_dex'),
+                "profit_usd_expected": opportunity.get('profit_usd'),
+                "trade_size_usd": trade_size_usd,
+                "success": success,
+                "tx_hash": tx_hash
+            }
+
+            self.trade_history.append(trade_record)
+
+            if success and token:
+                self.current_exposure[token] = self.current_exposure.get(token, 0) + trade_size_usd
+                self.logger.info(f"Recorded successful trade for {token}. New exposure: ${self.current_exposure[token]:.2f}")
+            elif not success:
+                self.logger.info(f"Recorded failed trade attempt for {token}.")
+            else:
+                self.logger.warning("Attempted to record trade without token information.")
+
+            self._save_trade_history()
+
+        except Exception as e:
+            self.logger.error(f"Error recording trade: {e}", exc_info=True)
+
+    def update_exposure_on_completion(self, token: str, trade_size_usd: Decimal):
+        """Reduce exposure when a trade completes (e.g., funds returned)."""
+        if token in self.current_exposure:
+            self.current_exposure[token] = max(0, self.current_exposure[token] - trade_size_usd)
+            self.logger.info(f"Reduced exposure for {token} by ${trade_size_usd:.2f}. New exposure: ${self.current_exposure[token]:.2f}")
+        else:
+            self.logger.warning(f"Attempted to reduce exposure for untracked token: {token}")
+
+    def _save_risk_assessment(self, opportunity, risk_score, approved: bool, reason: str):
+        """Save the details of a risk assessment decision."""
+        try:
+            token = opportunity.get('token', 'UNKNOWN')
+            assessment = {
+                "timestamp": datetime.now().isoformat(),
+                "opportunity_details": opportunity,
+                "risk_score": risk_score,
+                "risk_threshold": self.risk_threshold,
+                "approved": approved,
+                "reason": reason,
+                "current_exposure_usd": self.current_exposure.get(token, 0),
+                "max_exposure_usd": self.max_exposure.get(token, self.config.get('default_max_exposure_usd', 10000))
+            }
+
+            file_path = os.path.join("data", "risk", f"risk_assessment_{datetime.now().strftime('%Y%m%d_%H%M%S%f')}.json")
+            with open(file_path, "w") as f:
+                json.dump(assessment, f, indent=2, default=str)
+
+            self.last_assessment_time[token] = time.time()
+
+            self.logger.debug(f"Risk assessment saved to {file_path}")
+        except Exception as e:
+            self.logger.error(f"Error saving risk assessment: {e}", exc_info=True)
+
+    def _load_trade_history(self, file_path=os.path.join("data", "risk", "trade_history.json")):
+        """Load trade history from a file."""
+        try:
+            if os.path.exists(file_path):
+                with open(file_path, "r") as f:
+                    self.trade_history = json.load(f)
+                self.logger.info(f"Loaded {len(self.trade_history)} trades from {file_path}")
+            else:
+                self.logger.info("No trade history file found. Starting fresh.")
+                self.trade_history = []
+        except Exception as e:
+            self.logger.error(f"Error loading trade history: {e}", exc_info=True)
+            self.trade_history = []
+
+    def _save_trade_history(self, file_path=os.path.join("data", "risk", "trade_history.json")):
+        """Save trade history to a file."""
+        try:
+            with open(file_path, "w") as f:
+                json.dump(self.trade_history, f, indent=2, default=str)
+            self.logger.debug(f"Saved {len(self.trade_history)} trades to {file_path}")
+        except Exception as e:
+            self.logger.error(f"Error saving trade history: {e}", exc_info=True)
+
+# Create a singleton instance
+risk_manager = RiskManager()

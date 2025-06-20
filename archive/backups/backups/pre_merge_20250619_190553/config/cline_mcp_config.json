@@ -1,0 +1,60 @@
+{
+  "mcpServers": {
+    "flash-loan-arbitrage": {
+      "command": "python",
+      "args": ["simple_mcp_server.py"],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "."
+      }
+    },
+    "flash-loan-system": {
+      "command": "python",
+      "args": ["working_flash_loan_mcp.py"],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "."
+      }
+    },
+    "minimal-flash-loan": {
+      "command": "python",
+      "args": ["minimal-mcp-server.py"],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "."
+      }
+    },
+    "context7-integration": {
+      "command": "python",
+      "args": ["mcp_servers/ai_integration/clean_context7_mcp_server.py"],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "."
+      }
+    },
+    "matic-blockchain": {
+      "command": "python",
+      "args": ["mcp_servers/blockchain_integration/clean_matic_mcp_server.py"],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "."
+      }
+    },
+    "aave-flash-loan": {
+      "command": "python",
+      "args": ["mcp_servers/aave/aave_flash_loan_mcp_server.py"],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "."
+      }
+    },
+    "real-time-price": {
+      "command": "python",
+      "args": ["mcp_servers/pricing/real_time_price_mcp_server.py"],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "."
+      }
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "networks": {
+    "polygon": {
+      "rpc_url": "https://polygon-rpc.com",
+      "chain_id": 137,
+      "explorer_url": "https://polygonscan.com"
+    }
+  },
+  "contracts": {
+    "flash_loan_arbitrage": "0x153dDf13D58397740c40E9D1a6e183A8c0F36c32",
+    "aave_lending_pool": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+    "quickswap_router": "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff",
+    "sushiswap_router": "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506"
+  },
+  "tokens": {
+    "USDC": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+    "USDT": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+    "DAI": "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+    "WETH": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
+    "WMATIC": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270"
+  },
+  "trading": {
+    "monitoring_interval": 2.0,
+    "display_calculations": true,
+    "min_profit_threshold": 0.005,
+    "max_slippage": 0.02,
+    "max_gas_price_gwei": 150
+  },
+  "mcp_servers": {
+    "foundry": {
+      "port": 8001,
+      "enabled": true
+    },
+    "copilot": {
+      "port": 8002,
+      "enabled": true
+    },
+    "arbitrage": {
+      "port": 8003,
+      "enabled": true
+    },
+    "flash_loan": {
+      "port": 8004,
+      "enabled": true
+    }
+  }
+}

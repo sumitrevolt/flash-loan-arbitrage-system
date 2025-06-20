@@ -1,0 +1,68 @@
+# Flash Loan MCP Server CI/CD
+name: Flash Loan MCP Server CI/CD
+
+on:
+  push:
+    paths:
+      - 'mcp_servers/mcp_flash_loan_server.py'
+      - 'mcp_servers/flash_loan/**'
+  pull_request:
+    paths:
+      - 'mcp_servers/mcp_flash_loan_server.py'
+
+jobs:
+  flash-loan-ci:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+        
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install Flash Loan Dependencies
+      run: |
+        pip install web3 eth-brownie pytest pytest-asyncio
+        pip install -r requirements-flash-loan.txt
+    
+    - name: Code Quality Check with Ruff
+      run: |
+        pip install ruff
+        ruff check mcp_servers/mcp_flash_loan_server.py
+    
+    - name: Auto-Fix Syntax Errors
+      run: |
+        pip install autopep8 black
+        autopep8 --in-place --aggressive --aggressive mcp_servers/mcp_flash_loan_server.py
+        black mcp_servers/mcp_flash_loan_server.py
+        
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: python
+        
+    - name: Security Scan for Flash Loan Logic
+      uses: github/codeql-action/analyze@v3
+        
+    - name: Flash Loan Unit Tests
+      run: |
+        pytest tests/test_flash_loan_mcp.py -v --cov=mcp_servers
+        
+    - name: Flash Loan Integration Tests
+      run: |
+        pytest tests/integration/test_flash_loan_integration.py -v
+        
+    - name: Performance Benchmarks
+      run: |
+        python benchmarks/flash_loan_performance.py
+        
+    - name: Deploy Flash Loan MCP
+      if: github.ref == 'refs/heads/main'
+      run: |
+        docker build -t flash-loan-mcp:latest -f containers/mcp-flash-loan/Dockerfile .
+        docker-compose up flash-loan-mcp -d

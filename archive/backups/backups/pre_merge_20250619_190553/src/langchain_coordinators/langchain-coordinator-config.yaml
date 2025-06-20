@@ -1,0 +1,236 @@
+# LangChain MCP Coordinator Configuration
+# ======================================
+
+# LangChain Settings
+langchain:
+  model: "gpt-4"
+  temperature: 0.1
+  max_tokens: 2000
+  verbose: true
+  
+# System Configuration
+system:
+  project_root: "."
+  logs_directory: "logs"
+  config_directory: "config"
+  max_concurrent_fixes: 5
+  health_check_timeout: 30
+  retry_attempts: 3
+  
+# Docker Configuration
+docker:
+  compose_file: "docker-compose.yml"
+  network_name: "flash-loan-network"
+  build_timeout: 600
+  start_timeout: 120
+  
+# MCP Servers Configuration
+mcp_servers:
+  # AI Integration Servers
+  ai_integration:
+    - name: "context7-mcp"
+      port: 8004
+      critical: true
+    - name: "grok3-mcp" 
+      port: 3003
+      critical: false
+    - name: "enhanced-copilot-mcp"
+      port: 8006
+      critical: true
+      
+  # Blockchain Integration Servers  
+  blockchain:
+    - name: "matic-mcp"
+      port: 8002
+      critical: true
+    - name: "evm-mcp"
+      port: 8003
+      critical: true
+    - name: "foundry-mcp"
+      port: 8001
+      critical: true
+      
+  # Data Provider Servers
+  data_providers:
+    - name: "price-feed-mcp"
+      port: 8010
+      critical: true
+    - name: "dex-data-mcp"
+      port: 8011
+      critical: true
+    - name: "market-data-mcp"
+      port: 8012
+      critical: true
+      
+  # Execution Servers
+  execution:
+    - name: "trade-execution-mcp"
+      port: 8020
+      critical: true
+    - name: "flash-loan-mcp"
+      port: 8021
+      critical: true
+    - name: "arbitrage-mcp"
+      port: 8022
+      critical: true
+      
+  # Risk Management Servers
+  risk_management:
+    - name: "risk-analysis-mcp"
+      port: 8030
+      critical: true
+    - name: "portfolio-mcp"
+      port: 8031
+      critical: true
+      
+  # Analytics Servers
+  analytics:
+    - name: "analytics-mcp"
+      port: 8040
+      critical: false
+    - name: "performance-mcp"
+      port: 8041
+      critical: false
+      
+  # Monitoring Servers
+  monitoring:
+    - name: "health-monitor-mcp"
+      port: 8050
+      critical: true
+    - name: "log-aggregator-mcp"
+      port: 8051
+      critical: false
+      
+  # Coordination Servers
+  coordination:
+    - name: "orchestration-mcp"
+      port: 8060
+      critical: true
+    - name: "task-management-mcp"
+      port: 8061
+      critical: true
+    - name: "coordination-mcp"
+      port: 8062
+      critical: true
+
+# AI Agents Configuration
+ai_agents:
+  trading:
+    - name: "arbitrage-agent"
+      port: 9001
+      critical: true
+      memory_limit: "2GB"
+      
+  risk:
+    - name: "risk-management-agent"
+      port: 9002
+      critical: true
+      memory_limit: "1GB"
+      
+  analytics:
+    - name: "market-analysis-agent"
+      port: 9003
+      critical: false
+      memory_limit: "1.5GB"
+      
+  execution:
+    - name: "execution-agent"
+      port: 9004
+      critical: true
+      memory_limit: "1GB"
+      
+  monitoring:
+    - name: "monitoring-agent"
+      port: 9005
+      critical: true
+      memory_limit: "512MB"
+      
+  data:
+    - name: "data-collection-agent"
+      port: 9006
+      critical: true
+      memory_limit: "1GB"
+      
+  strategy:
+    - name: "strategy-agent"
+      port: 9007
+      critical: false
+      memory_limit: "2GB"
+      
+  coordination:
+    - name: "coordination-agent"
+      port: 9008
+      critical: true
+      memory_limit: "1GB"
+      
+  ml:
+    - name: "learning-agent"
+      port: 9009
+      critical: false
+      memory_limit: "3GB"
+      
+  reporting:
+    - name: "reporting-agent"
+      port: 9010
+      critical: false
+      memory_limit: "512MB"
+
+# Health Check Configuration
+health_checks:
+  endpoints:
+    - path: "/health"
+    - path: "/status"
+    - path: "/ping"
+  expected_codes: [200, 201]
+  timeout: 10
+  retries: 3
+  
+# Fix Strategies
+fix_strategies:
+  restart:
+    max_attempts: 3
+    delay_between_attempts: 10
+    
+  rebuild:
+    backup_before: true
+    force_pull: true
+    no_cache: true
+    
+  configuration:
+    backup_configs: true
+    validate_after_fix: true
+    
+  port_conflicts:
+    auto_reassign: true
+    port_range_start: 10000
+    port_range_end: 20000
+    
+# Notification Settings
+notifications:
+  email:
+    enabled: false
+    smtp_server: ""
+    smtp_port: 587
+    
+  discord:
+    enabled: false
+    webhook_url: ""
+    
+  slack:
+    enabled: false
+    webhook_url: ""
+    
+# Monitoring Thresholds
+thresholds:
+  cpu_usage: 80
+  memory_usage: 85
+  disk_usage: 90
+  response_time: 5000  # milliseconds
+  error_rate: 0.05     # 5%
+  
+# Backup Settings
+backup:
+  enabled: true
+  location: "backups/"
+  retention_days: 30
+  compress: true

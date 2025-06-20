@@ -1,0 +1,45 @@
+# Price Feed MCP Server CI/CD
+name: Price Feed MCP Server CI/CD
+
+on:
+  push:
+    paths:
+      - 'mcp_servers/mcp_price_feed_server.py'
+      - 'mcp_servers/price_feed/**'
+  schedule:
+    - cron: '0 */4 * * *'  # Run every 4 hours for price data updates
+
+jobs:
+  price-feed-ci:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Python with Price Feed Libraries
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install Price Feed Dependencies
+      run: |
+        pip install ccxt requests aiohttp redis
+        pip install -r requirements-price-feed.txt
+    
+    - name: Price Feed Data Validation
+      run: |
+        python tests/validate_price_feeds.py
+        
+    - name: Latency Performance Tests
+      run: |
+        python benchmarks/price_feed_latency.py
+        
+    - name: Price Feed Accuracy Tests
+      run: |
+        pytest tests/test_price_accuracy.py -v
+        
+    - name: Deploy Price Feed Updates
+      if: github.ref == 'refs/heads/main'
+      run: |
+        docker-compose restart price-feed-mcp
+        curl -X POST http://localhost:8000/price-feed/reload

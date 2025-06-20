@@ -1,0 +1,42 @@
+{
+  "mcpServers": {
+    "flash-loan-server": {
+      "command": "python",
+      "args": ["-m", "mcp_servers.execution.working_unified_flash_loan_mcp_server"],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "."
+      }
+    },
+    "foundry-server": {
+      "command": "python", 
+      "args": ["-m", "mcp_servers.foundry_integration.foundry-mcp-server.working_enhanced_foundry_mcp_server"],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "."
+      }
+    },
+    "copilot-server": {
+      "command": "python",
+      "args": ["-m", "mcp_servers.ai_integration.working_enhanced_copilot_mcp_server"],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "."
+      }
+    },
+    "price-oracle-server": {
+      "command": "python",
+      "args": ["-m", "mcp_servers.data_providers.price-oracle-mcp-server.price_oracle_mcp_server"],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "."
+      }
+    },
+    "minimal-server": {
+      "command": "python",
+      "args": ["minimal-mcp-server.py"],
+      "cwd": ".",
+      "env": {}
+    }
+  }
+}

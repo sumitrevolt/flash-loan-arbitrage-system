@@ -1,0 +1,131 @@
+{
+  "servers": [
+    {
+      "name": "arbitrage_trading",
+      "category": "trading",
+      "path": "mcp_servers/trading/arbitrage_trading_mcp_server.py",
+      "port": 8001,
+      "command": ["python", "mcp_servers/trading/arbitrage_trading_mcp_server.py"],
+      "health_endpoint": "/health",
+      "required": true,
+      "startup_delay": 0,
+      "max_restarts": 3,
+      "dependencies": [],
+      "agent_role": "EXECUTION",
+      "environment": {
+        "LOG_LEVEL": "INFO",
+        "TRADING_MODE": "live"
+      }
+    },
+    {
+      "name": "risk_manager",
+      "category": "risk",
+      "path": "mcp_servers/risk_management/mcp_risk_manager_server.py",
+      "port": 8002,
+      "command": ["python", "mcp_servers/risk_management/mcp_risk_manager_server.py"],
+      "health_endpoint": "/health",
+      "required": true,
+      "startup_delay": 0,
+      "max_restarts": 3,
+      "dependencies": [],
+      "agent_role": "RISK",
+      "environment": {
+        "LOG_LEVEL": "INFO",
+        "RISK_TOLERANCE": "medium"
+      }
+    },
+    {
+      "name": "analytics_engine",
+      "category": "analytics",
+      "path": "mcp_servers/analytics/analytics_mcp_server.py",
+      "port": 8003,
+      "command": ["python", "mcp_servers/analytics/analytics_mcp_server.py"],
+      "health_endpoint": "/health",
+      "required": true,
+      "startup_delay": 2,
+      "max_restarts": 3,
+      "dependencies": [],
+      "agent_role": "ANALYTICS",
+      "environment": {
+        "LOG_LEVEL": "INFO",
+        "ANALYTICS_MODE": "real_time"
+      }
+    },
+    {
+      "name": "qa_validator",
+      "category": "quality",
+      "path": "mcp_servers/quality/qa_mcp_server.py",
+      "port": 8004,
+      "command": ["python", "mcp_servers/quality/qa_mcp_server.py"],
+      "health_endpoint": "/health",
+      "required": false,
+      "startup_delay": 5,
+      "max_restarts": 2,
+      "dependencies": [],
+      "agent_role": "QA",
+      "environment": {
+        "LOG_LEVEL": "INFO",
+        "QA_MODE": "automated"
+      }
+    },
+    {
+      "name": "logs_aggregator",
+      "category": "monitoring",
+      "path": "mcp_servers/monitoring/logs_mcp_server.py",
+      "port": 8005,
+      "command": ["python", "mcp_servers/monitoring/logs_mcp_server.py"],
+      "health_endpoint": "/health",
+      "required": false,
+      "startup_delay": 0,
+      "max_restarts": 3,
+      "dependencies": [],
+      "agent_role": "LOGS",
+      "environment": {
+        "LOG_LEVEL": "INFO",
+        "LOG_RETENTION_DAYS": "30"
+      }
+    },
+    {
+      "name": "enhanced_copilot",
+      "category": "ai_integration",
+      "path": "mcp_servers/ai_integration/working_enhanced_copilot_mcp_server.py",
+      "port": 8006,
+      "command": ["python", "mcp_servers/ai_integration/working_enhanced_copilot_mcp_server.py"],
+      "health_endpoint": "/health",
+      "required": false,
+      "startup_delay": 3,
+      "max_restarts": 2,
+      "dependencies": ["analytics_engine"],
+      "agent_role": "ANALYTICS",
+      "environment": {
+        "LOG_LEVEL": "INFO",
+        "AI_MODEL": "gpt-4"
+      }
+    },
+    {
+      "name": "context7_integration",
+      "category": "ai_integration",
+      "path": "mcp_servers/ai_integration/clean_context7_mcp_server.py",
+      "port": 8007,
+      "command": ["python", "mcp_servers/ai_integration/clean_context7_mcp_server.py"],
+      "health_endpoint": "/health",
+      "required": false,
+      "startup_delay": 2,
+      "max_restarts": 2,
+      "dependencies": [],
+      "agent_role": "ANALYTICS",
+      "environment": {
+        "LOG_LEVEL": "INFO",
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      }
+    }
+  ],
+  "global_settings": {
+    "health_check_interval": 30,
+    "restart_cooldown": 60,
+    "log_level": "INFO",
+    "enable_web_interface": true,
+    "web_interface_port": 9000,
+    "max_concurrent_servers": 10
+  }
+}

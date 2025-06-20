@@ -1,0 +1,47 @@
+[
+  {
+    "name": "UNISWAP_V3",
+    "router_address": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+    "enabled": true,
+    "fee_tier": 0.3,
+    "supported_tokens": [
+      "USDC",
+      "USDT",
+      "DAI",
+      "WETH",
+      "WMATIC"
+    ],
+    "arbitrage_enabled": true,
+    "slippage_tolerance": 0.5
+  },
+  {
+    "name": "QUICKSWAP",
+    "router_address": "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff",
+    "enabled": true,
+    "fee_tier": 0.25,
+    "supported_tokens": [
+      "USDC",
+      "USDT",
+      "DAI",
+      "WETH",
+      "WMATIC"
+    ],
+    "arbitrage_enabled": true,
+    "slippage_tolerance": 0.5
+  },
+  {
+    "name": "SUSHISWAP",
+    "router_address": "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
+    "enabled": true,
+    "fee_tier": 0.25,
+    "supported_tokens": [
+      "USDC",
+      "USDT",
+      "DAI",
+      "WETH",
+      "WMATIC"
+    ],
+    "arbitrage_enabled": true,
+    "slippage_tolerance": 0.5
+  }
+]

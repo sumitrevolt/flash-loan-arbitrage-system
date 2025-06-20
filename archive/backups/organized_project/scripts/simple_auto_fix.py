@@ -1,0 +1,186 @@
+import asyncio\n#!/usr/bin/env python3
+"""
+Simplified Auto-Fix Script for Enhanced LangChain Orchestrator
+Fixes common Python syntax and indentation errors
+"""
+
+import os
+import sys
+import ast
+import re
+import shutil
+from datetime import datetime
+from pathlib import Path
+
+class SimpleAutoFixer:
+    def __init__(self, file_path):
+        self.file_path = Path(file_path)
+        self.backup_dir = Path("backups")
+        self.backup_dir.mkdir(exist_ok=True)
+    
+    def create_backup(self):
+        """Create backup of the original file"""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_name = f"{self.file_path.stem}_{timestamp}.py"
+        backup_path = self.backup_dir / backup_name
+        
+        try:
+            shutil.copy2(self.file_path, backup_path)
+            print(f"Backup created: {backup_path}")
+            return backup_path
+        except Exception as e:
+            print(f"Failed to create backup: {e}")
+            return None
+    
+    def check_syntax(self):
+        """Check if the file has valid Python syntax"""
+        try:
+            with open(self.file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            ast.parse(content)
+            return True, None
+        except SyntaxError as e:
+            return False, e
+        except Exception as e:
+            return False, e
+    
+    def fix_indentation(self):
+        """Fix common indentation issues"""
+        with open(self.file_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+        
+        fixed_lines = []
+        in_class = False
+        in_function = False
+        
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            
+            # Skip empty lines and comments
+            if not stripped or stripped.startswith('#'):
+                fixed_lines.append(line)
+                continue
+            
+            # Check for class/function definitions
+            if stripped.startswith('class '):
+                in_class = True
+                in_function = False
+                fixed_lines.append(line)
+                continue
+            elif stripped.startswith('def ') or stripped.startswith('async def '):
+                in_function = True
+                # Ensure proper indentation for methods in classes
+                if in_class and not line.startswith('    def ') and not line.startswith('    async def '):
+                    fixed_lines.append('    ' + stripped + '\n')
+                else:
+                    fixed_lines.append(line)
+                continue
+            
+            # Fix method indentation issues
+            if in_class and in_function:
+                if not line.startswith('        ') and not line.startswith('    def ') and not line.startswith('    async def '):
+                    if line.startswith('      '):  # Fix 6-space indentation
+                        fixed_lines.append('    ' + line[6:])
+                    elif line.startswith('  '):  # Fix 2-space indentation
+                        fixed_lines.append('        ' + line[2:])
+                    else:
+                        fixed_lines.append(line)
+                else:
+                    fixed_lines.append(line)
+            else:
+                fixed_lines.append(line)
+        
+        # Write fixed content back
+        with open(self.file_path, 'w', encoding='utf-8') as f:
+            f.writelines(fixed_lines)
+    
+    def fix_try_except_blocks(self):
+        """Fix incomplete try-except blocks"""
+        with open(self.file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Pattern to find try blocks without except/finally
+        try_pattern = r'(\s*try:\s*\n)((?:\s*#.*\n|\s*\n)*?)(\s*(?:except|finally|else))'
+        
+        def replace_empty_try(match):
+            try_line = match.group(1)
+            empty_content = match.group(2)
+            next_block = match.group(3)
+            
+            # If there's no content in try block, add a pass
+            if not empty_content.strip() or all(line.strip().startswith('#') or not line.strip() for line in empty_content.split('\n')):
+                return try_line + '        pass\n' + next_block
+            return match.group(0)
+        
+        content = re.sub(try_pattern, replace_empty_try, content, flags=re.MULTILINE)
+        
+        with open(self.file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+    
+    def run_fixes(self):
+        """Run all fixes"""
+        print(f"Starting auto-fix for {self.file_path}")
+        
+        # Create backup
+        backup_path = self.create_backup()
+        if not backup_path:
+            return False
+        
+        try:
+            # Initial syntax check
+            is_valid, error = self.check_syntax()
+            if is_valid:
+                print("File syntax is already valid!")
+                return True
+            
+            print(f"Syntax error found: {error}")
+            
+            # Apply fixes
+            print("Applying indentation fixes...")
+            self.fix_indentation()
+            
+            print("Fixing try-except blocks...")
+            self.fix_try_except_blocks()
+            
+            # Final syntax check
+            is_valid, error = self.check_syntax()
+            if is_valid:
+                print("File fixed successfully!")
+                return True
+            else:
+                print(f"Still has syntax errors: {error}")
+                # Restore backup
+                shutil.copy2(backup_path, self.file_path)
+                print("Restored from backup")
+                return False
+                
+        except Exception as e:
+            print(f"Error during fixing: {e}")
+            # Restore backup
+            if backup_path:
+                shutil.copy2(backup_path, self.file_path)
+                print("Restored from backup")
+            return False
+
+def main():
+    if len(sys.argv) != 2:
+        print("Usage: python simple_auto_fix.py <python_file>")
+        sys.exit(1)
+    
+    file_path = sys.argv[1]
+    if not os.path.exists(file_path):
+        print(f"File not found: {file_path}")
+        sys.exit(1)
+    
+    fixer = SimpleAutoFixer(file_path)
+    success = fixer.run_fixes()
+    
+    if success:
+        print("Auto-fix completed successfully!")
+        sys.exit(0)
+    else:
+        print("Auto-fix failed!")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

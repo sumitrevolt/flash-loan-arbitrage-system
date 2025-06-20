@@ -1,0 +1,10 @@
+{
+  "address": "0x866d78908deB13EDeb0D0058102Cbfe67a5789c9",
+  "network": "matic",
+  "chainId": 137,
+  "deployer": "0xaCd9a5B2438EF62bc7b725c574cDb23bf8D0314D",
+  "aavePoolAddressesProvider": "0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb",
+  "wethAddress": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+  "deployedAt": "2025-05-07T13:50:42.005Z",
+  "deploymentTx": "0x8cc07f7c29909835cb0aef261bd1c33df46ba47a69cf20dd214c7abf187df1cb"
+}

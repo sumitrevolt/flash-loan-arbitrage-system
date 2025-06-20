@@ -1,0 +1,85 @@
+{
+  "mcpServers": {
+    "context7_clean": {
+      "command": "python",
+      "args": [
+        "mcp_servers/ai_integration/clean_context7_mcp_server.py"
+      ],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "."
+      }
+    },
+    "matic_clean": {
+      "command": "python",
+      "args": [
+        "mcp_servers/blockchain_integration/clean_matic_mcp_server.py"
+      ],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "."
+      }
+    },
+    "minimal-mcp": {
+      "command": "python",
+      "args": [
+        "minimal-mcp-server.py"
+      ],
+      "cwd": ".",
+      "env": {}
+    },
+    "simple-flash-loan": {
+      "command": "python",
+      "args": [
+        "simple_mcp_server.py"
+      ],
+      "cwd": ".",
+      "env": {}
+    },
+    "context7": {
+      "command": "python",
+      "args": [
+        "mcp_servers/ai_integration/clean_context7_mcp_server.py"
+      ],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "."
+      }
+    },
+    "matic": {
+      "command": "python",
+      "args": [
+        "mcp_servers/blockchain_integration/clean_matic_mcp_server.py"
+      ],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "."
+      }
+    },
+    "flash-loan-system": {
+      "command": "python",
+      "args": [
+        "working_flash_loan_mcp.py"
+      ],
+      "cwd": "."
+    },
+    "simple-server": {
+      "command": "python",
+      "args": [
+        "simple_mcp_server.py"
+      ],
+      "cwd": "."
+    },
+    "matic-mcp": {
+      "command": "python",
+      "args": [
+        "-c",
+        "import sys; sys.path.append('.'); from mcp_servers.blockchain_integration.matic_mcp_server import main; main()"
+      ],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "."
+      }
+    }
+  }
+}

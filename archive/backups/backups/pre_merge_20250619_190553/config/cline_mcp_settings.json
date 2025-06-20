@@ -1,0 +1,154 @@
+{
+  "mcpServers": {
+    "matic-mcp": {
+      "command": "python",
+      "args": ["mcp_servers/blockchain_integration/matic-mcp-server/matic_mcp_server.py"],
+      "env": {
+        "MATIC_API_KEY": "",
+        "MATIC_NODE_URL": ""
+      }
+    },
+    "foundry-mcp": {
+      "command": "python",
+      "args": ["mcp_servers/foundry_integration/foundry-mcp-server/working_enhanced_foundry_mcp_server.py"],
+      "env": {
+        "FOUNDRY_PATH": "",
+        "FOUNDRY_CONFIG": ""
+      }
+    },
+    "evm-mcp": {
+      "command": "python",
+      "args": ["mcp_servers/blockchain_integration/evm-mcp-server/evm_mcp_server.py"],
+      "env": {
+        "EVM_NODE_URL": "",
+        "EVM_API_KEY": ""
+      }
+    },
+    "copilot-mcp": {
+      "command": "python",
+      "args": ["mcp_servers/ai_integration/working_enhanced_copilot_mcp_server.py"],
+      "env": {
+        "COPILOT_LOG_LEVEL": "INFO"
+      }
+    },
+    "flash-loan-mcp": {
+      "command": "python",
+      "args": ["mcp_servers/execution/working_unified_flash_loan_mcp_server.py"],
+      "env": {
+        "FLASH_LOAN_CONFIG": ""
+      }
+    },
+    "price-oracle-mcp": {
+      "command": "python",
+      "args": ["mcp_servers/data_providers/price-oracle-mcp-server/price_oracle_mcp_server.py"],
+      "env": {
+        "PRICE_ORACLE_CONFIG": ""
+      }
+    },
+    "context7-mcp": {
+      "command": "python",
+      "args": ["mcp_servers/ai_integration/context7-mcp-server/context7_mcp_server.py"],
+      "env": {
+        "CONTEXT7_API_KEY": ""
+      }
+    },
+    "risk-management-mcp": {
+      "command": "python",
+      "args": ["mcp_servers/risk_management/mcp_risk_manager_server.py"],
+      "env": {
+        "RISK_CONFIG": ""
+      }
+    },
+    "task-manager-mcp": {
+      "command": "node",
+      "args": ["mcp_servers/task_management/mcp-taskmanager/index.js"],
+      "env": {
+        "TASK_MANAGER_CONFIG": ""
+      }
+    },
+    "minimal-mcp": {
+      "command": "python",
+      "args": ["minimal-mcp-server.py"],
+      "env": {
+        "MINIMAL_CONFIG": ""
+      }
+    },
+    "contract-executor-mcp": {
+      "command": "python",
+      "args": ["mcp_servers/execution/mcp_contract_executor_server.py"],
+      "env": {
+        "CONTRACT_EXECUTOR_CONFIG": ""
+      }
+    },
+    "flash-loan-strategist": {
+      "command": "python",
+      "args": ["mcp_servers/execution/mcp_flash_loan_strategist_server.py"],
+      "env": {
+        "STRATEGIST_CONFIG": ""
+      }
+    },
+    "transaction-optimizer": {
+      "command": "python",
+      "args": ["mcp_servers/execution/mcp_transaction_optimizer_server.py"],
+      "env": {
+        "OPTIMIZER_CONFIG": ""
+      }
+    },
+    "production-mcp": {
+      "command": "python",
+      "args": ["mcp_servers/production/enhanced_production_mcp_server_v2.py"],
+      "env": {
+        "PRODUCTION_CONFIG": ""
+      }
+    },
+    "mcp-logger-auditor": {
+      "command": "python",
+      "args": ["mcp_logger_auditor_server.py"],
+      "env": {
+        "AUDIT_CONFIG": ""
+      }
+    },
+    "enhanced-mcp-dashboard": {
+      "command": "python",
+      "args": ["enhanced_mcp_dashboard_with_chat.py"],
+      "env": {
+        "DASHBOARD_CONFIG": ""
+      }
+    },
+    "ui-dashboard-mcp": {
+      "command": "python",
+      "args": ["mcp_servers/ui/mcp_dashboard_server.py"],
+      "env": {
+        "UI_CONFIG": ""
+      }
+    },
+    "dex-services-mcp": {
+      "command": "python",
+      "args": ["mcp_servers/dex_services/dex_price_mcp_server.py"],
+      "env": {
+        "DEX_CONFIG": ""
+      }
+    },
+    "market-analysis-arbitrage": {
+      "command": "python",
+      "args": ["mcp_servers/market_analysis/mcp_arbitrage_detector_server.py"],
+      "env": {
+        "ARBITRAGE_CONFIG": ""
+      }
+    },
+    "market-analysis-liquidity": {
+      "command": "python",
+      "args": ["mcp_servers/market_analysis/mcp_liquidity_monitor_server.py"],
+      "env": {
+        "LIQUIDITY_CONFIG": ""
+      }
+    },
+    "market-analysis-token-scanner": {
+      "command": "python",
+      "args": ["mcp_servers/market_analysis/mcp_token_scanner_server.py"],
+      "env": {
+        "TOKEN_SCANNER_CONFIG": ""
+      }
+    }
+  }
+}

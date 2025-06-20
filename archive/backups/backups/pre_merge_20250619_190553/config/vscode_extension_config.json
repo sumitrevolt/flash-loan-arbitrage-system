@@ -1,0 +1,67 @@
+{
+  "flashLoanProductivity": {
+    "enabled": true,
+    "features": {
+      "autoCompletion": {
+        "enabled": true,
+        "triggerCharacters": [".", "(", "[", "{", " "],
+        "maxSuggestions": 10,
+        "includeMLSuggestions": true,
+        "debounceTime": 300
+      },
+      "continuousAnalysis": {
+        "enabled": true,
+        "analyzeOnSave": true,
+        "analyzeOnType": true,
+        "typeDebounceTime": 1000,
+        "showInlineHints": true,
+        "severityLevels": {
+          "error": true,
+          "warning": true,
+          "info": true
+        }
+      },
+      "codeActions": {
+        "enabled": true,
+        "showQuickFixes": true,
+        "autoFixOnSave": false,
+        "suggestRefactorings": true
+      },
+      "productivityTracking": {
+        "enabled": true,
+        "showStatusBar": true,
+        "trackCompletionUsage": true,
+        "trackTimeSpent": true,
+        "generateReports": true
+      }
+    },
+    "server": {
+      "port": 8888,
+      "host": "localhost",
+      "protocol": "websocket"
+    },
+    "ui": {
+      "theme": "dark",
+      "showProductivityScore": true,
+      "position": "bottom-right",
+      "notifications": {
+        "showIssues": true,
+        "showSuggestions": true,
+        "showMetrics": false
+      }
+    },
+    "advanced": {
+      "mlModel": "gpt-4",
+      "cacheCompletions": true,
+      "cacheTimeout": 3600,
+      "maxConcurrentAnalysis": 5,
+      "excludePatterns": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/__pycache__/**",
+        "**/venv/**",
+        "**/.env/**"
+      ]
+    }
+  }
+}

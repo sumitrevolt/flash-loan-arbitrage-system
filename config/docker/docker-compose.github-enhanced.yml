@@ -1,0 +1,214 @@
+version: '3.8'
+
+networks:
+  flashloan-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  flashloan-logs:
+  flashloan-data:
+  redis-data:
+  postgres-data:
+  influx-data:
+  github-cache:
+  grafana-data:
+
+services:  # GitHub Pro Enhanced Orchestrator
+  orchestrator:
+    build: 
+      context: .
+      dockerfile: containers/orchestrator/Dockerfile.github-enhanced
+    container_name: flashloan-orchestrator-pro
+    networks:
+      flashloan-network:
+        ipv4_address: 172.20.0.10
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_COPILOT_ENABLED=true
+      - AUTO_FIX_ENABLED=true
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - REDIS_URL=redis://redis-cluster:6379
+      - POSTGRES_URL=postgresql://postgres:5432/flashloan
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./.github:/app/.github:ro
+      - ./logs:/app/logs
+      - github-cache:/app/github-cache
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      # Enhanced MCP Servers with Copilot
+  mcp-servers-pro:
+    build:
+      context: .
+      dockerfile: containers/mcp_servers/Dockerfile.copilot-enhanced
+    container_name: flashloan-mcp-servers-pro
+    networks:
+      flashloan-network:
+        ipv4_address: 172.20.0.20
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - COPILOT_API_KEY=${COPILOT_API_KEY}
+      - AUTO_SYNTAX_FIX=true
+      - CODE_QUALITY_CHECK=true
+      - REDIS_URL=redis://redis-cluster:6379
+      - POSTGRES_URL=postgresql://postgres:5432/flashloan
+    ports:
+      - "8000-8030:8000-8030"
+    volumes:
+      - ./mcp_servers:/app/mcp_servers
+      - ./training_data:/app/training_data
+      - github-cache:/app/github-cache
+    restart: unless-stopped
+    depends_on:
+      - redis-cluster
+      - postgres-db
+      # AI Agents with GitHub Integration
+  agents-pro:
+    build:
+      context: .
+      dockerfile: containers/agents/Dockerfile.ai-enhanced
+    container_name: flashloan-agents-pro
+    networks:
+      flashloan-network:
+        ipv4_address: 172.20.0.30
+    environment:
+      - GITHUB_INTEGRATION=true
+      - COPILOT_SUGGESTIONS=true
+      - AUTO_CODE_REVIEW=true
+      - MCP_COORDINATOR_URL=http://172.20.0.20:8000
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+    depends_on:
+      - mcp-servers-pro
+    
+  # High-Performance Redis Cluster
+  redis-cluster:
+    image: redis:7-alpine
+    container_name: flashloan-redis-cluster
+    networks:
+      flashloan-network:
+        ipv4_address: 172.20.0.40
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: |
+      redis-server 
+      --maxmemory 4gb 
+      --maxmemory-policy allkeys-lru 
+      --save 60 1000 
+      --appendonly yes
+    restart: unless-stopped
+    
+  # PostgreSQL with Performance Tuning
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: flashloan-postgres
+    networks:
+      flashloan-network:
+        ipv4_address: 172.20.0.50
+    environment:
+      - POSTGRES_DB=flashloan
+      - POSTGRES_USER=flashloan_user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_SHARED_PRELOAD_LIBRARIES=pg_stat_statements
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./sql/init:/docker-entrypoint-initdb.d
+    command: |
+      postgres
+      -c shared_preload_libraries=pg_stat_statements
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+    restart: unless-stopped
+    
+  # InfluxDB for Time Series Data
+  influxdb:
+    image: influxdb:2.7-alpine
+    container_name: flashloan-influx
+    networks:
+      flashloan-network:
+        ipv4_address: 172.20.0.60
+    environment:
+      - INFLUXDB_DB=flashloan_metrics
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=${INFLUX_PASSWORD}
+    ports:
+      - "8086:8086"
+    volumes:
+      - influx-data:/var/lib/influxdb2
+    restart: unless-stopped
+      # GitHub Metrics Collector
+  github-metrics:
+    build:
+      context: .
+      dockerfile: containers/github-metrics/Dockerfile
+    container_name: github-metrics-collector
+    networks:
+      flashloan-network:
+        ipv4_address: 172.20.0.70
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - PROMETHEUS_URL=http://172.20.0.80:9090
+      - INFLUX_URL=http://172.20.0.60:8086
+    ports:
+      - "8090:8090"
+    restart: unless-stopped
+    depends_on:
+      - prometheus-github
+      - influxdb
+    
+  # Enhanced Prometheus with GitHub Integration
+  prometheus-github:
+    image: prom/prometheus:latest
+    container_name: prometheus-github-enhanced
+    networks:
+      flashloan-network:
+        ipv4_address: 172.20.0.80
+    volumes:
+      - ./monitoring/prometheus-github.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/rules:/etc/prometheus/rules
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    
+  # Enhanced Grafana with GitHub Dashboards
+  grafana-github:
+    image: grafana/grafana:latest
+    container_name: grafana-github-enhanced
+    networks:
+      flashloan-network:
+        ipv4_address: 172.20.0.90
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_INSTALL_PLUGINS=grafana-github-datasource,redis-datasource
+      - GF_FEATURE_TOGGLES_ENABLE=publicDashboards
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./monitoring/grafana-github-dashboards:/var/lib/grafana/dashboards
+      - ./monitoring/grafana-datasources:/etc/grafana/provisioning/datasources
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus-github
+      - influxdb

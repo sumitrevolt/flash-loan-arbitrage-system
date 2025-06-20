@@ -1,0 +1,354 @@
+version: '3.8'
+
+# LangChain Multi-Agent Flash Loan System
+# Complete Docker Orchestration with Enhanced LangChain Integration
+# =================================================================
+
+networks:
+  flash_loan_network:
+    driver: bridge
+    name: flash-loan-langchain-system
+    ipam:
+      config:
+        - subnet: 172.31.0.0/16
+
+volumes:
+  redis_data:
+    name: flash-loan-redis-langchain
+  postgres_data:
+    name: flash-loan-postgres-langchain
+  rabbitmq_data:
+    name: flash-loan-rabbitmq-langchain
+  vector_store_data:
+    name: flash-loan-vectorstore
+  agent_memory_data:
+    name: flash-loan-memory
+  langchain_models:
+    name: flash-loan-models
+  langchain_logs:
+    name: flash-loan-logs
+
+services:
+  # ============================================
+  # INFRASTRUCTURE SERVICES
+  # ============================================
+  
+  redis:
+    image: redis:7-alpine
+    container_name: flash-loan-redis-langchain
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: >
+      redis-server 
+      --appendonly yes 
+      --requirepass flash_loan_redis_2025
+      --maxmemory 2gb
+      --maxmemory-policy allkeys-lru
+    networks:
+      - flash_loan_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "flash_loan_redis_2025", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: flash-loan-postgres-langchain
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: flash_loan_db
+      POSTGRES_USER: flash_loan_user
+      POSTGRES_PASSWORD: flash_loan_secure_2025
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init_scripts:/docker-entrypoint-initdb.d
+    networks:
+      - flash_loan_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flash_loan_user -d flash_loan_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: flash-loan-rabbitmq-langchain
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: flash_loan_mq
+      RABBITMQ_DEFAULT_PASS: flash_loan_mq_2025
+      RABBITMQ_DEFAULT_VHOST: flash_loan_vhost
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - flash_loan_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ============================================
+  # LANGCHAIN MULTI-AGENT SYSTEM
+  # ============================================
+
+  langchain-coordinator:
+    build:
+      context: ./langchain
+      dockerfile: Dockerfile
+    container_name: flash-loan-langchain-coordinator
+    ports:
+      - "8000:8000"  # Main API
+      - "8001:8001"  # Agent coordination
+      - "8002:8002"  # RAG service
+      - "8080:8080"  # Metrics/health
+    environment:
+      # Service configuration
+      - SERVICE_NAME=langchain_coordinator
+      - SERVICE_PORT=8000
+      - HOST=0.0.0.0
+      - WORKERS=1
+      
+      # Database connections
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=flash_loan_db
+      - POSTGRES_USER=flash_loan_user
+      - POSTGRES_PASSWORD=flash_loan_secure_2025
+      
+      # Redis configuration
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=flash_loan_redis_2025
+      
+      # RabbitMQ configuration
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=flash_loan_mq
+      - RABBITMQ_PASSWORD=flash_loan_mq_2025
+      - RABBITMQ_VHOST=flash_loan_vhost
+      
+      # LLM API keys (set these in your environment)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      
+      # LangChain configuration
+      - LLM_MODEL=gpt-4-turbo-preview
+      - LLM_TEMPERATURE=0.1
+      - LLM_MAX_TOKENS=2000
+      
+      # Vector store configuration
+      - VECTOR_STORE_PROVIDER=chroma
+      - VECTOR_STORE_DIR=/app/vector_store
+      - EMBEDDING_MODEL=text-embedding-ada-002
+      
+      # Agent configuration
+      - MAX_CONCURRENT_TASKS=5
+      - TASK_TIMEOUT=300
+      - ENABLE_CODE_EXECUTION=true
+      - CODE_EXECUTION_TIMEOUT=30
+      
+      # Monitoring
+      - LOG_LEVEL=INFO
+      - ENABLE_METRICS=true
+      - METRICS_PORT=8080
+      
+      # Initialization flags
+      - DB_INIT=true
+      - VECTOR_STORE_INIT=true
+      - LOAD_MODELS=false
+    volumes:
+      - vector_store_data:/app/vector_store
+      - agent_memory_data:/app/data
+      - langchain_models:/app/models
+      - langchain_logs:/app/logs
+      - ./langchain/data:/app/data/flash_loan_docs:ro
+      - ./config:/app/config:ro
+    networks:
+      - flash_loan_network
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+
+  # ============================================
+  # RAG DOCUMENT SERVICE
+  # ============================================
+
+  langchain-rag-service:
+    build:
+      context: ./langchain
+      dockerfile: Dockerfile
+    container_name: flash-loan-rag-service
+    ports:
+      - "8003:8000"
+    environment:
+      - SERVICE_NAME=rag_service
+      - SERVICE_PORT=8000
+      - SERVICE_MODE=rag_only
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=flash_loan_db
+      - POSTGRES_USER=flash_loan_user
+      - POSTGRES_PASSWORD=flash_loan_secure_2025
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=flash_loan_redis_2025
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - VECTOR_STORE_PROVIDER=chroma
+      - VECTOR_STORE_DIR=/app/vector_store
+      - LOG_LEVEL=INFO
+    volumes:
+      - vector_store_data:/app/vector_store
+      - ./langchain/data:/app/data:ro
+      - langchain_logs:/app/logs
+    networks:
+      - flash_loan_network
+    depends_on:
+      - langchain-coordinator
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ============================================
+  # CODE INTERPRETER SERVICE
+  # ============================================
+
+  langchain-code-interpreter:
+    build:
+      context: ./langchain
+      dockerfile: Dockerfile
+    container_name: flash-loan-code-interpreter
+    ports:
+      - "8004:8000"
+    environment:
+      - SERVICE_NAME=code_interpreter
+      - SERVICE_PORT=8000
+      - SERVICE_MODE=code_interpreter_only
+      - ENABLE_CODE_EXECUTION=true
+      - CODE_EXECUTION_TIMEOUT=30
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=flash_loan_redis_2025
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./langchain/code_temp:/app/temp
+      - langchain_logs:/app/logs
+    networks:
+      - flash_loan_network
+    depends_on:
+      - langchain-coordinator
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    security_opt:
+      - seccomp:unconfined
+    cap_add:
+      - SYS_ADMIN
+
+  # ============================================
+  # MONITORING & VISUALIZATION
+  # ============================================
+
+  langchain-dashboard:
+    image: grafana/grafana:latest
+    container_name: flash-loan-langchain-dashboard
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=redis-datasource,postgres-datasource
+    volumes:
+      - ./monitoring/grafana:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    networks:
+      - flash_loan_network
+    depends_on:
+      - langchain-coordinator
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: flash-loan-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - flash_loan_network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+
+  # ============================================
+  # REVERSE PROXY & LOAD BALANCER
+  # ============================================
+
+  nginx:
+    image: nginx:alpine
+    container_name: flash-loan-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    networks:
+      - flash_loan_network
+    depends_on:
+      - langchain-coordinator
+      - langchain-rag-service
+      - langchain-code-interpreter
+    restart: unless-stopped
+
+# Additional persistent volumes
+  grafana_data:
+    name: flash-loan-grafana
+  prometheus_data:
+    name: flash-loan-prometheus

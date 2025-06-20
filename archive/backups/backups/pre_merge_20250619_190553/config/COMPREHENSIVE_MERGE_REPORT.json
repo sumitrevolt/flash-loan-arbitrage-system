@@ -1,0 +1,158 @@
+{
+  "merge_timestamp": "2025-06-13T09:35:25.919299",
+  "backup_location": "backups\\comprehensive_merge_20250613_093523",
+  "statistics": {
+    "total_files_analyzed": 0,
+    "duplicates_removed": 40,
+    "categories_processed": 10,
+    "space_saved_mb": 0.8597707748413086
+  },
+  "summary": {
+    "categories_processed": 10,
+    "files_preserved": 27,
+    "duplicates_removed": 40,
+    "space_saved_mb": 0.86
+  },
+  "preserved_files": [
+    "archive\\backup_20250603_122623\\backup\\full_backup_20250603_121111\\core\\arbitrage_trading_mcp_server_fixed.py",
+    "core\\dex_price_fetcher.py",
+    "core\\src\\flash_loan\\core\\dex_integration.py",
+    "core\\src\\monitoring\\monitor_flash_loan_system.py",
+    "docker\\start_mcp_servers.py",
+    "infrastructure\\mcp_servers\\ai_integration\\clean_context7_mcp_server.py",
+    "infrastructure\\mcp_servers\\ai_integration\\working_enhanced_copilot_mcp_server.py",
+    "infrastructure\\mcp_servers\\blockchain_integration\\clean_matic_mcp_server.py",
+    "infrastructure\\mcp_servers\\blockchain_integration\\evm-mcp-server\\evm_mcp_server.py",
+    "infrastructure\\mcp_servers\\blockchain_integration\\working_enhanced_foundry_mcp_server.py",
+    "infrastructure\\mcp_servers\\blockchain_integration\\working_flash_loan_mcp.py",
+    "infrastructure\\mcp_servers\\coordination\\mcp_enhanced_coordinator.py",
+    "infrastructure\\mcp_servers\\coordination\\mcp_server_coordinator.py",
+    "infrastructure\\mcp_servers\\coordination\\multi_agent_coordinator.py",
+    "infrastructure\\mcp_servers\\foundry_integration\\foundry-mcp-server\\integration\\revenue_optimizer.py",
+    "infrastructure\\mcp_servers\\foundry_integration\\foundry-mcp-server\\src\\tools\\ai_contract_optimizer.py",
+    "infrastructure\\mcp_servers\\foundry_integration\\foundry-mcp-server\\src\\utils\\config_loader.py",
+    "infrastructure\\mcp_servers\\monitoring\\check-mcp-status.py",
+    "infrastructure\\mcp_servers\\monitoring\\check_mcp_status.py",
+    "infrastructure\\mcp_servers\\monitoring\\mcp_status_demo.py",
+    "infrastructure\\mcp_servers\\monitoring\\simple-mcp-status-check.py",
+    "infrastructure\\mcp_servers\\monitoring\\verify_mcp_status.py",
+    "infrastructure\\mcp_servers\\orchestration\\enhanced_production_mcp_server_v2.py",
+    "infrastructure\\mcp_servers\\orchestration\\mcp_unified_config.py",
+    "infrastructure\\mcp_servers\\orchestration\\simplified_mcp_coordinator_fixed.py",
+    "infrastructure\\mcp_servers\\orchestration\\unified_mcp_coordinator.py",
+    "infrastructure\\mcp_servers\\risk_management\\mcp_risk_manager_server.py"
+  ],
+  "removed_files": [
+    "archive\\backup_20250603_122623\\backup\\full_backup_20250603_121111\\core\\arbitrage_trading_mcp_server.py",
+    "archive\\backup_20250603_122623\\backup\\full_backup_20250603_121111\\mcp_servers\\evm_mcp_server.py",
+    "archive\\backup_20250603_122623\\backup\\full_backup_20250603_121111\\src\\flash_loan\\core\\dex_integration_clean.py",
+    "archive\\backup_20250603_122623\\backup\\full_backup_20250603_121154\\mcp_servers\\start_mcp_servers.py",
+    "check-mcp-status.py",
+    "core\\src\\flash_loan\\utils\\dex_price_fetcher.py",
+    "core\\src\\monitor_flash_loan_system.py",
+    "core\\src\\utils\\config_loader.py",
+    "core\\working_enhanced_copilot_mcp_server.py",
+    "infrastructure\\mcp_servers\\coordination\\unified_mcp_coordinator.py",
+    "infrastructure\\mcp_servers\\orchestration\\mcp_enhanced_coordinator.py",
+    "infrastructure\\mcp_servers\\orchestration\\simplified_mcp_coordinator_backup.py",
+    "infrastructure\\mcp_servers\\unified_mcp_coordinator.py\\unified_mcp_coordinator.py",
+    "mcp_servers\\ai_integration\\clean_context7_mcp_server.py",
+    "mcp_servers\\ai_integration\\working_enhanced_copilot_mcp_server.py",
+    "mcp_servers\\blockchain_integration\\clean_matic_mcp_server.py",
+    "mcp_servers\\blockchain_integration\\evm-mcp-server\\evm_mcp_server.py",
+    "mcp_servers\\blockchain_integration\\working_enhanced_foundry_mcp_server.py",
+    "mcp_servers\\blockchain_integration\\working_flash_loan_mcp.py",
+    "mcp_servers\\coordination\\mcp_enhanced_coordinator.py",
+    "mcp_servers\\coordination\\mcp_server_coordinator.py",
+    "mcp_servers\\coordination\\multi_agent_coordinator.py",
+    "mcp_servers\\coordination\\unified_mcp_coordinator.py",
+    "mcp_servers\\foundry_integration\\foundry-mcp-server\\integration\\revenue_optimizer.py",
+    "mcp_servers\\foundry_integration\\foundry-mcp-server\\src\\tools\\ai_contract_optimizer.py",
+    "mcp_servers\\foundry_integration\\foundry-mcp-server\\src\\utils\\config_loader.py",
+    "mcp_servers\\monitoring\\check-mcp-status.py",
+    "mcp_servers\\monitoring\\check_mcp_status.py",
+    "mcp_servers\\monitoring\\mcp_status_demo.py",
+    "mcp_servers\\monitoring\\simple-mcp-status-check.py",
+    "mcp_servers\\monitoring\\verify_mcp_status.py",
+    "mcp_servers\\orchestration\\enhanced_production_mcp_server_v2.py",
+    "mcp_servers\\orchestration\\mcp_enhanced_coordinator.py",
+    "mcp_servers\\orchestration\\mcp_unified_config.py",
+    "mcp_servers\\orchestration\\simplified_mcp_coordinator_backup.py",
+    "mcp_servers\\orchestration\\simplified_mcp_coordinator_fixed.py",
+    "mcp_servers\\orchestration\\unified_mcp_coordinator.py",
+    "mcp_servers\\risk_management\\mcp_risk_manager_server.py",
+    "mcp_servers\\unified_mcp_coordinator.py\\unified_mcp_coordinator.py",
+    "monitoring\\dex_price_fetcher.py"
+  ],
+  "merge_operations": [
+    {
+      "category": "mcp_servers",
+      "files_processed": 41,
+      "duplicates_removed": 12,
+      "timestamp": "2025-06-13T09:35:25.305307"
+    },
+    {
+      "category": "project_organizers",
+      "files_processed": 5,
+      "duplicates_removed": 0,
+      "timestamp": "2025-06-13T09:35:25.306607"
+    },
+    {
+      "category": "coordinators",
+      "files_processed": 17,
+      "duplicates_removed": 12,
+      "timestamp": "2025-06-13T09:35:25.327924"
+    },
+    {
+      "category": "arbitrage_bots",
+      "files_processed": 2,
+      "duplicates_removed": 0,
+      "timestamp": "2025-06-13T09:35:25.327924"
+    },
+    {
+      "category": "config_managers",
+      "files_processed": 10,
+      "duplicates_removed": 3,
+      "timestamp": "2025-06-13T09:35:25.333241"
+    },
+    {
+      "category": "system_status",
+      "files_processed": 18,
+      "duplicates_removed": 6,
+      "timestamp": "2025-06-13T09:35:25.343484"
+    },
+    {
+      "category": "revenue_generators",
+      "files_processed": 6,
+      "duplicates_removed": 1,
+      "timestamp": "2025-06-13T09:35:25.346127"
+    },
+    {
+      "category": "flash_loan",
+      "files_processed": 9,
+      "duplicates_removed": 2,
+      "timestamp": "2025-06-13T09:35:25.352078"
+    },
+    {
+      "category": "dex_integration",
+      "files_processed": 27,
+      "duplicates_removed": 3,
+      "timestamp": "2025-06-13T09:35:25.359934"
+    },
+    {
+      "category": "optimization",
+      "files_processed": 7,
+      "duplicates_removed": 1,
+      "timestamp": "2025-06-13T09:35:25.361957"
+    }
+  ],
+  "next_steps": [
+    "Verify core functionality still works",
+    "Run comprehensive test suite",
+    "Update import statements if needed",
+    "Check for any broken dependencies",
+    "Validate MCP server functionality",
+    "Test arbitrage bot operations",
+    "Verify configuration loading"
+  ]
+}
