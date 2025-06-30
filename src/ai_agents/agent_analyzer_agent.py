@@ -1,24 +1,39 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Dict, Any, List
+import asyncio
+import json
+import logging
+import os
+
+from fastapi import FastAPI, HTTPException
+import aiohttp
+import uvicorn
 """
 Market Analysis Agent
 Specialized agent for market analysis
 """
 
-import asyncio
-import logging
-import os
-import json
-from datetime import datetime
-from typing import Dict, Any, List
-from fastapi import FastAPI, HTTPException
-import uvicorn
-import aiohttp
 
 # Setup logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
-)
+
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Market Analysis Agent", version="1.0.0")
@@ -36,15 +51,15 @@ class Agent_AnalyzerAgent:
         
     async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Process specialized agent task"""
-        logger.info(f"Agent {self.name} processing: {self.description}")
-        return {
+        logger.info(str(f"Agent {self.name} processing: {self.description}")
+        return {}
             "agent": self.name,
             "description": self.description,
             "status": "processed",
             "timestamp": datetime.now().isoformat(),
             "port": 8201,
             "data": data
-        }
+        
     
     async def coordinate_with_mcps(self, mcp_servers: List[str]) -> Dict[str, Any]:
         """Coordinate with MCP servers"""
@@ -54,26 +69,26 @@ class Agent_AnalyzerAgent:
             for mcp_server in mcp_servers:
                 try:
                     # Coordinate with each MCP server
-                    coordination_results.append({
+                    coordination_results.append({)}
                         "mcp_server": mcp_server,
                         "status": "coordinated",
                         "timestamp": datetime.now().isoformat()
-                    })
+                    
                 except Exception as e:
-                    coordination_results.append({
+                    coordination_results.append({)}
                         "mcp_server": mcp_server,
                         "status": "failed",
                         "error": str(e),
                         "timestamp": datetime.now().isoformat()
-                    })
+                    
             
-            return {
+            return {}
                 "agent": self.name,
                 "coordination_results": coordination_results,
                 "timestamp": datetime.now().isoformat()
-            }
+            
         except Exception as e:
-            logger.error(f"MCP coordination error: {e}")
+            logger.error(str(f"MCP coordination error: {e}")
             return {"error": str(e)}
     
     async def coordinate_with_agents(self, other_agents: List[str]) -> Dict[str, Any]:
@@ -83,26 +98,26 @@ class Agent_AnalyzerAgent:
             
             for other_agent in other_agents:
                 try:
-                    coordination_results.append({
+                    coordination_results.append({)}
                         "agent": other_agent,
                         "status": "coordinated",
                         "timestamp": datetime.now().isoformat()
-                    })
+                    
                 except Exception as e:
-                    coordination_results.append({
+                    coordination_results.append({)}
                         "agent": other_agent,
                         "status": "failed",
                         "error": str(e),
                         "timestamp": datetime.now().isoformat()
-                    })
+                    
             
-            return {
+            return {}
                 "agent": self.name,
                 "coordination_results": coordination_results,
                 "timestamp": datetime.now().isoformat()
-            }
+            
         except Exception as e:
-            logger.error(f"Agent coordination error: {e}")
+            logger.error(str(f"Agent coordination error: {e}")
             return {"error": str(e)}
 
 # Global agent instance
@@ -111,13 +126,13 @@ agent = Agent_AnalyzerAgent()
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return {
+    return {}
         "status": "healthy" if agent.is_active else "unhealthy",
         "timestamp": datetime.now().isoformat(),
         "service": "agent-analyzer",
         "description": "Market Analysis",
         "port": 8201
-    }
+    
 
 @app.post("/process")
 async def process_task(task: Dict[str, Any]):
@@ -137,12 +152,12 @@ async def coordinate_with_agents(other_agents: List[str]):
 @app.get("/")
 async def root():
     """Root endpoint"""
-    return {
+    return {}
         "message": "Market Analysis Agent",
         "status": "running",
         "port": 8201,
         "description": "Market Analysis"
-    }
+    
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8201)

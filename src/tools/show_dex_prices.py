@@ -1,15 +1,19 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+        from decimal import Decimal
+from datetime import datetime
+import asyncio
+import json
+import time
+
+        from dex_price_fetcher import MultiDexPriceFetcher
+        from web3 import Web3
+import requests
 """
 DEX Prices and Arbitrage Calculations Display
 Shows current prices across DEXes and calculates potential profits
 """
 
-import asyncio
-import json
-import time
-from decimal import Decimal
-from datetime import datetime
-import requests
 
 async def get_polygon_gas_price():
     """Get current Polygon gas price"""
@@ -24,9 +28,6 @@ async def get_real_dex_price(dex_name, token_pair):
     """Get real DEX price from actual market data"""
     try:
         # Import the real price fetcher
-        from dex_price_fetcher import MultiDexPriceFetcher
-        from web3 import Web3
-        from decimal import Decimal
         
         # Initialize Web3 connection
         web3 = Web3(Web3.HTTPProvider('https://polygon-rpc.com'))
@@ -49,7 +50,7 @@ async def get_real_dex_price(dex_name, token_pair):
         token_b_address = tokens.get(token_b, {}).get('address', '')
         
         if not token_a_address or not token_b_address:
-            print(f"⚠️ Missing token addresses for {token_pair}")
+            print(f"[WARN] Missing token addresses for {token_pair}")
             raise Exception(f"Missing token addresses")
         
         # Get real price using correct method signature
@@ -70,7 +71,7 @@ async def get_real_dex_price(dex_name, token_pair):
             return 1.0
             
     except Exception as e:
-        print(f"⚠️ Error fetching real price for {dex_name}/{token_pair}: {e}")
+        print(f"[WARN] Error fetching real price for {dex_name}/{token_pair}: {e}")
         print(f"   Error type: {type(e).__name__}")
         print(f"   Error details: {str(e)}")
         # Fallback to basic market price
@@ -92,7 +93,7 @@ async def show_dex_prices():
     """Display current DEX prices and arbitrage calculations"""
     
     print("\n" + "="*80)
-    print("🔥 FLASH LOAN ARBITRAGE BOT - DEX PRICES & CALCULATIONS")
+    print("[HOT] FLASH LOAN ARBITRAGE BOT - DEX PRICES & CALCULATIONS")
     print("="*80)
     print(f"📅 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
@@ -100,9 +101,9 @@ async def show_dex_prices():
     try:
         with open('production_config.json', 'r') as f:
             config = json.load(f)
-        print("✅ Configuration loaded successfully")
+        print("[OK] Configuration loaded successfully")
     except Exception as e:
-        print(f"❌ Error loading config: {e}")
+        print(f"[ERROR] Error loading config: {e}")
         return
     
     # Get current gas price
@@ -111,7 +112,7 @@ async def show_dex_prices():
     print("-" * 80)
     
     # Sample token pairs with realistic prices (USD)
-    token_pairs = [
+    token_pairs = []
         ("WMATIC", "USDC", 0.8234),
         ("WETH", "USDC", 3420.50),
         ("WBTC", "USDC", 67890.25),
@@ -122,7 +123,7 @@ async def show_dex_prices():
         ("UNI", "USDC", 12.34),
         ("CRV", "USDC", 0.456),
         ("SUSHI", "USDC", 1.789)
-    ]
+    
     
     dexes = ['QuickSwap', 'Uniswap V3', 'SushiSwap', 'Curve', 'Balancer', 'DODO']
     
@@ -149,7 +150,7 @@ async def show_dex_prices():
         spread_usd = best_sell_price - best_buy_price
         spread_percent = (spread_usd / best_buy_price) * 100
         
-        print(f"\n📊 SPREAD ANALYSIS:")
+        print(f"\n[METRICS] SPREAD ANALYSIS:")
         print(f"  Best Buy:  {best_buy_dex} @ ${best_buy_price:.6f}")
         print(f"  Best Sell: {best_sell_dex} @ ${best_sell_price:.6f}")
         print(f"  Spread:    ${spread_usd:.6f} ({spread_percent:.3f}%)")
@@ -166,7 +167,7 @@ async def show_dex_prices():
         total_costs = aave_fee + dex_fees + gas_cost_usd
         net_profit = gross_profit - total_costs
         
-        print(f"\n💡 PROFIT CALCULATION (${trade_amount} trade):")
+        print(f"\n[INFO] PROFIT CALCULATION (${trade_amount} trade):")
         print(f"  Gross Profit:    ${gross_profit:.2f}")
         print(f"  AAVE Fee:        ${aave_fee:.2f}")
         print(f"  DEX Fees:        ${dex_fees:.2f}")
@@ -193,15 +194,15 @@ async def show_dex_prices():
     
     # Summary
     print("\n" + "="*80)
-    print("📈 ARBITRAGE OPPORTUNITIES SUMMARY")
+    print("[GROWTH] ARBITRAGE OPPORTUNITIES SUMMARY")
     print("="*80)
     
     if profitable_opportunities:
-        print(f"✅ Found {len(profitable_opportunities)} profitable opportunities:")
+        print(f"[OK] Found {len(profitable_opportunities)} profitable opportunities:")
         for i, (token_a, token_b, profit, buy_dex, sell_dex) in enumerate(profitable_opportunities, 1):
             print(f"  {i}. {token_a}/{token_b}: ${profit:.2f} profit ({buy_dex} → {sell_dex})")
     else:
-        print("❌ No profitable opportunities found at current prices")
+        print("[ERROR] No profitable opportunities found at current prices")
         print("   Reasons:")
         print("   • DEX prices are tightly aligned (efficient market)")
         print("   • Transaction costs exceed potential profits")
@@ -218,7 +219,7 @@ async def show_dex_prices():
 
 async def continuous_monitoring():
     """Run continuous price monitoring"""
-    print("🚀 Starting continuous DEX price monitoring...")
+    print("[INIT] Starting continuous DEX price monitoring...")
     print("Press Ctrl+C to stop")
     
     try:
@@ -227,7 +228,7 @@ async def continuous_monitoring():
             print("\n⏳ Waiting 10 seconds for next update...\n")
             await asyncio.sleep(10)
     except KeyboardInterrupt:
-        print("\n🛑 Monitoring stopped by user")
+        print("\n[STOP] Monitoring stopped by user")
 
 if __name__ == "__main__":
     print("DEX Price Monitor - Choose mode:")

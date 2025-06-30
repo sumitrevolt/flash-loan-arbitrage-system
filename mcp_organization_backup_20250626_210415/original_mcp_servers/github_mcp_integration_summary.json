@@ -1,0 +1,23 @@
+{
+  "github_mcp_integration": {
+    "status": "configured",
+    "services": {
+      "github": {
+        "image": "ghcr.io/github/github-mcp-server",
+        "port": 8017,
+        "description": "GitHub API operations (repos, issues, PRs)"
+      },
+      "filesystem": {
+        "image": "ghcr.io/cyanheads/filesystem-mcp-server",
+        "port": 8018,
+        "description": "Local filesystem and Git operations"
+      }
+    },
+    "startup_scripts": {
+      "linux_mac": "mcp_servers/start_github_mcp.sh",
+      "windows": "mcp_servers/start_github_mcp.bat"
+    },
+    "vscode_config": ".vscode/mcp.json",
+    "docker_compose": "mcp_servers/docker-compose.github-mcp.yml"
+  }
+}

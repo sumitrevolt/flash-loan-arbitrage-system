@@ -1,15 +1,17 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+from typing import Dict, Any
+import json
+import os
+import re
+import shutil
 """
 Flash Loan Project Organization Script
 Organizes Docker, MCP, and AI Agent setup for Claude integration
 """
 
-import os
-import json
-import shutil
 # import subprocess (unused) removed
-from pathlib import Path
-from typing import Dict, Any
 
 class ProjectOrganizer:
     def __init__(self):
@@ -22,7 +24,7 @@ class ProjectOrganizer:
         print("📁 Creating organized directory structure...")
         
         # Main directories
-        directories = [
+        directories = []
             "docker/claude",
             "docker/mcp", 
             "docker/ai",
@@ -43,26 +45,26 @@ class ProjectOrganizer:
             "scripts/docker",
             "documentation/claude",
             "documentation/setup"
-        ]
+        
         
         for directory in directories:
             dir_path = self.project_root / directory
             dir_path.mkdir(parents=True, exist_ok=True)
-            print(f"✅ Created: {directory}")
+            print(f"[OK] Created: {directory}")
     
     def organize_docker_files(self):
         """Organize Docker-related files"""
         print("\n🐳 Organizing Docker files...")
         
         # Docker files organization
-        docker_files = {
+        docker_files = {}
             "docker-compose-claude.yml": "docker/claude/",
             "docker-compose-simple.yml": "docker/",
             "Dockerfile.arbitrage": "docker/",
             "Dockerfile.price": "docker/", 
             "Dockerfile.aave": "docker/",
             "claude-bridge-server.js": "docker/claude/",
-        }
+        
         
         for file_name, target_dir in docker_files.items():
             source_path = self.project_root / file_name
@@ -72,17 +74,17 @@ class ProjectOrganizer:
                 target_path.parent.mkdir(parents=True, exist_ok=True)
                 if not target_path.exists():
                     shutil.copy2(source_path, target_path)
-                    print(f"✅ Moved: {file_name} → {target_dir}")
+                    print(f"[OK] Moved: {file_name} → {target_dir}")
     
     def organize_mcp_servers(self):
         """Organize MCP server files"""
         print("\n🔌 Organizing MCP servers...")
         
-        mcp_servers = [
+        mcp_servers = []
             "working_flash_loan_mcp.py",
             "simple_mcp_server.py", 
             "minimal-mcp-server.py",
-        ]
+        
         
         # Create MCP server directory structure
         mcp_dir = self.project_root / "mcp_servers_organized"
@@ -94,17 +96,17 @@ class ProjectOrganizer:
             
             if source_path.exists() and not target_path.exists():
                 shutil.copy2(source_path, target_path)
-                print(f"✅ Organized: {server}")
+                print(f"[OK] Organized: {server}")
     
     def organize_ai_agents(self):
         """Organize AI agent files"""
         print("\n🤖 Organizing AI agents...")
         
         # AI agent organization
-        ai_files = {
+        ai_files = {}
             "ai_agent/unified_agent.py": "agents/unified/",
             "agents/": "agents/specialized/",
-        }
+        
         
         for source, target in ai_files.items():
             source_path = self.project_root / source
@@ -112,38 +114,38 @@ class ProjectOrganizer:
             
             if source_path.exists():
                 target_path.mkdir(parents=True, exist_ok=True)
-                print(f"✅ AI agents organized in: {target}")
+                print(f"[OK] AI agents organized in: {target}")
     
     def create_configuration_files(self):
         """Create organized configuration files"""
         print("\n⚙️ Creating configuration files...")
         
         # Claude Desktop configuration for Docker
-        claude_config: Dict[str, Any] = {
-            "mcpServers": {
-                "docker-flash-loan": {
+        claude_config: Dict[str, Any] = {}
+            "mcpServers": {}
+                "docker-flash-loan": {}
                     "command": "docker",
                     "args": ["exec", "claude-mcp-flash-loan", "python", "working_flash_loan_mcp.py"],
-                    "env": {
+                    "env": {}
                         "DOCKER_MODE": "true"
-                    }
+                    
                 },
-                "docker-price-monitor": {
+                "docker-price-monitor": {}
                     "command": "docker", 
                     "args": ["exec", "claude-mcp-price-monitor", "python", "real_time_price_mcp_server.py"],
-                    "env": {
+                    "env": {}
                         "DOCKER_MODE": "true"
-                    }
+                    
                 },
-                "docker-aave": {
+                "docker-aave": {}
                     "command": "docker",
                     "args": ["exec", "claude-mcp-aave", "python", "aave_flash_loan_mcp_server.py"],
-                    "env": {
+                    "env": {}
                         "DOCKER_MODE": "true"
-                    }
-                }
-            }
-        }
+                    
+                
+            
+        
         
         claude_config_path = self.config_dir / "claude" / "claude_desktop_docker_config.json"
         claude_config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -151,11 +153,11 @@ class ProjectOrganizer:
         with open(claude_config_path, 'w') as f:
             json.dump(claude_config, f, indent=2)
         
-        print(f"✅ Created Claude Docker config: {claude_config_path}")
+        print(f"[OK] Created Claude Docker config: {claude_config_path}")
     
     def create_startup_scripts(self):
         """Create organized startup scripts"""
-        print("\n🚀 Creating startup scripts...")
+        print("\n[INIT] Creating startup scripts...")
         
         # Main startup script
         startup_script = """#!/bin/bash
@@ -165,14 +167,14 @@ echo "🤖 Starting Flash Loan Claude System..."
 
 # Check if Docker is running
 if ! docker info > /dev/null 2>&1; then
-    echo "❌ Docker is not running. Please start Docker first."
+    echo "[ERROR] Docker is not running. Please start Docker first."
     exit 1
 fi
 
-echo "✅ Docker is running"
+echo "[OK] Docker is running"
 
 # Start Claude services
-echo "🚀 Starting Claude services..."
+echo "[INIT] Starting Claude services..."
 docker compose -f docker/claude/docker-compose-claude.yml up -d
 
 echo "⏳ Waiting for services to start..."
@@ -180,11 +182,11 @@ sleep 30
 
 # Health checks
 echo "🏥 Performing health checks..."
-curl -f http://localhost:8080/health || echo "⚠️ Claude Bridge not ready"
-curl -f http://localhost:8900/health || echo "⚠️ MCP Coordinator not ready"
-curl -f http://localhost:7000/health || echo "⚠️ AI Coordinator not ready"
+curl -f http://localhost:8080/health || echo "[WARN] Claude Bridge not ready"
+curl -f http://localhost:8900/health || echo "[WARN] MCP Coordinator not ready"
+curl -f http://localhost:7000/health || echo "[WARN] AI Coordinator not ready"
 
-echo "🎉 Claude system startup complete!"
+echo "[CELEBRATE] Claude system startup complete!"
 echo "📍 Access URLs:"
 echo "  - Claude Bridge: http://localhost:8080"
 echo "  - Web UI: http://localhost:3000"
@@ -202,7 +204,7 @@ echo "  - AI Coordinator: http://localhost:7000"
         if os.name != 'nt':
             os.chmod(startup_path, 0o755)
         
-        print(f"✅ Created startup script: {startup_path}")
+        print(f"[OK] Created startup script: {startup_path}")
     
     def create_documentation(self):
         """Create comprehensive documentation"""
@@ -281,11 +283,11 @@ This directory contains the organized Docker setup for integrating Claude with y
         with open(readme_path, 'w') as f:
             f.write(readme_content)
         
-        print(f"✅ Created documentation: {readme_path}")
+        print(f"[OK] Created documentation: {readme_path}")
     
     def create_monitoring_config(self):
         """Create monitoring configuration"""
-        print("\n📊 Creating monitoring configuration...")
+        print("\n[METRICS] Creating monitoring configuration...")
         
         # Prometheus configuration
         prometheus_config = """
@@ -320,11 +322,11 @@ scrape_configs:
         with open(prometheus_path, 'w') as f:
             f.write(prometheus_config)
         
-        print(f"✅ Created Prometheus config: {prometheus_path}")
+        print(f"[OK] Created Prometheus config: {prometheus_path}")
     
     def run_organization(self):
         """Run complete project organization"""
-        print("🎯 Starting Flash Loan Project Organization for Claude...")
+        print("[TASK] Starting Flash Loan Project Organization for Claude...")
         print("=" * 60)
         
         try:
@@ -337,7 +339,7 @@ scrape_configs:
             self.create_documentation()
             self.create_monitoring_config()
             
-            print("\n🎉 Project organization completed successfully!")
+            print("\n[CELEBRATE] Project organization completed successfully!")
             print("\n📋 Next Steps:")
             print("1. Review the generated configuration files")
             print("2. Update environment variables in .env.claude")
@@ -353,7 +355,7 @@ scrape_configs:
             print("- monitoring/: Prometheus and Grafana configs")
             
         except Exception as e:
-            print(f"\n❌ Organization failed: {str(e)}")
+            print(f"\n[ERROR] Organization failed: {str(e)}")
             return False
         
         return True

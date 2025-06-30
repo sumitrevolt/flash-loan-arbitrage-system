@@ -1,14 +1,16 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Optional
+import asyncio
+import logging
+
+from src.flash_loan.agents.auto_executor import AutoExecutor
+from src.flash_loan.core.dex_integration_singleton import dex_integration
 """
 Main system runner for flash loan arbitrage system.
 """
 
-import asyncio
-import logging
-from typing import Optional
 
-from src.flash_loan.core.dex_integration_singleton import dex_integration
-from src.flash_loan.agents.auto_executor import AutoExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +40,7 @@ class FlashLoanSystem:
             return True
             
         except Exception as e:
-            self.logger.error(f"Error initializing system: {e}")
+            self.logger.error(str(f"Error initializing system: {e}")
             return False
     
     async def start(self):
@@ -51,9 +53,8 @@ class FlashLoanSystem:
             return True
             
         except Exception as e:
-            self.logger.error(f"Error starting system: {e}")
+            self.logger.error(str(f"Error starting system: {e}")
             return False
 
 # Global system instance
 flash_loan_system = FlashLoanSystem()
-

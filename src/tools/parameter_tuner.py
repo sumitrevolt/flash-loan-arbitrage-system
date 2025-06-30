@@ -1,3 +1,16 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from typing import Dict, Any, Optional, List, Tuple, Union
+import json
+import logging
+import math
+import os
+import statistics
+import threading
+import time
+
+import secrets
 """
 Parameter tuner for flash loan arbitrage.
 
@@ -5,17 +18,7 @@ This module automatically adjusts system parameters based on performance metrics
 to optimize the flash loan arbitrage system over time.
 """
 
-import logging
-import time
-import json
-import os
-import math
-import statistics
-import secrets  # Use secrets module for cryptographically secure random numbers
-from typing import Dict, Any, Optional, List, Tuple, Union
 
-from datetime import datetime, timedelta
-import threading
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -25,7 +28,7 @@ class ParameterTuner:
     Automatically tunes system parameters based on performance metrics.
     """
 
-    def __init__(
+    def __init__()
         self,
         config_path: str = "config/parameter_tuner_config.json",
         state_path: str = "data/parameter_tuner_state.json",
@@ -52,7 +55,7 @@ class ParameterTuner:
 
         # Initialize state if needed
         if not self.state:
-            self.state = {
+            self.state = {}
                 "last_tuning": time.time(),
                 "tuning_count": 0,
                 "performance_history": [],
@@ -63,7 +66,7 @@ class ParameterTuner:
                 "exploration_rate": self.config.get("initial_exploration_rate", 0.3),
                 "token_specific_parameters": {},
                 "dex_specific_parameters": {}
-            }
+            
             self._save_state()
 
         # Initialize lock for thread safety
@@ -85,10 +88,10 @@ class ParameterTuner:
                 with open(self.config_path, 'r') as f:
                     return json.load(f)
         except Exception as e:
-            self.logger.error(f"Error loading parameter tuner config: {e}")
+            self.logger.error(str(f"Error loading parameter tuner config: {e}")
 
         # Default configuration
-        return {
+        return {}
             "tuning_interval_seconds": 3600,  # 1 hour
             "performance_window_size": 100,
             "min_samples_for_tuning": 20,
@@ -97,98 +100,98 @@ class ParameterTuner:
             "max_exploration_rate": 0.5,
             "initial_exploration_rate": 0.3,
             "learning_rate": 0.1,
-            "performance_metrics": {
+            "performance_metrics": {}
                 "success_rate_weight": 0.4,
                 "profit_weight": 0.4,
                 "gas_efficiency_weight": 0.2
             },
-            "tunable_parameters": {
-                "slippage": {
-                    "base_slippage": {
+            "tunable_parameters": {}
+                "slippage": {}
+                    "base_slippage": {}
                         "min": 0.1,
                         "max": 1.0,
                         "step": 0.1,
                         "default": 0.5
                     },
-                    "max_slippage": {
+                    "max_slippage": {}
                         "min": 1.0,
                         "max": 5.0,
                         "step": 0.5,
                         "default": 3.0
                     },
-                    "volatility_factor": {
+                    "volatility_factor": {}
                         "min": 0.1,
                         "max": 1.0,
                         "step": 0.1,
                         "default": 0.5
-                    }
+                    
                 },
-                "circuit_breaker": {
-                    "max_consecutive_failures": {
+                "circuit_breaker": {}
+                    "max_consecutive_failures": {}
                         "min": 2,
                         "max": 10,
                         "step": 1,
                         "default": 3
                     },
-                    "cooldown_period_seconds": {
+                    "cooldown_period_seconds": {}
                         "min": 60,
                         "max": 1800,
                         "step": 60,
                         "default": 300
-                    }
+                    
                 },
-                "gas": {
-                    "gas_price_multipliers.standard": {
+                "gas": {}
+                    "gas_price_multipliers.standard": {}
                         "min": 0.8,
                         "max": 1.2,
                         "step": 0.05,
                         "default": 1.0
                     },
-                    "gas_price_multipliers.fast": {
+                    "gas_price_multipliers.fast": {}
                         "min": 1.0,
                         "max": 1.5,
                         "step": 0.05,
                         "default": 1.2
-                    }
+                    
                 },
-                "retry": {
-                    "max_retries": {
+                "retry": {}
+                    "max_retries": {}
                         "min": 1,
                         "max": 5,
                         "step": 1,
                         "default": 3
                     },
-                    "retry_delay": {
+                    "retry_delay": {}
                         "min": 1,
                         "max": 30,
                         "step": 1,
                         "default": 5
-                    }
+                    
                 },
-                "trade": {
-                    "min_profit_threshold_usd": {
+                "trade": {}
+                    "min_profit_threshold_usd": {}
                         "min": 1.0,
                         "max": 10.0,
                         "step": 0.5,
                         "default": 3.0
                     },
-                    "min_profit_percentage": {
+                    "min_profit_percentage": {}
                         "min": 0.1,
                         "max": 1.0,
                         "step": 0.1,
                         "default": 0.5
-                    }
-                }
+                    
+                
             },
-            "token_specific_tuning": {
+            "token_specific_tuning": {}
                 "enabled": True,
                 "min_samples_per_token": 10
             },
-            "dex_specific_tuning": {
+            "dex_specific_tuning": {}
                 "enabled": True,
                 "min_samples_per_dex": 10
-            }
-        }
+            
+        
 
     def _load_state(self) -> Dict[str, Any]:
         """Load parameter tuner state."""
@@ -197,7 +200,7 @@ class ParameterTuner:
                 with open(self.state_path, 'r') as f:
                     return json.load(f)
         except Exception as e:
-            self.logger.error(f"Error loading parameter tuner state: {e}")
+            self.logger.error(str(f"Error loading parameter tuner state: {e}")
 
         return {}
 
@@ -210,9 +213,9 @@ class ParameterTuner:
             with open(self.state_path, 'w') as f:
                 json.dump(self.state, f, indent=2)
 
-            self.logger.debug(f"Saved parameter tuner state to {self.state_path}")
+            self.logger.debug(str(f"Saved parameter tuner state to {self.state_path}")
         except Exception as e:
-            self.logger.error(f"Error saving parameter tuner state: {e}")
+            self.logger.error(str(f"Error saving parameter tuner state: {e}")
 
     def _auto_save_thread(self):
         """Auto-save thread function."""
@@ -322,13 +325,13 @@ class ParameterTuner:
 
         # Calculate current performance score
         current_score = self._calculate_performance_score(self.state["performance_history"])
-        self.logger.info(f"Current performance score: {current_score:.4f}")
+        self.logger.info(str(f"Current performance score: {current_score:.4f}")
 
         # Update best parameters if current performance is better
         if self.state.get("best_performance") is None or current_score > self.state["best_performance"]:
             self.state["best_parameters"] = self.state["current_parameters"].copy()
             self.state["best_performance"] = current_score
-            self.logger.info(f"New best performance: {current_score:.4f}")
+            self.logger.info(str(f"New best performance: {current_score:.4f}")
 
         # Decide whether to explore or exploit
         if secrets.randbelow(100) < int(self.state["exploration_rate"] * 100):
@@ -344,12 +347,12 @@ class ParameterTuner:
         self.state["exploration_rate"] = max(min_rate, self.state["exploration_rate"] * decay_rate)
 
         # Save parameter history
-        self.state["parameter_history"].append({
+        self.state["parameter_history"].append({)}
             "parameters": self.state["current_parameters"].copy(),
             "performance": current_score,
             "timestamp": time.time(),
             "exploration_rate": self.state["exploration_rate"]
-        })
+        
 
         # Tune token-specific parameters if enabled
         if self.config.get("token_specific_tuning", {}).get("enabled", False):
@@ -404,11 +407,11 @@ class ParameterTuner:
         normalized_efficiency = min(1.0, gas_efficiency / target_efficiency)
 
         # Calculate weighted score
-        score = (
+        score = ()
             success_weight * success_rate +
             profit_weight * normalized_profit +
             gas_weight * normalized_efficiency
-        )
+        
 
         return score
 
@@ -465,7 +468,7 @@ class ParameterTuner:
                 new_value = round(new_value, 2)  # Round to 2 decimal places
 
             new_params[param_key] = new_value
-            self.logger.info(f"Exploring parameter {param_key}: {new_params[param_key]}")
+            self.logger.info(str(f"Exploring parameter {param_key}: {new_params[param_key]}")
 
         # Update current parameters
         self.state["current_parameters"] = new_params
@@ -523,7 +526,7 @@ class ParameterTuner:
                     new_params[param_key] = new_value
 
                     if new_value != current_value:
-                        self.logger.info(f"Adjusting parameter {param_key}: {current_value} -> {new_value}")
+                        self.logger.info(str(f"Adjusting parameter {param_key}: {current_value} -> {new_value}")
 
         # Update current parameters
         self.state["current_parameters"] = new_params
@@ -544,7 +547,7 @@ class ParameterTuner:
         # Tune parameters for each token with enough samples
         for token, history in token_history.items():
             if len(history) >= min_samples:
-                self.logger.info(f"Tuning parameters for token {token}...")
+                self.logger.info(str(f"Tuning parameters for token {token}...")
 
                 # Calculate token-specific performance
                 token_score = self._calculate_performance_score(history)
@@ -555,11 +558,11 @@ class ParameterTuner:
 
                 # Tune parameters for this token
                 # For simplicity, we'll just tune a few key parameters
-                key_params = [
+                key_params = []
                     "slippage.base_slippage",
                     "slippage.volatility_factor",
                     "trade.min_profit_threshold_usd"
-                ]
+                
 
                 for param_key in key_params:
                     category, param_name = param_key.split(".", 1)
@@ -609,7 +612,7 @@ class ParameterTuner:
                         # Update token-specific parameter
                         if new_value != current_value:
                             self.state["token_specific_parameters"][token][param_key] = new_value
-                            self.logger.info(f"Adjusted {param_key} for {token}: {current_value} -> {new_value}")
+                            self.logger.info(str(f"Adjusted {param_key} for {token}: {current_value} -> {new_value}")
 
     def _tune_dex_specific_parameters(self):
         """Tune DEX-specific parameters."""
@@ -627,7 +630,7 @@ class ParameterTuner:
         # Tune parameters for each DEX with enough samples
         for dex, history in dex_history.items():
             if len(history) >= min_samples:
-                self.logger.info(f"Tuning parameters for DEX {dex}...")
+                self.logger.info(str(f"Tuning parameters for DEX {dex}...")
 
                 # Calculate DEX-specific performance
                 dex_score = self._calculate_performance_score(history)
@@ -638,11 +641,11 @@ class ParameterTuner:
 
                 # Tune parameters for this DEX
                 # For simplicity, we'll just tune a few key parameters
-                key_params = [
+                key_params = []
                     "gas.gas_price_multipliers.standard",
                     "gas.gas_price_multipliers.fast",
                     "slippage.max_slippage"
-                ]
+                
 
                 for param_key in key_params:
                     category, param_name = param_key.split(".", 1)
@@ -691,7 +694,7 @@ class ParameterTuner:
                         # Update DEX-specific parameter
                         if new_value != current_value:
                             self.state["dex_specific_parameters"][dex][param_key] = new_value
-                            self.logger.info(f"Adjusted {param_key} for {dex}: {current_value} -> {new_value}")
+                            self.logger.info(str(f"Adjusted {param_key} for {dex}: {current_value} -> {new_value}")
 
     def apply_parameters_to_config(self, config_path: str, config_key: str):
         """
@@ -732,10 +735,10 @@ class ParameterTuner:
             with open(config_path, 'w') as f:
                 json.dump(config, f, indent=2)
 
-            self.logger.info(f"Applied parameters to {config_path}")
+            self.logger.info(str(f"Applied parameters to {config_path}")
 
         except Exception as e:
-            self.logger.error(f"Error applying parameters to {config_path}: {e}")
+            self.logger.error(str(f"Error applying parameters to {config_path}: {e}")
 
     def get_performance_summary(self) -> Dict[str, Any]:
         """
@@ -748,13 +751,13 @@ class ParameterTuner:
             history = self.state.get("performance_history", [])
 
             if not history:
-                return {
+                return {}
                     "total_transactions": 0,
                     "success_rate": 0,
                     "average_profit": 0,
                     "total_profit": 0,
                     "best_performance_score": 0
-                }
+                
 
             # Calculate metrics
             total_txs = len(history)
@@ -764,7 +767,7 @@ class ParameterTuner:
             total_profit = sum(p.get("profit_usd", 0) for p in history)
             avg_profit = total_profit / successful_txs if successful_txs > 0 else 0
 
-            return {
+            return {}
                 "total_transactions": total_txs,
                 "successful_transactions": successful_txs,
                 "success_rate": success_rate,
@@ -773,4 +776,4 @@ class ParameterTuner:
                 "best_performance_score": self.state.get("best_performance", 0),
                 "tuning_count": self.state.get("tuning_count", 0),
                 "exploration_rate": self.state.get("exploration_rate", 0.3)
-            }
+            

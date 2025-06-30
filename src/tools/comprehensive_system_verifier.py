@@ -1,19 +1,34 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Dict, List, Tuple, Optional
+import json
+import logging
+import socket
+import time
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import requests
 """
 Comprehensive Flash Loan System Status Verification
 Tests all MCP servers and AI agents regardless of Docker health check status
 """
 
-import requests
-import socket
-import json
-import time
-from datetime import datetime
-from typing import Dict, List, Tuple, Optional
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import logging
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -34,7 +49,7 @@ class FlashLoanSystemVerifier:
             sock.close()
             return result == 0
         except Exception as e:
-            logger.debug(f"Port {port} connection failed: {e}")
+            logger.debug(str(f"Port {port} connection failed: {e}")
             return False
     
     def test_http_health(self, url: str, timeout: int = 10) -> Tuple[bool, Optional[Dict]]:
@@ -49,12 +64,12 @@ class FlashLoanSystemVerifier:
                     return True, {"status": "responding"}
             return False, None
         except Exception as e:
-            logger.debug(f"HTTP health check failed for {url}: {e}")
+            logger.debug(str(f"HTTP health check failed for {url}: {e}")
             return False, None
     
     def verify_service(self, service_name: str, port: int, service_type: str) -> Dict:
         """Verify a single service"""
-        result: str = {
+        result: str = {}
             'name': service_name,
             'port': port,
             'type': service_type,
@@ -62,7 +77,7 @@ class FlashLoanSystemVerifier:
             'http_healthy': False,
             'response_data': None,
             'status': 'unknown'
-        }
+        
         
         # Test port connectivity
         result['port_open'] = self.test_port_connectivity(port=port)
@@ -85,14 +100,14 @@ class FlashLoanSystemVerifier:
     
     def get_service_definitions(self) -> Dict[str, List[Tuple[str, int]]]:
         """Define all services to verify"""
-        return {
-            'infrastructure': [
+        return {}
+            'infrastructure': []
                 ('PostgreSQL', 5432),
                 ('Redis', 6379),
                 ('RabbitMQ', 5672),
                 ('RabbitMQ Management', 15672)
             ],
-            'mcp_servers': [
+            'mcp_servers': []
                 ('Flash Loan MCP', 4001),
                 ('Web3 Provider MCP', 4002),
                 ('DEX Price Server', 4003),
@@ -115,19 +130,19 @@ class FlashLoanSystemVerifier:
                 ('Code Indexer', 4020),
                 ('Health Checker', 4021)
             ],
-            'ai_agents': [
+            'ai_agents': []
                 ('Coordinator Agent', 5001),
                 ('Arbitrage Agent', 5002),
                 ('Monitoring Agent', 5003),
                 ('Builder Agent', 5004),
                 ('AAVE Executor', 5005),
                 ('Contract Executor', 5006)
-            ]
-        }
+            
+        
     
     def verify_all_services(self, max_workers: int = 10) -> Dict:
         """Verify all services concurrently"""
-        print("🔍 Flash Loan System Comprehensive Verification")
+        print("[SEARCH] Flash Loan System Comprehensive Verification")
         print("=" * 60)
         
         service_definitions = self.get_service_definitions()
@@ -142,10 +157,10 @@ class FlashLoanSystemVerifier:
         
         # Verify services concurrently
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_to_service = {
+            future_to_service = {}
                 executor.submit(self.verify_service, name, port, stype): (name, port, stype)
                 for name, port, stype in all_services
-            }
+            
             
             for future in as_completed(future_to_service):
                 service_name, port, service_type = future_to_service[future]
@@ -155,14 +170,14 @@ class FlashLoanSystemVerifier:
                     if result['status'] == 'healthy':
                         self.healthy_services += 1
                 except Exception as e:
-                    logger.error(f"Service verification failed for {service_name}: {e}")
-                    self.results[service_name] = {
+                    logger.error(str(f"Service verification failed for {service_name}: {e}")
+                    self.results[service_name] = {}
                         'name': service_name,
                         'port': port,
                         'type': service_type,
                         'status': 'error',
                         'error': str(e)
-                    }
+                    
         
         return self.results
     
@@ -171,7 +186,7 @@ class FlashLoanSystemVerifier:
         service_definitions = self.get_service_definitions()
         
         for service_type, services in service_definitions.items():
-            print(f"\n📊 {service_type.replace('_', ' ').title()}:")
+            print(f"\n[METRICS] {service_type.replace('_', ' ').title()}:")
             print("-" * 50)
             
             for service_name, port in services:
@@ -180,13 +195,13 @@ class FlashLoanSystemVerifier:
                     status = result['status']
                     
                     if status == 'healthy':
-                        icon = "✅"
+                        icon = "[OK]"
                         status_text = "HEALTHY"
                     elif status == 'port_open_no_http':
                         icon = "🟡"
                         status_text = "PORT OPEN (No HTTP)"
                     elif status == 'port_closed':
-                        icon = "❌"
+                        icon = "[ERROR]"
                         status_text = "PORT CLOSED"
                     else:
                         icon = "❓"
@@ -206,23 +221,23 @@ class FlashLoanSystemVerifier:
         """Generate summary report"""
         health_percentage = (self.healthy_services / self.total_services * 100) if self.total_services > 0 else 0
         
-        summary = {
+        summary = {}
             'timestamp': datetime.now().isoformat(),
             'total_services': self.total_services,
             'healthy_services': self.healthy_services,
             'health_percentage': round(health_percentage, 1),
             'status': 'operational' if health_percentage >= 80 else 'degraded' if health_percentage >= 50 else 'critical'
-        }
+        
         
         return summary
     
     def save_detailed_report(self, filename: str = 'system_verification_report.json'):
         """Save detailed report to JSON file"""
-        report = {
+        report = {}
             'verification_time': datetime.now().isoformat(),
             'summary': self.generate_summary_report(),
             'detailed_results': self.results
-        }
+        
         
         with open(filename, 'w') as f:
             json.dump(report, f, indent=2)
@@ -233,7 +248,7 @@ def main():
     """Main verification function"""
     verifier = FlashLoanSystemVerifier()
     
-    print("🚀 Starting Flash Loan System Verification...")
+    print("[INIT] Starting Flash Loan System Verification...")
     print(f"⏰ Start Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     # Verify all services
@@ -244,22 +259,22 @@ def main():
     
     # Generate and print summary
     summary = verifier.generate_summary_report()
-    print(f"\n📊 SYSTEM SUMMARY:")
+    print(f"\n[METRICS] SYSTEM SUMMARY:")
     print("=" * 40)
-    print(f"🎯 Total Services: {summary['total_services']}")
-    print(f"✅ Healthy Services: {summary['healthy_services']}")
-    print(f"📈 Health Percentage: {summary['health_percentage']}%")
+    print(f"[TASK] Total Services: {summary['total_services']}")
+    print(f"[OK] Healthy Services: {summary['healthy_services']}")
+    print(f"[GROWTH] Health Percentage: {summary['health_percentage']}%")
     print(f"🏥 System Status: {summary['status'].upper()}")
     
     # Status interpretation
     if summary['health_percentage'] >= 95:
-        print("🎉 EXCELLENT: System is performing optimally!")
+        print("[CELEBRATE] EXCELLENT: System is performing optimally!")
     elif summary['health_percentage'] >= 80:
         print("👍 GOOD: System is operational with minor issues.")
     elif summary['health_percentage'] >= 50:
-        print("⚠️  CAUTION: System is degraded, some services need attention.")
+        print("[WARN]  CAUTION: System is degraded, some services need attention.")
     else:
-        print("🚨 CRITICAL: System requires immediate attention!")
+        print("[ALERT] CRITICAL: System requires immediate attention!")
     
     # Save detailed report
     verifier.save_detailed_report()

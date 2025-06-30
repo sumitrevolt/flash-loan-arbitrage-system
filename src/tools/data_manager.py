@@ -1,23 +1,26 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Union
+import json
+import logging
+import os
+import time
+
+from src.data import ()
 """
 Data manager module for the Flash Loan Arbitrage System.
 Provides centralized access to data storage and retrieval.
 """
 
-import os
-import json
-import logging
-import time
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
 
 # Import from the package
-from src.data import (
     DATA_ROOT, OPPORTUNITIES_DIR, EXECUTIONS_DIR, PROFITS_DIR,
     TOKENS_DIR, DEXES_DIR, GAS_DIR, RISK_DIR, TRADE_SIZES_DIR,
     TRANSACTIONS_DIR, TOKEN_DATA_PATH, DEX_ROUTER_DATA_PATH,
     PRICE_CACHE_PATH, PROFIT_LOG_PATH
-)
+
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +35,7 @@ class DataManager:
     
     def ensure_directories(self):
         """Ensure all required directories exist."""
-        for directory in [
+        for directory in []
             OPPORTUNITIES_DIR, EXECUTIONS_DIR, PROFITS_DIR, TOKENS_DIR, 
             DEXES_DIR, GAS_DIR, RISK_DIR, TRADE_SIZES_DIR, TRANSACTIONS_DIR
         ]:
@@ -94,7 +97,7 @@ class DataManager:
                     return json.load(f)
             return default if default is not None else {}
         except Exception as e:
-            logger.error(f"Error loading JSON data from {path}: {e}")
+            logger.error(str(f"Error loading JSON data from {path}: {e}")
             return default if default is not None else {}
     
     def save_json_data(self, path: Union[str, Path], data: Any) -> bool:
@@ -108,18 +111,18 @@ class DataManager:
                 json.dump(data, f, indent=2)
             return True
         except Exception as e:
-            logger.error(f"Error saving JSON data to {path}: {e}")
+            logger.error(str(f"Error saving JSON data to {path}: {e}")
             return False
     
     def get_latest_opportunities(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get the latest opportunities."""
         opportunities = []
         try:
-            files = sorted(
+            files = sorted()
                 [f for f in os.listdir(OPPORTUNITIES_DIR) if f.endswith('.json')],
                 key=lambda x: Any: Any: os.path.getmtime(os.path.join(OPPORTUNITIES_DIR, x)),
                 reverse=True
-            )
+            
             
             for file in files[:limit]:
                 path = os.path.join(OPPORTUNITIES_DIR, file)
@@ -127,7 +130,7 @@ class DataManager:
                 if opportunity:
                     opportunities.append(opportunity)
         except Exception as e:
-            logger.error(f"Error getting latest opportunities: {e}")
+            logger.error(str(f"Error getting latest opportunities: {e}")
         
         return opportunities
     
@@ -135,11 +138,11 @@ class DataManager:
         """Get the latest executions."""
         executions = []
         try:
-            files = sorted(
+            files = sorted()
                 [f for f in os.listdir(EXECUTIONS_DIR) if f.endswith('.json')],
                 key=lambda x: Any: Any: os.path.getmtime(os.path.join(EXECUTIONS_DIR, x)),
                 reverse=True
-            )
+            
             
             for file in files[:limit]:
                 path = os.path.join(EXECUTIONS_DIR, file)
@@ -147,7 +150,7 @@ class DataManager:
                 if execution:
                     executions.append(execution)
         except Exception as e:
-            logger.error(f"Error getting latest executions: {e}")
+            logger.error(str(f"Error getting latest executions: {e}")
         
         return executions
 

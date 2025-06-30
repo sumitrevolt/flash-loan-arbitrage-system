@@ -1,15 +1,30 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Dict, List, Optional
+import logging
+import time
+
+import psycopg2
 """
 PostgreSQL LangChain Setup and Verification
 Ensures PostgreSQL is properly configured for LangChain operations
 """
 
-import psycopg2
-import logging
-import time
-from typing import Dict, List, Optional
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -31,93 +46,93 @@ class PostgreSQLLangChainSetup:
         
         for attempt in range(max_attempts):
             try:
-                conn = psycopg2.connect(
+                conn = psycopg2.connect()
                     host=self.host,
                     port=self.port,
                     user=self.admin_user,
                     password=self.admin_password,
                     database='postgres'
-                )
+                
                 conn.close()
-                logger.info("✅ PostgreSQL is ready")
+                logger.info("[OK] PostgreSQL is ready")
                 return True
             except Exception as e:
-                logger.debug(f"Attempt {attempt + 1}: {e}")
+                logger.debug(str(f"Attempt {attempt + 1}: {e}")
                 time.sleep(2)
         
-        logger.error("❌ PostgreSQL not ready after maximum attempts")
+        logger.error("[ERROR] PostgreSQL not ready after maximum attempts")
         return False
     
     def create_langchain_user(self):
         """Create LangChain user if it doesn't exist"""
         try:
-            conn = psycopg2.connect(
+            conn = psycopg2.connect()
                 host=self.host,
                 port=self.port,
                 user=self.admin_user,
                 password=self.admin_password,
                 database='postgres'
-            )
+            
             conn.autocommit = True
             cur = conn.cursor()
             
             # Check if user exists
             cur.execute("SELECT 1 FROM pg_user WHERE usename = %s", (self.langchain_user,))
             if cur.fetchone():
-                logger.info(f"✅ User '{self.langchain_user}' already exists")
+                logger.info(str(f"[OK] User '{self.langchain_user}' already exists")
             else:
                 # Create user
                 cur.execute(f"CREATE USER {self.langchain_user} WITH SUPERUSER PASSWORD %s", (self.langchain_password,))
-                logger.info(f"✅ Created user '{self.langchain_user}'")
+                logger.info(str(f"[OK] Created user '{self.langchain_user}'")
             
             cur.close()
             conn.close()
             return True
             
         except Exception as e:
-            logger.error(f"❌ Failed to create user: {e}")
+            logger.error(str(f"[ERROR] Failed to create user: {e}")
             return False
     
     def create_langchain_database(self):
         """Create LangChain database if it doesn't exist"""
         try:
-            conn = psycopg2.connect(
+            conn = psycopg2.connect()
                 host=self.host,
                 port=self.port,
                 user=self.admin_user,
                 password=self.admin_password,
                 database='postgres'
-            )
+            
             conn.autocommit = True
             cur = conn.cursor()
             
             # Check if database exists
             cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (self.langchain_db,))
             if cur.fetchone():
-                logger.info(f"✅ Database '{self.langchain_db}' already exists")
+                logger.info(str(f"[OK] Database '{self.langchain_db}' already exists")
             else:
                 # Create database
                 cur.execute(f"CREATE DATABASE {self.langchain_db} OWNER {self.langchain_user}")
-                logger.info(f"✅ Created database '{self.langchain_db}'")
+                logger.info(str(f"[OK] Created database '{self.langchain_db}'")
             
             cur.close()
             conn.close()
             return True
             
         except Exception as e:
-            logger.error(f"❌ Failed to create database: {e}")
+            logger.error(str(f"[ERROR] Failed to create database: {e}")
             return False
     
     def setup_langchain_extensions(self):
         """Set up PostgreSQL extensions for LangChain"""
         try:
-            conn = psycopg2.connect(
+            conn = psycopg2.connect()
                 host=self.host,
                 port=self.port,
                 user=self.langchain_user,
                 password=self.langchain_password,
                 database=self.langchain_db
-            )
+            
             conn.autocommit = True
             cur = conn.cursor()
             
@@ -127,43 +142,43 @@ class PostgreSQLLangChainSetup:
             for ext in extensions:
                 try:
                     cur.execute(f"CREATE EXTENSION IF NOT EXISTS \"{ext}\"")
-                    logger.info(f"✅ Enabled extension: {ext}")
+                    logger.info(str(f"[OK] Enabled extension: {ext}")
                 except Exception as e:
-                    logger.warning(f"⚠️ Could not enable extension {ext}: {e}")
+                    logger.warning(str(f"[WARN] Could not enable extension {ext}: {e}")
             
             cur.close()
             conn.close()
             return True
             
         except Exception as e:
-            logger.error(f"❌ Failed to setup extensions: {e}")
+            logger.error(str(f"[ERROR] Failed to setup extensions: {e}")
             return False
     
     def create_langchain_tables(self):
         """Create basic LangChain tables"""
         try:
-            conn = psycopg2.connect(
+            conn = psycopg2.connect()
                 host=self.host,
                 port=self.port,
                 user=self.langchain_user,
                 password=self.langchain_password,
                 database=self.langchain_db
-            )
+            
             conn.autocommit = True
             cur = conn.cursor()
             
             # Create basic tables for LangChain operations
-            tables = {
+            tables = {}
                 'mcp_sessions': '''
-                    CREATE TABLE IF NOT EXISTS mcp_sessions (
+                    CREATE TABLE IF NOT EXISTS mcp_sessions ()
                         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                         session_name VARCHAR(255) NOT NULL,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         metadata JSONB DEFAULT '{}'::jsonb
-                    )
+                    
                 ''',
                 'flash_loan_operations': '''
-                    CREATE TABLE IF NOT EXISTS flash_loan_operations (
+                    CREATE TABLE IF NOT EXISTS flash_loan_operations ()
                         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                         operation_type VARCHAR(100) NOT NULL,
                         token_symbol VARCHAR(20) NOT NULL,
@@ -172,10 +187,10 @@ class PostgreSQLLangChainSetup:
                         gas_used BIGINT,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         metadata JSONB DEFAULT '{}'::jsonb
-                    )
+                    
                 ''',
                 'arbitrage_opportunities': '''
-                    CREATE TABLE IF NOT EXISTS arbitrage_opportunities (
+                    CREATE TABLE IF NOT EXISTS arbitrage_opportunities ()
                         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                         token_pair VARCHAR(50) NOT NULL,
                         dex_source VARCHAR(50) NOT NULL,
@@ -184,60 +199,60 @@ class PostgreSQLLangChainSetup:
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         is_executed BOOLEAN DEFAULT FALSE,
                         metadata JSONB DEFAULT '{}'::jsonb
-                    )
+                    
                 '''
-            }
+            
             
             for table_name, create_sql in tables.items():
                 cur.execute(create_sql)
-                logger.info(f"✅ Created/verified table: {table_name}")
+                logger.info(str(f"[OK] Created/verified table: {table_name}")
             
             cur.close()
             conn.close()
             return True
             
         except Exception as e:
-            logger.error(f"❌ Failed to create tables: {e}")
+            logger.error(str(f"[ERROR] Failed to create tables: {e}")
             return False
     
     def test_langchain_connection(self):
         """Test LangChain connection and operations"""
         try:
-            conn = psycopg2.connect(
+            conn = psycopg2.connect()
                 host=self.host,
                 port=self.port,
                 user=self.langchain_user,
                 password=self.langchain_password,
                 database=self.langchain_db
-            )
+            
             cur = conn.cursor()
             
             # Test basic operations
             cur.execute("SELECT version()")
             version = cur.fetchone()[0]
-            logger.info(f"✅ Connected to: {version}")
+            logger.info(str(f"[OK] Connected to: {version}")
             
             # Test table access
             cur.execute("SELECT COUNT(*) FROM mcp_sessions")
             session_count = cur.fetchone()[0]
-            logger.info(f"✅ MCP sessions table accessible: {session_count} records")
+            logger.info(str(f"[OK] MCP sessions table accessible: {session_count} records")
             
             # Insert test data
-            cur.execute("""
+            cur.execute(""")
                 INSERT INTO mcp_sessions (session_name, metadata) 
                 VALUES (%s, %s) 
                 ON CONFLICT DO NOTHING
-            """, ('test_session', '{"test": true}'))
+            """, ('test_session', '{"test": true}')
             
             conn.commit()
             cur.close()
             conn.close()
             
-            logger.info("✅ LangChain PostgreSQL connection test successful")
+            logger.info("[OK] LangChain PostgreSQL connection test successful")
             return True
             
         except Exception as e:
-            logger.error(f"❌ LangChain connection test failed: {e}")
+            logger.error(str(f"[ERROR] LangChain connection test failed: {e}")
             return False
     
     def get_connection_string(self):
@@ -246,25 +261,25 @@ class PostgreSQLLangChainSetup:
     
     def setup_complete(self):
         """Perform complete PostgreSQL setup for LangChain"""
-        logger.info("🚀 Starting PostgreSQL LangChain Setup")
+        logger.info("[INIT] Starting PostgreSQL LangChain Setup")
         
-        steps = [
+        steps = []
             ("Waiting for PostgreSQL", self.wait_for_postgres),
             ("Creating LangChain user", self.create_langchain_user),
             ("Creating LangChain database", self.create_langchain_database),
             ("Setting up extensions", self.setup_langchain_extensions),
             ("Creating LangChain tables", self.create_langchain_tables),
             ("Testing connection", self.test_langchain_connection),
-        ]
+        
         
         for step_name, step_func in steps:
-            logger.info(f"📋 {step_name}...")
+            logger.info(str(f"📋 {step_name}...")
             if not step_func():
-                logger.error(f"❌ Failed at step: {step_name}")
+                logger.error(str(f"[ERROR] Failed at step: {step_name}")
                 return False
         
-        logger.info("🎉 PostgreSQL LangChain setup completed successfully!")
-        logger.info(f"📊 Connection string: {self.get_connection_string()}")
+        logger.info("[CELEBRATE] PostgreSQL LangChain setup completed successfully!")
+        logger.info(str(f"[METRICS] Connection string: {self.get_connection_string(}")
         
         return True
 
@@ -274,32 +289,32 @@ def main():
     print("=" * 40)
     
     # Try different PostgreSQL configurations
-    configs = [
+    configs = []
         # Try with admin user 'postgres' and password 'password' (from docker-compose.complete.yml)
         {'admin_user': 'postgres', 'admin_password': 'password'},
         # Try with langchain user if it already exists
         {'admin_user': 'langchain', 'admin_password': 'langchain123'},
         # Try with default postgres setup
         {'admin_user': 'postgres', 'admin_password': 'postgres'},
-    ]
+    
     
     for i, config in enumerate(configs, 1):
-        print(f"\n🔧 Trying configuration {i}: user={config['admin_user']}")
+        print(f"\n[SETUP] Trying configuration {i}: user={config['admin_user']}")
         
         setup = PostgreSQLLangChainSetup(**config)
         
         if setup.wait_for_postgres():
             if setup.setup_complete():
-                print(f"\n✅ Success with configuration {i}!")
+                print(f"\n[OK] Success with configuration {i}!")
                 print(f"🔗 LangChain connection string:")
                 print(f"   {setup.get_connection_string()}")
                 return 0
             else:
-                print(f"❌ Setup failed with configuration {i}")
+                print(f"[ERROR] Setup failed with configuration {i}")
         else:
-            print(f"❌ Could not connect with configuration {i}")
+            print(f"[ERROR] Could not connect with configuration {i}")
     
-    print(f"\n❌ All configurations failed. Check PostgreSQL container status.")
+    print(f"\n[ERROR] All configurations failed. Check PostgreSQL container status.")
     return 1
 
 if __name__ == "__main__":

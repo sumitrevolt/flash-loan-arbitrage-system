@@ -1,4 +1,12 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+import asyncio
+import os
+import signal
+import subprocess
+import sys
+import time
 """
 24/7 Arbitrage System Launcher
 ==============================
@@ -6,25 +14,18 @@
 Simple launcher script to start the complete arbitrage system with all components.
 """
 
-import os
-import sys
-import time
-import subprocess
-import asyncio
-import signal
-from pathlib import Path
 
 def print_banner():
     """Print startup banner"""
     banner = """
-🚀 24/7 ARBITRAGE SYSTEM LAUNCHER 🚀
+[INIT] 24/7 ARBITRAGE SYSTEM LAUNCHER [INIT]
 ===================================
 
 Starting complete arbitrage system with:
-✅ Production arbitrage engine
-✅ MCP servers for coordination  
-✅ AI agents for intelligence
-✅ Admin dashboard for control
+[OK] Production arbitrage engine
+[OK] MCP servers for coordination  
+[OK] AI agents for intelligence
+[OK] Admin dashboard for control
 
 Press Ctrl+C to stop all services
 """
@@ -32,21 +33,21 @@ Press Ctrl+C to stop all services
 
 def check_environment():
     """Check if environment is properly configured"""
-    print("🔍 Checking environment...")
+    print("[SEARCH] Checking environment...")
     
     # Check for required files
-    required_files = [
+    required_files = []
         '.env',
         'abi/aave_pool.json',
         'production_arbitrage_system.py'
-    ]
+    
     
     for file in required_files:
         if not os.path.exists(file):
-            print(f"❌ Missing required file: {file}")
+            print(f"[ERROR] Missing required file: {file}")
             return False
         else:
-            print(f"✅ Found: {file}")
+            print(f"[OK] Found: {file}")
     
     # Check environment variables
     required_env_vars = ['ARBITRAGE_PRIVATE_KEY', 'POLYGON_RPC_URL']
@@ -61,35 +62,35 @@ def check_environment():
     
     for var in required_env_vars:
         if not os.getenv(var):
-            print(f"❌ Missing environment variable: {var}")
+            print(f"[ERROR] Missing environment variable: {var}")
             return False
         else:
-            print(f"✅ Environment variable set: {var}")
+            print(f"[OK] Environment variable set: {var}")
     
-    print("✅ Environment check passed!")
+    print("[OK] Environment check passed!")
     return True
 
 def start_component(name, command, wait_time=2):
     """Start a system component"""
-    print(f"🚀 Starting {name}...")
+    print(f"[INIT] Starting {name}...")
     try:
-        process = subprocess.Popen(
+        process = subprocess.Popen()
             command.split(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=os.getcwd()
-        )
+        
         time.sleep(wait_time)
         
         # Check if process is still running
         if process.poll() is None:
-            print(f"✅ {name} started successfully (PID: {process.pid})")
+            print(f"[OK] {name} started successfully (PID: {process.pid})")
             return process
         else:
-            print(f"❌ {name} failed to start")
+            print(f"[ERROR] {name} failed to start")
             return None
     except Exception as e:
-        print(f"❌ Error starting {name}: {e}")
+        print(f"[ERROR] Error starting {name}: {e}")
         return None
 
 def main():
@@ -98,7 +99,7 @@ def main():
     
     # Check environment
     if not check_environment():
-        print("❌ Environment check failed. Please fix the issues above.")
+        print("[ERROR] Environment check failed. Please fix the issues above.")
         sys.exit(1)
     
     # Create logs directory
@@ -110,14 +111,14 @@ def main():
     try:
         # Start MCP servers
         print("\n📡 Starting MCP servers...")
-        mcp_servers = [
+        mcp_servers = []
             ("Real-Time Price MCP", "python mcp_servers/real_time_price_mcp_server.py"),
             ("Profit Optimizer MCP", "python mcp_servers/profit_optimizer_mcp_server.py"),
             ("Aave Integration MCP", "python mcp_servers/aave_flash_loan_mcp_server.py"),
             ("DEX Aggregator MCP", "python mcp_servers/dex_aggregator_mcp_server.py"),
             ("Risk Management MCP", "python mcp_servers/risk_management_mcp_server.py"),
             ("Monitoring MCP", "python mcp_servers/monitoring_mcp_server.py"),
-        ]
+        
         
         for name, command in mcp_servers:
             if os.path.exists(command.split()[1]):  # Check if file exists
@@ -125,16 +126,16 @@ def main():
                 if process:
                     processes.append(process)
             else:
-                print(f"⚠️ Skipping {name} - file not found")
+                print(f"[WARN] Skipping {name} - file not found")
         
         # Start AI agents
         print("\n🤖 Starting AI agents...")
-        ai_agents = [
+        ai_agents = []
             ("Arbitrage Detector", "python ai_agents/arbitrage_detector.py"),
             ("Risk Manager", "python ai_agents/risk_manager.py"),
             ("Route Optimizer", "python ai_agents/route_optimizer.py"),
             ("Market Analyzer", "python ai_agents/market_analyzer.py"),
-        ]
+        
         
         for name, command in ai_agents:
             if os.path.exists(command.split()[1]):  # Check if file exists
@@ -142,30 +143,30 @@ def main():
                 if process:
                     processes.append(process)
             else:
-                print(f"⚠️ Skipping {name} - file not found")
+                print(f"[WARN] Skipping {name} - file not found")
         
         # Start admin dashboard
-        print("\n📊 Starting admin dashboard...")
+        print("\n[METRICS] Starting admin dashboard...")
         if os.path.exists('admin_dashboard.py'):
             dashboard_process = start_component("Admin Dashboard", "python admin_dashboard.py")
             if dashboard_process:
                 processes.append(dashboard_process)
-                print("🌐 Admin dashboard available at: http://localhost:5000")
+                print("[NETWORK] Admin dashboard available at: http://localhost:5000")
         
         # Start main arbitrage system
-        print("\n🎯 Starting main arbitrage system...")
+        print("\n[TASK] Starting main arbitrage system...")
         main_process = start_component("Production Arbitrage System", "python production_arbitrage_system.py", wait_time=5)
         if main_process:
             processes.append(main_process)
         
-        print("\n✅ System startup complete!")
+        print("\n[OK] System startup complete!")
         print("=" * 50)
-        print("📊 Admin Dashboard: http://localhost:5000")
-        print("🎯 Arbitrage System: Active")
+        print("[METRICS] Admin Dashboard: http://localhost:5000")
+        print("[TASK] Arbitrage System: Active")
         print("📡 MCP Servers: Running")
         print("🤖 AI Agents: Running")
         print("=" * 50)
-        print("\n🔧 System Controls:")
+        print("\n[SETUP] System Controls:")
         print("  - View dashboard: http://localhost:5000")
         print("  - Pause system: Create admin_controls.json with {'pause': true}")
         print("  - Stop system: Press Ctrl+C or create admin_controls.json with {'stop': true}")
@@ -181,19 +182,19 @@ def main():
                 if process.poll() is None:  # Still running
                     active_processes.append(process)
                 else:
-                    print(f"⚠️ Process {process.pid} has stopped")
+                    print(f"[WARN] Process {process.pid} has stopped")
             
             processes = active_processes
             
             if not processes:
-                print("❌ All processes have stopped. Exiting.")
+                print("[ERROR] All processes have stopped. Exiting.")
                 break
     
     except KeyboardInterrupt:
-        print("\n🛑 Shutdown signal received...")
+        print("\n[STOP] Shutdown signal received...")
         
     except Exception as e:
-        print(f"\n❌ Launcher error: {e}")
+        print(f"\n[ERROR] Launcher error: {e}")
         
     finally:
         # Cleanup all processes
@@ -202,7 +203,7 @@ def main():
             try:
                 process.terminate()
                 process.wait(timeout=5)
-                print(f"✅ Process {process.pid} terminated")
+                print(f"[OK] Process {process.pid} terminated")
             except:
                 try:
                     process.kill()
@@ -210,7 +211,7 @@ def main():
                 except:
                     pass
         
-        print("✅ Cleanup complete. System stopped.")
+        print("[OK] Cleanup complete. System stopped.")
 
 if __name__ == "__main__":
     main()

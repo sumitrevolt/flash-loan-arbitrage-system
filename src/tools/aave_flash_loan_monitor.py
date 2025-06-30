@@ -1,24 +1,26 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from collections import deque
+from datetime import datetime, timedelta
+from decimal import Decimal, getcontext
+from typing import Dict, List, Optional, Tuple
+import asyncio
+import json
+import logging
+import os
+import platform
+import time
+
+from dataclasses import dataclass, asdict
+from dotenv import load_dotenv
+from web3 import Web3
+from web3.exceptions import ContractLogicError
+import aiohttp
 """
 Aave Flash Loan Arbitrage Monitoring System
 Real-time monitoring of Aave pools, flash loan executions, and arbitrage opportunities
 """
 
-import asyncio
-import json
-import logging
-import time
-import os
-import platform
-from datetime import datetime, timedelta
-from decimal import Decimal, getcontext
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, asdict
-from collections import deque
-import aiohttp
-from web3 import Web3
-from web3.exceptions import ContractLogicError
-from dotenv import load_dotenv
 
 # Windows compatibility
 if platform.system() == 'Windows':
@@ -31,18 +33,31 @@ load_dotenv()
 getcontext().prec = 50
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+
 logger = logging.getLogger(__name__)
 
 # Aave V3 Pool ABI (simplified)
-AAVE_POOL_ABI = [
-    {
+AAVE_POOL_ABI = []
+    {}
         "inputs": [{"name": "asset", "type": "address"}],
         "name": "getReserveData",
-        "outputs": [
+        "outputs": []
             {"name": "configuration", "type": "uint256"},
             {"name": "liquidityIndex", "type": "uint128"},
             {"name": "currentLiquidityRate", "type": "uint128"},
@@ -61,29 +76,29 @@ AAVE_POOL_ABI = [
         ],
         "type": "function"
     },
-    {
+    {}
         "inputs": [],
         "name": "FLASHLOAN_PREMIUM_TOTAL",
         "outputs": [{"name": "", "type": "uint128"}],
         "type": "function"
-    }
-]
+    
+
 
 # ERC20 ABI for balance checks
-ERC20_ABI = [
-    {
+ERC20_ABI = []
+    {}
         "inputs": [{"name": "account", "type": "address"}],
         "name": "balanceOf",
         "outputs": [{"name": "", "type": "uint256"}],
         "type": "function"
     },
-    {
+    {}
         "inputs": [],
         "name": "decimals",
         "outputs": [{"name": "", "type": "uint8"}],
         "type": "function"
-    }
-]
+    
+
 
 @dataclass
 class FlashLoanExecution:
@@ -136,10 +151,10 @@ class AaveFlashLoanMonitor:
         # Aave configuration
         self.aave_config = self.config.get('aave', {})
         self.pool_address = Web3.to_checksum_address(self.aave_config.get('pool_address'))
-        self.pool_contract = self.web3.eth.contract(
+        self.pool_contract = self.web3.eth.contract()
             address=self.pool_address,
             abi=AAVE_POOL_ABI
-        )
+        
         
         # Tracking data
         self.execution_history = deque(maxlen=1000)  # Last 1000 executions
@@ -161,20 +176,20 @@ class AaveFlashLoanMonitor:
         """Get current Aave pool metrics for a token"""
         try:
             # Get reserve data
-            reserve_data = self.pool_contract.functions.getReserveData(
+            reserve_data = self.pool_contract.functions.getReserveData()
                 Web3.to_checksum_address(token_address)
-            ).call()
+            ).call(
             
             # Get aToken address and balance
             atoken_address = reserve_data[8]
-            token_contract = self.web3.eth.contract(
+            token_contract = self.web3.eth.contract()
                 address=Web3.to_checksum_address(token_address),
                 abi=ERC20_ABI
-            )
-            atoken_contract = self.web3.eth.contract(
+            
+            atoken_contract = self.web3.eth.contract()
                 address=atoken_address,
                 abi=ERC20_ABI
-            )
+            
             
             # Get decimals and balances
             decimals = token_contract.functions.decimals().call()
@@ -191,7 +206,7 @@ class AaveFlashLoanMonitor:
             total_borrowed = Decimal('0')  # Placeholder
             utilization_rate = Decimal('0') if available_liquidity_decimal == 0 else total_borrowed / (available_liquidity_decimal + total_borrowed)
             
-            return AavePoolMetrics(
+            return AavePoolMetrics()
                 asset=token_address,
                 symbol=symbol,
                 available_liquidity=available_liquidity_decimal,
@@ -199,10 +214,10 @@ class AaveFlashLoanMonitor:
                 utilization_rate=utilization_rate,
                 flash_loan_premium=premium_rate,
                 last_update=datetime.now()
-            )
+            
             
         except Exception as e:
-            logger.error(f"Error fetching Aave metrics for {symbol}: {e}")
+            logger.error(str(f"Error fetching Aave metrics for {symbol}: {e}")
             return None
     
     async def monitor_gas_prices(self) -> Dict[str, Decimal]:
@@ -211,20 +226,20 @@ class AaveFlashLoanMonitor:
             gas_price = self.web3.eth.gas_price
             base_fee = self.web3.eth.get_block('latest').get('baseFeePerGas', 0)
             
-            return {
+            return {}
                 'current': Decimal(gas_price) / Decimal('1e9'),  # Convert to gwei
                 'base_fee': Decimal(base_fee) / Decimal('1e9'),
                 'safe': gas_price < (self.max_gas_price * 1e9),
                 'timestamp': datetime.now()
-            }
+            
         except Exception as e:
-            logger.error(f"Error fetching gas prices: {e}")
-            return {
+            logger.error(str(f"Error fetching gas prices: {e}")
+            return {}
                 'current': Decimal('0'),
                 'base_fee': Decimal('0'),
                 'safe': False,
                 'timestamp': datetime.now()
-            }
+            
     
     def calculate_flash_loan_cost(self, amount: Decimal, token_symbol: str) -> Decimal:
         """Calculate total cost of flash loan including fees"""
@@ -305,7 +320,7 @@ class AaveFlashLoanMonitor:
         recent_successful = sum(1 for e in recent_executions if e.success)
         recent_profit = sum(e.profit for e in recent_executions if e.success)
         
-        return {
+        return {}
             'total_executions': self.total_executions,
             'successful_executions': self.successful_executions,
             'success_rate': success_rate,
@@ -313,12 +328,12 @@ class AaveFlashLoanMonitor:
             'total_gas_cost': self.total_gas_cost,
             'net_profit': self.total_profit - self.total_gas_cost,
             'avg_profit_per_trade': avg_profit,
-            'recent_24h': {
+            'recent_24h': {}
                 'executions': len(recent_executions),
                 'successful': recent_successful,
                 'profit': recent_profit
-            }
-        }
+            
+        
     
     async def display_dashboard(self):
         """Display comprehensive monitoring dashboard"""
@@ -327,12 +342,12 @@ class AaveFlashLoanMonitor:
         print("="*100)
         
         # Monitor key tokens
-        key_tokens = {
+        key_tokens = {}
             '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174': 'USDC',
             '0xc2132D05D31c914a87C6611C10748AEb04B58e8F': 'USDT',
             '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619': 'WETH',
             '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270': 'WMATIC'
-        }
+        
         
         while True:
             try:
@@ -346,7 +361,7 @@ class AaveFlashLoanMonitor:
                 print("="*100)
                 
                 # 1. Aave Pool Status
-                print("\n📊 AAVE POOL STATUS")
+                print("\n[METRICS] AAVE POOL STATUS")
                 print("-"*100)
                 print(f"{'Token':<10} {'Available Liquidity':>20} {'Utilization':>15} {'Flash Fee':>12} {'Status':>15}")
                 print("-"*100)
@@ -356,42 +371,42 @@ class AaveFlashLoanMonitor:
                     if metrics:
                         self.pool_metrics[symbol] = metrics
                         
-                        status = "✅ Ready" if metrics.available_liquidity > self.min_liquidity else "⚠️ Low Liquidity"
+                        status = "[OK] Ready" if metrics.available_liquidity > self.min_liquidity else "[WARN] Low Liquidity"
                         if metrics.utilization_rate > self.max_utilization:
-                            status = "❌ High Util"
+                            status = "[ERROR] High Util"
                         
-                        print(f"{symbol:<10} ${metrics.available_liquidity:>19,.2f} "
+                        print(f"{symbol:<10} ${metrics.available_liquidity:>19,.2f} ")
                               f"{metrics.utilization_rate*100:>14.2f}% "
                               f"{metrics.flash_loan_premium*100:>11.3f}% "
-                              f"{status:>15}")
+                              f"{status:>15}"
                 
                 # 2. Gas Prices
                 gas_metrics = await self.monitor_gas_prices()
                 print(f"\n⛽ GAS PRICES")
                 print("-"*100)
-                print(f"Current: {gas_metrics['current']:.2f} gwei | "
+                print(f"Current: {gas_metrics['current']:.2f} gwei | ")
                       f"Base Fee: {gas_metrics['base_fee']:.2f} gwei | "
-                      f"Status: {'✅ Safe' if gas_metrics['safe'] else '❌ Too High'}")
+                      f"Status: {'[OK] Safe' if gas_metrics['safe'] else '[ERROR] Too High'}"
                 
                 # 3. Performance Stats
                 stats = self.get_performance_stats()
-                print(f"\n📈 PERFORMANCE METRICS")
+                print(f"\n[GROWTH] PERFORMANCE METRICS")
                 print("-"*100)
-                print(f"Total Executions: {stats['total_executions']} | "
+                print(f"Total Executions: {stats['total_executions']} | ")
                       f"Success Rate: {stats['success_rate']:.1f}% | "
-                      f"Total Profit: ${stats['total_profit']:.2f}")
-                print(f"Total Gas Cost: ${stats['total_gas_cost']:.2f} | "
+                      f"Total Profit: ${stats['total_profit']:.2f}"
+                print(f"Total Gas Cost: ${stats['total_gas_cost']:.2f} | ")
                       f"Net Profit: ${stats['net_profit']:.2f} | "
-                      f"Avg Profit/Trade: ${stats['avg_profit_per_trade']:.2f}")
+                      f"Avg Profit/Trade: ${stats['avg_profit_per_trade']:.2f}"
                 
                 print(f"\n📅 LAST 24 HOURS")
                 print("-"*100)
-                print(f"Executions: {stats['recent_24h']['executions']} | "
+                print(f"Executions: {stats['recent_24h']['executions']} | ")
                       f"Successful: {stats['recent_24h']['successful']} | "
-                      f"Profit: ${stats['recent_24h']['profit']:.2f}")
+                      f"Profit: ${stats['recent_24h']['profit']:.2f}"
                 
                 # 4. Recent Executions
-                print(f"\n🔄 RECENT FLASH LOAN EXECUTIONS")
+                print(f"\n[SYNC] RECENT FLASH LOAN EXECUTIONS")
                 print("-"*100)
                 print(f"{'Time':<10} {'Token':<8} {'Amount':>12} {'Route':<25} {'Profit':>10} {'Gas':>8} {'Status':<12}")
                 print("-"*100)
@@ -399,12 +414,12 @@ class AaveFlashLoanMonitor:
                 recent_execs = list(self.execution_history)[-5:]  # Last 5
                 for exec in recent_execs:
                     time_str = exec.timestamp.strftime("%H:%M:%S")
-                    status = "✅ Success" if exec.success else f"❌ {exec.revert_reason or 'Failed'}"
-                    print(f"{time_str:<10} {exec.token:<8} ${exec.amount:>11,.0f} "
-                          f"{exec.route:<25} ${exec.profit:>9.2f} ${exec.gas_cost:>7.2f} {status:<12}")
+                    status = "[OK] Success" if exec.success else f"[ERROR] {exec.revert_reason or 'Failed'}"
+                    print(f"{time_str:<10} {exec.token:<8} ${exec.amount:>11,.0f} ")
+                          f"{exec.route:<25} ${exec.profit:>9.2f} ${exec.gas_cost:>7.2f} {status:<12}"
                 
                 # 5. Active Opportunities
-                print(f"\n🎯 ACTIVE ARBITRAGE OPPORTUNITIES")
+                print(f"\n[TASK] ACTIVE ARBITRAGE OPPORTUNITIES")
                 print("-"*100)
                 
                 if self.opportunities:
@@ -412,10 +427,10 @@ class AaveFlashLoanMonitor:
                     print("-"*100)
                     
                     for opp in list(self.opportunities)[-5:]:  # Last 5
-                        status = "✅ Ready" if opp.executable else "❌ Too Risky"
-                        print(f"{opp.token_pair:<15} {opp.buy_dex} → {opp.sell_dex:<15} "
+                        status = "[OK] Ready" if opp.executable else "[ERROR] Too Risky"
+                        print(f"{opp.token_pair:<15} {opp.buy_dex} → {opp.sell_dex:<15} ")
                               f"${opp.loan_amount:>11,.0f} ${opp.expected_profit:>9.2f} "
-                              f"{opp.risk_score:>7.0f}% {status:<12}")
+                              f"{opp.risk_score:>7.0f}% {status:<12}"
                 else:
                     print("No active opportunities at the moment")
                 
@@ -427,9 +442,9 @@ class AaveFlashLoanMonitor:
                 web3_connected = self.web3.is_connected()
                 aave_accessible = True  # Would check actual contract call
                 
-                print(f"Web3 Connection: {'✅ Connected' if web3_connected else '❌ Disconnected'}")
-                print(f"Aave Pool: {'✅ Accessible' if aave_accessible else '❌ Unreachable'}")
-                print(f"Monitor Status: ✅ Running")
+                print(f"Web3 Connection: {'[OK] Connected' if web3_connected else '[ERROR] Disconnected'}")
+                print(f"Aave Pool: {'[OK] Accessible' if aave_accessible else '[ERROR] Unreachable'}")
+                print(f"Monitor Status: [OK] Running")
                 
                 print("\n" + "="*100)
                 print("Press Ctrl+C to stop monitoring")
@@ -437,7 +452,7 @@ class AaveFlashLoanMonitor:
                 # Simulate adding some data (in production, this would come from actual executions)
                 if self.total_executions % 10 == 0:  # Every 10th iteration
                     # Simulate an execution
-                    mock_exec = FlashLoanExecution(
+                    mock_exec = FlashLoanExecution()
                         timestamp=datetime.now(),
                         tx_hash="0x" + "a" * 64,
                         token="USDC",
@@ -446,7 +461,7 @@ class AaveFlashLoanMonitor:
                         gas_cost=Decimal('5.25'),
                         success=True,
                         route="UniswapV3 → SushiSwap"
-                    )
+                    
                     self.record_execution(mock_exec)
                 
                 # Wait before next update
@@ -456,22 +471,22 @@ class AaveFlashLoanMonitor:
                 print("\n\n👋 Monitoring stopped by user")
                 break
             except Exception as e:
-                logger.error(f"Dashboard error: {e}")
-                print(f"\n❌ Dashboard error: {e}")
+                logger.error(str(f"Dashboard error: {e}")
+                print(f"\n[ERROR] Dashboard error: {e}")
                 await asyncio.sleep(5)
 
 async def main():
     """Main function"""
     monitor = AaveFlashLoanMonitor('production_config.json')
     
-    print("🚀 Starting Aave Flash Loan Monitor...")
-    print("📊 Initializing pool metrics...")
+    print("[INIT] Starting Aave Flash Loan Monitor...")
+    print("[METRICS] Initializing pool metrics...")
     
     try:
         await monitor.display_dashboard()
     except Exception as e:
-        logger.error(f"Monitor failed: {e}")
-        print(f"❌ Monitor failed: {e}")
+        logger.error(str(f"Monitor failed: {e}")
+        print(f"[ERROR] Monitor failed: {e}")
 
 if __name__ == "__main__":
     asyncio.run(main())

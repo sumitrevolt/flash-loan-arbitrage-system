@@ -1,4 +1,16 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Set, Union, Tuple, Callable, Tuple
+import hashlib
+import json
+import logging
+import os
+import re
+import shutil
+import sys
 """
 Simple Project Organizer and Cleaner
 ====================================
@@ -13,26 +25,29 @@ Author: GitHub Copilot Assistant
 Date: June 2025
 """
 
-import os
-import sys
-import shutil
-import hashlib
-import json
-import logging
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Set, Union, Tuple, Callable, Tuple
-from collections import defaultdict
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(),
         logging.FileHandler('simple_project_organizer.log', encoding='utf-8')
-    ]
-)
+    
+
 
 logger = logging.getLogger(__name__)
 
@@ -41,17 +56,17 @@ class SimpleProjectOrganizer:
     
     def __init__(self, project_root: str):
         self.project_root = Path(project_root)
-        self.report = {
+        self.report = {}
             'start_time': datetime.now().isoformat(),
             'duplicates_removed': 0,
             'files_organized': 0,
             'directories_created': 0,
             'backup_files_cleaned': 0,
             'python_files_fixed': 0
-        }
+        
         
         # Target directory structure
-        self.target_structure = {
+        self.target_structure = {}
             'src': ['langchain_coordinators', 'mcp_integrators', 'tools', 'utilities'],
             'mcp_servers': ['task_management', 'github_integration', 'playwright_automation', 'context_retrieval'],
             'docker': ['compose_files', 'configurations'],
@@ -60,11 +75,11 @@ class SimpleProjectOrganizer:
             'docs': [],
             'logs': [],
             'backups': []
-        }
+        
     
     def organize_project(self) -> Dict[str, Any]:
         """Main method to organize the project"""
-        logger.info("🚀 Starting simple project organization...")
+        logger.info("[INIT] Starting simple project organization...")
         
         try:
             # Step 1: Create directory structure
@@ -85,11 +100,11 @@ class SimpleProjectOrganizer:
             # Step 6: Generate report
             self.generate_report()
             
-            logger.info("✅ Project organization completed successfully!")
+            logger.info("[OK] Project organization completed successfully!")
             return self.report
             
         except Exception as e:
-            logger.error(f"❌ Error during organization: {e}")
+            logger.error(str(f"[ERROR] Error during organization: {e}")
             return {'error': str(e)}
     
     def create_directory_structure(self) -> None:
@@ -100,23 +115,23 @@ class SimpleProjectOrganizer:
             main_path = self.project_root / main_dir
             main_path.mkdir(exist_ok=True)
             self.report['directories_created'] += 1
-            logger.info(f"📂 Created: {main_dir}")
+            logger.info(str(f"📂 Created: {main_dir}")
             
             for subdir in subdirs:
                 sub_path = main_path / subdir
                 sub_path.mkdir(exist_ok=True)
                 self.report['directories_created'] += 1
-                logger.info(f"📂 Created: {main_dir}/{subdir}")
+                logger.info(str(f"📂 Created: {main_dir}/{subdir}")
     
     def remove_duplicate_files(self) -> None:
         """Remove duplicate files based on content hash"""
-        logger.info("🔍 Detecting and removing duplicate files...")
+        logger.info("[SEARCH] Detecting and removing duplicate files...")
         
         file_hashes: Dict[str, List[Path]] = defaultdict(list)
         
         # Calculate hashes for all files
         for file_path in self.project_root.rglob('*'):
-            if (file_path.is_file() and 
+            if (file_path.is_file() and )
                 not self._should_skip_file(file_path) and
                 not self._is_in_target_dirs(file_path)):
                 
@@ -124,29 +139,29 @@ class SimpleProjectOrganizer:
                     content_hash = self._calculate_file_hash(file_path)
                     file_hashes[content_hash].append(file_path)
                 except Exception as e:
-                    logger.warning(f"Could not hash {file_path}: {e}")
+                    logger.warning(str(f"Could not hash {file_path}: {e}")
         
         # Remove duplicates (keep the first file in each group)
         for content_hash, file_list in file_hashes.items():
             if len(file_list) > 1:
-                logger.info(f"🔍 Found {len(file_list)} duplicate files:")
+                logger.info(str(f"[SEARCH] Found {len(file_list} duplicate files:")
                 for file_path in file_list:
-                    logger.info(f"   - {file_path.relative_to(self.project_root)}")
+                    logger.info(str(f"   - {file_path.relative_to(self.project_root}")
                 
                 # Keep the first file, remove others
                 for duplicate_file in file_list[1:]:
                     try:
                         duplicate_file.unlink()
                         self.report['duplicates_removed'] += 1
-                        logger.info(f"🗑️  Removed: {duplicate_file.name}")
+                        logger.info(str(f"🗑️  Removed: {duplicate_file.name}")
                     except Exception as e:
-                        logger.warning(f"Could not remove {duplicate_file}: {e}")
+                        logger.warning(str(f"Could not remove {duplicate_file}: {e}")
     
     def clean_backup_files(self) -> None:
         """Clean up backup and temporary files"""
         logger.info("🧹 Cleaning backup and temporary files...")
         
-        backup_patterns = [
+        backup_patterns = []
             '*.backup',
             '*.backup_*',
             '*.bak',
@@ -154,7 +169,7 @@ class SimpleProjectOrganizer:
             '*~',
             '*.py.backup*',
             '*.old'
-        ]
+        
         
         for pattern in backup_patterns:
             for file_path in self.project_root.rglob(pattern):
@@ -170,9 +185,9 @@ class SimpleProjectOrganizer:
                         
                         shutil.move(str(file_path), str(backup_path))
                         self.report['backup_files_cleaned'] += 1
-                        logger.info(f"📦 Moved to backup: {file_path.name}")
+                        logger.info(str(f"[PACKAGE] Moved to backup: {file_path.name}")
                     except Exception as e:
-                        logger.warning(f"Could not move backup file {file_path}: {e}")
+                        logger.warning(str(f"Could not move backup file {file_path}: {e}")
     
     def organize_files(self) -> None:
         """Organize files into appropriate directories"""
@@ -181,12 +196,12 @@ class SimpleProjectOrganizer:
         # Get all files that are not in target directories
         files_to_organize = []
         for file_path in self.project_root.rglob('*'):
-            if (file_path.is_file() and 
+            if (file_path.is_file() and )
                 not self._should_skip_file(file_path) and
                 not self._is_in_target_dirs(file_path)):
                 files_to_organize.append(file_path)
         
-        logger.info(f"📄 Found {len(files_to_organize)} files to organize")
+        logger.info(str(f"📄 Found {len(files_to_organize} files to organize")
         
         for file_path in files_to_organize:
             target_dir = self._determine_target_directory(file_path)
@@ -201,14 +216,14 @@ class SimpleProjectOrganizer:
                     
                     shutil.move(str(file_path), str(target_path))
                     self.report['files_organized'] += 1
-                    logger.info(f"📦 Moved {file_path.name} to {target_dir.relative_to(self.project_root)}")
+                    logger.info(str(f"[PACKAGE] Moved {file_path.name} to {target_dir.relative_to(self.project_root}")
                     
                 except Exception as e:
-                    logger.warning(f"Could not move {file_path}: {e}")
+                    logger.warning(str(f"Could not move {file_path}: {e}")
     
     def fix_python_files(self) -> None:
         """Fix common issues in Python files"""
-        logger.info("🔧 Fixing Python files...")
+        logger.info("[SETUP] Fixing Python files...")
         
         for py_file in self.project_root.rglob('*.py'):
             if self._should_process_python_file(py_file):
@@ -216,20 +231,20 @@ class SimpleProjectOrganizer:
                     fixed = self._fix_python_file(py_file)
                     if fixed:
                         self.report['python_files_fixed'] += 1
-                        logger.info(f"🔧 Fixed: {py_file.relative_to(self.project_root)}")
+                        logger.info(str(f"[SETUP] Fixed: {py_file.relative_to(self.project_root}")
                 except Exception as e:
-                    logger.warning(f"Could not fix {py_file}: {e}")
+                    logger.warning(str(f"Could not fix {py_file}: {e}")
     
     def _should_skip_file(self, file_path: Path) -> bool:
         """Determine if file should be skipped"""
         skip_extensions = {'.log', '.tmp', '.cache', '.pyc', '.pyo', '.pyd'}
         skip_names = {'__pycache__', '.git', '.vscode', 'node_modules'}
         
-        return (
+        return ()
             file_path.suffix.lower() in skip_extensions or
             any(part in skip_names for part in file_path.parts) or
             file_path.name.startswith('.')
-        )
+        
     
     def _is_in_target_dirs(self, file_path: Path) -> bool:
         """Check if file is already in target directory structure"""
@@ -312,12 +327,12 @@ class SimpleProjectOrganizer:
             original_content = content
             
             # Fix common import issues
-            import_fixes = [
+            import_fixes = []
                 ('from langchain_openai import ChatOpenAI', 'from langchain_openai import ChatOpenAI'),
-                ('tool.run(', 'tool.run('),
-                ('analysis_tool.run(', 'analysis_tool.run('),
-                ('fixer_tool.run(', 'fixer_tool.run('),
-            ]
+                ('tool.run(', 'tool.run('),))
+                ('analysis_tool.run(', 'analysis_tool.run('),))
+                ('fixer_tool.run(', 'fixer_tool.run('),))
+            
             
             for old_import, new_import in import_fixes:
                 if old_import in content:
@@ -334,7 +349,7 @@ class SimpleProjectOrganizer:
                 return True
                 
         except Exception as e:
-            logger.warning(f"Could not fix Python file {file_path}: {e}")
+            logger.warning(str(f"Could not fix Python file {file_path}: {e}")
         
         return False
     
@@ -387,8 +402,8 @@ Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         with open(json_report_file, 'w', encoding='utf-8') as f:
             json.dump(self.report, f, indent=2)
         
-        logger.info(f"📋 Generated reports: {report_file}")
-        logger.info(f"📋 JSON report: {json_report_file}")
+        logger.info(str(f"📋 Generated reports: {report_file}")
+        logger.info(str(f"📋 JSON report: {json_report_file}")
     
     def _generate_structure_tree(self) -> str:
         """Generate a tree view of the project structure"""
@@ -398,9 +413,9 @@ Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             
             items = []
             try:
-                children = sorted([item for item in directory.iterdir() 
-                                 if not item.name.startswith('.')], 
-                                key=lambda x: Any: Any: (x.is_file(), x.name.lower()))
+                children = sorted([item for item in directory.iterdir() )]
+                                 if not item.name.startswith('.')],
+                                key=lambda x: Any: Any: (x.is_file(), x.name.lower())
                 
                 for i, item in enumerate(children[:15]):  # Limit to 15 items per directory
                     is_last = i == len(children) - 1
@@ -437,19 +452,19 @@ def main():
     """Main entry point"""
     project_root = Path.cwd()
     
-    logger.info("🎯 Starting Simple Project Organization")
-    logger.info(f"📁 Project root: {project_root}")
+    logger.info("[TASK] Starting Simple Project Organization")
+    logger.info(str(f"📁 Project root: {project_root}")
     
     organizer = SimpleProjectOrganizer(str(project_root))
     
     try:
         result: str = organizer.organize_project()
-        logger.info("✅ Organization Results:")
+        logger.info("[OK] Organization Results:")
         for key, value in result.items():
             if key != 'error':
-                logger.info(f"   {key}: {value}")
+                logger.info(str(f"   {key}: {value}")
     except Exception as e:
-        logger.error(f"❌ Organization failed: {e}")
+        logger.error(str(f"[ERROR] Organization failed: {e}")
 
 if __name__ == "__main__":
     main()

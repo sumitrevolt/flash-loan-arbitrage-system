@@ -1,21 +1,26 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Optional, Dict, Any, cast, TypeVar, Type
+import json
+import logging
+import os
+
+from hexbytes import HexBytes
+import backoff
+
+            from src.blockchain.rpc_manager import get_rpc_manager
+from src.utils.web3_provider import ()
 """
 Wallet manager for the Flash Loan Arbitrage System.
 Handles wallet operations and transaction signing.
 """
 
-import os
-import json
-import logging
-import backoff
-from typing import Optional, Dict, Any, cast, TypeVar, Type
-from hexbytes import HexBytes
 
 # Import from central web3_provider to ensure consistent Web3 usage
-from src.utils.web3_provider import (
     Web3, Web3Exception, ContractLogicError, TransactionNotFound,
     requires_web3, WEB3_IMPORTED, get_web3_instance, to_checksum_address,
     TxParams, Wei, ChecksumAddress, HexStr
-)
+
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +61,7 @@ class WalletManager:
                         config = json.load(f)
                         rpc_url = config.get("polygon_rpc_url", default_rpc_url)
                 except Exception as e:
-                    logger.error(f"Error loading config: {e}")
+                    logger.error(str(f"Error loading config: {e}")
             
             self.web3 = get_web3_instance(rpc_url=rpc_url, apply_poa=True)
             
@@ -137,7 +142,7 @@ class WalletManager:
             logger.error("No private key found in environment or config")
             raise ValueError("Private key not configured. Set PRIVATE_KEY environment variable or create config/wallet_config.json")
         except Exception as e:
-            logger.error(f"Error loading private key: {e}")
+            logger.error(str(f"Error loading private key: {e}")
             raise
 
     def get_wallet_address(self):
@@ -153,7 +158,7 @@ class WalletManager:
             logger.error("Cannot derive wallet address - missing private key or web3")
             raise ValueError("Cannot derive wallet address")
         except Exception as e:
-            logger.error(f"Error getting wallet address: {e}")
+            logger.error(str(f"Error getting wallet address: {e}")
             raise
 
     def wait_for_transaction(self, tx_hash: str, timeout: int = 180) -> Dict[str, Any]:
@@ -176,13 +181,13 @@ class WalletManager:
 
             # Check status using dictionary access
             if receipt["status"] == 1:
-                logger.info(f"Transaction successful: {tx_hash}")
+                logger.info(str(f"Transaction successful: {tx_hash}")
             else:
-                logger.warning(f"Transaction failed: {tx_hash}")
+                logger.warning(str(f"Transaction failed: {tx_hash}")
 
             return dict(receipt)
         except Exception as e:
-            logger.error(f"Failed to wait for transaction: {e}")
+            logger.error(str(f"Failed to wait for transaction: {e}")
             return {}
 
 # Singleton instance
@@ -201,7 +206,6 @@ def get_wallet_manager(web3 = None) -> "WalletManager":
     global _wallet_manager_instance
     if _wallet_manager_instance is None:
         if web3 is None:
-            from src.blockchain.rpc_manager import get_rpc_manager
             web3 = get_rpc_manager().get_web3()
         if web3 is not None:
             _wallet_manager_instance = WalletManager(web3)
@@ -215,11 +219,11 @@ def get_wallet_manager(web3 = None) -> "WalletManager":
                 # Log wallet address status
                 wallet_address = _wallet_manager_instance.get_wallet_address()
                 if wallet_address:
-                    logger.info(f"Wallet manager initialized with address: {wallet_address}")
+                    logger.info(str(f"Wallet manager initialized with address: {wallet_address}")
                 else:
                     logger.warning("Wallet manager initialized but no wallet address is available")
             except Exception as e:
-                logger.error(f"Failed to initialize wallet manager with real credentials: {e}")
+                logger.error(str(f"Failed to initialize wallet manager with real credentials: {e}")
                 logger.error("Please configure PRIVATE_KEY environment variable or config/wallet_config.json")
                 raise
         else:

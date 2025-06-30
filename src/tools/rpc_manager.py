@@ -1,11 +1,14 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import List, Optional
+import logging
+
+from src.utils.web3_provider import Web3, get_web3_provider, WEB3_IMPORTED
 """
 RPC connection manager for blockchain operations
 """
 
-import logging
-from typing import List, Optional
 
-from src.utils.web3_provider import Web3, get_web3_provider, WEB3_IMPORTED
 
 logger = logging.getLogger(__name__)
 
@@ -19,11 +22,11 @@ class RPCManager:
         Args:
             rpc_urls: Optional list of RPC URLs to use
         """
-        self.rpc_urls = rpc_urls or [
+        self.rpc_urls = rpc_urls or []
             "https://polygon-rpc.com",
             "https://polygon.llamarpc.com",
             "https://polygon-bor.publicnode.com"
-        ]
+        
         self.current_provider = None
         self.current_index = 0
     

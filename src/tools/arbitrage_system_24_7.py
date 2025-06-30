@@ -1,4 +1,26 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from decimal import Decimal, getcontext
+from pathlib import Path
+from threading import Thread
+from typing import Dict, List, Optional, Any, Tuple
+import argparse
+import asyncio
+import json
+import logging
+import os
+import signal
+import subprocess
+import sys
+import time
+
+from dataclasses import dataclass, asdict
+from web3 import Web3
+from web3.exceptions import ContractLogicError
+import aiohttp
+import concurrent.futures
+import requests
 """
 24/7 ONLINE ARBITRAGE SYSTEM - PRODUCTION READY
 ===============================================
@@ -23,28 +45,8 @@ Features:
 - Multi-path routing optimization
 """
 
-import asyncio
-import argparse
-import logging
-import signal
-import sys
-import json
-import os
-import time
-import aiohttp
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-from decimal import Decimal, getcontext
-from dataclasses import dataclass, asdict
-from web3 import Web3
-from web3.exceptions import ContractLogicError
 
 # Import system modules for coordination
-import subprocess
-import requests
-import concurrent.futures
-from threading import Thread
 
 # For MCP server coordination via HTTP endpoints
 class MCPServerClient:
@@ -63,7 +65,7 @@ class MCPServerClient:
                     async with session.get(f"{self.base_url}{endpoint}") as resp:
                         return await resp.json()
         except Exception as e:
-            logger.error(f"MCP Server {self.name} call failed: {e}")
+            logger.error(str(f"MCP Server {self.name} call failed: {e}")
             return {"error": str(e)}
 
 # For AI agent coordination via HTTP endpoints            
@@ -83,22 +85,35 @@ class AIAgentClient:
                     async with session.get(f"{self.base_url}{endpoint}") as resp:
                         return await resp.json()
         except Exception as e:
-            logger.error(f"AI Agent {self.name} call failed: {e}")
+            logger.error(str(f"AI Agent {self.name} call failed: {e}")
             return {"error": str(e)}
 
 # Set high precision for calculations
 getcontext().prec = 50
 
 # Configure production logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(sys.stdout),
         logging.FileHandler('logs/arbitrage_system_24_7.log'),
         logging.FileHandler('logs/profits.log') if logging.getLevelName('INFO') else None
-    ]
-)
+    
+
 
 logger = logging.getLogger("ArbitrageSystem24x7")
 
@@ -164,27 +179,27 @@ class ArbitrageSystem24x7:
         # Initialize configuration
         self._load_system_config()
           # MCP Servers for agentic coordination (HTTP clients)
-        self.mcp_servers = {
+        self.mcp_servers = {}
             'price_feed': MCPServerClient('real_time_price', 8001),
             'profit_optimizer': MCPServerClient('profit_optimizer', 8002),
             'aave_integration': MCPServerClient('aave_flash_loan', 8003),
             'dex_aggregator': MCPServerClient('dex_aggregator', 8004),
             'risk_management': MCPServerClient('risk_management', 8005),
             'monitoring': MCPServerClient('monitoring', 8006)
-        }
+        
         
         # AI Agents for intelligent analysis (HTTP clients)
-        self.ai_agents = {
+        self.ai_agents = {}
             'arbitrage_detector': AIAgentClient('arbitrage_detector', 9001),
             'risk_manager': AIAgentClient('risk_manager', 9002),
             'route_optimizer': AIAgentClient('route_optimizer', 9003),
             'market_analyzer': AIAgentClient('market_analyzer', 9004)
-        }
+        
         
         # System state
         self.current_prices = {}
         self.active_opportunities = []
-        self.system_stats = {
+        self.system_stats = {}
             'opportunities_found': 0,
             'opportunities_executed': 0,
             'total_profit_usd': 0.0,
@@ -193,10 +208,10 @@ class ArbitrageSystem24x7:
             'uptime_start': datetime.now(),
             'last_profitable_trade': None,
             'best_profit_today': 0.0
-        }
+        
         
         # Real Polygon mainnet configuration
-        self.POLYGON_TOKENS = {
+        self.POLYGON_TOKENS = {}
             'WMATIC': '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
             'WETH': '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619',
             'WBTC': '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6',
@@ -212,38 +227,38 @@ class ArbitrageSystem24x7:
             'BAL': '0x9a71012b13ca4d3d0cdc72a177df3ef03b0e76a3',
             'QUICK': '0x831753dd7087cac61ab5644b308642cc1c33dc13',
             'GHST': '0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7'
-        }
         
-        self.POLYGON_DEXS = {
-            'Uniswap_V3': {
+        
+        self.POLYGON_DEXS = {}
+            'Uniswap_V3': {}
                 'router': '0xE592427A0AEce92De3Edee1F18E0157C05861564',
                 'factory': '0x1F98431c8aD98523631AE4a59f267346ea31F984',
                 'fee_tiers': [100, 500, 3000, 10000]  # 0.01%, 0.05%, 0.3%, 1%
             },
-            'SushiSwap': {
+            'SushiSwap': {}
                 'router': '0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506',
                 'factory': '0xc35DADB65012eC5796536bD9864eD8773aBc74C4'
             },
-            'QuickSwap': {
+            'QuickSwap': {}
                 'router': '0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff',
                 'factory': '0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32'
             },
-            'Balancer_V2': {
+            'Balancer_V2': {}
                 'vault': '0xBA12222222228d8Ba445958a75a0704d566BF2C8',
                 'router': '0xBA12222222228d8Ba445958a75a0704d566BF2C8'
             },
-            'Curve': {
+            'Curve': {}
                 'registry': '0x094d12e5b541784701FD8d65F11fc0598FBC6332',
                 'router': '0x094d12e5b541784701FD8d65F11fc0598FBC6332'
-            }
-        }
+            
+        
         
         # Aave V3 Polygon addresses
-        self.AAVE_ADDRESSES = {
+        self.AAVE_ADDRESSES = {}
             'pool': '0x794a61358D6845594F94dc1DB02A252b5b4814aD',
             'provider': '0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb',
             'data_provider': '0x69FA688f1Dc47d4B5d8029D5a35FB7a548310654'
-        }
+        
         
         # Deployed flash loan contract address
         self.FLASH_LOAN_CONTRACT = os.getenv('CONTRACT_ADDRESS', '0x35791D283Ec6eeF6C7687026CaF026C5F84C7c15')
@@ -283,11 +298,11 @@ class ArbitrageSystem24x7:
             # Load contract ABIs and initialize contracts
             self._initialize_contracts()
             
-            self.logger.info(f"Connected to Polygon mainnet (Block: {self.w3.eth.block_number})")
-            self.logger.info(f"Wallet: {self.wallet_address}")
+            self.logger.info(str(f"Connected to Polygon mainnet (Block: {self.w3.eth.block_number}")
+            self.logger.info(str(f"Wallet: {self.wallet_address}")
             
         except Exception as e:
-            self.logger.error(f"Failed to initialize Web3: {e}")
+            self.logger.error(str(f"Failed to initialize Web3: {e}")
             raise
             
     def _initialize_contracts(self):
@@ -298,22 +313,22 @@ class ArbitrageSystem24x7:
                 aave_pool_abi = json.load(f)
                 
             # Initialize Aave Pool contract
-            self.aave_pool = self.w3.eth.contract(
+            self.aave_pool = self.w3.eth.contract()
                 address=self.AAVE_ADDRESSES['pool'],
                 abi=aave_pool_abi
-            )
+            
             
             # Initialize flash loan contract (your deployed contract)
             # You would need to provide the ABI for your contract
-            # self.flash_loan_contract = self.w3.eth.contract(
+            # self.flash_loan_contract = self.w3.eth.contract()
             #     address=self.FLASH_LOAN_CONTRACT,
             #     abi=flash_loan_abi
-            # )
+            # 
             
             self.logger.info("Smart contracts initialized successfully")
             
         except Exception as e:
-            self.logger.error(f"Failed to initialize contracts: {e}")
+            self.logger.error(str(f"Failed to initialize contracts: {e}")
             raise
             
     def _load_system_config(self):
@@ -330,7 +345,7 @@ class ArbitrageSystem24x7:
                             
             self.logger.info("System configuration loaded")
               except Exception as e:
-            self.logger.warning(f"Using default configuration: {e}")
+            self.logger.warning(str(f"Using default configuration: {e}")
             
     async def initialize_mcp_servers(self):
         """Initialize all MCP servers for agentic coordination"""
@@ -338,22 +353,22 @@ class ArbitrageSystem24x7:
         
         try:
             # Start MCP servers as separate processes
-            mcp_server_commands = [
+            mcp_server_commands = []
                 ('real_time_price', 'python mcp_servers/real_time_price_mcp_server.py --port 8001'),
                 ('profit_optimizer', 'python mcp_servers/profit_optimizer_mcp_server.py --port 8002'),
                 ('aave_integration', 'python mcp_servers/aave_flash_loan_mcp_server.py --port 8003'),
                 ('dex_aggregator', 'python mcp_servers/dex_aggregator_mcp_server.py --port 8004'),
                 ('risk_management', 'python mcp_servers/risk_management_mcp_server.py --port 8005'),
                 ('monitoring', 'python mcp_servers/monitoring_mcp_server.py --port 8006')
-            ]
+            
             
             for name, command in mcp_server_commands:
                 try:
                     # Start server process
-                    subprocess.Popen(command.split(), 
+                    subprocess.Popen(command.split(), )
                                    cwd=os.getcwd(),
                                    stdout=subprocess.PIPE, 
-                                   stderr=subprocess.PIPE)
+                                   stderr=subprocess.PIPE
                     
                     # Wait a bit for server to start
                     await asyncio.sleep(2)
@@ -363,17 +378,17 @@ class ArbitrageSystem24x7:
                     if server_client:
                         response = await server_client.call_endpoint('/health')
                         if not response.get('error'):
-                            self.logger.info(f"MCP Server '{name}' started successfully")
+                            self.logger.info(str(f"MCP Server '{name}' started successfully")
                         else:
-                            self.logger.warning(f"MCP Server '{name}' started but not responding")
+                            self.logger.warning(str(f"MCP Server '{name}' started but not responding")
                     
                 except Exception as e:
-                    self.logger.error(f"Failed to start MCP server '{name}': {e}")
+                    self.logger.error(str(f"Failed to start MCP server '{name}': {e}")
                     
             self.logger.info("MCP servers initialization complete")
             
         except Exception as e:
-            self.logger.error(f"MCP servers initialization failed: {e}")
+            self.logger.error(str(f"MCP servers initialization failed: {e}")
             
     async def initialize_ai_agents(self):
         """Initialize AI agents for intelligent coordination"""
@@ -381,20 +396,20 @@ class ArbitrageSystem24x7:
         
         try:
             # Start AI agents as separate processes
-            ai_agent_commands = [
+            ai_agent_commands = []
                 ('arbitrage_detector', 'python ai_agents/arbitrage_detector.py'),
                 ('risk_manager', 'python ai_agents/risk_manager.py'),
                 ('route_optimizer', 'python ai_agents/route_optimizer.py'),
                 ('market_analyzer', 'python ai_agents/market_analyzer.py')
-            ]
+            
             
             for name, command in ai_agent_commands:
                 try:
                     # Start agent process
-                    subprocess.Popen(command.split(), 
+                    subprocess.Popen(command.split(), )
                                    cwd=os.getcwd(),
                                    stdout=subprocess.PIPE, 
-                                   stderr=subprocess.PIPE)
+                                   stderr=subprocess.PIPE
                     
                     # Wait a bit for agent to start
                     await asyncio.sleep(2)
@@ -404,23 +419,23 @@ class ArbitrageSystem24x7:
                     if agent_client:
                         response = await agent_client.call_endpoint('/health')
                         if not response.get('error'):
-                            self.logger.info(f"AI Agent '{name}' started successfully")
+                            self.logger.info(str(f"AI Agent '{name}' started successfully")
                         else:
-                            self.logger.warning(f"AI Agent '{name}' started but not responding")
+                            self.logger.warning(str(f"AI Agent '{name}' started but not responding")
                     
                 except Exception as e:
-                    self.logger.error(f"Failed to start AI agent '{name}': {e}")
+                    self.logger.error(str(f"Failed to start AI agent '{name}': {e}")
                     
             self.logger.info("AI agents initialization complete")
             
         except Exception as e:
-            self.logger.error(f"AI agents initialization failed: {e}")
+            self.logger.error(str(f"AI agents initialization failed: {e}")
             
     async def start_system(self):
         """Start the 24/7 arbitrage system"""
         try:
             self.is_running = True
-            self.logger.info("🚀 Starting 24/7 Online Arbitrage System")
+            self.logger.info("[INIT] Starting 24/7 Online Arbitrage System")
             self.logger.info("=" * 80)
             
             # Display system banner
@@ -434,14 +449,14 @@ class ArbitrageSystem24x7:
             self._setup_signal_handlers()
             
             # Start main monitoring loops
-            tasks = [
+            tasks = []
                 asyncio.create_task(self._price_monitoring_loop()),
                 asyncio.create_task(self._opportunity_detection_loop()),
                 asyncio.create_task(self._execution_coordination_loop()),
                 asyncio.create_task(self._system_monitoring_loop()),
                 asyncio.create_task(self._admin_control_loop()),
                 asyncio.create_task(self._metrics_reporting_loop())
-            ]
+            
             
             # Wait for all tasks
             await asyncio.gather(*tasks, return_exceptions=True)
@@ -449,16 +464,16 @@ class ArbitrageSystem24x7:
         except KeyboardInterrupt:
             self.logger.info("Admin shutdown signal received")
         except Exception as e:
-            self.logger.error(f"System error: {e}")
+            self.logger.error(str(f"System error: {e}")
         finally:
             await self.shutdown()
             
     def _display_system_banner(self):
         """Display system startup banner"""
-        banner = [
-            "🔥 24/7 ONLINE ARBITRAGE SYSTEM - PRODUCTION MODE 🔥",
+        banner = []
+            "[HOT] 24/7 ONLINE ARBITRAGE SYSTEM - PRODUCTION MODE [HOT]",
             "=" * 80,
-            f"📊 Monitoring: {len(self.POLYGON_TOKENS)} tokens across {len(self.POLYGON_DEXS)} DEXs",
+            f"[METRICS] Monitoring: {len(self.POLYGON_TOKENS)} tokens across {len(self.POLYGON_DEXS)} DEXs",
             f"💰 Target Profit: ${self.config.min_profit_usd} - ${self.config.max_profit_usd}",
             f"🏦 Flash Loan Provider: Aave V3 (Polygon)",
             f"🔗 Network: Polygon Mainnet",
@@ -467,7 +482,7 @@ class ArbitrageSystem24x7:
             f"🤖 MCP Servers: {len(self.mcp_servers)} active",
             f"🧠 AI Agents: {len(self.ai_agents)} active",
             "=" * 80
-        ]
+        
         
         for line in banner:
             self.logger.info(line)
@@ -475,7 +490,7 @@ class ArbitrageSystem24x7:
     def _setup_signal_handlers(self):
         """Setup signal handlers for admin control"""
         def signal_handler(signum, frame):
-            self.logger.info(f"Admin signal {signum} received, initiating shutdown...")
+            self.logger.info(str(f"Admin signal {signum} received, initiating shutdown...")
             self.admin_controls["stop"] = True
             
         signal.signal(signal.SIGINT, signal_handler)
@@ -496,29 +511,29 @@ class ArbitrageSystem24x7:
                 # Check gas price first
                 gas_price_gwei = self.w3.eth.gas_price / 1e9
                 if gas_price_gwei > self.config.max_gas_price_gwei:
-                    self.logger.warning(f"High gas price: {gas_price_gwei:.1f} Gwei (limit: {self.config.max_gas_price_gwei})")
+                    self.logger.warning(str(f"High gas price: {gas_price_gwei:.1f} Gwei (limit: {self.config.max_gas_price_gwei}")
                     await asyncio.sleep(30)
                     continue
                 
                 # Fetch prices using MCP server coordination
                 if 'price_feed' in self.mcp_servers:
                     try:
-                        price_data = await self.mcp_servers['price_feed'].fetch_all_prices(
+                        price_data = await self.mcp_servers['price_feed'].fetch_all_prices()
                             tokens=list(self.POLYGON_TOKENS.keys()),
                             dexs=list(self.POLYGON_DEXS.keys())
-                        )
+                        
                         self.current_prices = price_data
                         
                     except Exception as e:
-                        self.logger.error(f"Price fetching failed: {e}")
+                        self.logger.error(str(f"Price fetching failed: {e}")
                         
                 end_time = time.time()
-                self.logger.debug(f"Price update completed in {end_time - start_time:.2f}s")
+                self.logger.debug(str(f"Price update completed in {end_time - start_time:.2f}s")
                 
                 await asyncio.sleep(self.config.price_update_interval_seconds)
                 
             except Exception as e:
-                self.logger.error(f"Price monitoring error: {e}")
+                self.logger.error(str(f"Price monitoring error: {e}")
                 await asyncio.sleep(10)
                 
     async def _opportunity_detection_loop(self):
@@ -533,11 +548,11 @@ class ArbitrageSystem24x7:
                     
                 # Use AI agent for opportunity detection
                 if 'arbitrage_detector' in self.ai_agents:
-                    opportunities = await self.ai_agents['arbitrage_detector'].analyze_opportunities(
+                    opportunities = await self.ai_agents['arbitrage_detector'].analyze_opportunities()
                         price_data=self.current_prices,
                         min_profit=self.config.min_profit_usd,
                         max_profit=self.config.max_profit_usd
-                    )
+                    
                     
                     # Filter and validate opportunities
                     valid_opportunities = []
@@ -553,17 +568,17 @@ class ArbitrageSystem24x7:
                     if valid_opportunities:
                         self.system_stats['opportunities_found'] += len(valid_opportunities)
                         for opp in valid_opportunities[:3]:  # Log top 3
-                            self.logger.info(
+                            self.logger.info()
                                 f"💰 Opportunity: {opp.token_symbol} | "
                                 f"{opp.buy_dex} → {opp.sell_dex} | "
                                 f"Profit: ${opp.net_profit_usd:.2f} | "
                                 f"Confidence: {opp.confidence_score:.2%}"
-                            )
+                            
                             
                 await asyncio.sleep(self.config.monitoring_interval_seconds)
                 
             except Exception as e:
-                self.logger.error(f"Opportunity detection error: {e}")
+                self.logger.error(str(f"Opportunity detection error: {e}")
                 await asyncio.sleep(5)
                 
     async def _execution_coordination_loop(self):
@@ -591,33 +606,33 @@ class ArbitrageSystem24x7:
                         if execution_result['profit'] > self.system_stats['best_profit_today']:
                             self.system_stats['best_profit_today'] = execution_result['profit']
                             
-                        self.logger.info(
-                            f"✅ EXECUTED: {best_opportunity.token_symbol} | "
+                        self.logger.info()
+                            f"[OK] EXECUTED: {best_opportunity.token_symbol} | "
                             f"Profit: ${execution_result['profit']:.2f} | "
                             f"Gas: {execution_result['gas_used']} | "
                             f"Total Profit Today: ${self.system_stats['total_profit_usd']:.2f}"
-                        )
+                        
                     else:
                         self.system_stats['execution_errors'] += 1
-                        self.logger.error(f"❌ Execution failed: {execution_result['error']}")
+                        self.logger.error(str(f"[ERROR] Execution failed: {execution_result['error']}")
                         
                 await asyncio.sleep(1)  # Check frequently for execution opportunities
                 
             except Exception as e:
-                self.logger.error(f"Execution coordination error: {e}")
+                self.logger.error(str(f"Execution coordination error: {e}")
                 await asyncio.sleep(5)
                 
     async def _execute_arbitrage_with_coordination(self, opportunity: ArbitrageOpportunity) -> Dict[str, Any]:
         """Execute arbitrage using full MCP server and AI agent coordination"""
         try:
-            self.logger.info(f"🔄 Executing arbitrage for {opportunity.token_symbol}...")
+            self.logger.info(str(f"[SYNC] Executing arbitrage for {opportunity.token_symbol}...")
             
             # Step 1: Pre-execution checks using MCP servers
             if 'aave_integration' in self.mcp_servers:
-                liquidity_check = await self.mcp_servers['aave_integration'].check_liquidity(
+                liquidity_check = await self.mcp_servers['aave_integration'].check_liquidity()
                     token_address=opportunity.token_address,
                     amount=opportunity.trade_size_usd
-                )
+                
                 
                 if not liquidity_check['sufficient']:
                     return {'success': False, 'error': 'Insufficient Aave liquidity'}
@@ -629,10 +644,10 @@ class ArbitrageSystem24x7:
                 
             # Step 3: Approval checks using DEX aggregator MCP
             if 'dex_aggregator' in self.mcp_servers:
-                approval_status = await self.mcp_servers['dex_aggregator'].check_approvals(
+                approval_status = await self.mcp_servers['dex_aggregator'].check_approvals()
                     token_address=opportunity.token_address,
                     dexs=[opportunity.buy_dex, opportunity.sell_dex]
-                )
+                
                 
                 if not approval_status['all_approved']:
                     return {'success': False, 'error': 'Token/DEX approvals missing'}
@@ -666,11 +681,11 @@ class ArbitrageSystem24x7:
             if gas_cost_usd > opportunity.net_profit_usd * 0.5:  # Gas cost > 50% of profit
                 return {'success': False, 'error': 'Gas cost too high relative to profit'}
                 
-            return {
+            return {}
                 'success': True,
                 'estimated_gas': estimated_gas,
                 'gas_cost_usd': gas_cost_usd
-            }
+            
             
         except Exception as e:
             return {'success': False, 'error': str(e)}
@@ -685,23 +700,23 @@ class ArbitrageSystem24x7:
             flash_loan_amount = int(opportunity.trade_size_usd * 1e6)  # Convert to token units
             
             # Call your flash loan contract
-            # tx_hash = await self._send_transaction(
+            # tx_hash = await self._send_transaction()
             #     contract=self.flash_loan_contract,
             #     function='executeArbitrage',
-            #     args=[
+            #     args=[]
             #         opportunity.token_address,
             #         flash_loan_amount,
             #         opportunity.route_path
-            #     ]
-            # )
+            #     
+            # 
             
             # For now, simulate successful execution
-            return {
+            return {}
                 'success': True,
                 'profit': opportunity.net_profit_usd,
                 'gas_used': 450000,
                 'tx_hash': '0x' + '0' * 64  # Placeholder
-            }
+            
             
         except Exception as e:
             return {'success': False, 'error': str(e)}
@@ -717,19 +732,19 @@ class ArbitrageSystem24x7:
                     health_status = await self.mcp_servers['monitoring'].check_system_health()
                     
                     if not health_status['healthy']:
-                        self.logger.warning(f"System health issue: {health_status['issues']}")
+                        self.logger.warning(str(f"System health issue: {health_status['issues']}")
                         
                 # Check wallet balance
                 balance_wei = self.w3.eth.get_balance(self.wallet_address)
                 balance_matic = balance_wei / 1e18
                 
                 if balance_matic < 10:  # Low MATIC warning
-                    self.logger.warning(f"Low MATIC balance: {balance_matic:.2f}")
+                    self.logger.warning(str(f"Low MATIC balance: {balance_matic:.2f}")
                     
                 await asyncio.sleep(self.config.health_check_interval_seconds)
                 
             except Exception as e:
-                self.logger.error(f"System monitoring error: {e}")
+                self.logger.error(str(f"System monitoring error: {e}")
                 await asyncio.sleep(30)
                 
     async def _admin_control_loop(self):
@@ -747,17 +762,17 @@ class ArbitrageSystem24x7:
                     if controls.get('pause', False) != self.admin_controls["pause"]:
                         self.admin_controls["pause"] = controls['pause']
                         status = "PAUSED" if controls['pause'] else "RESUMED"
-                        self.logger.info(f"🔧 Admin Control: System {status}")
+                        self.logger.info(str(f"[SETUP] Admin Control: System {status}")
                         
                     if controls.get('stop', False):
                         self.admin_controls["stop"] = True
-                        self.logger.info("🔧 Admin Control: System STOP requested")
+                        self.logger.info("[SETUP] Admin Control: System STOP requested")
                         break
                         
                 await asyncio.sleep(5)
                 
             except Exception as e:
-                self.logger.error(f"Admin control error: {e}")
+                self.logger.error(str(f"Admin control error: {e}")
                 await asyncio.sleep(10)
                 
     async def _metrics_reporting_loop(self):
@@ -768,43 +783,43 @@ class ArbitrageSystem24x7:
                 
                 uptime = datetime.now() - self.system_stats['uptime_start']
                 
-                self.logger.info("📊 SYSTEM METRICS REPORT:")
-                self.logger.info(f"  ⏰ Uptime: {uptime}")
-                self.logger.info(f"  🎯 Opportunities Found: {self.system_stats['opportunities_found']}")
-                self.logger.info(f"  ✅ Executed: {self.system_stats['opportunities_executed']}")
-                self.logger.info(f"  💵 Total Profit: ${self.system_stats['total_profit_usd']:.2f}")
-                self.logger.info(f"  🏆 Best Profit Today: ${self.system_stats['best_profit_today']:.2f}")
-                self.logger.info(f"  ❌ Errors: {self.system_stats['execution_errors']}")
+                self.logger.info("[METRICS] SYSTEM METRICS REPORT:")
+                self.logger.info(str(f"  ⏰ Uptime: {uptime}")
+                self.logger.info(str(f"  [TASK] Opportunities Found: {self.system_stats['opportunities_found']}")
+                self.logger.info(str(f"  [OK] Executed: {self.system_stats['opportunities_executed']}")
+                self.logger.info(str(f"  💵 Total Profit: ${self.system_stats['total_profit_usd']:.2f}")
+                self.logger.info(str(f"  [SUCCESS] Best Profit Today: ${self.system_stats['best_profit_today']:.2f}")
+                self.logger.info(str(f"  [ERROR] Errors: {self.system_stats['execution_errors']}")
                 
-                success_rate = (self.system_stats['opportunities_executed'] / 
+                success_rate = (self.system_stats['opportunities_executed'] / )
                               max(self.system_stats['opportunities_found'], 1)) * 100
-                self.logger.info(f"  📈 Success Rate: {success_rate:.1f}%")
+                self.logger.info(str(f"  [GROWTH] Success Rate: {success_rate:.1f}%")
                 
             except Exception as e:
-                self.logger.error(f"Metrics reporting error: {e}")
+                self.logger.error(str(f"Metrics reporting error: {e}")
                 
     async def shutdown(self):
         """Gracefully shutdown the system"""
-        self.logger.info("🛑 Initiating system shutdown...")
+        self.logger.info("[STOP] Initiating system shutdown...")
         self.is_running = False
         
         # Shutdown MCP servers
         for name, server in self.mcp_servers.items():
             try:
                 await server.shutdown()
-                self.logger.info(f"MCP Server '{name}' stopped")
+                self.logger.info(str(f"MCP Server '{name}' stopped")
             except Exception as e:
-                self.logger.error(f"Error stopping MCP server '{name}': {e}")
+                self.logger.error(str(f"Error stopping MCP server '{name}': {e}")
                 
         # Shutdown AI agents
         for name, agent in self.ai_agents.items():
             try:
                 await agent.shutdown()
-                self.logger.info(f"AI Agent '{name}' stopped")
+                self.logger.info(str(f"AI Agent '{name}' stopped")
             except Exception as e:
-                self.logger.error(f"Error stopping AI agent '{name}': {e}")
+                self.logger.error(str(f"Error stopping AI agent '{name}': {e}")
                 
-        self.logger.info("✅ System shutdown complete")
+        self.logger.info("[OK] System shutdown complete")
         
     # Admin API endpoints for external control
     def pause_system(self):
@@ -812,21 +827,21 @@ class ArbitrageSystem24x7:
         self.admin_controls["pause"] = True
         with open('admin_controls.json', 'w') as f:
             json.dump(self.admin_controls, f)
-        self.logger.info("🔧 Admin: System PAUSED")
+        self.logger.info("[SETUP] Admin: System PAUSED")
         
     def resume_system(self):
         """Resume the system (admin control)"""
         self.admin_controls["pause"] = False
         with open('admin_controls.json', 'w') as f:
             json.dump(self.admin_controls, f)
-        self.logger.info("🔧 Admin: System RESUMED")
+        self.logger.info("[SETUP] Admin: System RESUMED")
         
     def stop_system(self):
         """Stop the system (admin control)"""
         self.admin_controls["stop"] = True
         with open('admin_controls.json', 'w') as f:
             json.dump(self.admin_controls, f)
-        self.logger.info("🔧 Admin: System STOP requested")
+        self.logger.info("[SETUP] Admin: System STOP requested")
 
 async def main():
     """Main entry point"""

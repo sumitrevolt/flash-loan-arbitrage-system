@@ -1,4 +1,20 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, List, Any, Optional
+import argparse
+import asyncio
+import json
+import logging
+import os
+import signal
+import sys
+import uuid
+
+    from github_copilot_trainer import GitHubCopilotTrainer
+    from mcp_server_trainer import MCPServerManager
+    from multi_agent_terminal_coordinator import MultiAgentTerminalCoordinator, TaskRequest, AgentType
 """
 Master LangChain Integration System
 ===================================
@@ -10,38 +26,37 @@ Comprehensive system that integrates:
 - Advanced AI agent coordination for project development
 """
 
-import asyncio
-import logging
-import json
-import os
-import sys
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Any, Optional
-import uuid
-import signal
-import argparse
 
 # Import our custom modules
 sys.path.append(str(Path(__file__).parent))
 
 try:
-    from multi_agent_terminal_coordinator import MultiAgentTerminalCoordinator, TaskRequest, AgentType
-    from github_copilot_trainer import GitHubCopilotTrainer
-    from mcp_server_trainer import MCPServerManager
 except ImportError as e:
     logging.error(f"Failed to import modules: {e}")
     sys.exit(1)
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(),
         logging.FileHandler('master_langchain_system.log')
-    ]
-)
+    
+
 logger = logging.getLogger(__name__)
 
 class MasterLangChainSystem:
@@ -56,14 +71,14 @@ class MasterLangChainSystem:
         self.mcp_manager = MCPServerManager(str(self.project_root))
         
         # System state
-        self.system_status = {
+        self.system_status = {}
             "initialized": False,
             "subsystems_ready": 0,
             "total_subsystems": 3,
             "start_time": datetime.now(),
             "uptime": timedelta(),
             "tasks_completed": 0
-        }
+        
         
         # Background tasks
         self.background_tasks = []
@@ -75,18 +90,18 @@ class MasterLangChainSystem:
     
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals"""
-        logger.info(f"🛑 Received signal {signum}, initiating shutdown...")
+        logger.info(str(f"[STOP] Received signal {signum}, initiating shutdown...")
         self.shutdown_requested = True
     
     async def initialize(self) -> Dict[str, Any]:
         """Initialize the master system"""
-        logger.info("🚀 Initializing Master LangChain System...")
+        logger.info("[INIT] Initializing Master LangChain System...")
         
-        initialization_results = {
+        initialization_results = {}
             "terminal_coordinator": {"success": False},
             "copilot_trainer": {"success": False},
             "mcp_manager": {"success": False}
-        }
+        
         
         try:
             # Initialize terminal coordinator
@@ -94,60 +109,60 @@ class MasterLangChainSystem:
             if await self.terminal_coordinator.initialize():
                 initialization_results["terminal_coordinator"]["success"] = True
                 self.system_status["subsystems_ready"] += 1
-                logger.info("✅ Terminal Coordinator initialized")
+                logger.info("[OK] Terminal Coordinator initialized")
             else:
-                logger.error("❌ Failed to initialize Terminal Coordinator")
+                logger.error("[ERROR] Failed to initialize Terminal Coordinator")
             
             # Initialize copilot trainer (no async init needed)
-            logger.info("💡 Initializing GitHub Copilot Trainer...")
+            logger.info("[INFO] Initializing GitHub Copilot Trainer...")
             initialization_results["copilot_trainer"]["success"] = True
             self.system_status["subsystems_ready"] += 1
-            logger.info("✅ GitHub Copilot Trainer initialized")
+            logger.info("[OK] GitHub Copilot Trainer initialized")
             
             # Initialize MCP manager (no async init needed)
-            logger.info("🔧 Initializing MCP Server Manager...")
+            logger.info("[SETUP] Initializing MCP Server Manager...")
             initialization_results["mcp_manager"]["success"] = True
             self.system_status["subsystems_ready"] += 1
-            logger.info("✅ MCP Server Manager initialized")
+            logger.info("[OK] MCP Server Manager initialized")
             
             # Mark system as initialized
             self.system_status["initialized"] = True
             
-            logger.info(f"✅ Master System initialized with {self.system_status['subsystems_ready']}/{self.system_status['total_subsystems']} subsystems ready")
+            logger.info(str(f"[OK] Master System initialized with {self.system_status['subsystems_ready']}/{self.system_status['total_subsystems']} subsystems ready")
             
-            return {
+            return {}
                 "success": True,
                 "subsystems_ready": self.system_status["subsystems_ready"],
                 "total_subsystems": self.system_status["total_subsystems"],
                 "results": initialization_results
-            }
+            
             
         except Exception as e:
-            logger.error(f"❌ Failed to initialize Master System: {e}")
-            return {
+            logger.error(str(f"[ERROR] Failed to initialize Master System: {e}")
+            return {}
                 "success": False,
                 "error": str(e),
                 "results": initialization_results
-            }
+            
     
     async def start_all_services(self) -> Dict[str, Any]:
         """Start all MCP servers and background services"""
-        logger.info("🚀 Starting all services...")
+        logger.info("[INIT] Starting all services...")
         
-        results = {
+        results = {}
             "mcp_servers": {"success": False},
             "monitoring": {"success": False},
             "training": {"success": False}
-        }
+        
         
         try:
             # Start MCP servers
-            logger.info("🔧 Starting MCP servers...")
+            logger.info("[SETUP] Starting MCP servers...")
             mcp_results = await self.mcp_manager.start_all_servers()
             results["mcp_servers"] = mcp_results
             
             # Start monitoring
-            logger.info("🔍 Starting monitoring services...")
+            logger.info("[SEARCH] Starting monitoring services...")
             monitoring_task = asyncio.create_task(self.mcp_manager.start_monitoring())
             self.background_tasks.append(monitoring_task)
             results["monitoring"]["success"] = True
@@ -158,11 +173,11 @@ class MasterLangChainSystem:
             self.background_tasks.append(training_task)
             results["training"]["success"] = True
             
-            logger.info("✅ All services started successfully")
+            logger.info("[OK] All services started successfully")
             return {"success": True, "results": results}
             
         except Exception as e:
-            logger.error(f"❌ Failed to start services: {e}")
+            logger.error(str(f"[ERROR] Failed to start services: {e}")
             return {"success": False, "error": str(e), "results": results}
     
     async def _background_training(self):
@@ -177,13 +192,13 @@ class MasterLangChainSystem:
                 if training_data:
                     # Train agents with collected data
                     session = await self.copilot_trainer.train_agent_with_copilot_data(training_data)
-                    logger.info(f"📊 Completed training session: {session.session_id}")
+                    logger.info(str(f"[METRICS] Completed training session: {session.session_id}")
                 
                 # Wait before next training cycle (1 hour)
                 await asyncio.sleep(3600)
                 
             except Exception as e:
-                logger.error(f"❌ Error in background training: {e}")
+                logger.error(str(f"[ERROR] Error in background training: {e}")
                 await asyncio.sleep(300)  # Wait 5 minutes on error
     
     async def execute_terminal_command(self, command: str, timeout: int = 60) -> Dict[str, Any]:
@@ -207,12 +222,12 @@ class MasterLangChainSystem:
         # Remove duplicates
         unique_suggestions = list(set(combined_suggestions))
         
-        return {
+        return {}
             "success": True,
             "suggestions": unique_suggestions[:20],  # Top 20 suggestions
             "sources": ["terminal_coordinator", "copilot_trainer"],
             "confidence": training_result.get("confidence", 0.5)
-        }
+        
     
     async def train_mcp_server(self, server_name: str, training_data: Dict = None) -> Dict[str, Any]:
         """Train MCP server"""
@@ -232,25 +247,25 @@ class MasterLangChainSystem:
         mcp_status = await self.mcp_manager.get_server_status()
         copilot_report = await self.copilot_trainer.generate_training_report()
         
-        return {
+        return {}
             "master_system": self.system_status,
             "terminal_coordinator": terminal_status,
             "mcp_servers": mcp_status,
             "copilot_training": copilot_report,
             "timestamp": datetime.now().isoformat()
-        }
+        
     
     async def generate_comprehensive_report(self) -> Dict[str, Any]:
         """Generate comprehensive system report"""
-        logger.info("📊 Generating comprehensive system report...")
+        logger.info("[METRICS] Generating comprehensive system report...")
         
         system_status = await self.get_system_status()
         mcp_performance = await self.mcp_manager.generate_performance_report()
         code_analysis = await self.copilot_trainer.analyze_code_patterns()
         
-        report = {
+        report = {}
             "generated_at": datetime.now().isoformat(),
-            "system_overview": {
+            "system_overview": {}
                 "uptime": str(system_status["master_system"]["uptime"]),
                 "subsystems_ready": system_status["master_system"]["subsystems_ready"],
                 "total_tasks_completed": system_status["terminal_coordinator"]["total_tasks_completed"],
@@ -262,7 +277,7 @@ class MasterLangChainSystem:
             "mcp_performance": mcp_performance,
             "code_analysis": code_analysis,
             "recommendations": self._generate_recommendations(system_status, mcp_performance, code_analysis)
-        }
+        
         
         return report
     
@@ -296,10 +311,10 @@ class MasterLangChainSystem:
     
     async def start_interactive_mode(self):
         """Start interactive mode for user commands"""
-        logger.info("🎮 Starting Master System Interactive Mode...")
+        logger.info("[GAME] Starting Master System Interactive Mode...")
         
         print("\n" + "="*60)
-        print("🚀 MASTER LANGCHAIN SYSTEM - INTERACTIVE MODE")
+        print("[INIT] MASTER LANGCHAIN SYSTEM - INTERACTIVE MODE")
         print("="*60)
         print("\nAvailable Commands:")
         print("  'terminal <command>'     - Execute terminal command")
@@ -343,17 +358,17 @@ class MasterLangChainSystem:
                 
                 if command == 'status':
                     status = await self.get_system_status()
-                    print(json.dumps({
-                        "uptime": str(status["master_system"]["uptime"]),
+                    print(json.dumps({))}
+                        "uptime": str(status["master_system"]["uptime"], ensure_ascii=True, default=str),
                         "subsystems_ready": status["master_system"]["subsystems_ready"],
                         "agents_active": status["terminal_coordinator"]["agents_active"],
                         "tasks_completed": status["terminal_coordinator"]["total_tasks_completed"],
                         "mcp_servers": len(status["mcp_servers"]["servers"])
-                    }, indent=2))
+                    }, indent=2
                     continue
                 
                 elif command == 'report':
-                    print("📊 Generating comprehensive report...")
+                    print("[METRICS] Generating comprehensive report...")
                     report = await self.generate_comprehensive_report()
                     
                     # Print summary
@@ -364,7 +379,7 @@ class MasterLangChainSystem:
                     print(f"MCP Servers Healthy: {report['system_overview']['mcp_servers_healthy']}")
                     
                     if report.get('recommendations'):
-                        print("\n💡 RECOMMENDATIONS:")
+                        print("\n[INFO] RECOMMENDATIONS:")
                         for rec in report['recommendations']:
                             print(f"  • {rec}")
                     
@@ -377,14 +392,14 @@ class MasterLangChainSystem:
                 
                 elif command == 'mcp':
                     if len(parts) < 2:
-                        print("❌ Usage: mcp <status|start|stop|restart> [server_name]")
+                        print("[ERROR] Usage: mcp <status|start|stop|restart> [server_name]")
                         continue
                     
                     mcp_action = parts[1].lower()
                     
                     if mcp_action == 'status':
                         status = await self.mcp_manager.get_server_status()
-                        print(f"\n📊 MCP SERVERS STATUS ({status['total_servers']} servers)")
+                        print(f"\n[METRICS] MCP SERVERS STATUS ({status['total_servers']} servers)")
                         for name, info in status['servers'].items():
                             print(f"  • {name}: {info['status']} (port {info['port']})")
                         continue
@@ -399,23 +414,23 @@ class MasterLangChainSystem:
                             result = await self.mcp_manager.restart_server(server_name)
                         
                         if result["success"]:
-                            print(f"✅ {mcp_action.title()} successful for {server_name}")
+                            print(f"[OK] {mcp_action.title()} successful for {server_name}")
                         else:
-                            print(f"❌ {mcp_action.title()} failed for {server_name}: {result.get('error', 'Unknown error')}")
+                            print(f"[ERROR] {mcp_action.title()} failed for {server_name}: {result.get('error', 'Unknown error')}")
                         continue
                 
                 # Handle other commands
                 if len(parts) < 2:
-                    print("❌ Invalid command format")
+                    print("[ERROR] Invalid command format")
                     continue
                 
                 args = ' '.join(parts[1:])
                 
                 if command == 'terminal':
-                    print(f"🔧 Executing: {args}")
+                    print(f"[SETUP] Executing: {args}")
                     result = await self.execute_terminal_command(args)
                 elif command == 'code':
-                    print(f"💡 Getting code assistance for: {args}")
+                    print(f"[INFO] Getting code assistance for: {args}")
                     result = await self.get_code_assistance(args)
                 elif command == 'train':
                     print(f"🎓 Training MCP server: {args}")
@@ -424,20 +439,20 @@ class MasterLangChainSystem:
                     print(f"📁 Managing project: {args}")
                     result = await self.manage_project(args)
                 else:
-                    print(f"❌ Unknown command: {command}")
+                    print(f"[ERROR] Unknown command: {command}")
                     continue
                 
                 # Display result
                 if result.get("success"):
-                    print("✅ Success!")
+                    print("[OK] Success!")
                     if "suggestions" in result:
-                        print("💡 Suggestions:")
+                        print("[INFO] Suggestions:")
                         for i, suggestion in enumerate(result["suggestions"][:5], 1):
                             print(f"  {i}. {suggestion}")
                     elif "result" in result:
-                        print(f"📄 Result: {json.dumps(result['result'], indent=2, default=str)}")
+                        print(f"📄 Result: {json.dumps(result['result'], indent=2, default=str, ensure_ascii=True, default=str)}")
                 else:
-                    print(f"❌ Error: {result.get('error', 'Unknown error')}")
+                    print(f"[ERROR] Error: {result.get('error', 'Unknown error')}")
                 
                 self.system_status["tasks_completed"] += 1
                 
@@ -446,14 +461,14 @@ class MasterLangChainSystem:
             except EOFError:
                 break
             except Exception as e:
-                logger.error(f"❌ Error in interactive mode: {e}")
-                print(f"❌ Error: {e}")
+                logger.error(str(f"[ERROR] Error in interactive mode: {e}")
+                print(f"[ERROR] Error: {e}")
         
         print("\n👋 Exiting interactive mode...")
     
     async def shutdown(self):
         """Shutdown the master system"""
-        logger.info("🛑 Shutting down Master LangChain System...")
+        logger.info("[STOP] Shutting down Master LangChain System...")
         
         # Cancel background tasks
         for task in self.background_tasks:
@@ -467,16 +482,16 @@ class MasterLangChainSystem:
         await self.terminal_coordinator.shutdown()
         await self.mcp_manager.stop_all_servers()
         
-        logger.info("✅ Master System shutdown completed")
+        logger.info("[OK] Master System shutdown completed")
 
 async def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="Master LangChain Integration System")
     parser.add_argument("--project-root", help="Project root directory")
-    parser.add_argument("--mode", choices=["interactive", "daemon"], default="interactive",
-                       help="Run mode: interactive or daemon")
-    parser.add_argument("--start-services", action="store_true", 
-                       help="Start all MCP servers and services")
+    parser.add_argument("--mode", choices=["interactive", "daemon"], default="interactive",)
+                       help="Run mode: interactive or daemon"
+    parser.add_argument("--start-services", action="store_true", )
+                       help="Start all MCP servers and services"
     
     args = parser.parse_args()
     
@@ -485,36 +500,36 @@ async def main():
     
     try:
         # Initialize system
-        logger.info("🚀 Starting Master LangChain System...")
+        logger.info("[INIT] Starting Master LangChain System...")
         init_result = await system.initialize()
         
         if not init_result["success"]:
-            logger.error("❌ Failed to initialize system")
+            logger.error("[ERROR] Failed to initialize system")
             return 1
         
         # Start services if requested
         if args.start_services:
             services_result = await system.start_all_services()
             if services_result["success"]:
-                logger.info("✅ All services started successfully")
+                logger.info("[OK] All services started successfully")
             else:
-                logger.warning("⚠️ Some services failed to start")
+                logger.warning("[WARN] Some services failed to start")
         
         # Run in selected mode
         if args.mode == "interactive":
             await system.start_interactive_mode()
         else:  # daemon mode
-            logger.info("🔄 Running in daemon mode...")
+            logger.info("[SYNC] Running in daemon mode...")
             while not system.shutdown_requested:
                 await asyncio.sleep(10)
         
         return 0
         
     except KeyboardInterrupt:
-        logger.info("🛑 Received shutdown signal")
+        logger.info("[STOP] Received shutdown signal")
         return 0
     except Exception as e:
-        logger.error(f"❌ System error: {e}")
+        logger.error(str(f"[ERROR] System error: {e}")
         return 1
     finally:
         await system.shutdown()

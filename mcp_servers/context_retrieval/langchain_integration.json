@@ -1,9 +1,186 @@
 {
-  "name": "context_retrieval",
-  "path": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\context_retrieval",
+  "name": "langchain_master_orchestrator",
+  "version": "1.0.0",
+  "description": "LangChain Master Orchestrator for Flash Loan Arbitrage System",
+  "path": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\langchain_integration",
   "enabled": true,
+  "components": {
+    "orchestrator": {
+      "class": "LangChainMasterOrchestrator",
+      "module": "langchain_master_orchestrator",
+      "description": "Main orchestrator for workflow coordination and MCP server management",
+      "capabilities": [
+        "workflow_orchestration",
+        "mcp_server_coordination",
+        "arbitrage_strategy_management",
+        "multi_phase_execution",
+        "error_recovery",
+        "state_management"
+      ]
+    },
+    "mcp_communication_manager": {
+      "class": "MCPCommunicationManager",
+      "module": "mcp_communication_manager",
+      "description": "Manages communication with all MCP servers with load balancing",
+      "capabilities": [
+        "mcp_protocol_communication",
+        "load_balancing",
+        "circuit_breaker",
+        "health_monitoring",
+        "failover_management",
+        "protocol_adaptation"
+      ]
+    },
+    "workflow_engine": {
+      "class": "WorkflowEngine",
+      "module": "workflow_engine",
+      "description": "Orchestrates complex multi-step arbitrage workflows",
+      "capabilities": [
+        "workflow_execution",
+        "dependency_management",
+        "retry_logic",
+        "step_coordination",
+        "conditional_execution",
+        "parallel_processing"
+      ]
+    },
+    "intelligent_router": {
+      "class": "IntelligentRouter",
+      "module": "intelligent_router",
+      "description": "Intelligent load balancing and server selection",
+      "capabilities": [
+        "intelligent_routing",
+        "performance_optimization",
+        "health_based_selection",
+        "capability_matching",
+        "session_affinity",
+        "circuit_breaker_integration"
+      ]
+    },
+    "conversation_manager": {
+      "class": "ConversationManager",
+      "module": "conversation_manager",
+      "description": "Multi-agent conversation and decision management",
+      "capabilities": [
+        "multi_agent_conversations",
+        "consensus_building",
+        "autogen_integration",
+        "decision_algorithms",
+        "conversation_orchestration",
+        "conflict_resolution"
+      ]
+    }
+  },
+  "integration_points": {
+    "autogen_system": {
+      "url": "http://localhost:8001",
+      "endpoints": [
+        "/coordinate",
+        "/agents",
+        "/health",
+        "/status"
+      ],
+      "integration_type": "rest_api"
+    },
+    "mcp_servers": {
+      "critical_tier": [
+        "filesystem",
+        "context7",
+        "supermemory",
+        "taskmanager"
+      ],
+      "integration_tier": [
+        "langchain_orchestrator",
+        "enhanced_manager",
+        "complete_langchain_integration"
+      ],
+      "specialized_tier": [
+        "aave_flash_loan",
+        "arbitrage_detector",
+        "risk_analyzer"
+      ]
+    },
+    "external_services": {
+      "redis": {
+        "url": "redis://localhost:6379",
+        "purpose": "state_persistence"
+      },
+      "postgresql": {
+        "url": "postgresql://localhost:5432/flash_loan_arbitrage",
+        "purpose": "historical_data"
+      }
+    }
+  },
+  "workflows": {
+    "arbitrage_analysis": {
+      "description": "Complete arbitrage opportunity analysis workflow",
+      "steps": [
+        "fetch_market_data",
+        "calculate_arbitrage",
+        "validate_liquidity",
+        "assess_gas_costs"
+      ],
+      "timeout": 120,
+      "priority": "high"
+    },
+    "risk_assessment": {
+      "description": "Comprehensive risk assessment workflow",
+      "steps": [
+        "analyze_price_volatility",
+        "check_slippage_risk",
+        "validate_smart_contracts",
+        "calculate_risk_score"
+      ],
+      "timeout": 90,
+      "priority": "high"
+    },
+    "trade_execution": {
+      "description": "Flash loan trade execution workflow",
+      "steps": [
+        "prepare_flash_loan",
+        "execute_flash_loan",
+        "monitor_transaction",
+        "calculate_profit"
+      ],
+      "timeout": 300,
+      "priority": "critical"
+    }
+  },
+  "configuration": {
+    "config_file": "config/langchain_config.yaml",
+    "environment_variables": [
+      "REDIS_URL",
+      "POSTGRES_PASSWORD",
+      "OPENAI_API_KEY",
+      "SUPERMEMORY_API_KEY"
+    ],
+    "default_settings": {
+      "max_concurrent_workflows": 10,
+      "circuit_breaker_threshold": 5,
+      "health_check_interval": 30,
+      "conversation_timeout": 300
+    }
+  },
+  "monitoring": {
+    "metrics": [
+      "total_orchestrations",
+      "successful_orchestrations",
+      "failed_orchestrations",
+      "avg_response_time",
+      "server_health_scores",
+      "conversation_success_rate"
+    ],
+    "alerts": [
+      "high_error_rate",
+      "slow_response_time",
+      "server_down",
+      "circuit_breaker_open"
+    ]
+  },
   "langchain_integration": {
-    "tool_prefix": "context-retrieval",
-    "description": "Integration with context_retrieval MCP server"
+    "tool_prefix": "langchain-orchestrator",
+    "description": "LangChain Master Orchestrator for Flash Loan Arbitrage with full MCP integration",
+    "version": "1.0.0",
+    "last_updated": "2025-06-22"
   }
 }

@@ -1,4 +1,10 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from pathlib import Path
+import logging
+import shutil
+import sys
 """
 Cleanup Duplicates Script
 ========================
@@ -6,20 +12,28 @@ Cleanup Duplicates Script
 Remove duplicate files and directories after consolidation.
 """
 
-import shutil
-import logging
-import sys
-from pathlib import Path
-from datetime import datetime
 
 # Set up logging with proper encoding handling
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(levelname)s:%(name)s:%(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(sys.stdout)
-    ]
-)
+    
+
 
 # Ensure stdout uses UTF-8 encoding
 if sys.stdout.encoding != 'utf-8':
@@ -40,7 +54,7 @@ class DuplicateCleanup:
         self.project_root = Path(__file__).parent.parent
         
         # Directories to remove (duplicates)
-        self.dirs_to_remove = [
+        self.dirs_to_remove = []
             "mcp_servers_organized",
             "mcp_server",
             "infrastructure/mcp_servers",
@@ -49,13 +63,13 @@ class DuplicateCleanup:
             "backups/final_merge_20250613_094444",
             "archive/deprecated/old_mcp_servers",
             "archive/backup_20250603_122623"
-        ]
+        
         
         # Files to remove (duplicates in root)
-        self.files_to_remove = [
+        self.files_to_remove = []
             "simple_mcp_server.py",
             "minimal-mcp-server.py"
-        ]
+        
 
     def cleanup_directories(self) -> None:
         """Remove duplicate directories"""
@@ -66,9 +80,9 @@ class DuplicateCleanup:
             if full_path.exists():
                 try:
                     shutil.rmtree(full_path)
-                    logger.info(f"   ✅ Removed: {dir_path}")
+                    logger.info(str(f"   [OK] Removed: {dir_path}")
                 except Exception as e:
-                    logger.error(f"   ❌ Failed to remove {dir_path}: {e}")
+                    logger.error(str(f"   [ERROR] Failed to remove {dir_path}: {e}")
 
     def cleanup_files(self) -> None:
         """Remove duplicate files"""
@@ -79,9 +93,9 @@ class DuplicateCleanup:
             if full_path.exists():
                 try:
                     full_path.unlink()
-                    logger.info(f"   ✅ Removed: {file_path}")
+                    logger.info(str(f"   [OK] Removed: {file_path}")
                 except Exception as e:
-                    logger.error(f"   ❌ Failed to remove {file_path}: {e}")
+                    logger.error(str(f"   [ERROR] Failed to remove {file_path}: {e}")
 
     def create_summary_report(self) -> None:
         """Create a summary of cleanup actions"""
@@ -111,18 +125,18 @@ def main():
     """Main cleanup function"""
     cleanup = DuplicateCleanup()
     
-    logger.info("🚀 Starting duplicate cleanup process...")
+    logger.info("[INIT] Starting duplicate cleanup process...")
     
     try:
         cleanup.cleanup_directories()
         cleanup.cleanup_files()
         cleanup.create_summary_report()
         
-        logger.info("✅ Cleanup completed successfully!")
+        logger.info("[OK] Cleanup completed successfully!")
         logger.info("📄 Summary report created: CLEANUP_SUMMARY.md")
         
     except Exception as e:
-        logger.error(f"❌ Cleanup failed: {e}")
+        logger.error(str(f"[ERROR] Cleanup failed: {e}")
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -1,7 +1,7 @@
-import functools
 
-
+# -*- coding: utf-8 -*-
 # from jaraco.functools 3.5
+import functools
 def pass_none(func):
     """
     Wrap func so it's not called if its first param is None

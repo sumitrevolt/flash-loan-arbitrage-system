@@ -1,0 +1,13 @@
+{
+  "web-eval-agent": {
+    "command": "node",
+    "args": [
+      "--eval",
+      "console.log('Placeholder for webEvalAgent execution')"
+    ],
+    "env": {
+      "OPERATIVE_API_KEY": "op-1Q3XbGntO4-2jUTP7FLi7u5oPmO7xGKr22_g4OYrXwc",
+      "PLAYWRIGHT_BROWSER": "chromium"
+    }
+  }
+}

@@ -1,0 +1,4 @@
+aiohttp==3.9.1
+asyncio==3.4.3
+typing-extensions==4.8.0
+dataclasses==0.6 

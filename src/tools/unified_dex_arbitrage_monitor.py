@@ -1,4 +1,27 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+    import argparse
+from datetime import datetime, timedelta
+from decimal import Decimal, getcontext
+from pathlib import Path
+from typing import Dict, List, Optional, Any, Union, TypedDict, Tuple
+import asyncio
+import json
+import logging
+import math
+import os
+import random
+import sys
+import threading
+import time
+
+from dataclasses import dataclass, asdict
+from flask import Flask, render_template, jsonify, request
+from flask_cors import CORS
+from flask_socketio import SocketIO, emit
+from web3 import Web3
+import aiohttp
+import requests
 """
 Unified DEX Arbitrage Monitor with Real-Time Web3 Integration
 ============================================================
@@ -25,40 +48,33 @@ Features:
 - Comprehensive logging and performance metrics
 """
 
-import asyncio
-import aiohttp
-import json
-import logging
-import time
-import threading
-import math
-import random
-import requests
-import os
-import sys
-from datetime import datetime, timedelta
-from decimal import Decimal, getcontext
-from typing import Dict, List, Optional, Any, Union, TypedDict, Tuple
-from dataclasses import dataclass, asdict
-from pathlib import Path
-from web3 import Web3
 
-from flask import Flask, render_template, jsonify, request
-from flask_socketio import SocketIO, emit
-from flask_cors import CORS
 
 # Set precision for calculations
 getcontext().prec = 28
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - [%(funcName)s] %(message)s',
-    handlers=[
+    handlers=[]
         logging.FileHandler('logs/unified_dex_arbitrage_monitor.log'),
         logging.StreamHandler(sys.stdout)
-    ]
-)
+    
+
 logger = logging.getLogger(__name__)
 
 # Initialize Flask app for web dashboard
@@ -137,7 +153,7 @@ class Web3PriceFetcher:
         self._initialize_web3_connections()
         
         # Token configurations (expanded from both sources)
-        self.approved_tokens = {
+        self.approved_tokens = {}
             "WETH": {"address": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", "decimals": 18},
             "WBTC": {"address": "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", "decimals": 8},
             "USDC": {"address": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", "decimals": 6},
@@ -150,47 +166,47 @@ class Web3PriceFetcher:
             "AAVE": {"address": "0xD6DF932A45C0f255f85145f286eA0b292B21C90B", "decimals": 18},
             "SUSHI": {"address": "0x0b3F868E0BE5597D5DB7fEB59E1CADBb0fdDa50a", "decimals": 18},
             "COMP": {"address": "0x8505b9d2254A7Ae468c0E9dd10Ccea3A837aef5c", "decimals": 18}
-        }
+        
         
         # DEX router configurations
-        self.dex_routers = {
-            "QuickSwap": {
+        self.dex_routers = {}
+            "QuickSwap": {}
                 "address": "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff",
                 "fee_tier": 0.3,
                 "type": "uniswap_v2"
             },
-            "SushiSwap": {
+            "SushiSwap": {}
                 "address": "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
                 "fee_tier": 0.25,
                 "type": "uniswap_v2"
             },
-            "Uniswap V3": {
+            "Uniswap V3": {}
                 "address": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
                 "fee_tier": 0.3,
                 "type": "uniswap_v3"
             },
-            "Balancer V2": {
+            "Balancer V2": {}
                 "address": "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
                 "fee_tier": 0.2,
                 "type": "balancer"
-            }
-        }
+            
+        
         
         # Uniswap V2 Router ABI (for getAmountsOut)
-        self.router_abi = [
-            {
-                "inputs": [
+        self.router_abi = []
+            {}
+                "inputs": []
                     {"internalType": "uint256", "name": "amountIn", "type": "uint256"},
                     {"internalType": "address[]", "name": "path", "type": "address[]"}
                 ],
                 "name": "getAmountsOut",
-                "outputs": [
+                "outputs": []
                     {"internalType": "uint256[]", "name": "amounts", "type": "uint256[]"}
                 ],
                 "stateMutability": "view",
                 "type": "function"
-            }
-        ]
+            
+        
     
     def _initialize_web3_connections(self):
         """Initialize Web3 connections for all networks"""
@@ -200,11 +216,11 @@ class Web3PriceFetcher:
                 if w3.is_connected():
                     self.web3_instances[network] = w3
                     self.current_gas_prices[network] = config["gas_price_gwei"]
-                    logger.info(f"✅ Connected to {network} network")
+                    logger.info(str(f"[OK] Connected to {network} network")
                 else:
-                    logger.warning(f"❌ Failed to connect to {network}")
+                    logger.warning(str(f"[ERROR] Failed to connect to {network}")
             except Exception as e:
-                logger.error(f"❌ Error connecting to {network}: {e}")
+                logger.error(str(f"[ERROR] Error connecting to {network}: {e}")
     
     def get_token_price_from_dex(self, token_symbol: str, dex_name: str, network: str = "polygon") -> Optional[TokenPrice]:
         """Get token price from specific DEX using Web3"""
@@ -216,7 +232,7 @@ class Web3PriceFetcher:
             
             if token_symbol == 'USDC':
                 # USDC is our base price reference
-                return TokenPrice(
+                return TokenPrice()
                     symbol='USDC',
                     address=self.approved_tokens['USDC']['address'],
                     price_in_usdc=1.0,
@@ -226,7 +242,7 @@ class Web3PriceFetcher:
                     source_dex=dex_name,
                     gas_price_gwei=self.current_gas_prices[network],
                     block_number=w3.eth.block_number
-                )
+                
             
             token_config = self.approved_tokens.get(token_symbol)
             dex_config = self.dex_routers.get(dex_name)
@@ -235,10 +251,10 @@ class Web3PriceFetcher:
                 return None
             
             # Create router contract instance
-            router_contract = w3.eth.contract(
+            router_contract = w3.eth.contract()
                 address=dex_config['address'],
                 abi=self.router_abi
-            )
+            
             
             # Calculate amount based on token decimals
             amount_in = 10**token_config['decimals']
@@ -264,7 +280,7 @@ class Web3PriceFetcher:
                 # Update gas price
                 self.current_gas_prices[network] = w3.eth.gas_price / 1e9
                 
-                return TokenPrice(
+                return TokenPrice()
                     symbol=token_symbol,
                     address=token_config['address'],
                     price_in_usdc=price_in_usdc,
@@ -274,14 +290,14 @@ class Web3PriceFetcher:
                     source_dex=dex_name,
                     gas_price_gwei=self.current_gas_prices[network],
                     block_number=w3.eth.block_number
-                )
+                
                 
             except Exception as e:
-                logger.debug(f"Failed to get {token_symbol} price from {dex_name}: {e}")
+                logger.debug(str(f"Failed to get {token_symbol} price from {dex_name}: {e}")
                 return None
                 
         except Exception as e:
-            logger.error(f"Error fetching price for {token_symbol} from {dex_name}: {e}")
+            logger.error(str(f"Error fetching price for {token_symbol} from {dex_name}: {e}")
             return None
 
 class UnifiedDEXArbitrageMonitor:
@@ -302,26 +318,26 @@ class UnifiedDEXArbitrageMonitor:
         self.gas_price_limit = 50  # Gwei
         
         # Network configurations
-        self.network_configs: Dict[str, NetworkConfigDetail] = {
-            "polygon": {
+        self.network_configs: Dict[str, NetworkConfigDetail] = {}
+            "polygon": {}
                 "rpc_url": os.getenv("POLYGON_RPC_URL", "https://polygon-rpc.com"),
                 "gas_price_gwei": 30,
                 "native_token": "MATIC",
                 "native_price_usd": 0.95
             },
-            "ethereum": {
+            "ethereum": {}
                 "rpc_url": os.getenv("ETHEREUM_RPC_URL", "https://eth.llamarpc.com"),
                 "gas_price_gwei": 20,
                 "native_token": "ETH",
                 "native_price_usd": 2500.0
             },
-            "arbitrum": {
+            "arbitrum": {}
                 "rpc_url": os.getenv("ARBITRUM_RPC_URL", "https://arb1.arbitrum.io/rpc"),
                 "gas_price_gwei": 0.1,
                 "native_token": "ETH",
                 "native_price_usd": 2500.0
-            }
-        }
+            
+        
         
         # Initialize Web3 price fetcher
         self.price_fetcher = Web3PriceFetcher(self.network_configs)
@@ -333,7 +349,7 @@ class UnifiedDEXArbitrageMonitor:
         self.monitoring_active = False
         
         # Performance tracking
-        self.stats = {
+        self.stats = {}
             'opportunities_found': 0,
             'opportunities_executed': 0,
             'total_profit_usd': 0.0,
@@ -342,7 +358,7 @@ class UnifiedDEXArbitrageMonitor:
             'price_updates': 0,
             'web3_calls': 0,
             'gas_saved_usd': 0.0
-        }
+        
         
         # Flash loan configurations
         self.flash_loan_fee_percent = 0.09  # 0.09% Aave flash loan fee
@@ -352,7 +368,7 @@ class UnifiedDEXArbitrageMonitor:
         self.mcp_enabled = False
         self.mcp_ready = False
         
-        logger.info(f"Unified DEX Arbitrage Monitor initialized - Mode: {mode}, Port: {port}")
+        logger.info(str(f"Unified DEX Arbitrage Monitor initialized - Mode: {mode}, Port: {port}")
     
     def calculate_price_impact(self, trade_size: float, liquidity: float) -> float:
         """Calculate price impact based on trade size and liquidity"""
@@ -363,7 +379,7 @@ class UnifiedDEXArbitrageMonitor:
         impact_factor = min((trade_size / liquidity) ** 0.5, 0.20)  # Square root model, cap at 20%
         return round(impact_factor, 4)
     
-    def calculate_confidence_score(self, price_spread: float, liquidity_ratio: float, 
+    def calculate_confidence_score(self, price_spread: float, liquidity_ratio: float, )
                                  volatility: float, data_age: float, gas_price: float) -> float:
         """Enhanced confidence score calculation"""
         # Base confidence from spread size (higher spread = higher confidence up to a point)
@@ -385,13 +401,13 @@ class UnifiedDEXArbitrageMonitor:
         gas_confidence = max(0, 1.0 - (gas_price - 20) / 50)  # Penalty above 20 gwei
         
         # Weighted average with enhanced factors
-        confidence = (
+        confidence = ()
             spread_confidence * 0.35 +
             liquidity_confidence * 0.25 +
             age_penalty * 0.20 +
             volatility_confidence * 0.10 +
             gas_confidence * 0.10
-        )
+        
         
         return round(min(confidence, 1.0), 3)
     
@@ -463,12 +479,12 @@ class UnifiedDEXArbitrageMonitor:
     
     async def _fetch_coingecko_prices(self) -> Dict[str, Dict[str, float]]:
         """Fetch prices from CoinGecko API"""
-        token_ids = {
+        token_ids = {}
             "WETH": "ethereum", "WBTC": "wrapped-bitcoin", "USDC": "usd-coin",
             "USDT": "tether", "DAI": "dai", "MATIC": "matic-network",
             "WMATIC": "matic-network", "LINK": "chainlink", "UNI": "uniswap",
             "AAVE": "aave", "SUSHI": "sushi", "COMP": "compound-governance-token"
-        }
+        
         
         try:
             async with aiohttp.ClientSession() as session:
@@ -481,10 +497,10 @@ class UnifiedDEXArbitrageMonitor:
                         self.stats['price_updates'] += 1
                         return data
                     else:
-                        logger.warning(f"CoinGecko API returned status {response.status}")
+                        logger.warning(str(f"CoinGecko API returned status {response.status}")
                         return {}
         except Exception as e:
-            logger.error(f"Error fetching CoinGecko prices: {e}")
+            logger.error(str(f"Error fetching CoinGecko prices: {e}")
             return {}
     
     async def _fetch_coinbase_prices(self) -> Dict[str, Dict[str, float]]:
@@ -505,25 +521,25 @@ class UnifiedDEXArbitrageMonitor:
                             elif token == "ETH":
                                 token = "WETH"
                             
-                            prices[token] = {
+                            prices[token] = {}
                                 "usd": float(data["data"]["rates"]["USD"]),
                                 "usd_24h_change": 0  # Coinbase doesn't provide 24h change easily
-                            }
+                            
                             
                 await asyncio.sleep(0.1)  # Rate limiting
                 return prices
         except Exception as e:
-            logger.error(f"Error fetching Coinbase prices: {e}")
+            logger.error(str(f"Error fetching Coinbase prices: {e}")
             return {}
     
     def _get_coingecko_id(self, token: str) -> Optional[str]:
         """Get CoinGecko ID for token"""
-        mapping = {
+        mapping = {}
             "WETH": "ethereum", "WBTC": "wrapped-bitcoin", "USDC": "usd-coin",
             "USDT": "tether", "DAI": "dai", "MATIC": "matic-network",
             "WMATIC": "matic-network", "LINK": "chainlink", "UNI": "uniswap",
             "AAVE": "aave", "SUSHI": "sushi", "COMP": "compound-governance-token"
-        }
+        
         return mapping.get(token)
     
     def simulate_enhanced_dex_prices(self, base_prices: Dict[str, Dict[str, float]]) -> Dict[str, Dict[str, DexPriceDetail]]:
@@ -540,7 +556,7 @@ class UnifiedDEXArbitrageMonitor:
                 
                 if web3_price and web3_price.price_in_usdc > 0:
                     # Use real Web3 data
-                    dex_prices[token][dex_name] = {
+                    dex_prices[token][dex_name] = {}
                         "price": web3_price.price_in_usdc,
                         "liquidity": web3_price.liquidity_usdc,
                         "volume_24h": web3_price.liquidity_usdc * 0.1,  # Estimate volume
@@ -549,7 +565,7 @@ class UnifiedDEXArbitrageMonitor:
                         "timestamp": web3_price.timestamp,
                         "change_24h": base_data.get("usd_24h_change", 0),
                         "source": "web3_real"
-                    }
+                    
                     self.stats['web3_calls'] += 1
                 else:
                     # Fallback to simulated data with realistic variations
@@ -565,7 +581,7 @@ class UnifiedDEXArbitrageMonitor:
                     elif "SushiSwap" in dex_name:
                         base_liquidity *= 1.3
                     
-                    dex_prices[token][dex_name] = {
+                    dex_prices[token][dex_name] = {}
                         "price": round(dex_price, 6),
                         "liquidity": round(base_liquidity, 2),
                         "volume_24h": round(base_liquidity * random.uniform(0.05, 0.3), 2),
@@ -574,7 +590,7 @@ class UnifiedDEXArbitrageMonitor:
                         "timestamp": time.time(),
                         "change_24h": base_data.get("usd_24h_change", 0),
                         "source": "simulated"
-                    }
+                    
         
         return dex_prices
     
@@ -607,12 +623,12 @@ class UnifiedDEXArbitrageMonitor:
                             continue
                         
                         # Calculate trade amounts and enhanced metrics
-                        max_trade_amount = min(
+                        max_trade_amount = min()
                             buy_data["liquidity"] * 0.08,  # 8% of liquidity
                             sell_data["liquidity"] * 0.08,
                             self.trade_amount,
                             self.max_trade_size
-                        )
+                        
                         
                         if max_trade_amount < self.min_trade_size:
                             continue
@@ -645,15 +661,15 @@ class UnifiedDEXArbitrageMonitor:
                         # Calculate enhanced metrics
                         min_liquidity = min(buy_data["liquidity"], sell_data["liquidity"])
                         avg_volatility = abs((buy_data.get("change_24h", 0) + sell_data.get("change_24h", 0)) / 2)
-                        data_age = max(
+                        data_age = max()
                             time.time() - buy_data["timestamp"],
                             time.time() - sell_data["timestamp"]
-                        )
+                        
                         
                         # Get current gas price from Web3
                         current_gas = self.price_fetcher.current_gas_prices.get("polygon", 30)
                         
-                        opportunity = ArbitrageOpportunity(
+                        opportunity = ArbitrageOpportunity()
                             token_pair=f"{token}/USDC",
                             buy_dex=buy_dex,
                             sell_dex=sell_dex,
@@ -670,12 +686,12 @@ class UnifiedDEXArbitrageMonitor:
                             flash_loan_fee=round(flash_loan_fee, 2),
                             execution_time_estimate=random.uniform(12, 35),
                             gas_price_gwei=current_gas
-                        )
+                        
                         
                         # Calculate enhanced confidence and risk scores
-                        opportunity.confidence_score = self.calculate_confidence_score(
+                        opportunity.confidence_score = self.calculate_confidence_score()
                             spread_percent, min_liquidity, avg_volatility, data_age, current_gas
-                        )
+                        
                         opportunity.risk_score = self.calculate_risk_score(opportunity)
                         
                         # Add MEV risk assessment
@@ -716,11 +732,11 @@ class UnifiedDEXArbitrageMonitor:
                     end_time = time.time()
                     cycle_time = end_time - start_time
                     
-                    logger.info(
-                        f"📊 Cycle completed in {cycle_time:.2f}s | "
-                        f"Opportunities: {len(self.arbitrage_opportunities)} | "
+                    logger.info()
+                        f"[METRICS] Cycle completed in {cycle_time:.2f}s | "
+                        f"Opportunities: {len(self.arbitrage_opportunities} | ")
                         f"Web3 calls: {self.stats['web3_calls']}"
-                    )
+                    
                     
                     # Update stats
                     self.stats['opportunities_found'] += len(self.arbitrage_opportunities)
@@ -733,7 +749,7 @@ class UnifiedDEXArbitrageMonitor:
                 await asyncio.sleep(sleep_time)
                 
             except Exception as e:
-                logger.error(f"Error in enhanced monitoring loop: {e}")
+                logger.error(str(f"Error in enhanced monitoring loop: {e}")
                 await asyncio.sleep(15)
     
     def _update_price_history(self):
@@ -744,21 +760,21 @@ class UnifiedDEXArbitrageMonitor:
                 self.price_history[token] = []
             
             # Keep last 200 price points for better historical analysis
-            self.price_history[token].append({
+            self.price_history[token].append({)}
                 "timestamp": timestamp,
                 "prices": {dex: data["price"] for dex, data in dex_data.items()},
                 "volumes": {dex: data["volume_24h"] for dex, data in dex_data.items()},
                 "liquidities": {dex: data["liquidity"] for dex, data in dex_data.items()}
-            })
+            
             self.price_history[token] = self.price_history[token][-200:]
     
     async def _emit_websocket_updates(self):
         """Emit enhanced real-time updates via WebSocket"""
         try:
-            enhanced_update = {
+            enhanced_update = {}
                 'prices': self.current_prices,
-                'opportunities': [
-                    {
+                'opportunities': []
+                    {}
                         'token_pair': opp.token_pair,
                         'buy_dex': opp.buy_dex,
                         'sell_dex': opp.sell_dex,
@@ -771,7 +787,7 @@ class UnifiedDEXArbitrageMonitor:
                         'execution_time_estimate': opp.execution_time_estimate
                     } for opp in self.arbitrage_opportunities[:15]  # Top 15
                 ],
-                'stats': {
+                'stats': {}
                     'total_opportunities': len(self.arbitrage_opportunities),
                     'profitable_opportunities': len([o for o in self.arbitrage_opportunities if o.net_profit > 0]),
                     'high_confidence_opportunities': len([o for o in self.arbitrage_opportunities if o.confidence_score > 0.7]),
@@ -781,16 +797,16 @@ class UnifiedDEXArbitrageMonitor:
                 },
                 'timestamp': datetime.now().isoformat(),
                 'mode': self.mode,
-                'network_status': {
+                'network_status': {}
                     network: bool(self.price_fetcher.web3_instances.get(network))
                     for network in self.network_configs.keys()
-                }
-            }
+                
+            
             
             socketio.emit('enhanced_price_update', enhanced_update)
             
         except Exception as e:
-            logger.warning(f"WebSocket emit failed: {e}")
+            logger.warning(str(f"WebSocket emit failed: {e}")
     
     def stop_monitoring(self):
         """Stop the enhanced monitoring loop"""
@@ -802,7 +818,7 @@ class UnifiedDEXArbitrageMonitor:
 @app.route('/')
 def enhanced_dashboard():
     """Enhanced main dashboard"""
-    return jsonify({
+    return jsonify({)}
         "status": "Unified DEX Arbitrage Monitor Active",
         "mode": monitor.mode,
         "monitoring": monitor.monitoring_active,
@@ -813,14 +829,14 @@ def enhanced_dashboard():
         "web3_integration": bool(monitor.price_fetcher.web3_instances),
         "mcp_integration": monitor.mcp_enabled,
         "stats": monitor.stats
-    })
+    
 
 @app.route('/api/enhanced-opportunities')
 def get_enhanced_opportunities():
     """Get enhanced arbitrage opportunities with comprehensive data"""
     opportunities_data = []
     for opp in monitor.arbitrage_opportunities:
-        opportunities_data.append({
+        opportunities_data.append({)}
             "token_pair": opp.token_pair,
             "buy_dex": opp.buy_dex,
             "sell_dex": opp.sell_dex,
@@ -839,9 +855,9 @@ def get_enhanced_opportunities():
             "execution_time_estimate": opp.execution_time_estimate,
             "gas_price_gwei": opp.gas_price_gwei,
             "mev_risk_score": getattr(opp, 'mev_risk_score', 0.0)
-        })
+        
     
-    return jsonify({
+    return jsonify({)}
         "opportunities": opportunities_data,
         "count": len(opportunities_data),
         "total_potential_profit": sum(o["potential_profit"] for o in opportunities_data),
@@ -849,7 +865,7 @@ def get_enhanced_opportunities():
         "avg_confidence": sum(o["confidence_score"] for o in opportunities_data) / len(opportunities_data) if opportunities_data else 0,
         "high_confidence_count": len([o for o in opportunities_data if o["confidence_score"] > 0.7]),
         "timestamp": datetime.now().isoformat()
-    })
+    
 
 @app.route('/api/network-status')
 def get_network_status():
@@ -861,31 +877,31 @@ def get_network_status():
             try:
                 latest_block = w3.eth.block_number
                 gas_price = w3.eth.gas_price / 1e9
-                network_status[network] = {
+                network_status[network] = {}
                     "connected": True,
                     "latest_block": latest_block,
                     "gas_price_gwei": round(gas_price, 2),
                     "rpc_url": config["rpc_url"][:50] + "...",
                     "native_token": config["native_token"]
-                }
+                
             except Exception as e:
-                network_status[network] = {
+                network_status[network] = {}
                     "connected": False,
                     "error": str(e),
                     "rpc_url": config["rpc_url"][:50] + "..."
-                }
+                
         else:
-            network_status[network] = {
+            network_status[network] = {}
                 "connected": False,
                 "error": "No Web3 instance",
                 "rpc_url": config["rpc_url"][:50] + "..."
-            }
+            
     
-    return jsonify({
+    return jsonify({)}
         "networks": network_status,
         "total_connected": sum(1 for status in network_status.values() if status.get("connected")),
         "timestamp": datetime.now().isoformat()
-    })
+    
 
 @app.route('/api/enhanced-stats')
 def get_enhanced_statistics():
@@ -907,23 +923,23 @@ def get_enhanced_statistics():
     avg_risk = sum(opp.risk_score for opp in monitor.arbitrage_opportunities) / total_opportunities if total_opportunities > 0 else 0
     
     # Web3 integration metrics
-    web3_price_count = sum(
+    web3_price_count = sum()
         1 for token_prices in monitor.current_prices.values()
         for dex_data in token_prices.values()
         if dex_data.get('source') == 'web3_real'
-    )
+    
     total_price_points = sum(len(token_prices) for token_prices in monitor.current_prices.values())
     web3_integration_rate = (web3_price_count / total_price_points * 100) if total_price_points > 0 else 0
     
-    return jsonify({
-        "system_info": {
+    return jsonify({)}
+        "system_info": {}
             "mode": monitor.mode,
             "uptime_seconds": uptime.total_seconds(),
             "uptime_formatted": str(uptime),
             "monitoring_active": monitor.monitoring_active,
             "mcp_enabled": monitor.mcp_enabled
         },
-        "opportunity_metrics": {
+        "opportunity_metrics": {}
             "total_opportunities": total_opportunities,
             "profitable_opportunities": profitable_opportunities,
             "high_confidence_opportunities": high_confidence_opportunities,
@@ -933,7 +949,7 @@ def get_enhanced_statistics():
             "avg_confidence_score": round(avg_confidence, 3),
             "avg_risk_score": round(avg_risk, 3)
         },
-        "web3_metrics": {
+        "web3_metrics": {}
             "connected_networks": len(monitor.price_fetcher.web3_instances),
             "total_networks": len(monitor.network_configs),
             "web3_calls_total": monitor.stats['web3_calls'],
@@ -941,7 +957,7 @@ def get_enhanced_statistics():
             "web3_integration_rate": round(web3_integration_rate, 1),
             "price_updates_total": monitor.stats['price_updates']
         },
-        "trading_metrics": {
+        "trading_metrics": {}
             "supported_tokens": len(monitor.price_fetcher.approved_tokens),
             "supported_dexes": len(monitor.price_fetcher.dex_routers),
             "min_profit_threshold": monitor.min_profit_threshold,
@@ -950,7 +966,7 @@ def get_enhanced_statistics():
         },
         "performance_metrics": monitor.stats,
         "timestamp": datetime.now().isoformat()
-    })
+    
 
 # Enhanced WebSocket Events
 
@@ -958,13 +974,13 @@ def get_enhanced_statistics():
 def handle_enhanced_connect():
     """Handle enhanced client connection"""
     logger.info("Enhanced client connected to WebSocket")
-    emit('enhanced_status', {
+    emit('enhanced_status', {)}
         'status': 'connected',
         'monitoring': monitor.monitoring_active,
         'mode': monitor.mode,
         'web3_networks': list(monitor.price_fetcher.web3_instances.keys()),
         'supported_features': ['real_time_prices', 'web3_integration', 'enhanced_analytics', 'risk_scoring']
-    })
+    
 
 @socketio.on('start_enhanced_monitoring')
 def handle_start_enhanced_monitoring():
@@ -979,11 +995,11 @@ def handle_get_network_status():
     network_data = {}
     for network, w3 in monitor.price_fetcher.web3_instances.items():
         try:
-            network_data[network] = {
+            network_data[network] = {}
                 'connected': w3.is_connected(),
                 'latest_block': w3.eth.block_number,
                 'gas_price_gwei': round(w3.eth.gas_price / 1e9, 2)
-            }
+            
         except:
             network_data[network] = {'connected': False}
     
@@ -994,17 +1010,16 @@ monitor = UnifiedDEXArbitrageMonitor()
 
 async def main():
     """Enhanced main function"""
-    import argparse
     
     parser = argparse.ArgumentParser(description='Unified DEX Arbitrage Monitor with Web3 Integration')
-    parser.add_argument('--mode', choices=['alert', 'execute', 'analyze'], 
-                       default='alert', help='Monitoring mode')
+    parser.add_argument('--mode', choices=['alert', 'execute', 'analyze'], )
+                       default='alert', help='Monitoring mode'
     parser.add_argument('--port', type=int, default=8080, help='Web server port')
     parser.add_argument('--trade-amount', type=float, default=10000, help='Default trade amount in USD')
     parser.add_argument('--min-profit', type=float, default=5.0, help='Minimum profit threshold in USD')
     parser.add_argument('--monitor-only', action='store_true', help='Run monitoring without web server')
-    parser.add_argument('--network', choices=['polygon', 'ethereum', 'arbitrum'], 
-                       default='polygon', help='Primary network for Web3 integration')
+    parser.add_argument('--network', choices=['polygon', 'ethereum', 'arbitrum'], )
+                       default='polygon', help='Primary network for Web3 integration'
     
     args = parser.parse_args()
     
@@ -1014,10 +1029,10 @@ async def main():
     monitor.trade_amount = args.trade_amount
     monitor.min_profit_threshold = args.min_profit
     
-    logger.info(f"🚀 Starting Unified DEX Arbitrage Monitor")
-    logger.info(f"Mode: {args.mode.upper()}")
-    logger.info(f"Primary Network: {args.network.upper()}")
-    logger.info(f"Web3 Integration: {bool(monitor.price_fetcher.web3_instances)}")
+    logger.info(str(f"[INIT] Starting Unified DEX Arbitrage Monitor")
+    logger.info(str(f"Mode: {args.mode.upper(}")
+    logger.info(str(f"Primary Network: {args.network.upper(}")
+    logger.info(str(f"Web3 Integration: {bool(monitor.price_fetcher.web3_instances}")
     logger.info("=" * 60)
     
     if args.monitor_only:
@@ -1029,9 +1044,9 @@ async def main():
         monitoring_task = asyncio.create_task(monitor.monitor_enhanced_prices())
         
         # Run enhanced web server
-        logger.info(f"Starting enhanced web server on port {args.port}...")
-        logger.info(f"Dashboard: http://localhost:{args.port}")
-        logger.info(f"Enhanced API: http://localhost:{args.port}/api/enhanced-opportunities")
+        logger.info(str(f"Starting enhanced web server on port {args.port}...")
+        logger.info(str(f"Dashboard: http://localhost:{args.port}")
+        logger.info(str(f"Enhanced API: http://localhost:{args.port}/api/enhanced-opportunities")
         socketio.run(app, host='0.0.0.0', port=args.port, debug=False)
 
 if __name__ == "__main__":
@@ -1042,4 +1057,4 @@ if __name__ == "__main__":
         if monitor:
             monitor.stop_monitoring()
     except Exception as e:
-        logger.error(f"❌ Error running unified monitor: {e}")
+        logger.error(str(f"[ERROR] Error running unified monitor: {e}")

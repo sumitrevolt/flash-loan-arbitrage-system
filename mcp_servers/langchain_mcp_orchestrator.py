@@ -1,24 +1,41 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+from typing import Dict, List, Any
+from typing import Dict, List, Optional, Any
+import asyncio
+import json
+import logging
+import os
+import socket
+import subprocess
+import sys
+import time
+
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from flask import Flask, request, jsonify
+import requests
 """
 LangChain-based MCP Server Orchestrator
 Fixes MCP server connection issues and ensures proper server startup
 """
 
-import asyncio
-import json
-import logging
-import os
-import subprocess
-import sys
-import time
-import socket
-from pathlib import Path
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass
-from concurrent.futures import ThreadPoolExecutor
-import requests
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -49,13 +66,13 @@ class LangChainMCPOrchestrator:
         self.mcp_servers_dir.mkdir(exist_ok=True)
         
         # Create individual server directories
-        server_dirs = [
+        server_dirs = []
             "context7_clean",
             "flash_loan_blockchain", 
             "matic_mcp_server",
             "ai_integration",
             "blockchain_integration"
-        ]
+        
         
         for server_dir in server_dirs:
             (self.mcp_servers_dir / server_dir).mkdir(exist_ok=True)
@@ -65,54 +82,54 @@ class LangChainMCPOrchestrator:
         configs = {}
         
         # Context7 Clean MCP Server
-        configs["context7_clean"] = MCPServerConfig(
+        configs["context7_clean"] = MCPServerConfig()
             name="context7_clean",
             port=4100,
             executable="python",
             args=["context7_mcp_server.py"],
             working_dir=str(self.mcp_servers_dir / "context7_clean"),
             env_vars={"MCP_SERVER_NAME": "context7_clean", "PORT": "4100"}
-        )
+        
         
         # Flash Loan Blockchain MCP Server
-        configs["flash_loan_blockchain"] = MCPServerConfig(
+        configs["flash_loan_blockchain"] = MCPServerConfig()
             name="flash_loan_blockchain",
             port=4101,
             executable="python", 
             args=["flash_loan_mcp_server.py"],
             working_dir=str(self.mcp_servers_dir / "flash_loan_blockchain"),
             env_vars={"MCP_SERVER_NAME": "flash_loan_blockchain", "PORT": "4101"}
-        )
+        
         
         # Matic MCP Server
-        configs["matic_mcp_server"] = MCPServerConfig(
+        configs["matic_mcp_server"] = MCPServerConfig()
             name="matic_mcp_server",
             port=4102,
             executable="python",
             args=["matic_mcp_server.py"],
             working_dir=str(self.mcp_servers_dir / "matic_mcp_server"),
             env_vars={"MCP_SERVER_NAME": "matic_mcp_server", "PORT": "4102"}
-        )
+        
         
         # AI Integration MCP Server
-        configs["ai_integration"] = MCPServerConfig(
+        configs["ai_integration"] = MCPServerConfig()
             name="ai_integration",
             port=4103,
             executable="python",
             args=["ai_integration_server.py"],
             working_dir=str(self.mcp_servers_dir / "ai_integration"),
             env_vars={"MCP_SERVER_NAME": "ai_integration", "PORT": "4103"}
-        )
+        
         
         # Blockchain Integration MCP Server  
-        configs["blockchain_integration"] = MCPServerConfig(
+        configs["blockchain_integration"] = MCPServerConfig()
             name="blockchain_integration",
             port=4104,
             executable="python",
             args=["blockchain_integration_server.py"],
             working_dir=str(self.mcp_servers_dir / "blockchain_integration"),
             env_vars={"MCP_SERVER_NAME": "blockchain_integration", "PORT": "4104"}
-        )
+        
         
         return configs
     
@@ -141,14 +158,21 @@ Context7 Clean MCP Server
 Provides context management and cleaning capabilities
 '''
 
-import json
-import asyncio
-from pathlib import Path
-from typing import Dict, List, Any
-from flask import Flask, request, jsonify
-import logging
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -161,16 +185,16 @@ class Context7MCPServer:
         
     def clean_context(self, context_data: Dict) -> Dict:
         '''Clean and optimize context data'''
-        cleaned = {{
+        cleaned = {{}}
             'libraries': context_data.get('libraries', []),
             'documentation': context_data.get('documentation', ''),
             'code_examples': context_data.get('code_examples', []),
-            'metadata': {{
+            'metadata': {{}}
                 'cleaned_at': 'now',
                 'original_size': len(str(context_data)),
                 'cleaned_size': 0
-            }}
-        }}
+
+
         cleaned['metadata']['cleaned_size'] = len(str(cleaned))
         return cleaned
     
@@ -182,7 +206,7 @@ server = Context7MCPServer()
 
 @app.route('/health')
 def health():
-    return jsonify({{'status': 'healthy', 'server': 'context7_clean', 'port': {config.port}}}))
+    return jsonify({{'status': 'healthy', 'server': 'context7_clean', 'port': {config.port}}})
 
 @app.route('/contexts', methods=['GET'])
 def list_contexts():
@@ -203,19 +227,19 @@ def clean_context(context_name):
 
 @app.route('/mcp/capabilities', methods=['GET'])
 def mcp_capabilities():
-    return jsonify({{
-        'server_info': {{
+    return jsonify({{)}}
+        'server_info': {{}}
             'name': 'context7_clean',
             'version': '1.0.0'
         }},
-        'capabilities': {{
+        'capabilities': {{}}
             'tools': ['clean_context', 'list_contexts', 'get_context'],
             'resources': ['contexts', 'documentation']
-        }}
-    }})
+
+
 
 if __name__ == '__main__':
-    logger.info(f"Starting Context7 Clean MCP Server on port {config.port}")
+    logger.info(str(f"Starting Context7 Clean MCP Server on port {config.port}")
     app.run(host='0.0.0.0', port={config.port}, debug=False)
 """
         
@@ -230,13 +254,21 @@ Flash Loan Blockchain MCP Server
 Handles flash loan operations and blockchain interactions
 '''
 
-import json
-import asyncio
-from typing import Dict, List, Any
-from flask import Flask, request, jsonify
-import logging
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -249,30 +281,30 @@ class FlashLoanMCPServer:
         
     def calculate_arbitrage_opportunity(self, token_pair: str) -> Dict:
         '''Calculate potential arbitrage opportunities'''
-        return {{
+        return {{}}
             'token_pair': token_pair,
             'potential_profit': 0.02,  # 2% example
             'gas_cost': 0.001,
             'net_profit': 0.019,
             'recommended': True
-        }}
+
     
     def simulate_flash_loan(self, amount: float, token: str, protocol: str) -> Dict:
         '''Simulate flash loan execution'''
-        return {{
+        return {{}}
             'loan_amount': amount,
             'token': token,
             'protocol': protocol,
             'estimated_fee': amount * 0.0009,  # 0.09% fee
             'success_probability': 0.95,
             'execution_time': '2-3 blocks'
-        }}
+
 
 server = FlashLoanMCPServer()
 
 @app.route('/health')
 def health():
-    return jsonify({{'status': 'healthy', 'server': 'flash_loan_blockchain', 'port': {config.port}}}))
+    return jsonify({{'status': 'healthy', 'server': 'flash_loan_blockchain', 'port': {config.port}}})
 
 @app.route('/protocols', methods=['GET'])
 def list_protocols():
@@ -295,19 +327,19 @@ def simulate_flash_loan():
 
 @app.route('/mcp/capabilities', methods=['GET'])
 def mcp_capabilities():
-    return jsonify({{
-        'server_info': {{
+    return jsonify({{)}}
+        'server_info': {{}}
             'name': 'flash_loan_blockchain',
             'version': '1.0.0'
         }},
-        'capabilities': {{
+        'capabilities': {{}}
             'tools': ['calculate_arbitrage', 'simulate_flash_loan', 'list_protocols'],
             'resources': ['protocols', 'arbitrage_opportunities']
-        }}
-    }})
+
+
 
 if __name__ == '__main__':
-    logger.info(f"Starting Flash Loan Blockchain MCP Server on port {config.port}")
+    logger.info(str(f"Starting Flash Loan Blockchain MCP Server on port {config.port}")
     app.run(host='0.0.0.0', port={config.port}, debug=False)
 """
         
@@ -322,12 +354,21 @@ Matic MCP Server
 Handles Polygon/Matic blockchain operations
 '''
 
-import json
-from typing import Dict, List, Any
-from flask import Flask, request, jsonify
-import logging
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -335,44 +376,44 @@ app = Flask(__name__)
 
 class MaticMCPServer:
     def __init__(self):
-        self.network_info = {{
+        self.network_info = {{}}
             'chain_id': 137,
             'name': 'Polygon Mainnet',
             'rpc_url': 'https://polygon-rpc.com',
             'block_time': 2  # seconds
-        }}
+
         
     def get_gas_price(self) -> Dict:
         '''Get current gas prices on Polygon'''
-        return {{
+        return {{}}
             'slow': 30,      # 30 gwei
             'standard': 35,  # 35 gwei  
             'fast': 40,      # 40 gwei
             'unit': 'gwei'
-        }}
+
     
     def get_token_info(self, token_address: str) -> Dict:
         '''Get token information'''
         # Mock token data
-        tokens = {{
-            '0x2791bca1f2de4661ed88a30c99a7a9449aa84174': {{
+        tokens = {{}}
+            '0x2791bca1f2de4661ed88a30c99a7a9449aa84174': {{}}
                 'symbol': 'USDC',
                 'name': 'USD Coin',
                 'decimals': 6
             }},
-            '0x8f3cf7ad23cd3cadbd9735aff958023239c6a063': {{
+            '0x8f3cf7ad23cd3cadbd9735aff958023239c6a063': {{}}
                 'symbol': 'DAI', 
                 'name': 'Dai Stablecoin',
                 'decimals': 18
-            }}
-        }}
+
+
         return tokens.get(token_address.lower(), {{'symbol': 'UNKNOWN', 'name': 'Unknown Token', 'decimals': 18}})
 
 server = MaticMCPServer()
 
 @app.route('/health')
 def health():
-    return jsonify({{'status': 'healthy', 'server': 'matic_mcp_server', 'port': {config.port}}}))
+    return jsonify({{'status': 'healthy', 'server': 'matic_mcp_server', 'port': {config.port}}})
 
 @app.route('/network', methods=['GET'])
 def network_info():
@@ -389,19 +430,19 @@ def token_info(token_address):
 
 @app.route('/mcp/capabilities', methods=['GET'])
 def mcp_capabilities():
-    return jsonify({{
-        'server_info': {{
+    return jsonify({{)}}
+        'server_info': {{}}
             'name': 'matic_mcp_server',
             'version': '1.0.0'
         }},
-        'capabilities': {{
+        'capabilities': {{}}
             'tools': ['get_gas_price', 'get_token_info', 'network_info'],
             'resources': ['network', 'tokens', 'gas_prices']
-        }}
-    }})
+
+
 
 if __name__ == '__main__':
-    logger.info(f"Starting Matic MCP Server on port {config.port}")
+    logger.info(str(f"Starting Matic MCP Server on port {config.port}")
     app.run(host='0.0.0.0', port={config.port}, debug=False)
 """
         
@@ -416,12 +457,21 @@ AI Integration MCP Server
 Handles AI model integrations and LangChain operations
 '''
 
-import json
-from typing import Dict, List, Any
-from flask import Flask, request, jsonify
-import logging
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -435,28 +485,28 @@ class AIMCPServer:
     def create_ai_session(self, model: str, config: Dict) -> str:
         '''Create a new AI session'''
         session_id = f"session_{{len(self.active_sessions) + 1}}"
-        self.active_sessions[session_id] = {{
+        self.active_sessions[session_id] = {{}}
             'model': model,
             'config': config,
             'created_at': 'now'
-        }}
+
         return session_id
     
     def get_model_capabilities(self, model: str) -> Dict:
         '''Get capabilities of a specific model'''
-        capabilities = {{
+        capabilities = {{}}
             'gpt-4': ['text_generation', 'code_analysis', 'reasoning'],
             'claude-3': ['text_generation', 'analysis', 'coding'],
             'llama-2': ['text_generation', 'conversation'],
             'mistral': ['text_generation', 'multilingual']
-        }}
+
         return {{'model': model, 'capabilities': capabilities.get(model, [])}}
 
 server = AIMCPServer()
 
 @app.route('/health')
 def health():
-    return jsonify({{'status': 'healthy', 'server': 'ai_integration', 'port': {config.port}}}))
+    return jsonify({{'status': 'healthy', 'server': 'ai_integration', 'port': {config.port}}})
 
 @app.route('/models', methods=['GET'])
 def list_models():
@@ -476,19 +526,19 @@ def create_session():
 
 @app.route('/mcp/capabilities', methods=['GET'])
 def mcp_capabilities():
-    return jsonify({{
-        'server_info': {{
+    return jsonify({{)}}
+        'server_info': {{}}
             'name': 'ai_integration',
             'version': '1.0.0'
         }},
-        'capabilities': {{
+        'capabilities': {{}}
             'tools': ['create_session', 'list_models', 'model_capabilities'],
             'resources': ['models', 'sessions']
-        }}
-    }})
+
+
 
 if __name__ == '__main__':
-    logger.info(f"Starting AI Integration MCP Server on port {config.port}")
+    logger.info(str(f"Starting AI Integration MCP Server on port {config.port}")
     app.run(host='0.0.0.0', port={config.port}, debug=False)
 """
         
@@ -503,12 +553,21 @@ Blockchain Integration MCP Server
 General blockchain operations and integrations
 '''
 
-import json
-from typing import Dict, List, Any
-from flask import Flask, request, jsonify
-import logging
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -521,44 +580,44 @@ class BlockchainMCPServer:
         
     def get_chain_info(self, chain: str) -> Dict:
         '''Get information about a blockchain'''
-        chain_data = {{
+        chain_data = {{}}
             'ethereum': {{'chain_id': 1, 'name': 'Ethereum Mainnet', 'native_token': 'ETH'}},
             'polygon': {{'chain_id': 137, 'name': 'Polygon', 'native_token': 'MATIC'}},
             'bsc': {{'chain_id': 56, 'name': 'BNB Smart Chain', 'native_token': 'BNB'}},
             'arbitrum': {{'chain_id': 42161, 'name': 'Arbitrum One', 'native_token': 'ETH'}}
-        }}
+
         return chain_data.get(chain, {{}})
     
     def estimate_transaction_fee(self, chain: str, tx_type: str) -> Dict:
         '''Estimate transaction fees'''
-        base_fees = {{
+        base_fees = {{}}
             'ethereum': 0.002,
             'polygon': 0.0001,
             'bsc': 0.0005,
             'arbitrum': 0.0008
-        }}
+
         
-        multipliers = {{
+        multipliers = {{}}
             'simple_transfer': 1.0,
             'contract_interaction': 1.5,
             'complex_defi': 2.0
-        }}
+
         
         base_fee = base_fees.get(chain, 0.001)
         multiplier = multipliers.get(tx_type, 1.0)
         
-        return {{
+        return {{}}
             'chain': chain,
             'transaction_type': tx_type,
             'estimated_fee': base_fee * multiplier,
             'currency': 'ETH' if chain in ['ethereum', 'arbitrum'] else 'MATIC' if chain == 'polygon' else 'BNB'
-        }}
+
 
 server = BlockchainMCPServer()
 
 @app.route('/health')
 def health():
-    return jsonify({{'status': 'healthy', 'server': 'blockchain_integration', 'port': {config.port}}}))
+    return jsonify({{'status': 'healthy', 'server': 'blockchain_integration', 'port': {config.port}}})
 
 @app.route('/chains', methods=['GET'])
 def list_chains():
@@ -574,19 +633,19 @@ def estimate_fees(chain, tx_type):
 
 @app.route('/mcp/capabilities', methods=['GET'])
 def mcp_capabilities():
-    return jsonify({{
-        'server_info': {{
+    return jsonify({{)}}
+        'server_info': {{}}
             'name': 'blockchain_integration',
             'version': '1.0.0'
         }},
-        'capabilities': {{
+        'capabilities': {{}}
             'tools': ['get_chain_info', 'estimate_fees', 'list_chains'],
             'resources': ['chains', 'transactions', 'fees']
-        }}
-    }})
+
+
 
 if __name__ == '__main__':
-    logger.info(f"Starting Blockchain Integration MCP Server on port {config.port}")
+    logger.info(str(f"Starting Blockchain Integration MCP Server on port {config.port}")
     app.run(host='0.0.0.0', port={config.port}, debug=False)
 """
         
@@ -604,11 +663,11 @@ if __name__ == '__main__':
             return True
     
     def start_mcp_server(self, config: MCPServerConfig) -> bool:
-        """Start an individual MCP server"""        logger.info(f"Starting MCP server: {config.name} on port {config.port}")
+        """Start an individual MCP server"""        logger.info(str(f"Starting MCP server: {config.name} on port {config.port}")
         
         # Check if port is available
         if not self.check_port_available(config.port):
-            logger.warning(f"Port {config.port} is already in use for {config.name}")
+            logger.warning(str(f"Port {config.port} is already in use for {config.name}")
             return False
         
         # Create server script if it doesn't exist
@@ -623,17 +682,17 @@ if __name__ == '__main__':
         
         try:
             # Start the process
-            process = subprocess.Popen(
+            process = subprocess.Popen()
                 [config.executable] + config.args,
                 cwd=config.working_dir,
                 env=env,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True
-            )
+            
             
             self.processes[config.name] = process
-            logger.info(f"Started {{config.name}} with PID {{process.pid}}")
+            logger.info(str(f"Started {{config.name}} with PID {{process.pid}}")
             
             # Wait a bit for startup
             time.sleep(config.startup_time)
@@ -644,20 +703,20 @@ if __name__ == '__main__':
                 try:
                     response = requests.get(f"http://localhost:{{config.port}}/health", timeout=5)
                     if response.status_code == 200:
-                        logger.info(f"✅ {{config.name}} is healthy on port {{config.port}}")
+                        logger.info(str(f"[OK] {{config.name}} is healthy on port {{config.port}}")
                         return True
                     else:
-                        logger.error(f"❌ {{config.name}} health check failed")
+                        logger.error(str(f"[ERROR] {{config.name}} health check failed")
                         return False
                 except Exception as e:
-                    logger.error(f"❌ {{config.name}} health check error: {{e}}")
+                    logger.error(str(f"[ERROR] {{config.name}} health check error: {{e}}")
                     return False
             else:
-                logger.error(f"❌ {{config.name}} process exited early")
+                logger.error(str(f"[ERROR] {{config.name}} process exited early")
                 return False
                 
         except Exception as e:
-            logger.error(f"Failed to start {{config.name}}: {{e}}")
+            logger.error(str(f"Failed to start {{config.name}}: {{e}}")
             return False
     
     def stop_mcp_server(self, server_name: str):
@@ -667,15 +726,15 @@ if __name__ == '__main__':
             process.terminate()
             try:
                 process.wait(timeout=10)
-                logger.info(f"Stopped {{server_name}}")
+                logger.info(str(f"Stopped {{server_name}}")
             except subprocess.TimeoutExpired:
                 process.kill()
-                logger.info(f"Force killed {{server_name}}")
+                logger.info(str(f"Force killed {{server_name}}")
             del self.processes[server_name]
     
     def start_all_servers(self) -> Dict[str, bool]:
         """Start all MCP servers"""
-        logger.info("🚀 Starting all MCP servers...")
+        logger.info("[INIT] Starting all MCP servers...")
         
         configs = self.create_mcp_server_configs()
         results = {{}}
@@ -703,29 +762,29 @@ if __name__ == '__main__':
                 except:
                     pass
             
-            status[name] = {{
+            status[name] = {{}}
                 'running': is_running,
                 'healthy': health_ok,
                 'port': config.port,
                 'pid': process.pid if process else None
-            }}
+
         
         return status
     
     def create_cline_mcp_config(self) -> Dict:
         """Create MCP configuration for Cline/VS Code"""
-        mcp_config = {{
+        mcp_config = {{}}
             "mcpServers": {{}}
-        }}
+
         
         for name, config in self.server_configs.items():
-            mcp_config["mcpServers"][name] = {{
+            mcp_config["mcpServers"][name] = {{}}
                 "command": config.executable,
                 "args": config.args,
                 "cwd": config.working_dir,
                 "env": config.env_vars or {{}},
                 "url": f"http://localhost:{{config.port}}"
-            }}
+
         
         return mcp_config
     
@@ -750,7 +809,7 @@ if __name__ == '__main__':
         with open(config_path, 'w') as f:
             json.dump(existing_settings, f, indent=2)
         
-        logger.info(f"✅ Saved Cline MCP configuration to {{config_path}}")
+        logger.info(str(f"[OK] Saved Cline MCP configuration to {{config_path}}")
 
 def main():
     """Main orchestrator function"""
@@ -763,17 +822,17 @@ def main():
         # Start all servers
         results = orchestrator.start_all_servers()
         
-        print("\\n📊 Startup Results:")
+        print("\\n[METRICS] Startup Results:")
         print("-" * 30)
         
         success_count = 0
         for server_name, success in results.items():
-            status = "✅ SUCCESS" if success else "❌ FAILED"
+            status = "[OK] SUCCESS" if success else "[ERROR] FAILED"
             print(f"  {{server_name:<25}} {{status}}")
             if success:
                 success_count += 1
         
-        print(f"\\n🎯 Summary: {{success_count}}/{{len(results)}} servers started successfully")
+        print(f"\\n[TASK] Summary: {{success_count}}/{{len(results)}} servers started successfully")
         
         if success_count > 0:
             # Get detailed status
@@ -783,14 +842,14 @@ def main():
             
             for name, info in status.items():
                 running = "🟢" if info['running'] else "🔴"
-                healthy = "✅" if info['healthy'] else "❌"
+                healthy = "[OK]" if info['healthy'] else "[ERROR]"
                 print(f"  {{name:<25}} {{running}} Running {{healthy}} Healthy (Port: {{info['port']}})")
             
             # Save Cline configuration
             orchestrator.save_cline_config()
             
-            print("\\n🎉 MCP servers are now running and configured for Cline!")
-            print("\\n📝 Next steps:")
+            print("\\n[CELEBRATE] MCP servers are now running and configured for Cline!")
+            print("\\n[LOG] Next steps:")
             print("  1. Restart VS Code/Cline")
             print("  2. Check that MCP servers appear as 'online' in Cline")
             print("  3. Test MCP server functionality")
@@ -805,18 +864,18 @@ def main():
                     current_status = orchestrator.get_server_status()
                     unhealthy = [name for name, info in current_status.items() if info['running'] and not info['healthy']]
                     if unhealthy:
-                        logger.warning(f"Unhealthy servers detected: {{unhealthy}}")
+                        logger.warning(str(f"Unhealthy servers detected: {{unhealthy}}")
             except KeyboardInterrupt:
-                print("\\n\\n🛑 Stopping all MCP servers...")
+                print("\\n\\n[STOP] Stopping all MCP servers...")
                 for server_name in orchestrator.processes.keys():
                     orchestrator.stop_mcp_server(server_name)
-                print("✅ All servers stopped")
+                print("[OK] All servers stopped")
         else:
-            print("\\n❌ No servers started successfully. Check logs for errors.")
+            print("\\n[ERROR] No servers started successfully. Check logs for errors.")
             return 1
             
     except Exception as e:
-        logger.error(f"Orchestrator error: {{e}}")
+        logger.error(str(f"Orchestrator error: {{e}}")
         return 1
     
     return 0

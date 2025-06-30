@@ -1,0 +1,546 @@
+version: '3.8'
+
+networks:
+  flash-loan-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+  vector_store_data:
+    driver: local
+  langchain_data:
+    driver: local
+  autogen_data:
+    driver: local
+  mcp_data:
+    driver: local
+
+services:
+  # Core Infrastructure Services
+  postgres:
+    image: postgres:15-alpine
+    container_name: flash-loan-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-flash_loan_db}
+      POSTGRES_USER: ${POSTGRES_USER:-flash_loan_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flash_loan_secure_2025}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init_scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      flash-loan-network:
+        ipv4_address: 172.20.0.10
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flash_loan_user} -d ${POSTGRES_DB:-flash_loan_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: flash-loan-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-flash_loan_redis_2025} --appendonly yes
+    volumes:
+      - redis_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      flash-loan-network:
+        ipv4_address: 172.20.0.11
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: flash-loan-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-flash_loan_mq}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-flash_loan_mq_2025}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-flash_loan_vhost}
+      RABBITMQ_ERLANG_COOKIE: flash_loan_rabbitmq_cookie_2025
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./config/rabbitmq:/etc/rabbitmq
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    networks:
+      flash-loan-network:
+        ipv4_address: 172.20.0.12
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 30s
+      timeout: 20s
+      retries: 5
+      start_period: 60s
+
+  # MCP Servers
+  mcp-supermemory:
+    build:
+      context: ../../
+      dockerfile: deployment/docker/containers/mcp_servers/Dockerfile.supermemory
+    container_name: flash-loan-mcp-supermemory
+    restart: unless-stopped
+    environment:
+      - SUPERMEMORY_API_KEY=${SUPERMEMORY_API_KEY:-}
+      - MCP_SERVER_NAME=supermemory-mcp
+      - MCP_SERVER_PORT=8100
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - mcp_data:/app/data
+      - ./logs:/app/logs
+    ports:
+      - "8100:8100"
+    networks:
+      flash-loan-network:
+        ipv4_address: 172.20.0.20
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8100/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      - postgres
+      - redis
+
+  mcp-context7:
+    image: node:18-alpine
+    container_name: flash-loan-mcp-context7
+    restart: unless-stopped
+    working_dir: /app
+    command: ["npx", "-y", "@upstash/context7-mcp@latest"]
+    environment:
+      - MCP_SERVER_NAME=context7-mcp
+      - MCP_SERVER_PORT=8101
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - NODE_ENV=production
+    volumes:
+      - mcp_data:/app/data
+      - ./logs:/app/logs
+    ports:
+      - "8101:8101"
+    networks:
+      flash-loan-network:
+        ipv4_address: 172.20.0.21
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8101/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  mcp-filesystem:
+    image: node:18-alpine
+    container_name: flash-loan-mcp-filesystem
+    restart: unless-stopped
+    working_dir: /workspace
+    command: ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/workspace"]
+    environment:
+      - MCP_SERVER_NAME=filesystem-mcp
+      - MCP_SERVER_PORT=8102
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - NODE_ENV=production
+    volumes:
+      - ../../:/workspace:ro
+      - mcp_data:/app/data
+      - ./logs:/app/logs
+    ports:
+      - "8102:8102"
+    networks:
+      flash-loan-network:
+        ipv4_address: 172.20.0.22
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8102/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  mcp-taskmanager:
+    build:
+      context: ../../mcp_servers/taskmanager
+      dockerfile: Dockerfile
+    container_name: flash-loan-mcp-taskmanager
+    restart: unless-stopped
+    environment:
+      - MCP_SERVER_NAME=taskmanager-mcp
+      - MCP_SERVER_PORT=8103
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - NODE_ENV=production
+    volumes:
+      - mcp_data:/app/data
+      - ./logs:/app/logs
+    ports:
+      - "8103:8103"
+    networks:
+      flash-loan-network:
+        ipv4_address: 172.20.0.23
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8103/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      - postgres
+      - redis
+
+  # LangChain Coordinator Service
+  langchain-coordinator:
+    build:
+      context: ./langchain
+      dockerfile: Dockerfile
+    container_name: flash-loan-langchain
+    restart: unless-stopped
+    environment:
+      # Core API Keys
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      
+      # GitHub Integration
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_COPILOT_API_KEY=${GITHUB_COPILOT_API_KEY}
+      - GITHUB_COPILOT_ENABLED=${GITHUB_COPILOT_ENABLED:-true}
+      - GITHUB_COPILOT_MODEL=${GITHUB_COPILOT_MODEL:-gpt-4-turbo-preview}
+      
+      # LangChain Configuration
+      - LLM_MODEL=${LLM_MODEL:-gpt-4-turbo-preview}
+      - LLM_TEMPERATURE=${LLM_TEMPERATURE:-0.1}
+      - LLM_MAX_TOKENS=${LLM_MAX_TOKENS:-4000}
+      
+      # Database Configuration
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-flash_loan_db}
+      - POSTGRES_USER=${POSTGRES_USER:-flash_loan_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      
+      # Redis Configuration
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      
+      # RabbitMQ Configuration
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER:-flash_loan_mq}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-flash_loan_vhost}
+      
+      # Vector Store Configuration
+      - VECTOR_STORE_PROVIDER=${VECTOR_STORE_PROVIDER:-chroma}
+      - VECTOR_STORE_DIR=/app/vector_store
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-text-embedding-ada-002}
+      
+      # Agent Configuration
+      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS:-5}
+      - TASK_TIMEOUT=${TASK_TIMEOUT:-300}
+      - ENABLE_CODE_EXECUTION=${ENABLE_CODE_EXECUTION:-true}
+      - CODE_EXECUTION_TIMEOUT=${CODE_EXECUTION_TIMEOUT:-30}
+      
+      # MCP Server Endpoints
+      - MCP_SUPERMEMORY_URL=http://mcp-supermemory:8100
+      - MCP_CONTEXT7_URL=http://mcp-context7:8101
+      - MCP_FILESYSTEM_URL=http://mcp-filesystem:8102
+      - MCP_TASKMANAGER_URL=http://mcp-taskmanager:8103
+      
+      # Service Discovery
+      - SERVICE_NAME=langchain-coordinator
+      - SERVICE_PORT=8000
+      - AUTOGEN_COORDINATOR_URL=http://autogen-coordinator:8010
+      
+      # Monitoring
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - ENABLE_METRICS=${ENABLE_METRICS:-true}
+      - METRICS_PORT=8080
+    volumes:
+      - langchain_data:/app/data
+      - vector_store_data:/app/vector_store
+      - ./logs:/app/logs
+      - ../../src:/app/src:ro
+      - ../../config:/app/config:ro
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8002:8002"
+      - "8080:8080"
+    networks:
+      flash-loan-network:
+        ipv4_address: 172.20.0.30
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mcp-supermemory:
+        condition: service_healthy
+      mcp-context7:
+        condition: service_healthy
+      mcp-filesystem:
+        condition: service_healthy
+
+  # AutoGen Coordinator Service
+  autogen-coordinator:
+    build:
+      context: ./autogen
+      dockerfile: Dockerfile
+    container_name: flash-loan-autogen
+    restart: unless-stopped
+    environment:
+      # Core API Keys
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      
+      # GitHub Integration
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_COPILOT_API_KEY=${GITHUB_COPILOT_API_KEY}
+      
+      # AutoGen Configuration
+      - AUTOGEN_WORK_DIR=/app/autogen_work
+      - AUTOGEN_LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - AUTOGEN_MAX_AGENTS=${AUTOGEN_MAX_AGENTS:-10}
+      - AUTOGEN_CONVERSATION_TIMEOUT=${AUTOGEN_CONVERSATION_TIMEOUT:-600}
+      
+      # Database Configuration
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-flash_loan_db}
+      - POSTGRES_USER=${POSTGRES_USER:-flash_loan_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      
+      # Redis Configuration
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      
+      # RabbitMQ Configuration
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER:-flash_loan_mq}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-flash_loan_vhost}
+      
+      # MCP Server Endpoints
+      - MCP_SUPERMEMORY_URL=http://mcp-supermemory:8100
+      - MCP_CONTEXT7_URL=http://mcp-context7:8101
+      - MCP_FILESYSTEM_URL=http://mcp-filesystem:8102
+      - MCP_TASKMANAGER_URL=http://mcp-taskmanager:8103
+      
+      # Service Discovery
+      - SERVICE_NAME=autogen-coordinator
+      - SERVICE_PORT=8010
+      - LANGCHAIN_COORDINATOR_URL=http://langchain-coordinator:8000
+      
+      # Monitoring
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - ENABLE_METRICS=${ENABLE_METRICS:-true}
+      - HEALTH_CHECK_PORT=8011
+    volumes:
+      - autogen_data:/app/data
+      - autogen_data:/app/autogen_work
+      - autogen_data:/app/conversation_logs
+      - ./logs:/app/logs
+      - ../../src:/app/src:ro
+      - ../../config:/app/config:ro
+    ports:
+      - "8010:8000"
+      - "8011:8001"
+      - "8012:8002"
+      - "8013:8080"
+    networks:
+      flash-loan-network:
+        ipv4_address: 172.20.0.31
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mcp-supermemory:
+        condition: service_healthy
+      mcp-context7:
+        condition: service_healthy
+      mcp-filesystem:
+        condition: service_healthy
+      mcp-taskmanager:
+        condition: service_healthy
+
+  # Monitoring and Management Services
+  system-monitor:
+    image: prom/prometheus:latest
+    container_name: flash-loan-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus:/etc/prometheus:ro
+    ports:
+      - "9090:9090"
+    networks:
+      flash-loan-network:
+        ipv4_address: 172.20.0.40
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: flash-loan-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+    volumes:
+      - ./config/grafana:/etc/grafana/provisioning:ro
+      - ./config/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    networks:
+      flash-loan-network:
+        ipv4_address: 172.20.0.41
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f localhost:3000/api/health && echo 'ready'"]
+      interval: 30s
+      retries: 3
+    depends_on:
+      - system-monitor
+
+  # Log Aggregation
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    container_name: flash-loan-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - ./data/elasticsearch:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      flash-loan-network:
+        ipv4_address: 172.20.0.50
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.8.0
+    container_name: flash-loan-kibana
+    restart: unless-stopped
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    networks:
+      flash-loan-network:
+        ipv4_address: 172.20.0.51
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  # Unified Web Dashboard
+  web-dashboard:
+    build:
+      context: ./
+      dockerfile: containers/dashboard/Dockerfile
+    container_name: flash-loan-dashboard
+    restart: unless-stopped
+    environment:
+      - REACT_APP_LANGCHAIN_URL=http://langchain-coordinator:8000
+      - REACT_APP_AUTOGEN_URL=http://autogen-coordinator:8010
+      - REACT_APP_GRAFANA_URL=http://grafana:3000
+      - REACT_APP_KIBANA_URL=http://kibana:5601
+      - REACT_APP_API_BASE_URL=http://localhost:8090
+    ports:
+      - "8090:80"
+    networks:
+      flash-loan-network:
+        ipv4_address: 172.20.0.60
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - langchain-coordinator
+      - autogen-coordinator
+      - grafana
+      - kibana
+
+  # Health Check Service
+  health-checker:
+    build:
+      context: ./
+      dockerfile: containers/health-checker/Dockerfile
+    container_name: flash-loan-health-checker
+    restart: unless-stopped
+    environment:
+      - CHECK_INTERVAL=60
+      - ALERT_WEBHOOK_URL=${ALERT_WEBHOOK_URL:-}
+      - SERVICES_CONFIG=/app/config/services.json
+    volumes:
+      - ./config/health-check-services.json:/app/config/services.json:ro
+      - ./logs:/app/logs
+    networks:
+      flash-loan-network:
+        ipv4_address: 172.20.0.70
+    depends_on:
+      - langchain-coordinator
+      - autogen-coordinator
+      - postgres
+      - redis
+      - rabbitmq

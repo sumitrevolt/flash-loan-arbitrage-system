@@ -1,29 +1,31 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+    from xml.etree.ElementTree import fromstring as defused_fromstring
+    from xml.etree.ElementTree import parse as defused_parse
+from typing import Optional, Union, Any
+from xml.etree.ElementTree import Element, SubElement, ElementTree
+import json
+import logging
+
+    from defusedxml.ElementTree import fromstring as defused_fromstring
+    from defusedxml.ElementTree import parse as defused_parse
 """
 Secure XML parsing utilities
 """
 
-import logging
-from typing import Optional, Union, Any
-import json
 
 logger = logging.getLogger(__name__)
 
 # Always import Element, SubElement, ElementTree from stdlib for type safety
-from xml.etree.ElementTree import Element, SubElement, ElementTree
 
 # Try to import defusedxml for secure parsing
 try:
-    from defusedxml.ElementTree import parse as defused_parse
-    from defusedxml.ElementTree import fromstring as defused_fromstring
     DEFUSEDXML_AVAILABLE = True
 except ImportError:
     logger.warning("defusedxml not available - using standard library with security warnings")
-    from xml.etree.ElementTree import parse as defused_parse
-    from xml.etree.ElementTree import fromstring as defused_fromstring
     DEFUSEDXML_AVAILABLE = False
 
-def safe_parse_xml(
+def safe_parse_xml()
     xml_data: Union[str, bytes],
     allow_dtd: bool = False,
     allow_external_entities: bool = False
@@ -52,10 +54,10 @@ def safe_parse_xml(
             return defused_fromstring(xml_data)
             
     except Exception as e:
-        logger.error(f"Error parsing XML: {e}")
+        logger.error(str(f"Error parsing XML: {e}")
         return None
 
-def safe_parse_xml_file(
+def safe_parse_xml_file()
     file_path: str,
     allow_dtd: bool = False,
     allow_external_entities: bool = False
@@ -80,7 +82,7 @@ def safe_parse_xml_file(
             logger.warning("Using standard XML parser - potential security risk!")
             return defused_parse(file_path)  # type: ignore
     except Exception as e:
-        logger.error(f"Error parsing XML file: {e}")
+        logger.error(str(f"Error parsing XML file: {e}")
         return None
 
 def create_safe_xml_element(tag: str, attrib: Optional[dict] = None, text: Optional[str] = None) -> Element:
@@ -128,12 +130,12 @@ def xml_to_dict(element: Element) -> dict:
     Returns:
         Dictionary representation of XML
     """
-    result: str = {
+    result: str = {}
         'tag': element.tag,
         'attrib': dict(element.attrib),
         'text': element.text,
         'children': []
-    }
+    
     
     for child in element:
         result['children'].append(xml_to_dict(child))
@@ -153,10 +155,10 @@ def safe_xml_to_json(xml_data: Union[str, bytes]) -> Optional[str]:
     try:
         root = safe_parse_xml(xml_data)
         if root is not None:
-            return json.dumps(xml_to_dict(root), indent=2)
+            return json.dumps(xml_to_dict(root, ensure_ascii=True, default=str), indent=2)
         return None
     except Exception as e:
-        logger.error(f"Error converting XML to JSON: {e}")
+        logger.error(str(f"Error converting XML to JSON: {e}")
         return None
 
 # Example usage and testing

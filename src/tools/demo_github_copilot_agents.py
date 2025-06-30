@@ -1,11 +1,14 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+import asyncio
+import sys
+
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 """
 Simple demo of GitHub Copilot Multi-Agent System in Demo Mode
 """
 
-import asyncio
-import sys
-from pathlib import Path
 
 # Add project path
 sys.path.append(str(Path(__file__).parent))
@@ -14,7 +17,7 @@ print("🤖 GitHub Copilot Multi-Agent System - Demo Mode")
 print("=" * 50)
 
 # Simple demo of multi-agent responses
-demo_responses = {
+demo_responses = {}
     "Code Analyst": """
 **Code Analysis Report (Demo Mode)**
 
@@ -41,22 +44,21 @@ Flash Loan Arbitrage Analysis:
 ```solidity
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract FlashLoanArbitrage is ReentrancyGuard {
+contract FlashLoanArbitrage is ReentrancyGuard {}
     address public owner;
     uint256 public constant MAX_SLIPPAGE = 300; // 3%
     
-    constructor() {
+    constructor() {}
         owner = msg.sender;
-    }
     
-    function executeArbitrage(
+    
+    function executeArbitrage()
         address tokenA,
         address dexA,
         address dexB,
         uint256 amount
-    ) external nonReentrant {
+    ) external nonReentrant {}
         require(amount > 0, "Invalid amount");
         
         // 1. Execute flash loan
@@ -64,8 +66,8 @@ contract FlashLoanArbitrage is ReentrancyGuard {
         // 3. Sell on DEX B
         // 4. Repay loan + fees
         // 5. Keep profit
-    }
-}
+    
+
 ```
 
 *Demo mode active. Enable GitHub token permissions for full code generation.*
@@ -74,13 +76,13 @@ contract FlashLoanArbitrage is ReentrancyGuard {
     "Security Auditor": """
 **Security Audit (Demo Mode)**
 
-**🔍 Flash Loan Security Assessment:**
+**[SEARCH] Flash Loan Security Assessment:**
 
 **Critical Checks:**
-✅ Reentrancy protection needed
-✅ Price manipulation resistance
-✅ Flash loan callback validation
-✅ Access control implementation
+[OK] Reentrancy protection needed
+[OK] Price manipulation resistance
+[OK] Flash loan callback validation
+[OK] Access control implementation
 
 **Risk Score: 7/10** (Medium-High)
 
@@ -97,10 +99,10 @@ contract FlashLoanArbitrage is ReentrancyGuard {
 **Multi-Agent Coordination Summary (Demo Mode)**
 
 **Task Distribution Complete:**
-✅ Analysis: Code structure and risks assessed
-✅ Generation: Smart contract template created  
-✅ Security: Vulnerability assessment completed
-✅ Architecture: System design recommendations
+[OK] Analysis: Code structure and risks assessed
+[OK] Generation: Smart contract template created  
+[OK] Security: Vulnerability assessment completed
+[OK] Architecture: System design recommendations
 
 **Key Findings:**
 - Flash loan arbitrage is viable with proper safeguards
@@ -114,15 +116,15 @@ contract FlashLoanArbitrage is ReentrancyGuard {
 3. Conduct formal audit
 4. Optimize for gas efficiency
 
-**Agent Collaboration:** ✅ Successful coordination achieved
+**Agent Collaboration:** [OK] Successful coordination achieved
 
 *Demo mode showcasing multi-agent capabilities.*
     """
-}
+
 
 def demonstrate_multi_agent_system():
     """Demonstrate the multi-agent system capabilities"""
-    print("\n🎭 Multi-Agent Flash Loan Analysis Demo")
+    print("\n[THEATER] Multi-Agent Flash Loan Analysis Demo")
     print("-" * 40)
     
     task = """
@@ -142,28 +144,28 @@ def demonstrate_multi_agent_system():
 
 def show_system_status():
     """Show system status and configuration"""
-    print("\n📊 System Status")
+    print("\n[METRICS] System Status")
     print("-" * 20)
-    print("✅ Multi-Agent System: Initialized")
-    print("✅ Agent Roles: 6 specialized agents ready")
-    print("✅ Coordination Logic: Active")
-    print("⚠️  GitHub Models API: Permission needed")
-    print("✅ Demo Mode: Functional")
+    print("[OK] Multi-Agent System: Initialized")
+    print("[OK] Agent Roles: 6 specialized agents ready")
+    print("[OK] Coordination Logic: Active")
+    print("[WARN]  GitHub Models API: Permission needed")
+    print("[OK] Demo Mode: Functional")
     
 def show_next_steps():
     """Show next steps for full activation"""
-    print("\n🎯 Activation Steps")
+    print("\n[TASK] Activation Steps")
     print("-" * 20)
-    print("1. 🔑 Fix GitHub Token:")
+    print("1. [KEY] Fix GitHub Token:")
     print("   - Go to: https://github.com/settings/tokens")
     print("   - Add 'models' permission to existing token")
     print("   - Or create new token with 'models' scope")
     print("")
     print("2. 🧪 Test Full System:")
     print("   - Run: python github_token_diagnostic.py")
-    print("   - Verify: ✅ GitHub Models API access successful")
+    print("   - Verify: [OK] GitHub Models API access successful")
     print("")
-    print("3. 🚀 Launch Multi-Agent System:")
+    print("3. [INIT] Launch Multi-Agent System:")
     print("   - Run: python test_github_copilot_agents.py")
     print("   - Expected: Full AI-powered multi-agent coordination")
 
@@ -179,12 +181,12 @@ def main():
         # Show next steps
         show_next_steps()
         
-        print("\n🎉 Demo Complete!")
+        print("\n[CELEBRATE] Demo Complete!")
         print("Your GitHub Copilot multi-agent system is ready!")
         print("Just enable the 'models' permission to activate full AI capabilities.")
         
     except Exception as e:
-        print(f"❌ Demo error: {e}")
+        print(f"[ERROR] Demo error: {e}")
 
 if __name__ == "__main__":
     main()

@@ -1,21 +1,25 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+            import subprocess
+from datetime import datetime, timedelta
+from decimal import Decimal, getcontext
+from typing import Dict, List, Any, Optional
+import asyncio
+import json
+import os
+import re
+import sys
+import time
+
+            import colorama
+from colorama import Fore, Back, Style
+from dataclasses import dataclass
+import aiohttp
 """
 Enhanced Monitoring Terminal for Flash Loan Arbitrage System
 Real-time monitoring using all MCP servers with DEX prices and calculations
 """
 
-import asyncio
-import aiohttp
-import json
-import time
-import sys
-import os
-from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
-from decimal import Decimal, getcontext
-from dataclasses import dataclass
-import colorama
-from colorama import Fore, Back, Style
 
 # Initialize colorama for colored output
 colorama.init(autoreset=True)
@@ -46,74 +50,74 @@ class EnhancedMonitoringTerminal:
     """Real-time monitoring terminal with MCP integration"""
     
     def __init__(self):
-        self.mcp_servers = {
+        self.mcp_servers = {}
             'foundry': {'port': 8001, 'url': 'http://localhost:8001'},
             'evm': {'port': 8002, 'url': 'http://localhost:8002'},
             'matic': {'port': 8003, 'url': 'http://localhost:8003'}
-        }
+        
         
         # Token configuration
-        self.tokens = {
-            'WMATIC': {
+        self.tokens = {}
+            'WMATIC': {}
                 'address': '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
                 'decimals': 18,
                 'symbol': 'WMATIC'
             },
-            'USDC': {
+            'USDC': {}
                 'address': '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
                 'decimals': 6,
                 'symbol': 'USDC'
             },
-            'USDT': {
+            'USDT': {}
                 'address': '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
                 'decimals': 6,
                 'symbol': 'USDT'
             },
-            'DAI': {
+            'DAI': {}
                 'address': '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063',
                 'decimals': 18,
                 'symbol': 'DAI'
             },
-            'WETH': {
+            'WETH': {}
                 'address': '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619',
                 'decimals': 18,
                 'symbol': 'WETH'
-            }
-        }
+            
+        
         
         # DEX configuration
-        self.dexes = {
-            'QuickSwap': {
+        self.dexes = {}
+            'QuickSwap': {}
                 'router': '0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff',
                 'factory': '0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32',
                 'fee': '0.003'
             },
-            'SushiSwap': {
+            'SushiSwap': {}
                 'router': '0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506',
                 'factory': '0xc35DADB65012eC5796536bD9864eD8773aBc74C4',
                 'fee': '0.003'
             },
-            'UniswapV3': {
+            'UniswapV3': {}
                 'router': '0xE592427A0AEce92De3Edee1F18E0157C05861564',
                 'factory': '0x1F98431c8aD98523631AE4a59f267346ea31F984',
                 'fee': '0.003'
             },
-            'Curve': {
+            'Curve': {}
                 'router': '0x094d12e5b541784701FD8d65F11fc0598FBC6332',
                 'factory': '0x0000000000000000000000000000000000000000',
                 'fee': '0.0004'
-            }
-        }
+            
+        
         
         # Performance metrics
-        self.metrics = {
+        self.metrics = {}
             'total_opportunities': 0,
             'profitable_opportunities': 0,
             'avg_profit_potential': Decimal('0'),
             'max_profit_seen': Decimal('0'),
             'start_time': datetime.now(),
             'last_update': datetime.now()
-        }
+        
         
         # Price history for trending
         self.price_history = {}
@@ -125,7 +129,7 @@ class EnhancedMonitoringTerminal:
         async with aiohttp.ClientSession() as session:
             for server_name, config in self.mcp_servers.items():
                 try:
-                    async with session.get(f"{config['url']}/health", 
+                    async with session.get(f"{config['url']}/health", )
                                          timeout=aiohttp.ClientTimeout(total=2)) as response:
                         if response.status == 200:
                             data = await response.json()
@@ -163,13 +167,13 @@ class EnhancedMonitoringTerminal:
         """Simulate token price for demonstration (replace with real price feeds)"""
         try:
             # Base prices in USD for simulation
-            base_prices = {
+            base_prices = {}
                 'WMATIC': Decimal('0.45'),
                 'USDC': Decimal('1.00'),
                 'USDT': Decimal('1.00'),
                 'DAI': Decimal('1.00'),
                 'WETH': Decimal('1800.00')
-            }
+            
             
             # Add some variation based on DEX and time
             base_price = base_prices.get(token_symbol, Decimal('1.00'))
@@ -216,7 +220,7 @@ class EnhancedMonitoringTerminal:
             if price_diff > Decimal('0.001'):
                 profit_estimate = price_diff * Decimal('1000')  # Estimate with $1000
                 
-                opportunities.append(ArbitrageOpportunity(
+                opportunities.append(ArbitrageOpportunity())
                     token_pair=(token_symbol, 'USD'),
                     buy_dex=min_dex,
                     sell_dex=max_dex,
@@ -225,7 +229,7 @@ class EnhancedMonitoringTerminal:
                     price_difference=price_diff,
                     profit_estimate=profit_estimate,
                     confidence=0.8
-                ))
+
                 
         return sorted(opportunities, key=lambda x: Any: Any: x.profit_estimate, reverse=True)
     
@@ -238,17 +242,17 @@ class EnhancedMonitoringTerminal:
                 self.price_history[token_symbol] = []
                 
             # Keep only last 10 price points
-            self.price_history[token_symbol].append({
+            self.price_history[token_symbol].append({)}
                 'timestamp': current_time,
                 'prices': token_prices.copy()
-            })
+            
             
             if len(self.price_history[token_symbol]) > 10:
                 self.price_history[token_symbol].pop(0)
     
     def get_price_trend(self, token_symbol: str, dex_name: str) -> str:
         """Get price trend indicator for a token on a specific DEX"""
-        if (token_symbol not in self.price_history or 
+        if (token_symbol not in self.price_history or )
             len(self.price_history[token_symbol]) < 2):
             return "━"
             
@@ -340,8 +344,8 @@ class EnhancedMonitoringTerminal:
             else:
                 profit_color = Fore.YELLOW
                 
-            print(f"{token:<8} {opp.buy_dex:<12} {opp.sell_dex:<12} "
-                  f"{price_diff_pct:>6.2f}%     {profit_color}${opp.profit_estimate:>7.2f}{Style.RESET_ALL}")
+            print(f"{token:<8} {opp.buy_dex:<12} {opp.sell_dex:<12} ")
+                  f"{price_diff_pct:>6.2f}%     {profit_color}${opp.profit_estimate:>7.2f}{Style.RESET_ALL}"
     
     def display_performance_metrics(self):
         """Display performance metrics"""
@@ -401,9 +405,9 @@ class EnhancedMonitoringTerminal:
                 
                 # Status line
                 active_servers = sum(1 for status in health_status.values() if status)
-                print(f"\n{Fore.GREEN}● MONITORING ACTIVE{Style.RESET_ALL} - "
+                print(f"\n{Fore.GREEN}● MONITORING ACTIVE{Style.RESET_ALL} - ")
                       f"{Fore.CYAN}{active_servers}/3 MCP Servers Online{Style.RESET_ALL} - "
-                      f"{Fore.YELLOW}Refreshing in 3s...{Style.RESET_ALL}")
+                      f"{Fore.YELLOW}Refreshing in 3s...{Style.RESET_ALL}"
                 
                 # Wait before next update
                 await asyncio.sleep(3)
@@ -418,12 +422,9 @@ async def main():
     try:
         # Install colorama if not available
         try:
-            import colorama
         except ImportError:
             print("Installing colorama for colored output...")
-            import subprocess
             subprocess.check_call([sys.executable, "-m", "pip", "install", "colorama"])
-            import colorama
         
         monitor = EnhancedMonitoringTerminal()
         await monitor.run_monitoring_loop()

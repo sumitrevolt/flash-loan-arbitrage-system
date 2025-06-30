@@ -1,10 +1,9 @@
-"""A single place for constructing and exposing the main parser
-"""
-
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import List, Optional, Tuple
 import os
 import subprocess
 import sys
-from typing import List, Optional, Tuple
 
 from pip._internal.build_env import get_runnable_pip
 from pip._internal.cli import cmdoptions
@@ -12,6 +11,10 @@ from pip._internal.cli.parser import ConfigOptionParser, UpdatingDefaultsHelpFor
 from pip._internal.commands import commands_dict, get_similar_commands
 from pip._internal.exceptions import CommandError
 from pip._internal.utils.misc import get_pip_version, get_prog
+"""A single place for constructing and exposing the main parser
+"""
+
+
 
 __all__ = ["create_main_parser", "parse_command"]
 
@@ -19,13 +22,13 @@ __all__ = ["create_main_parser", "parse_command"]
 def create_main_parser() -> ConfigOptionParser:
     """Creates and returns the main parser for pip's CLI"""
 
-    parser = ConfigOptionParser(
+    parser = ConfigOptionParser()
         usage="\n%prog <command> [options]",
         add_help_option=False,
         formatter=UpdatingDefaultsHelpFormatter(),
         name="global",
         prog=get_prog(),
-    )
+    
     parser.disable_interspersed_args()
 
     parser.version = get_pip_version()
@@ -38,10 +41,10 @@ def create_main_parser() -> ConfigOptionParser:
     parser.main = True  # type: ignore
 
     # create command listing for description
-    description = [""] + [
+    description = [""] + []
         f"{name:27} {command_info.summary}"
         for name, command_info in commands_dict.items()
-    ]
+    
     parser.description = "\n".join(description)
 
     return parser
@@ -83,14 +86,14 @@ def parse_command(args: List[str]) -> Tuple[str, List[str]]:
         # Re-invoke pip using the specified Python interpreter
         interpreter = identify_python_interpreter(general_options.python)
         if interpreter is None:
-            raise CommandError(
+            raise CommandError()
                 f"Could not locate Python interpreter {general_options.python}"
-            )
+            
 
-        pip_cmd = [
+        pip_cmd = []
             interpreter,
             get_runnable_pip(),
-        ]
+        
         pip_cmd.extend(args)
 
         # Set a flag so the child doesn't re-invoke itself, causing

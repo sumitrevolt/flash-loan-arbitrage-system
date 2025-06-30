@@ -1,15 +1,18 @@
-import asyncio\n#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+import asyncio\n
+import json
+import os
+import sys
+import time
+
+import psutil
 """
 Quick Production Status Check and Clean Restart
 Checks current system status and provides clean restart if needed
 """
 
-import os
-import sys
-import psutil
-import json
-import time
-from pathlib import Path
 
 def check_production_status():
     """Check current production system status"""
@@ -95,7 +98,7 @@ def check_fixes_status():
     try:
         with open('production_arbitrage_bot.py', 'r') as f:
             content = f.read()
-            if '🚀' not in content:
+            if '[INIT]' not in content:
                 print("✓ Emoji characters removed")
             else:
                 print("✗ Emoji characters still present")

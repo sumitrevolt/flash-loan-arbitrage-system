@@ -1,0 +1,432 @@
+# LangChain Master Orchestrator Configuration
+# Flash Loan Arbitrage System Integration
+
+# System Configuration
+system:
+  name: "LangChain Flash Loan Arbitrage Orchestrator"
+  version: "1.0.0"
+  environment: "development"  # development, staging, production
+  debug: true
+  log_level: "INFO"
+
+# Redis Configuration
+redis:
+  url: "redis://localhost:6379"
+  db: 0
+  password: null
+  ssl: false
+  connection_pool:
+    max_connections: 20
+    retry_on_timeout: true
+    socket_keepalive: true
+    socket_keepalive_options: {}
+
+# PostgreSQL Configuration (Optional)
+postgres:
+  host: "localhost"
+  port: 5432
+  database: "flash_loan_arbitrage"
+  username: "postgres"
+  password: "${POSTGRES_PASSWORD}"
+  ssl_mode: "prefer"
+  pool_size: 10
+  max_overflow: 20
+
+# MCP Server Configuration
+mcp_servers:
+  # Critical Tier (Tier 1) - Always Active
+  critical:
+    filesystem:
+      host: "localhost"
+      port: 3023
+      protocol: "http"
+      health_endpoint: "/health"
+      capabilities: ["file_operations", "config_management", "data_storage"]
+      max_connections: 100
+      weight: 1.0
+      timeout: 30
+      
+    context7:
+      host: "localhost"
+      port: 3022
+      protocol: "http"
+      health_endpoint: "/health"
+      capabilities: ["documentation", "code_examples", "library_info"]
+      max_connections: 50
+      weight: 1.0
+      timeout: 30
+      
+    supermemory:
+      host: "localhost"
+      port: 3021
+      protocol: "http"
+      health_endpoint: "/health"
+      capabilities: ["memory_storage", "context_persistence", "retrieval"]
+      max_connections: 75
+      weight: 1.0
+      timeout: 30
+      
+    taskmanager:
+      host: "localhost"
+      port: 3020
+      protocol: "http"
+      health_endpoint: "/health"
+      capabilities: ["task_orchestration", "workflow_management"]
+      max_connections: 50
+      weight: 1.0
+      timeout: 30
+
+  # Integration Tier (Tier 2) - Load Balanced
+  integration:
+    langchain_orchestrator:
+      host: "localhost"
+      port: 3016
+      protocol: "http"
+      health_endpoint: "/health"
+      capabilities: ["workflow_coordination", "agent_management"]
+      max_connections: 50
+      weight: 0.8
+      timeout: 45
+      
+    enhanced_manager:
+      host: "localhost"
+      port: 3015
+      protocol: "http"
+      health_endpoint: "/health"
+      capabilities: ["system_health", "service_coordination"]
+      max_connections: 40
+      weight: 0.8
+      timeout: 30
+      
+    complete_langchain_integration:
+      host: "localhost"
+      port: 3014
+      protocol: "http"
+      health_endpoint: "/health"
+      capabilities: ["integration_management", "coordination"]
+      max_connections: 30
+      weight: 0.7
+      timeout: 40
+
+  # Specialized Tier (Tier 3) - Demand-Based Routing
+  specialized:
+    aave_flash_loan:
+      host: "localhost"
+      port: 3001
+      protocol: "http"
+      health_endpoint: "/health"
+      capabilities: ["flash_loan", "aave_integration", "defi_protocols"]
+      max_connections: 25
+      weight: 0.6
+      timeout: 60
+      priority: "high"
+      
+    arbitrage_detector:
+      host: "localhost"
+      port: 3003
+      protocol: "http"
+      health_endpoint: "/health"
+      capabilities: ["arbitrage_analysis", "opportunity_detection"]
+      max_connections: 20
+      weight: 0.6
+      timeout: 45
+      priority: "high"
+      
+    risk_analyzer:
+      host: "localhost"
+      port: 3007
+      protocol: "http"
+      health_endpoint: "/health"
+      capabilities: ["risk_assessment", "safety_validation"]
+      max_connections: 15
+      weight: 0.5
+      timeout: 30
+      priority: "medium"
+
+# AutoGen Integration
+autogen:
+  url: "http://localhost:8001"
+  timeout: 300
+  max_retries: 3
+  retry_delay: 5
+  conversation_config:
+    max_rounds: 10
+    timeout_per_round: 30
+    consensus_threshold: 0.6
+    
+  # Agent Configuration
+  agents:
+    coordinator:
+      name: "ArbitrageCoordinator"
+      role: "coordinator"
+      capabilities: ["strategy_planning", "resource_allocation", "decision_making"]
+      system_message: "You are the master coordinator for flash loan arbitrage strategies."
+      
+    analyzer:
+      name: "MarketAnalyzer"
+      role: "analyzer"
+      capabilities: ["market_analysis", "data_processing", "opportunity_detection"]
+      system_message: "You are a market data analyst specializing in DeFi protocols."
+      
+    risk_manager:
+      name: "RiskManager"
+      role: "risk_manager"
+      capabilities: ["risk_assessment", "safety_validation", "compliance"]
+      system_message: "You are the risk management specialist."
+      
+    executor:
+      name: "TransactionExecutor"
+      role: "executor"
+      capabilities: ["transaction_execution", "gas_optimization", "monitoring"]
+      system_message: "You are responsible for executing flash loan transactions."
+
+# Intelligent Routing Configuration
+routing:
+  # Load Balancing Strategies
+  strategies:
+    default: "weighted_round_robin"
+    critical_requests: "fastest_response"
+    analytics_requests: "health_weighted"
+    execution_requests: "least_connections"
+    
+  # Server Tier Weights
+  tier_weights:
+    critical: 1.0
+    integration: 0.8
+    specialized: 0.6
+    
+  # Circuit Breaker Configuration
+  circuit_breaker:
+    failure_threshold: 5
+    recovery_timeout: 60  # seconds
+    half_open_max_calls: 3
+    
+  # Health Monitoring
+  health_monitoring:
+    interval: 30  # seconds
+    timeout: 10   # seconds
+    retry_attempts: 3
+    
+  # Affinity Configuration
+  session_affinity:
+    enabled: true
+    timeout: 3600  # 1 hour
+    max_mappings: 1000
+
+# Workflow Engine Configuration
+workflow:
+  # Execution Configuration
+  execution:
+    max_concurrent_workflows: 10
+    max_concurrent_steps: 5
+    default_timeout: 300  # seconds
+    max_retries: 3
+    retry_delay: 5
+    
+  # Performance Configuration
+  performance:
+    metrics_retention: 1000  # number of executions to keep
+    cleanup_interval: 3600   # seconds (1 hour)
+    history_retention: 86400 # seconds (24 hours)
+    
+  # Default Workflow Definitions
+  definitions:
+    arbitrage_analysis:
+      timeout: 120
+      priority: "high"
+      max_retries: 2
+      
+    risk_assessment:
+      timeout: 90
+      priority: "high"
+      max_retries: 2
+      
+    trade_execution:
+      timeout: 300
+      priority: "critical"
+      max_retries: 1
+
+# Conversation Management Configuration
+conversation:
+  # Default Settings
+  defaults:
+    timeout: 300  # seconds
+    max_rounds: 10
+    consensus_threshold: 0.6
+    
+  # Decision Algorithms
+  decision_algorithms:
+    default: "majority_consensus"
+    risk_assessment: "risk_weighted_decision"
+    execution_approval: "unanimous_consensus"
+    strategy_planning: "weighted_consensus"
+    
+  # Conversation Types
+  types:
+    arbitrage_decision:
+      timeout: 300
+      max_rounds: 8
+      required_participants: ["coordinator", "analyzer", "risk_manager"]
+      
+    risk_assessment:
+      timeout: 180
+      max_rounds: 6
+      required_participants: ["risk_manager", "analyzer"]
+      
+    execution_approval:
+      timeout: 120
+      max_rounds: 4
+      required_participants: ["coordinator", "executor", "risk_manager"]
+
+# Monitoring and Alerting
+monitoring:
+  # Metrics Collection
+  metrics:
+    enabled: true
+    collection_interval: 10  # seconds
+    retention_period: 2592000  # 30 days in seconds
+    
+  # Alerts Configuration
+  alerts:
+    enabled: true
+    
+    # Performance Alerts
+    performance:
+      high_response_time:
+        threshold: 5.0  # seconds
+        severity: "warning"
+        
+      high_error_rate:
+        threshold: 0.05  # 5%
+        severity: "critical"
+        
+      low_success_rate:
+        threshold: 0.90  # 90%
+        severity: "warning"
+    
+    # System Health Alerts
+    health:
+      server_down:
+        severity: "critical"
+        
+      circuit_breaker_open:
+        severity: "warning"
+        
+      high_memory_usage:
+        threshold: 0.85  # 85%
+        severity: "warning"
+        
+      queue_backlog:
+        threshold: 100  # messages
+        severity: "warning"
+
+# Security Configuration
+security:
+  # API Security
+  api:
+    rate_limiting:
+      enabled: true
+      requests_per_minute: 1000
+      burst_limit: 100
+      
+    authentication:
+      enabled: false  # Set to true in production
+      token_expiry: 3600  # seconds
+      
+  # Communication Security
+  communication:
+    encrypt_internal: false  # Set to true in production
+    verify_ssl: true
+    timeout: 30
+
+# Performance Tuning
+performance:
+  # Connection Pooling
+  connection_pools:
+    http:
+      max_pool_size: 100
+      max_connections_per_host: 10
+      keepalive_timeout: 30
+      
+  # Caching
+  caching:
+    enabled: true
+    ttl: 300  # seconds
+    max_size: 1000  # entries
+    
+  # Async Configuration
+  async_config:
+    max_workers: 10
+    queue_size: 1000
+    timeout: 60
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # File Logging
+  file:
+    enabled: true
+    path: "logs/langchain_orchestrator.log"
+    max_size: "100MB"
+    backup_count: 5
+    rotation: "daily"
+    
+  # Structured Logging
+  structured:
+    enabled: true
+    format: "json"
+    include_trace_id: true
+    
+  # Log Levels by Component
+  components:
+    orchestrator: "INFO"
+    mcp_manager: "INFO"
+    workflow_engine: "INFO"
+    intelligent_router: "INFO"
+    conversation_manager: "INFO"
+    autogen: "DEBUG"
+
+# Development and Testing
+development:
+  # Mock Services
+  mock_services:
+    enabled: false
+    autogen_mock: false
+    mcp_mock: false
+    
+  # Testing Configuration
+  testing:
+    test_mode: false
+    mock_responses: false
+    simulate_failures: false
+    
+  # Debug Features
+  debug:
+    detailed_logging: false
+    trace_requests: false
+    save_conversations: true
+    
+# Production Overrides
+production:
+  # Production-specific settings
+  system:
+    debug: false
+    log_level: "WARNING"
+    
+  security:
+    api:
+      authentication:
+        enabled: true
+    communication:
+      encrypt_internal: true
+      
+  performance:
+    connection_pools:
+      http:
+        max_pool_size: 200
+        
+  monitoring:
+    alerts:
+      enabled: true

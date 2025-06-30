@@ -1,4 +1,13 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+    import sys
+from datetime import datetime
+from typing import Dict, List
+import asyncio
+import json
+import time
+
+import aiohttp
 """
 Docker Service Health Checker
 ============================
@@ -6,19 +15,13 @@ Docker Service Health Checker
 Monitors the health of all Docker-based MCP servers and AI agents.
 """
 
-import asyncio
-import aiohttp
-import json
-import time
-from datetime import datetime
-from typing import Dict, List
 
 class DockerHealthChecker:
     """Health checker for Docker-based services"""
     
     def __init__(self):
         # Docker MCP Services - Using actual running containers
-        self.mcp_services = {
+        self.mcp_services = {}
             'auth-manager': 'http://localhost:8100',
             'blockchain': 'http://localhost:8101',
             'defi-analyzer': 'http://localhost:8102',
@@ -40,10 +43,10 @@ class DockerHealthChecker:
             'task-queue': 'http://localhost:8118',
             'filesystem': 'http://localhost:8119',
             'coordinator': 'http://localhost:8120'
-        }
+        
         
         # AI Agents - Using actual running containers
-        self.ai_agents = {
+        self.ai_agents = {}
             'analyzer': 'http://localhost:8201',
             'executor': 'http://localhost:8202',
             'risk-manager': 'http://localhost:8203',
@@ -54,7 +57,7 @@ class DockerHealthChecker:
             'reporter': 'http://localhost:8208',
             'healer': 'http://localhost:8209',
             'coordinator': 'http://localhost:8200'
-        }
+        
     
     async def check_service_health(self, name: str, url: str) -> Dict:
         """Check health of a single service"""
@@ -68,50 +71,50 @@ class DockerHealthChecker:
                     if response.status == 200:
                         try:
                             data = await response.json()
-                            return {
+                            return {}
                                 'name': name,
                                 'url': url,
                                 'status': 'healthy',
                                 'response_time_ms': round(response_time, 2),
                                 'details': data
-                            }
+                            
                         except:
-                            return {
+                            return {}
                                 'name': name,
                                 'url': url,
                                 'status': 'healthy',
                                 'response_time_ms': round(response_time, 2),
                                 'details': {'message': 'OK'}
-                            }
+                            
                     else:
-                        return {
+                        return {}
                             'name': name,
                             'url': url,
                             'status': 'unhealthy',
                             'response_time_ms': round(response_time, 2),
                             'error': f"HTTP {response.status}"
-                        }
+                        
                         
         except asyncio.TimeoutError:
-            return {
+            return {}
                 'name': name,
                 'url': url,
                 'status': 'timeout',
                 'response_time_ms': 5000,
                 'error': 'Request timeout'
-            }
+            
         except Exception as e:
-            return {
+            return {}
                 'name': name,
                 'url': url,
                 'status': 'unreachable',
                 'response_time_ms': (time.time() - start_time) * 1000,
                 'error': str(e)
-            }
+            
     
     async def check_all_services(self) -> Dict:
         """Check health of all services"""
-        print(f"\n🔍 Health Check Started - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"\n[SEARCH] Health Check Started - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 80)
         
         # Prepare tasks for concurrent health checks
@@ -133,13 +136,13 @@ class DockerHealthChecker:
         unhealthy = [r for r in results if r['status'] in ['unhealthy', 'timeout', 'unreachable']]
         
         # Print results
-        print(f"\n✅ HEALTHY SERVICES ({len(healthy)}):")
+        print(f"\n[OK] HEALTHY SERVICES ({len(healthy)}):")
         print("-" * 40)
         for service in sorted(healthy, key=lambda x: x['name']):
             print(f"  {service['name']:<25} | {service['response_time_ms']:>6.1f}ms | {service['url']}")
         
         if unhealthy:
-            print(f"\n❌ UNHEALTHY SERVICES ({len(unhealthy)}):")
+            print(f"\n[ERROR] UNHEALTHY SERVICES ({len(unhealthy)}):")
             print("-" * 40)
             for service in sorted(unhealthy, key=lambda x: x['name']):
                 print(f"  {service['name']:<25} | {service['status']:<12} | {service.get('error', 'Unknown error')}")
@@ -149,7 +152,7 @@ class DockerHealthChecker:
         healthy_count = len(healthy)
         health_percentage = (healthy_count / total_services) * 100 if total_services > 0 else 0
         
-        print(f"\n📊 SUMMARY:")
+        print(f"\n[METRICS] SUMMARY:")
         print("-" * 40)
         print(f"  Total Services:     {total_services}")
         print(f"  Healthy Services:   {healthy_count}")
@@ -161,7 +164,7 @@ class DockerHealthChecker:
             avg_response_time = sum(s['response_time_ms'] for s in healthy) / len(healthy)
             print(f"  Avg Response Time:  {avg_response_time:.1f}ms")
         
-        return {
+        return {}
             'timestamp': datetime.now().isoformat(),
             'total_services': total_services,
             'healthy_services': healthy_count,
@@ -169,15 +172,15 @@ class DockerHealthChecker:
             'health_percentage': health_percentage,
             'healthy': healthy,
             'unhealthy': unhealthy
-        }
+        
     
     async def test_arbitrage_endpoints(self):
         """Test specific arbitrage-related endpoints"""
-        print(f"\n🎯 Testing Arbitrage Endpoints")
+        print(f"\n[TASK] Testing Arbitrage Endpoints")
         print("=" * 80)
         
         # Test critical services for arbitrage
-        critical_services = {
+        critical_services = {}
             'price-feed': self.mcp_services['price-feed'],
             'arbitrage': self.mcp_services['arbitrage'],
             'flash-loan': self.mcp_services['flash-loan'],
@@ -185,7 +188,7 @@ class DockerHealthChecker:
             'risk-manager': self.mcp_services['risk-manager'],
             'arbitrage-bot': self.ai_agents['arbitrage-bot'],
             'executor': self.ai_agents['executor']
-        }
+        
         
         for name, url in critical_services.items():
             try:
@@ -193,7 +196,7 @@ class DockerHealthChecker:
                     # Test health endpoint
                     async with session.get(f"{url}/health", timeout=3) as response:
                         if response.status == 200:
-                            print(f"  ✅ {name:<20} | Health: OK")
+                            print(f"  [OK] {name:<20} | Health: OK")
                             
                             # Test specific endpoints based on service type
                             if 'price' in name:
@@ -207,25 +210,25 @@ class DockerHealthChecker:
                             
                             elif 'arbitrage' in name and 'mcp' in url:
                                 # Test arbitrage scanning
-                                test_data = {
+                                test_data = {}
                                     'tokens': ['WMATIC', 'USDC'],
                                     'dexs': ['QuickSwap', 'SushiSwap'],
                                     'min_profit_usd': 3.0
-                                }
+                                
                                 async with session.post(f"{url}/scan_opportunities", json=test_data, timeout=10) as test_response:
                                     if test_response.status == 200:
                                         print(f"     {' '*20} | Scan API: OK")
                                     else:
                                         print(f"     {' '*20} | Scan API: Error {test_response.status}")
                         else:
-                            print(f"  ❌ {name:<20} | Health: Error {response.status}")
+                            print(f"  [ERROR] {name:<20} | Health: Error {response.status}")
                             
             except Exception as e:
-                print(f"  ❌ {name:<20} | Error: {str(e)[:50]}")
+                print(f"  [ERROR] {name:<20} | Error: {str(e)[:50]}")
     
     async def continuous_monitoring(self, interval_seconds: int = 60):
         """Continuously monitor services"""
-        print(f"🔄 Starting continuous monitoring (every {interval_seconds}s)")
+        print(f"[SYNC] Starting continuous monitoring (every {interval_seconds}s)")
         print("Press Ctrl+C to stop")
         
         try:
@@ -239,7 +242,6 @@ class DockerHealthChecker:
 
 async def main():
     """Main entry point"""
-    import sys
     
     checker = DockerHealthChecker()
     
@@ -254,7 +256,7 @@ async def main():
         elif command == 'quick':
             # Quick health check of critical services only
             critical = ['flash-loan', 'arbitrage', 'price-feed', 'arbitrage-bot']
-            print("🚀 Quick Health Check - Critical Services Only")
+            print("[INIT] Quick Health Check - Critical Services Only")
             print("=" * 50)
             
             for service in critical:
@@ -265,7 +267,7 @@ async def main():
                 else:
                     continue
                 
-                status_icon = "✅" if result['status'] == 'healthy' else "❌"
+                status_icon = "[OK]" if result['status'] == 'healthy' else "[ERROR]"
                 print(f"  {status_icon} {result['name']:<25} | {result['status']}")
         else:
             print("Usage:")

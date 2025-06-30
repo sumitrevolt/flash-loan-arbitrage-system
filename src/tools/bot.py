@@ -1,12 +1,27 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import asyncio\nimport discord
-import os
-import aiohttp
 import logging
+import os
 
+import aiohttp
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 
 COMMANDING_URL = "http://commanding:8000"
+
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -61,13 +76,13 @@ async def on_message(message):
             logging.error(f"Flashloan error: {e}")
 
     elif message.content.startswith('!help'):
-        help_text = (
+        help_text = ()
             "**Available Commands:**\n"
             "!status - Get system status\n"
             "!command <target> <action> - Send command to agents/servers\n"
             "!flashloan <amount> <token_address> - Trigger flashloan execution\n"
             "!help - Show this help message"
-        )
+        
         await message.channel.send(help_text)
 
 if __name__ == '__main__':

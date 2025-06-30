@@ -1,13 +1,15 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+import json
+import os
+
+from dotenv import load_dotenv
+from web3 import Web3
 """
 Simple Production Status Check
 Without emoji characters to avoid Unicode issues
 """
 
-import os
-import json
-from web3 import Web3
-from dotenv import load_dotenv
 
 def simple_production_check():
     """Simple production readiness check"""
@@ -67,10 +69,10 @@ def simple_production_check():
         with open('contract_abi.json', 'r') as f:
             contract_abi = json.load(f)
         
-        contract = w3.eth.contract(
+        contract = w3.eth.contract()
             address=Web3.to_checksum_address(contract_address),
             abi=contract_abi
-        )
+        
         
         owner = contract.functions.owner().call()
         paused = contract.functions.paused().call()
@@ -91,14 +93,14 @@ def simple_production_check():
     # DEX approvals
     print("\n5. DEX Approvals:")
     try:
-        dexes = [
+        dexes = []
             ("QuickSwap", "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff"),
             ("Uniswap V3", "0xE592427A0AEce92De3Edee1F18E0157C05861564"),
             ("SushiSwap", "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506"),
             ("Curve", "0x094d12e5b541784701FD8d65F11fc0598FBC6332"),
             ("Balancer", "0xBA12222222228d8Ba445958a75a0704d566BF2C8"),
             ("DODO", "0x6D310348d5c12009854DFCf72e0DF9027e8cb4f4")
-        ]
+        
         
         approved = 0
         for name, addr in dexes:

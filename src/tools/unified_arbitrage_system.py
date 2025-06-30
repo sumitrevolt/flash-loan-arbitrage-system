@@ -1,4 +1,26 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from collections import defaultdict
+from datetime import datetime, timedelta
+from decimal import Decimal, getcontext
+from pathlib import Path
+from typing import Dict, List, Optional, Any, Tuple, Union
+import argparse
+import asyncio
+import json
+import logging
+import os
+import platform
+import signal
+import subprocess
+import sys
+import time
+
+        from dotenv import load_dotenv
+from dataclasses import dataclass, field
+from types import FrameType, TracebackType
+from web3 import Web3
+import aiohttp
 """
 Unified Flash Loan Arbitrage System - Consolidated Version
 =========================================================
@@ -21,25 +43,6 @@ Features:
 - Real blockchain data only (no mock/simulation)
 """
 
-import asyncio
-import aiohttp
-import argparse
-import logging
-import signal
-import sys
-import json
-import os
-import subprocess
-import time
-from datetime import datetime, timedelta
-from decimal import Decimal, getcontext
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Tuple, Union
-from types import FrameType, TracebackType
-from collections import defaultdict
-from pathlib import Path
-from web3 import Web3
-import platform
 
 # Windows compatibility
 if platform.system() == 'Windows':
@@ -49,14 +52,27 @@ if platform.system() == 'Windows':
 getcontext().prec = 28
 
 # Configure comprehensive logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s',
-    handlers=[
+    handlers=[]
         logging.FileHandler('logs/unified_arbitrage_system.log', encoding='utf-8'),
         logging.StreamHandler(sys.stdout)
-    ]
-)
+    
+
 logger = logging.getLogger(__name__)
 
 # CUSTOM EXCEPTIONS for better error handling
@@ -115,12 +131,12 @@ class ArbitrageOpportunity:
     @property
     def execution_ready(self) -> bool:
         """Check if opportunity is ready for execution"""
-        return (
+        return ()
             not self.is_stale and
             self.confidence > 0.8 and
             self.net_profit > 0 and
             self.mev_risk_score < 0.3
-        )
+        
 
 @dataclass
 class FlashLoanParams:
@@ -150,23 +166,23 @@ class RealDEXIntegrations:
         self.cache_ttl = 30  # seconds
         
         # DEX configurations
-        self.dex_configs = {
-            'uniswap_v3': {
+        self.dex_configs = {}
+            'uniswap_v3': {}
                 'base_url': 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3',
                 'router': '0xE592427A0AEce92De3Edee1F18E0157C05861564',
                 'fee_tiers': [100, 500, 3000, 10000]  # 0.01%, 0.05%, 0.3%, 1%
             },
-            'sushiswap': {
+            'sushiswap': {}
                 'base_url': 'https://api.thegraph.com/subgraphs/name/sushiswap/exchange',
                 'router': '0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506',
                 'fee': 0.003
             },
-            'quickswap': {
+            'quickswap': {}
                 'base_url': 'https://api.thegraph.com/subgraphs/name/sameepsi/quickswap06',
                 'router': '0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff',
                 'fee': 0.003
-            }
-        }
+            
+        
     
     async def get_session(self):
         """Get or create aiohttp session"""
@@ -196,7 +212,7 @@ class RealDEXIntegrations:
             elif dex == 'quickswap':
                 price_data = await self._fetch_quickswap_price(session, token_pair)
             else:
-                logger.warning(f"Unsupported DEX: {dex}")
+                logger.warning(str(f"Unsupported DEX: {dex}")
                 return None
             
             if price_data:
@@ -207,27 +223,27 @@ class RealDEXIntegrations:
             return None
             
         except Exception as e:
-            logger.error(f"Error fetching price from {dex} for {token_pair}: {e}")
+            logger.error(str(f"Error fetching price from {dex} for {token_pair}: {e}")
             return None
     
     async def _fetch_uniswap_v3_price(self, session: aiohttp.ClientSession, token_pair: str) -> Optional[DexPrice]:
         """Fetch Uniswap V3 price"""
         # Implementation for Uniswap V3 GraphQL query
         query = """
-        {
-          pools(where: {token0: "%s", token1: "%s"}) {
+        {}
+          pools(where: {token0: "%s", token1: "%s"}) {}
             tick
             sqrtPrice
             liquidity
             token0Price
             token1Price
             volumeUSD
-          }
-        }
+          
+        
         """ % tuple(token_pair.split('/'))
         
         try:
-            async with session.post(
+            async with session.post()
                 self.dex_configs['uniswap_v3']['base_url'],
                 json={'query': query}
             ) as response:
@@ -236,15 +252,15 @@ class RealDEXIntegrations:
                 if 'data' in data and data['data']['pools']:
                     pool = data['data']['pools'][0]  # Take highest liquidity pool
                     
-                    return DexPrice(
+                    return DexPrice()
                         dex='uniswap_v3',
                         token_pair=token_pair,
                         price=Decimal(str(pool['token0Price'])),
                         liquidity=Decimal(str(pool['liquidity'])),
                         timestamp=datetime.now()
-                    )
+                    
         except Exception as e:
-            logger.error(f"Uniswap V3 price fetch error: {e}")
+            logger.error(str(f"Uniswap V3 price fetch error: {e}")
         
         return None
     
@@ -289,37 +305,36 @@ class UnifiedFlashLoanArbitrageSystem:
         self.mcp_enabled = False
         
         # Performance tracking
-        self.execution_stats = {
+        self.execution_stats = {}
             'opportunities_found': 0,
             'opportunities_executed': 0,
             'total_profit': Decimal('0'),
             'total_gas_spent': 0,
             'success_rate': 0.0
-        }
+        
         
         # Circuit breaker for safety
-        self.circuit_breaker = {
+        self.circuit_breaker = {}
             'max_failures': 5,
             'current_failures': 0,
             'last_failure_time': None,
             'cooldown_period': 300  # 5 minutes
-        }
+        
         
         # Price monitoring
-        self.monitored_pairs = [
+        self.monitored_pairs = []
             'WMATIC/USDC',
             'WETH/USDC',
             'USDT/USDC',
             'DAI/USDC',
             'WBTC/WETH'
-        ]
+        
         
         self.opportunities = []
         self.min_profit_threshold = Decimal('10')  # $10 minimum profit
     
     def _load_environment(self):
         """Load environment variables"""
-        from dotenv import load_dotenv
         load_dotenv()
         
         self.rpc_url = os.getenv('POLYGON_RPC_URL')
@@ -338,7 +353,7 @@ class UnifiedFlashLoanArbitrageSystem:
         
         if self.private_key:
             self.account = self.web3.eth.account.from_key(self.private_key)
-            logger.info(f"Loaded account: {self.account.address}")
+            logger.info(str(f"Loaded account: {self.account.address}")
     
     def _load_configuration(self) -> Dict[str, Any]:
         """Load system configuration"""
@@ -349,9 +364,9 @@ class UnifiedFlashLoanArbitrageSystem:
                 return json.load(f)
         
         # Default configuration
-        return {
+        return {}
             'dexes': ['uniswap_v3', 'sushiswap', 'quickswap'],
-            'tokens': {
+            'tokens': {}
                 'WMATIC': '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
                 'USDC': '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
                 'USDT': '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
@@ -361,7 +376,7 @@ class UnifiedFlashLoanArbitrageSystem:
             'min_profit_usd': 10,
             'max_slippage': 0.01,
             'gas_price_multiplier': 1.2
-        }
+        
     
     async def initialize_mcp_servers(self):
         """Initialize MCP server connections"""
@@ -379,7 +394,7 @@ class UnifiedFlashLoanArbitrageSystem:
                     else:
                         logger.warning("MCP coordinator not available, running in standalone mode")
         except Exception as e:
-            logger.warning(f"Failed to connect to MCP servers: {e}")
+            logger.warning(str(f"Failed to connect to MCP servers: {e}")
     
     async def find_arbitrage_opportunities(self) -> List[ArbitrageOpportunity]:
         """Find arbitrage opportunities across DEXes"""
@@ -388,10 +403,10 @@ class UnifiedFlashLoanArbitrageSystem:
         try:
             for pair in self.monitored_pairs:
                 # Fetch prices from all DEXes concurrently
-                price_tasks = [
+                price_tasks = []
                     self.dex_integrations.fetch_price(dex, pair)
                     for dex in self.config['dexes']
-                ]
+                
                 
                 prices = await asyncio.gather(*price_tasks, return_exceptions=True)
                 valid_prices = [p for p in prices if isinstance(p, DexPrice) and p is not None]
@@ -409,9 +424,9 @@ class UnifiedFlashLoanArbitrageSystem:
                             profit_pct = float((sell_price.price - buy_price.price) / buy_price.price * 100)
                             
                             if profit_pct > 0.5:  # At least 0.5% profit
-                                opportunity = await self._calculate_opportunity(
+                                opportunity = await self._calculate_opportunity()
                                     pair, buy_price, sell_price
-                                )
+                                
                                 
                                 if opportunity and opportunity.net_profit > self.min_profit_threshold:
                                     opportunities.append(opportunity)
@@ -425,10 +440,10 @@ class UnifiedFlashLoanArbitrageSystem:
             return opportunities
             
         except Exception as e:
-            logger.error(f"Error finding arbitrage opportunities: {e}")
+            logger.error(str(f"Error finding arbitrage opportunities: {e}")
             return []
     
-    async def _calculate_opportunity(
+    async def _calculate_opportunity()
         self, 
         pair: str, 
         buy_price: DexPrice, 
@@ -460,7 +475,7 @@ class UnifiedFlashLoanArbitrageSystem:
             # Estimate MEV risk (simplified)
             mev_risk = min(profit_pct / 10.0, 1.0)  # Higher profit = higher MEV risk
             
-            return ArbitrageOpportunity(
+            return ArbitrageOpportunity()
                 token_pair=pair,
                 dex_buy=buy_price.dex,
                 dex_sell=sell_price.dex,
@@ -477,16 +492,16 @@ class UnifiedFlashLoanArbitrageSystem:
                 gas_estimate=21000 * 3,  # Estimated gas for flash loan + swaps
                 execution_priority=int(net_profit),
                 mev_risk_score=mev_risk
-            )
+            
             
         except Exception as e:
-            logger.error(f"Error calculating opportunity for {pair}: {e}")
+            logger.error(str(f"Error calculating opportunity for {pair}: {e}")
             return None
     
     async def execute_arbitrage(self, opportunity: ArbitrageOpportunity) -> bool:
         """Execute arbitrage opportunity using flash loan"""
         if not opportunity.execution_ready:
-            logger.warning(f"Opportunity not ready for execution: {opportunity.token_pair}")
+            logger.warning(str(f"Opportunity not ready for execution: {opportunity.token_pair}")
             return False
         
         if self._check_circuit_breaker():
@@ -494,15 +509,15 @@ class UnifiedFlashLoanArbitrageSystem:
             return False
         
         try:
-            logger.info(f"Executing arbitrage: {opportunity.token_pair} - ${opportunity.net_profit}")
+            logger.info(str(f"Executing arbitrage: {opportunity.token_pair} - ${opportunity.net_profit}")
             
             # Prepare flash loan parameters
-            flash_loan_params = FlashLoanParams(
+            flash_loan_params = FlashLoanParams()
                 asset=self.config['tokens']['USDC'],  # Use USDC for flash loan
                 amount=int(opportunity.trade_amount * 1e6),  # Convert to wei
                 recipient=self.account.address,
                 params=self._encode_arbitrage_params(opportunity)
-            )
+            
             
             # Execute flash loan
             success = await self._execute_flash_loan(flash_loan_params)
@@ -511,7 +526,7 @@ class UnifiedFlashLoanArbitrageSystem:
                 self.execution_stats['opportunities_executed'] += 1
                 self.execution_stats['total_profit'] += opportunity.net_profit
                 self._reset_circuit_breaker()
-                logger.info(f"Arbitrage executed successfully: ${opportunity.net_profit}")
+                logger.info(str(f"Arbitrage executed successfully: ${opportunity.net_profit}")
                 return True
             else:
                 self._increment_circuit_breaker()
@@ -519,7 +534,7 @@ class UnifiedFlashLoanArbitrageSystem:
                 return False
                 
         except Exception as e:
-            logger.error(f"Error executing arbitrage: {e}")
+            logger.error(str(f"Error executing arbitrage: {e}")
             self._increment_circuit_breaker()
             return False
     
@@ -544,7 +559,7 @@ class UnifiedFlashLoanArbitrageSystem:
             return True
             
         except Exception as e:
-            logger.error(f"Flash loan execution failed: {e}")
+            logger.error(str(f"Flash loan execution failed: {e}")
             return False
     
     def _check_circuit_breaker(self) -> bool:
@@ -577,19 +592,19 @@ class UnifiedFlashLoanArbitrageSystem:
                 opportunities = await self.find_arbitrage_opportunities()
                 
                 if opportunities:
-                    logger.info(f"Found {len(opportunities)} arbitrage opportunities")
+                    logger.info(str(f"Found {len(opportunities} arbitrage opportunities")
                     for opp in opportunities[:5]:  # Show top 5
-                        logger.info(
+                        logger.info()
                             f"  {opp.token_pair}: {opp.dex_buy} -> {opp.dex_sell}, "
-                            f"Profit: ${opp.net_profit:.2f} ({opp.profit_percentage:.2f}%)"
-                        )
+                            f"Profit: ${opp.net_profit:.2f} ({opp.profit_percentage:.2f}%")
+                        
                 else:
                     logger.info("No profitable opportunities found")
                 
                 await asyncio.sleep(10)  # Check every 10 seconds
                 
             except Exception as e:
-                logger.error(f"Error in monitoring loop: {e}")
+                logger.error(str(f"Error in monitoring loop: {e}")
                 await asyncio.sleep(5)
     
     async def execute_mode(self):
@@ -609,7 +624,7 @@ class UnifiedFlashLoanArbitrageSystem:
                 await asyncio.sleep(5)  # Check every 5 seconds in execution mode
                 
             except Exception as e:
-                logger.error(f"Error in execution loop: {e}")
+                logger.error(str(f"Error in execution loop: {e}")
                 await asyncio.sleep(10)
     
     async def analyze_mode(self):
@@ -631,10 +646,10 @@ class UnifiedFlashLoanArbitrageSystem:
                     total_profit = sum(opp.net_profit for opp in opportunities)
                     avg_profit = total_profit / len(opportunities)
                     
-                    logger.info(f"Analysis Results:")
-                    logger.info(f"  Total opportunities: {len(opportunities)}")
-                    logger.info(f"  Total potential profit: ${total_profit:.2f}")
-                    logger.info(f"  Average profit per opportunity: ${avg_profit:.2f}")
+                    logger.info(str(f"Analysis Results:")
+                    logger.info(str(f"  Total opportunities: {len(opportunities}")
+                    logger.info(str(f"  Total potential profit: ${total_profit:.2f}")
+                    logger.info(str(f"  Average profit per opportunity: ${avg_profit:.2f}")
                     
                     # Best pairs analysis
                     pair_profits = defaultdict(list)
@@ -643,27 +658,27 @@ class UnifiedFlashLoanArbitrageSystem:
                     
                     logger.info("  Best performing pairs:")
                     for pair, profits in sorted(pair_profits.items(), key=lambda x: Any: Any: sum(x[1]), reverse=True)[:3]:
-                        logger.info(f"    {pair}: ${sum(profits):.2f} total, ${sum(profits)/len(profits):.2f} avg")
+                        logger.info(str(f"    {pair}: ${sum(profits:.2f} total, ${sum(profits)/len(profits):.2f} avg")))
                 
                 await asyncio.sleep(30)  # Analyze every 30 seconds
                 
             except Exception as e:
-                logger.error(f"Error in analysis loop: {e}")
+                logger.error(str(f"Error in analysis loop: {e}")
                 await asyncio.sleep(10)
     
     def print_stats(self):
         """Print execution statistics"""
         success_rate = 0
         if self.execution_stats['opportunities_found'] > 0:
-            success_rate = (self.execution_stats['opportunities_executed'] / 
-                          self.execution_stats['opportunities_found'] * 100)
+            success_rate = (self.execution_stats['opportunities_executed'] / )
+                          self.execution_stats['opportunities_found'] * 100
         
         logger.info("=== Execution Statistics ===")
-        logger.info(f"Opportunities found: {self.execution_stats['opportunities_found']}")
-        logger.info(f"Opportunities executed: {self.execution_stats['opportunities_executed']}")
-        logger.info(f"Total profit: ${self.execution_stats['total_profit']:.2f}")
-        logger.info(f"Success rate: {success_rate:.1f}%")
-        logger.info(f"Gas spent: {self.execution_stats['total_gas_spent']} gwei")
+        logger.info(str(f"Opportunities found: {self.execution_stats['opportunities_found']}")
+        logger.info(str(f"Opportunities executed: {self.execution_stats['opportunities_executed']}")
+        logger.info(str(f"Total profit: ${self.execution_stats['total_profit']:.2f}")
+        logger.info(str(f"Success rate: {success_rate:.1f}%")
+        logger.info(str(f"Gas spent: {self.execution_stats['total_gas_spent']} gwei")
     
     async def run(self, mode: str = "monitor"):
         """Main run method"""
@@ -674,7 +689,7 @@ class UnifiedFlashLoanArbitrageSystem:
             # Initialize MCP servers
             await self.initialize_mcp_servers()
             
-            logger.info(f"Starting Unified Flash Loan Arbitrage System in {mode} mode")
+            logger.info(str(f"Starting Unified Flash Loan Arbitrage System in {mode} mode")
             
             if mode == "monitor":
                 await self.monitor_mode()
@@ -683,13 +698,13 @@ class UnifiedFlashLoanArbitrageSystem:
             elif mode == "analyze":
                 await self.analyze_mode()
             else:
-                logger.error(f"Invalid mode: {mode}")
+                logger.error(str(f"Invalid mode: {mode}")
                 return
                 
         except KeyboardInterrupt:
             logger.info("Shutdown requested by user")
         except Exception as e:
-            logger.error(f"System error: {e}")
+            logger.error(str(f"System error: {e}")
         finally:
             self.is_running = False
             await self.cleanup()
@@ -714,12 +729,12 @@ def signal_handler(signum, frame):
 async def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(description='Unified Flash Loan Arbitrage System')
-    parser.add_argument('--mode', choices=['monitor', 'execute', 'analyze'], 
-                       default='monitor', help='Operating mode')
-    parser.add_argument('--min-profit', type=float, default=10, 
-                       help='Minimum profit threshold in USD')
-    parser.add_argument('--ai-optimize', action='store_true', 
-                       help='Enable AI optimization via MCP')
+    parser.add_argument('--mode', choices=['monitor', 'execute', 'analyze'], )
+                       default='monitor', help='Operating mode'
+    parser.add_argument('--min-profit', type=float, default=10, )
+                       help='Minimum profit threshold in USD'
+    parser.add_argument('--ai-optimize', action='store_true', )
+                       help='Enable AI optimization via MCP'
     
     args = parser.parse_args()
     
@@ -736,7 +751,7 @@ async def main():
     try:
         await system.run(args.mode)
     except Exception as e:
-        logger.error(f"System failed: {e}")
+        logger.error(str(f"System failed: {e}")
         return 1
     
     return 0

@@ -1,14 +1,24 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+from typing import List, Dict, Set
+import asyncio
+import hashlib
+import json
+import logging
+import os
+import re
+import shutil
+import sys
+
+from blockchain_transaction_fixer import UnifiedTransactionFixer
+from flash_loan_arbitrage_bot import FlashLoanArbitrageBot
+from monitor_opportunities import OpportunityMonitor
 """
 Project Structure Organizer
 Removes duplicates and organizes the flash loan arbitrage project
 """
 
-import os
-import shutil
-import hashlib
-from pathlib import Path
-from typing import List, Dict, Set
 
 class ProjectOrganizer:
     """Organize and clean up the project structure"""
@@ -16,37 +26,37 @@ class ProjectOrganizer:
     def __init__(self, base_path: str):
         self.base_path = Path(base_path)
         self.duplicates: Dict[str, List[Path]] = {}
-        self.project_structure = {
+        self.project_structure = {}
             'contracts': ['FlashLoanArbitrage.sol', 'contract_abi.json'],
-            'scripts': [
+            'scripts': []
                 'blockchain_transaction_fixer.py',
                 'flash_loan_arbitrage_bot.py',
                 'deploy_contract.py',
                 'monitor_opportunities.py'
             ],
-            'config': [
+            'config': []
                 'production_config.json',
                 'deployed_contract_config.json',
                 'network_config.json'
             ],
-            'mcp_servers': [
+            'mcp_servers': []
                 'mcp-coinbase-price-feed',
                 'mcp-newsapi',
                 'mcp-twitter',
                 'mcp-taskmanager'
             ],
-            'utils': [
+            'utils': []
                 'gas_optimizer.py',
                 'dex_interfaces.py',
                 'token_manager.py'
             ],
-            'tests': [
+            'tests': []
                 'test_arbitrage.py',
                 'test_transaction_fixer.py'
             ],
             'logs': [],
             'data': ['opportunities.json', 'transactions.json']
-        }
+        
     
     def calculate_file_hash(self, filepath: Path) -> str:
         """Calculate MD5 hash of a file"""
@@ -115,7 +125,7 @@ class ProjectOrganizer:
         moved_files = []
         
         # Define file mappings
-        file_mappings = {
+        file_mappings = {}
             '.sol': 'contracts',
             '_abi.json': 'contracts',
             'config.json': 'config',
@@ -126,7 +136,7 @@ class ProjectOrganizer:
             'test_': 'tests',
             '.log': 'logs',
             'mcp-': 'mcp_servers'
-        }
+        
         
         for file_path in self.base_path.rglob("*"):
             if file_path.is_file() and file_path.parent == self.base_path:
@@ -161,32 +171,37 @@ Flash Loan Arbitrage Bot - Main Entry Point
 Integrates all components with MCP servers for real-time operation
 """
 
-import asyncio
-import json
-import logging
-from pathlib import Path
-import sys
 
 # Add project directories to path
 project_root = Path(__file__).parent
-sys.path.extend([
+sys.path.extend([)]
     str(project_root / 'scripts'),
     str(project_root / 'utils')
-])
 
-from blockchain_transaction_fixer import UnifiedTransactionFixer
-from flash_loan_arbitrage_bot import FlashLoanArbitrageBot
-from monitor_opportunities import OpportunityMonitor
+
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.FileHandler('logs/main.log'),
         logging.StreamHandler()
-    ]
-)
+    
+
 
 logger = logging.getLogger(__name__)
 
@@ -209,7 +224,7 @@ class MainApplication:
                 with open(config_file, 'r') as f:
                     config[config_file.stem] = json.load(f)
             except Exception as e:
-                logger.error(f"Error loading {config_file}: {e}")
+                logger.error(str(f"Error loading {config_file}: {e}")
         
         return config
     
@@ -217,27 +232,27 @@ class MainApplication:
         """Initialize all components"""
         try:
             # Initialize bot
-            self.bot = FlashLoanArbitrageBot(
+            self.bot = FlashLoanArbitrageBot()
                 self.config.get('production_config', {}),
                 self.config.get('deployed_contract_config', {})
-            )
+            
             
             # Initialize monitor
-            self.monitor = OpportunityMonitor(
+            self.monitor = OpportunityMonitor()
                 self.config.get('network_config', {})
-            )
+            
             
             # Initialize fixer
-            self.fixer = UnifiedTransactionFixer(
+            self.fixer = UnifiedTransactionFixer()
                 self.bot.web3,
                 self.bot.account,
                 self.config.get('production_config', {})
-            )
+            
             
             logger.info("All components initialized successfully")
             
         except Exception as e:
-            logger.error(f"Error initializing components: {e}")
+            logger.error(str(f"Error initializing components: {e}")
             raise
     
     async def run(self):
@@ -257,7 +272,7 @@ class MainApplication:
         except KeyboardInterrupt:
             logger.info("Shutting down...")
         except Exception as e:
-            logger.error(f"Application error: {e}")
+            logger.error(str(f"Application error: {e}")
         finally:
             await self.cleanup()
     

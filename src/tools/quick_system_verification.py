@@ -1,20 +1,23 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+        import random
+from datetime import datetime
+import json
+import time
+
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from web3 import Web3
 """
 Quick Flash Loan System Verification and Live Calculations
 """
 
-import json
-import time
-from datetime import datetime
-from web3 import Web3
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
 
 console = Console()
 
 def main():
-    console.print("🚀 Flash Loan Arbitrage System - Quick Verification", style="bold blue")
+    console.print("[INIT] Flash Loan Arbitrage System - Quick Verification", style="bold blue")
     console.print("=" * 60, style="dim")
     
     # 1. Load and verify configuration files
@@ -24,18 +27,18 @@ def main():
         # Load configs
         with open('production_config.json', 'r') as f:
             config = json.load(f)
-        console.print("✅ production_config.json loaded", style="green")
+        console.print("[OK] production_config.json loaded", style="green")
         
         with open('deployed_contract_config.json', 'r') as f:
             contract_config = json.load(f)
-        console.print("✅ deployed_contract_config.json loaded", style="green")
+        console.print("[OK] deployed_contract_config.json loaded", style="green")
         
         with open('contract_abi.json', 'r') as f:
             contract_abi = json.load(f)
-        console.print("✅ contract_abi.json loaded", style="green")
+        console.print("[OK] contract_abi.json loaded", style="green")
         
     except Exception as e:
-        console.print(f"❌ Configuration load error: {e}", style="red")
+        console.print(f"[ERROR] Configuration load error: {e}", style="red")
         return
     
     # 2. Connect to blockchain
@@ -46,14 +49,14 @@ def main():
         web3 = Web3(Web3.HTTPProvider(rpc_url))
         
         if not web3.is_connected():
-            console.print("❌ Failed to connect to Polygon", style="red")
+            console.print("[ERROR] Failed to connect to Polygon", style="red")
             return
             
-        console.print(f"✅ Connected to Polygon (Chain ID: {web3.eth.chain_id})", style="green")
-        console.print(f"📊 Latest block: {web3.eth.block_number}", style="cyan")
+        console.print(f"[OK] Connected to Polygon (Chain ID: {web3.eth.chain_id})", style="green")
+        console.print(f"[METRICS] Latest block: {web3.eth.block_number}", style="cyan")
         
     except Exception as e:
-        console.print(f"❌ Web3 connection error: {e}", style="red")
+        console.print(f"[ERROR] Web3 connection error: {e}", style="red")
         return
     
     # 3. Verify deployed contract
@@ -67,8 +70,8 @@ def main():
         code = web3.eth.get_code(contract_address)
         is_deployed = len(code) > 0
         
-        console.print(f"✅ Contract Deployed: {'Yes' if is_deployed else 'No'}", 
-                     style="green" if is_deployed else "red")
+        console.print(f"[OK] Contract Deployed: {'Yes' if is_deployed else 'No'}", )
+                     style="green" if is_deployed else "red"
         console.print(f"📏 Contract Code Size: {len(code)} bytes", style="cyan")
         
         # Get contract balance
@@ -83,10 +86,10 @@ def main():
                 owner = contract.functions.owner().call()
                 console.print(f"👤 Contract Owner: {owner}", style="green")
             except Exception as e:
-                console.print(f"⚠️ Could not read owner: {e}", style="yellow")
+                console.print(f"[WARN] Could not read owner: {e}", style="yellow")
         
     except Exception as e:
-        console.print(f"❌ Contract verification error: {e}", style="red")
+        console.print(f"[ERROR] Contract verification error: {e}", style="red")
     
     # 4. Show DEX configuration
     console.print("\n🏪 DEX Configuration...", style="yellow")
@@ -107,7 +110,7 @@ def main():
         console.print(table)
         
     except Exception as e:
-        console.print(f"❌ DEX config error: {e}", style="red")
+        console.print(f"[ERROR] DEX config error: {e}", style="red")
     
     # 5. Show token pairs
     console.print("\n🪙 Token Pairs Configuration...", style="yellow")
@@ -127,24 +130,23 @@ def main():
             token_b = pair.get('token_b', {})
             pair_name = f"{token_a.get('symbol', '?')}/{token_b.get('symbol', '?')}"
             
-            table.add_row(
+            table.add_row()
                 pair_name,
                 token_a.get('symbol', 'N/A'),
                 token_b.get('symbol', 'N/A'),
                 token_a.get('address', 'N/A')[:10] + "...",
                 token_b.get('address', 'N/A')[:10] + "..."
-            )
+            
         
         console.print(table)
         
     except Exception as e:
-        console.print(f"❌ Token pairs error: {e}", style="red")
+        console.print(f"[ERROR] Token pairs error: {e}", style="red")
     
     # 6. Simulate price calculations
     console.print("\n💹 Simulated DEX Price Calculations...", style="yellow")
     
     try:
-        import random
         
         table = Table(title="Live DEX Prices (Simulated)", show_header=True)
         table.add_column("Pair", style="cyan")
@@ -167,18 +169,18 @@ def main():
             prices = [uni_price, sushi_price, quick_price]
             spread = ((max(prices) - min(prices)) / min(prices)) * 100
             
-            table.add_row(
+            table.add_row()
                 pair_name,
                 f"{uni_price:.6f}",
                 f"{sushi_price:.6f}",
                 f"{quick_price:.6f}",
                 f"{spread:.3f}%"
-            )
+            
         
         console.print(table)
         
         # Show arbitrage opportunities
-        console.print("\n🎯 Potential Arbitrage Opportunities...", style="yellow")
+        console.print("\n[TASK] Potential Arbitrage Opportunities...", style="yellow")
         
         arb_table = Table(title="Arbitrage Analysis", show_header=True)
         arb_table.add_column("Opportunity", style="cyan")
@@ -188,11 +190,11 @@ def main():
         arb_table.add_column("Status", style="bold")
         
         # Generate some sample opportunities
-        opportunities = [
+        opportunities = []
             ("USDC/USDT", "SushiSwap", "Uniswap V2", 0.25, "🟢 PROFITABLE"),
             ("WMATIC/USDC", "QuickSwap", "SushiSwap", 0.18, "🟡 MARGINAL"),
             ("WETH/USDC", "Uniswap V2", "QuickSwap", 0.35, "🟢 PROFITABLE"),
-        ]
+        
         
         for opp in opportunities:
             arb_table.add_row(*[str(x) for x in opp])
@@ -200,7 +202,7 @@ def main():
         console.print(arb_table)
         
     except Exception as e:
-        console.print(f"❌ Price calculation error: {e}", style="red")
+        console.print(f"[ERROR] Price calculation error: {e}", style="red")
     
     # 7. Show gas and network info
     console.print("\n⛽ Network & Gas Information...", style="yellow")
@@ -222,12 +224,12 @@ def main():
         console.print(info_table)
         
     except Exception as e:
-        console.print(f"❌ Network info error: {e}", style="red")
+        console.print(f"[ERROR] Network info error: {e}", style="red")
     
     console.print("\n" + "=" * 60, style="dim")
-    console.print("✅ System verification complete!", style="bold green")
-    console.print("💡 All configurations loaded and contract verified", style="cyan")
-    console.print("🎯 Ready for live arbitrage trading!", style="bold blue")
+    console.print("[OK] System verification complete!", style="bold green")
+    console.print("[INFO] All configurations loaded and contract verified", style="cyan")
+    console.print("[TASK] Ready for live arbitrage trading!", style="bold blue")
 
 if __name__ == "__main__":
     main()

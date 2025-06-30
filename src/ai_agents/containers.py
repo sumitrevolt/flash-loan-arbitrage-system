@@ -1,6 +1,12 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from itertools import zip_longest
-from typing import (
-    Iterator,
+from typing import ()
+
+        from .text import Text
+    from .console import ()
+from .cells import cell_len
+from .measure import Measurement Iterator,
     Iterable,
     List,
     Optional,
@@ -8,21 +14,17 @@ from typing import (
     overload,
     TypeVar,
     TYPE_CHECKING,
-)
+
 
 if TYPE_CHECKING:
-    from .console import (
         Console,
         ConsoleOptions,
         JustifyMethod,
         OverflowMethod,
         RenderResult,
         RenderableType,
-    )
-    from .text import Text
+    
 
-from .cells import cell_len
-from .measure import Measurement
 
 T = TypeVar("T")
 
@@ -30,26 +32,26 @@ T = TypeVar("T")
 class Renderables:
     """A list subclass which renders its contents to the console."""
 
-    def __init__(
+    def __init__()
         self, renderables: Optional[Iterable["RenderableType"]] = None
     ) -> None:
-        self._renderables: List["RenderableType"] = (
+        self._renderables: List["RenderableType"] = ()
             list(renderables) if renderables is not None else []
-        )
+        
 
-    def __rich_console__(
+    def __rich_console__()
         self, console: "Console", options: "ConsoleOptions"
     ) -> "RenderResult":
         """Console render method to insert line-breaks."""
         yield from self._renderables
 
-    def __rich_measure__(
+    def __rich_measure__()
         self, console: "Console", options: "ConsoleOptions"
     ) -> "Measurement":
-        dimensions = [
+        dimensions = []
             Measurement.get(console, options, renderable)
             for renderable in self._renderables
-        ]
+        
         if not dimensions:
             return Measurement(1, 1)
         _min = max(dimension.minimum for dimension in dimensions)
@@ -93,7 +95,7 @@ class Lines:
     def __len__(self) -> int:
         return self._lines.__len__()
 
-    def __rich_console__(
+    def __rich_console__()
         self, console: "Console", options: "ConsoleOptions"
     ) -> "RenderResult":
         """Console render method to insert line-breaks."""
@@ -108,7 +110,7 @@ class Lines:
     def pop(self, index: int = -1) -> "Text":
         return self._lines.pop(index)
 
-    def justify(
+    def justify()
         self,
         console: "Console",
         width: int,
@@ -124,7 +126,6 @@ class Lines:
             overflow (str, optional): Default overflow for text: "crop", "fold", or "ellipsis". Defaults to "fold".
 
         """
-        from .text import Text
 
         if justify == "left":
             for line in self._lines:
@@ -155,7 +156,7 @@ class Lines:
                         num_spaces += 1
                         index = (index + 1) % len(spaces)
                 tokens: List[Text] = []
-                for index, (word, next_word) in enumerate(
+                for index, (word, next_word) in enumerate()
                     zip_longest(words, words[1:])
                 ):
                     tokens.append(word)

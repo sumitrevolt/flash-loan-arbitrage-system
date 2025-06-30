@@ -1,23 +1,27 @@
-"""
-DEX integration module for Flash Loan Arbitrage System.
-Clean implementation focusing on core functionality needed for revenue generation.
-"""
-
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from decimal import Decimal
+from typing import Dict, List, Any, Optional, Tuple, Union
 import asyncio
 import json
 import logging
 import os
 import time
-from typing import Dict, List, Any, Optional, Tuple, Union
-from decimal import Decimal
 import traceback
+
+                from src.utils.unified_dex_price_fetcher import UnifiedDEXPriceFetcher
+    from src.utils.web3_provider import ContractLogicError
+    from src.utils.web3_provider import Web3
+"""
+DEX integration module for Flash Loan Arbitrage System.
+Clean implementation focusing on core functionality needed for revenue generation.
+"""
+
 
 # Web3 imports with error handling
 try:
     # Import from central web3_provider
-    from src.utils.web3_provider import Web3
     # Import exceptions from central provider
-    from src.utils.web3_provider import ContractLogicError
     WEB3_AVAILABLE = True
 except ImportError:
     WEB3_AVAILABLE = False
@@ -86,11 +90,11 @@ class DEXIntegration:
         
         # Initialize rate limiter
         rate_limit_config = self.config.get("rate_limit_settings", {})
-        self.rate_limiter = RateLimiter(
+        self.rate_limiter = RateLimiter()
             requests_per_second=rate_limit_config.get("requests_per_second", 5.0),
             burst_limit=rate_limit_config.get("burst_limit", 10),
             cooldown_period=rate_limit_config.get("cooldown_period", 1.0)
-        )
+        
         
         # Token and DEX addresses
         self._init_addresses()
@@ -103,20 +107,20 @@ class DEXIntegration:
             self.logger.error("Web3 not available")
             return
             
-        rpc_urls = [
+        rpc_urls = []
             self.config.get("polygon_rpc_url", "https://polygon-rpc.com"),
             "https://polygon-bor.publicnode.com",
             "https://rpc-mainnet.matic.network"
-        ]
+        
         
         for rpc_url in rpc_urls:
             try:
                 self.w3 = Web3(Web3.HTTPProvider(rpc_url, request_kwargs={'timeout': 30}))
                 if self.w3.is_connected():
-                    self.logger.info(f"Connected to Polygon via {rpc_url}")
+                    self.logger.info(str(f"Connected to Polygon via {rpc_url}")
                     break
             except Exception as e:
-                self.logger.warning(f"Failed to connect via {rpc_url}: {e}")
+                self.logger.warning(str(f"Failed to connect via {rpc_url}: {e}")
                 continue
         
         if not self.w3 or not self.w3.is_connected():
@@ -133,14 +137,14 @@ class DEXIntegration:
             self.wmatic_address = '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270'
         
         # Default router addresses
-        self.default_routers = {
+        self.default_routers = {}
             "QuickSwap": "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff",
             "SushiSwap": "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
             "UniswapV3": "0xE592427A0AEce92De3Edee1F18E0157C05861564"
-        }
+        
         
         # Default token addresses
-        self.default_tokens = {
+        self.default_tokens = {}
             "WETH": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
             "WMATIC": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
             "USDC": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
@@ -153,7 +157,7 @@ class DEXIntegration:
             "CRV": "0x172370d5Cd63279eFa6d502DAB29171933a610AF",
             "SUSHI": "0x0b3F868E0BE5597D5DB7fEB59E1CADBb0fdDa50a",
             "BAL": "0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3"
-        }
+        
 
     @property
     def routers(self) -> Dict[str, str]:
@@ -208,7 +212,7 @@ class DEXIntegration:
                 return Web3.to_checksum_address(address)
             return address
         except Exception as e:
-            self.logger.error(f"Error getting token address for {token_symbol}: {e}")
+            self.logger.error(str(f"Error getting token address for {token_symbol}: {e}")
             return None
 
     def get_router_address(self, dex_name: str) -> Optional[str]:
@@ -232,7 +236,7 @@ class DEXIntegration:
             
             return None
         except Exception as e:
-            self.logger.error(f"Error getting router address for {dex_name}: {e}")
+            self.logger.error(str(f"Error getting router address for {dex_name}: {e}")
             return None
 
     async def update_prices(self) -> bool:
@@ -242,7 +246,7 @@ class DEXIntegration:
             # Prices are fetched in real-time when needed, no caching
             return True
         except Exception as e:
-            self.logger.error(f"Error updating prices: {e}")
+            self.logger.error(str(f"Error updating prices: {e}")
             return False
 
     async def get_token_price(self, token_symbol: str, dex_name: Optional[str] = None) -> Optional[float]:
@@ -260,7 +264,6 @@ class DEXIntegration:
             
             # Import and use UnifiedDEXPriceFetcher for real-time prices
             try:
-                from src.utils.unified_dex_price_fetcher import UnifiedDEXPriceFetcher
                 price_fetcher = UnifiedDEXPriceFetcher(self.w3)
                 
                 # Get real-time price from specific DEX or all DEXes
@@ -271,16 +274,16 @@ class DEXIntegration:
                     prices = await price_fetcher.get_all_dex_prices(token_symbol)
                     if prices:
                         price = sum(prices.values()) / len(prices)
-                        self.logger.info(f"Average price for {token_symbol} from {len(prices)} DEXes: ${price:.6f}")
+                        self.logger.info(str(f"Average price for {token_symbol} from {len(prices} DEXes: ${price:.6f}")
                     else:
                         price = None
                 
                 if price:
-                    self.logger.info(f"Real-time price for {token_symbol}: ${price:.6f}")
+                    self.logger.info(str(f"Real-time price for {token_symbol}: ${price:.6f}")
                     self.rate_limiter.record_request()
                     return price
                 else:
-                    self.logger.warning(f"Could not fetch real-time price for {token_symbol}")
+                    self.logger.warning(str(f"Could not fetch real-time price for {token_symbol}")
                     return None
                     
             except ImportError:
@@ -288,7 +291,7 @@ class DEXIntegration:
                 return None
             
         except Exception as e:
-            self.logger.error(f"Error getting real-time token price for {token_symbol}: {e}")
+            self.logger.error(str(f"Error getting real-time token price for {token_symbol}: {e}")
             return None
 
     async def _get_uniswap_v2_price(self, token_address: str, usdc_address: str, dex_info: Dict[str, Any]) -> Optional[float]:
@@ -299,17 +302,16 @@ class DEXIntegration:
                 return None
             
             # Import UnifiedDEXPriceFetcher to handle the actual price fetching
-            from src.utils.unified_dex_price_fetcher import UnifiedDEXPriceFetcher
             price_fetcher = UnifiedDEXPriceFetcher(self.w3)
             
             # Use the price fetcher's V2 method
             amount_in = 10 ** 18  # 1 token with 18 decimals
-            price_wei = await price_fetcher.get_token_price_v2(
+            price_wei = await price_fetcher.get_token_price_v2()
                 token_address,
                 usdc_address,
                 amount_in,
                 "quickswap"  # Default to QuickSwap for V2
-            )
+            
             
             if price_wei:
                 # Convert to USD (USDC has 6 decimals)
@@ -319,7 +321,7 @@ class DEXIntegration:
             return None
             
         except Exception as e:
-            self.logger.error(f"Error getting Uniswap V2 price: {e}")
+            self.logger.error(str(f"Error getting Uniswap V2 price: {e}")
             return None
 
     def reset_circuit_breaker(self):
@@ -330,7 +332,7 @@ class DEXIntegration:
             self.rate_limiter.request_times.clear()
             self.logger.info("Circuit breaker reset successfully")
         except Exception as e:
-            self.logger.error(f"Error resetting circuit breaker: {e}")
+            self.logger.error(str(f"Error resetting circuit breaker: {e}")
 
 # Compatibility functions for the transaction executor
 def create_dex_integration(config: Dict[str, Any] = None, logger: logging.Logger = None) -> DEXIntegration:

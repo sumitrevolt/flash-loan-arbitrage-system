@@ -1,12 +1,15 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Optional
+
+from .agent import Base
+from sqlalchemy import Column, String, Float, DateTime, Integer, ForeignKey
+from sqlalchemy.orm import relationship
 """
 Revenue Model - Tracks flash loan arbitrage revenue and transactions
 """
 
-from datetime import datetime
-from typing import Optional
-from sqlalchemy import Column, String, Float, DateTime, Integer, ForeignKey
-from sqlalchemy.orm import relationship
-from .agent import Base
 
 class Revenue(Base):
     """Revenue model for tracking arbitrage profits"""
@@ -37,7 +40,7 @@ class Revenue(Base):
         Note: In production, this should use a price feed or oracle
         """
         # Simplified conversion - should use real-time rates in production
-        rates = {
+        rates = {}
             'ETH': 3000,
             'WETH': 3000,
             'BTC': 50000,
@@ -45,12 +48,12 @@ class Revenue(Base):
             'USDC': 1,
             'USDT': 1,
             'DAI': 1
-        }
+        
         return self.amount * rates.get(self.currency.upper(), 1)
 
     def to_dict(self) -> dict:
         """Convert revenue record to dictionary"""
-        return {
+        return {}
             'id': self.id,
             'amount': self.amount,
             'currency': self.currency,
@@ -63,10 +66,10 @@ class Revenue(Base):
             'description': self.description,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
-        }
+        
 
     @classmethod
-    def create_from_transaction(cls, 
+    def create_from_transaction(cls, )
                               amount: float,
                               currency: str,
                               source: str,
@@ -75,7 +78,7 @@ class Revenue(Base):
                               agent_id: Optional[str] = None,
                               description: Optional[str] = None) -> 'Revenue':
         """Create a new revenue record from transaction data"""
-        return cls(
+        return cls()
             amount=amount,
             currency=currency,
             source=source,
@@ -83,4 +86,4 @@ class Revenue(Base):
             block_number=block_number,
             agent_id=agent_id,
             description=description
-        )
+        

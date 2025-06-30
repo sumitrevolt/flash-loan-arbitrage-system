@@ -1,4 +1,29 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Any, Tuple
+import asyncio
+import json
+import logging
+import os
+import subprocess
+import time
+
+    from autogen import AssistantAgent, UserProxyAgent, GroupChat, GroupChatManager
+    import autogen
+from dataclasses import dataclass
+from enum import Enum
+from langchain.agents import AgentExecutor, create_react_agent
+from langchain.memory import ConversationBufferWindowMemory
+from langchain.prompts import PromptTemplate
+from langchain.schema import BaseMessage, HumanMessage, AIMessage
+from langchain.tools import Tool
+from langchain_community.chat_models import ChatOllama
+import aiohttp
+import docker
+import pika
+import redis
+import websockets
 """
 Docker-based MCP Server and Agent Coordination System
 ====================================================
@@ -12,48 +37,38 @@ This system orchestrates coordination between:
 All components run in Docker containers with advanced networking and communication.
 """
 
-import asyncio
-import aiohttp
-import json
-import logging
-import os
-import time
-import docker
-import subprocess
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass
-from enum import Enum
-import websockets
-import redis
-import pika
 
 # LangChain imports
-from langchain.agents import AgentExecutor, create_react_agent
-from langchain.tools import Tool
-from langchain.prompts import PromptTemplate
-from langchain.memory import ConversationBufferWindowMemory
-from langchain.schema import BaseMessage, HumanMessage, AIMessage
-from langchain_community.chat_models import ChatOllama
 
 # AutoGen imports
 try:
-    import autogen
-    from autogen import AssistantAgent, UserProxyAgent, GroupChat, GroupChatManager
     AUTOGEN_AVAILABLE = True
 except ImportError:
     AUTOGEN_AVAILABLE = False
     logging.warning("AutoGen not available. Install with: pip install pyautogen")
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.FileHandler('docker_coordination_system.log'),
         logging.StreamHandler()
-    ]
-)
+    
+
 logger = logging.getLogger(__name__)
 
 class ServiceType(Enum):
@@ -111,40 +126,40 @@ class DockerCoordinationSystem:
                 
             for server_name, config in mcp_config.get('servers', {}).items():
                 if config.get('enabled', True):
-                    self.services[server_name] = ServiceConfig(
+                    self.services[server_name] = ServiceConfig()
                         name=server_name,
                         service_type=ServiceType.MCP_SERVER,
                         container_name=f"mcp_{server_name}",
                         port=config.get('port', 8000),
                         health_endpoint="/health",
                         dependencies=[],
-                        environment={
+                        environment={}
                             'SERVER_TYPE': server_name,
                             'PORT': str(config.get('port', 8000))
-                        }
-                    )
+                        
+                    
                     
             # Load AI agent configurations
             with open('ai_agents_config.json', 'r') as f:
                 agent_config = json.load(f)
                 
             for agent_name, config in agent_config.get('agents', {}).items():
-                self.services[agent_name] = ServiceConfig(
+                self.services[agent_name] = ServiceConfig()
                     name=agent_name,
                     service_type=ServiceType.AI_AGENT,
                     container_name=f"agent_{agent_name}",
                     port=config.get('port', 9000),
                     health_endpoint="/health",
                     dependencies=['redis', 'rabbitmq'],
-                    environment={
+                    environment={}
                         'AGENT_TYPE': agent_name,
                         'AGENT_ROLE': config.get('role', ''),
                         'PORT': str(config.get('port', 9000))
-                    }
-                )
+                    
+                
                 
         except Exception as e:
-            logger.error(f"Error loading configurations: {e}")
+            logger.error(str(f"Error loading configurations: {e}")
             
     async def initialize_infrastructure(self):
         """Initialize Redis, RabbitMQ, and other infrastructure"""
@@ -173,47 +188,47 @@ class DockerCoordinationSystem:
             logger.info("Infrastructure initialized successfully")
             
         except Exception as e:
-            logger.error(f"Error initializing infrastructure: {e}")
+            logger.error(str(f"Error initializing infrastructure: {e}")
             raise
             
     async def _start_infrastructure_containers(self):
         """Start Redis, RabbitMQ, and PostgreSQL containers"""
-        infrastructure_services = [
-            {
+        infrastructure_services = []
+            {}
                 'name': 'redis',
                 'image': 'redis:7-alpine',
                 'ports': {'6379/tcp': 6379},
-                'healthcheck': {
+                'healthcheck': {}
                     'test': ['CMD', 'redis-cli', 'ping'],
                     'interval': 30000000000,  # 30s in nanoseconds
                     'timeout': 10000000000,   # 10s in nanoseconds
                     'retries': 3
-                }
+                
             },
-            {
+            {}
                 'name': 'rabbitmq',
                 'image': 'rabbitmq:3-management',
                 'ports': {'5672/tcp': 5672, '15672/tcp': 15672},
-                'environment': {
+                'environment': {}
                     'RABBITMQ_DEFAULT_USER': 'flashloan',
                     'RABBITMQ_DEFAULT_PASS': 'flashloan_pass'
-                }
+                
             },
-            {
+            {}
                 'name': 'postgres',
                 'image': 'postgres:15-alpine',
                 'ports': {'5432/tcp': 5432},
-                'environment': {
+                'environment': {}
                     'POSTGRES_DB': 'flashloan',
                     'POSTGRES_USER': 'flashloan',
                     'POSTGRES_PASSWORD': 'flashloan_pass'
-                }
-            }
-        ]
+                
+            
+        
         
         for service in infrastructure_services:
             try:
-                container = self.docker_client.containers.run(
+                container = self.docker_client.containers.run()
                     service['image'],
                     name=f"fl_{service['name']}",
                     ports=service.get('ports', {}),
@@ -221,47 +236,47 @@ class DockerCoordinationSystem:
                     detach=True,
                     remove=True,
                     network_mode='bridge'
-                )
-                logger.info(f"Started {service['name']} container: {container.id[:12]}")
+                
+                logger.info(str(f"Started {service['name']} container: {container.id[:12]}")
                 
             except docker.errors.APIError as e:
                 if "Conflict" in str(e):
-                    logger.info(f"{service['name']} container already running")
+                    logger.info(str(f"{service['name']} container already running")
                 else:
-                    logger.error(f"Error starting {service['name']}: {e}")
+                    logger.error(str(f"Error starting {service['name']}: {e}")
                     
     async def initialize_langchain_agents(self):
         """Initialize LangChain agents for intelligent coordination"""
         try:
             # Define LangChain tools for MCP server interaction
-            mcp_tools = [
-                Tool(
+            mcp_tools = []
+                Tool()
                     name="query_mcp_server",
                     description="Query a specific MCP server for information",
                     func=self._query_mcp_server
                 ),
-                Tool(
+                Tool()
                     name="coordinate_agents",
                     description="Coordinate multiple AI agents for a task",
                     func=self._coordinate_agents
                 ),
-                Tool(
+                Tool()
                     name="analyze_arbitrage_opportunity",
                     description="Analyze arbitrage opportunities using MCP data",
                     func=self._analyze_arbitrage_opportunity
                 ),
-                Tool(
+                Tool()
                     name="execute_flash_loan",
                     description="Execute a flash loan transaction",
                     func=self._execute_flash_loan
-                )
-            ]
+                
+            
             
             # Create LangChain agents
             llm = ChatOllama(model="llama2", temperature=0.1)
             
             # Coordinator Agent
-            coordinator_prompt = PromptTemplate(
+            coordinator_prompt = PromptTemplate()
                 input_variables=["input", "agent_scratchpad", "chat_history"],
                 template="""You are the Coordinator Agent responsible for orchestrating MCP servers and AI agents.
                 
@@ -272,19 +287,19 @@ Current task: {input}
 {agent_scratchpad}
 
 Coordinate the appropriate services to complete this task efficiently."""
-            )
+            
             
             coordinator_agent = create_react_agent(llm, mcp_tools, coordinator_prompt)
-            self.langchain_agents['coordinator'] = AgentExecutor(
+            self.langchain_agents['coordinator'] = AgentExecutor()
                 agent=coordinator_agent,
                 tools=mcp_tools,
                 memory=self.langchain_memory,
                 verbose=True,
                 handle_parsing_errors=True
-            )
+            
             
             # Analyzer Agent
-            analyzer_prompt = PromptTemplate(
+            analyzer_prompt = PromptTemplate()
                 input_variables=["input", "agent_scratchpad", "chat_history"],
                 template="""You are the Analyzer Agent specialized in market analysis and opportunity detection.
                 
@@ -295,21 +310,21 @@ Analysis request: {input}
 {agent_scratchpad}
 
 Provide detailed analysis using MCP server data and AI agent insights."""
-            )
+            
             
             analyzer_agent = create_react_agent(llm, mcp_tools, analyzer_prompt)
-            self.langchain_agents['analyzer'] = AgentExecutor(
+            self.langchain_agents['analyzer'] = AgentExecutor()
                 agent=analyzer_agent,
                 tools=mcp_tools,
                 memory=self.langchain_memory,
                 verbose=True,
                 handle_parsing_errors=True
-            )
+            
             
             logger.info("LangChain agents initialized successfully")
             
         except Exception as e:
-            logger.error(f"Error initializing LangChain agents: {e}")
+            logger.error(str(f"Error initializing LangChain agents: {e}")
             
     async def initialize_autogen_agents(self):
         """Initialize AutoGen agents for multi-agent conversations"""
@@ -319,73 +334,73 @@ Provide detailed analysis using MCP server data and AI agent insights."""
             
         try:
             # Configuration for AutoGen agents
-            config_list = [
-                {
+            config_list = []
+                {}
                     "model": "gpt-4",
                     "api_key": os.getenv("OPENAI_API_KEY", "dummy_key"),
                     "api_type": "open_ai",
                     "api_base": "http://localhost:11434/v1",  # Ollama endpoint
-                }
-            ]
+                
+            
             
             # Create AutoGen agents
-            self.autogen_agents['coordinator'] = AssistantAgent(
+            self.autogen_agents['coordinator'] = AssistantAgent()
                 name="Coordinator",
                 system_message="""You are a Coordinator agent responsible for orchestrating MCP servers and AI agents.
                 You coordinate between different services to achieve optimal arbitrage execution.""",
                 llm_config={"config_list": config_list}
-            )
             
-            self.autogen_agents['analyzer'] = AssistantAgent(
+            
+            self.autogen_agents['analyzer'] = AssistantAgent()
                 name="Analyzer",
                 system_message="""You are an Analyzer agent specialized in market analysis.
                 You analyze price data, liquidity, and arbitrage opportunities from MCP servers.""",
                 llm_config={"config_list": config_list}
-            )
             
-            self.autogen_agents['executor'] = AssistantAgent(
+            
+            self.autogen_agents['executor'] = AssistantAgent()
                 name="Executor",
                 system_message="""You are an Executor agent responsible for transaction execution.
                 You handle flash loan execution and risk management.""",
                 llm_config={"config_list": config_list}
-            )
             
-            self.autogen_agents['risk_manager'] = AssistantAgent(
+            
+            self.autogen_agents['risk_manager'] = AssistantAgent()
                 name="RiskManager",
                 system_message="""You are a Risk Manager agent responsible for risk assessment.
                 You evaluate risks and provide safety recommendations.""",
                 llm_config={"config_list": config_list}
-            )
+            
             
             # Create user proxy agent
-            self.autogen_agents['user_proxy'] = UserProxyAgent(
+            self.autogen_agents['user_proxy'] = UserProxyAgent()
                 name="UserProxy",
                 human_input_mode="NEVER",
                 max_consecutive_auto_reply=10,
                 code_execution_config=False
-            )
+            
             
             # Create group chat
-            self.group_chat = GroupChat(
+            self.group_chat = GroupChat()
                 agents=list(self.autogen_agents.values()),
                 messages=[],
                 max_round=20
-            )
             
-            self.group_chat_manager = GroupChatManager(
+            
+            self.group_chat_manager = GroupChatManager()
                 groupchat=self.group_chat,
                 llm_config={"config_list": config_list}
-            )
+            
             
             logger.info("AutoGen agents initialized successfully")
             
         except Exception as e:
-            logger.error(f"Error initializing AutoGen agents: {e}")
+            logger.error(str(f"Error initializing AutoGen agents: {e}")
             
     async def start_mcp_servers(self):
         """Start all MCP server containers"""
-        mcp_servers = [service for service in self.services.values() 
-                      if service.service_type == ServiceType.MCP_SERVER]
+        mcp_servers = [service for service in self.services.values() ]
+                      if service.service_type == ServiceType.MCP_SERVER
         
         for server in mcp_servers:
             try:
@@ -424,7 +439,7 @@ CMD ["python", "{server.name}.py"]
 """
                 
                 # Build and run container
-                container = self.docker_client.containers.run(
+                container = self.docker_client.containers.run()
                     "python:3.11-slim",
                     name=server.container_name,
                     ports={f'{server.port}/tcp': server.port},
@@ -432,17 +447,17 @@ CMD ["python", "{server.name}.py"]
                     detach=True,
                     remove=True,
                     network_mode='bridge'
-                )
                 
-                logger.info(f"Started MCP server {server.name}: {container.id[:12]}")
+                
+                logger.info(str(f"Started MCP server {server.name}: {container.id[:12]}")
                 
             except Exception as e:
-                logger.error(f"Error starting MCP server {server.name}: {e}")
+                logger.error(str(f"Error starting MCP server {server.name}: {e}")
                 
     async def start_ai_agents(self):
         """Start all AI agent containers"""
-        ai_agents = [service for service in self.services.values() 
-                    if service.service_type == ServiceType.AI_AGENT]
+        ai_agents = [service for service in self.services.values() ]
+                    if service.service_type == ServiceType.AI_AGENT
         
         for agent in ai_agents:
             try:
@@ -483,7 +498,7 @@ CMD ["python", "advanced_agentic_coordination.py"]
 """
                 
                 # Build and run container
-                container = self.docker_client.containers.run(
+                container = self.docker_client.containers.run()
                     "python:3.11-slim",
                     name=agent.container_name,
                     ports={f'{agent.port}/tcp': agent.port},
@@ -491,30 +506,30 @@ CMD ["python", "advanced_agentic_coordination.py"]
                     detach=True,
                     remove=True,
                     network_mode='bridge'
-                )
                 
-                logger.info(f"Started AI agent {agent.name}: {container.id[:12]}")
+                
+                logger.info(str(f"Started AI agent {agent.name}: {container.id[:12]}")
                 
             except Exception as e:
-                logger.error(f"Error starting AI agent {agent.name}: {e}")
+                logger.error(str(f"Error starting AI agent {agent.name}: {e}")
                 
     async def coordinate_task(self, task_description: str) -> Dict[str, Any]:
         """Coordinate a task across MCP servers and agents"""
         try:
-            coordination_result = {
+            coordination_result = {}
                 'task': task_description,
                 'timestamp': datetime.now().isoformat(),
                 'langchain_result': None,
                 'autogen_result': None,
                 'mcp_responses': [],
                 'agent_responses': []
-            }
+            
             
             # 1. Use LangChain coordinator for initial analysis
             if 'coordinator' in self.langchain_agents:
-                langchain_result = await self.langchain_agents['coordinator'].ainvoke({
+                langchain_result = await self.langchain_agents['coordinator'].ainvoke({)}
                     'input': task_description
-                })
+                
                 coordination_result['langchain_result'] = langchain_result
                 
             # 2. Use AutoGen for multi-agent discussion
@@ -533,11 +548,11 @@ CMD ["python", "advanced_agentic_coordination.py"]
             # 5. Publish coordination results to message queue
             await self._publish_coordination_result(coordination_result)
             
-            logger.info(f"Task coordination completed: {task_description}")
+            logger.info(str(f"Task coordination completed: {task_description}")
             return coordination_result
             
         except Exception as e:
-            logger.error(f"Error coordinating task: {e}")
+            logger.error(str(f"Error coordinating task: {e}")
             return {'error': str(e)}
             
     async def _run_autogen_conversation(self, topic: str) -> Dict[str, Any]:
@@ -569,20 +584,20 @@ CMD ["python", "advanced_agentic_coordination.py"]
                 if agent_name in self.autogen_agents:
                     # Simulate agent response (in real implementation, use AutoGen's chat)
                     response = f"Agent {agent_name} analyzing: {topic}"
-                    conversation_log.append({
+                    conversation_log.append({)}
                         'agent': agent_name,
                         'message': response,
                         'timestamp': datetime.now().isoformat()
-                    })
                     
-            return {
+                    
+            return {}
                 'conversation_log': conversation_log,
                 'participants': len(agents_order),
                 'status': 'completed'
-            }
+            
             
         except Exception as e:
-            logger.error(f"Error in AutoGen conversation: {e}")
+            logger.error(str(f"Error in AutoGen conversation: {e}")
             return {'error': str(e)}
             
     async def _query_relevant_mcp_servers(self, task_description: str) -> List[Dict[str, Any]]:
@@ -611,24 +626,24 @@ CMD ["python", "advanced_agentic_coordination.py"]
                         async with session.post(url, json={'query': task_description}) as response:
                             if response.status == 200:
                                 result = await response.json()
-                                responses.append({
+                                responses.append({)}
                                     'server': server_name,
                                     'response': result,
                                     'status': 'success'
-                                })
+                                
                             else:
-                                responses.append({
+                                responses.append({)}
                                     'server': server_name,
                                     'error': f"HTTP {response.status}",
                                     'status': 'error'
-                                })
+                                
                                 
                 except Exception as e:
-                    responses.append({
+                    responses.append({)}
                         'server': server_name,
                         'error': str(e),
                         'status': 'error'
-                    })
+                    
                     
         return responses
         
@@ -661,24 +676,24 @@ CMD ["python", "advanced_agentic_coordination.py"]
                         async with session.post(url, json={'task': task_description}) as response:
                             if response.status == 200:
                                 result = await response.json()
-                                responses.append({
+                                responses.append({)}
                                     'agent': agent_name,
                                     'response': result,
                                     'status': 'success'
-                                })
+                                
                             else:
-                                responses.append({
+                                responses.append({)}
                                     'agent': agent_name,
                                     'error': f"HTTP {response.status}",
                                     'status': 'error'
-                                })
+                                
                                 
                 except Exception as e:
-                    responses.append({
+                    responses.append({)}
                         'agent': agent_name,
                         'error': str(e),
                         'status': 'error'
-                    })
+                    
                     
         return responses
         
@@ -686,21 +701,21 @@ CMD ["python", "advanced_agentic_coordination.py"]
         """Publish coordination results to message queue"""
         try:
             if self.rabbitmq_channel:
-                self.rabbitmq_channel.basic_publish(
+                self.rabbitmq_channel.basic_publish()
                     exchange='coordination',
                     routing_key='task.completed',
-                    body=json.dumps(result)
-                )
+                    body=json.dumps(result, ensure_ascii=True, default=str)
+                
                 
             if self.redis_client:
-                self.redis_client.setex(
+                self.redis_client.setex()
                     f"coordination:result:{result['timestamp']}", 
                     3600,  # 1 hour TTL
-                    json.dumps(result)
-                )
+                    json.dumps(result, ensure_ascii=True, default=str)
+                
                 
         except Exception as e:
-            logger.error(f"Error publishing coordination result: {e}")
+            logger.error(str(f"Error publishing coordination result: {e}")
             
     # Tool functions for LangChain agents
     def _query_mcp_server(self, server_query: str) -> str:
@@ -754,7 +769,7 @@ CMD ["python", "advanced_agentic_coordination.py"]
                         
             except Exception as e:
                 health_status[service_name] = False
-                logger.error(f"Health check failed for {service_name}: {e}")
+                logger.error(str(f"Health check failed for {service_name}: {e}")
                 
         return health_status
         
@@ -766,10 +781,10 @@ CMD ["python", "advanced_agentic_coordination.py"]
             try:
                 service_config = self.services.get(service_name)
                 if service_config:
-                    logger.info(f"Attempting recovery for {service_name}")
+                    logger.info(str(f"Attempting recovery for {service_name}")
                     container = self.docker_client.containers.get(service_config.container_name)
                     container.restart()
-                    logger.info(f"Restarted container for {service_name}")
+                    logger.info(str(f"Restarted container for {service_name}")
                     
                     # Wait for a brief period before rechecking health
                     await asyncio.sleep(10)
@@ -777,11 +792,11 @@ CMD ["python", "advanced_agentic_coordination.py"]
                         url = f"http://localhost:{service_config.port}{service_config.health_endpoint}"
                         async with session.get(url, timeout=5) as response:
                             if response.status == 200:
-                                logger.info(f"Recovery successful for {service_name}")
+                                logger.info(str(f"Recovery successful for {service_name}")
                             else:
-                                logger.error(f"Recovery failed for {service_name}: Still unhealthy after restart")
+                                logger.error(str(f"Recovery failed for {service_name}: Still unhealthy after restart")
             except Exception as e:
-                logger.error(f"Error during recovery of {service_name}: {e}")
+                logger.error(str(f"Error during recovery of {service_name}: {e}")
                 
     async def run_coordination_system(self):
         """Main coordination system loop"""
@@ -813,23 +828,23 @@ CMD ["python", "advanced_agentic_coordination.py"]
                     unhealthy_services = [name for name, healthy in health_status.items() if not healthy]
                     
                     if unhealthy_services:
-                        logger.warning(f"Unhealthy services detected: {unhealthy_services}")
+                        logger.warning(str(f"Unhealthy services detected: {unhealthy_services}")
                         await self.recover_unhealthy_services(health_status)
                         
                     # Example coordination task
                     if datetime.now().minute % 5 == 0:  # Every 5 minutes
-                        await self.coordinate_task(
+                        await self.coordinate_task()
                             "Analyze current arbitrage opportunities across all DEXes and recommend optimal flash loan strategies"
-                        )
+                        
                         
                     await asyncio.sleep(60)  # Check every minute
                     
                 except Exception as e:
-                    logger.error(f"Error in coordination loop: {e}")
+                    logger.error(str(f"Error in coordination loop: {e}")
                     await asyncio.sleep(5)
                     
         except Exception as e:
-            logger.error(f"Error in coordination system: {e}")
+            logger.error(str(f"Error in coordination system: {e}")
             raise
         finally:
             await self.cleanup()
@@ -848,14 +863,14 @@ CMD ["python", "advanced_agentic_coordination.py"]
                 try:
                     container = self.docker_client.containers.get(service_config.container_name)
                     container.stop()
-                    logger.info(f"Stopped container: {service_config.container_name}")
+                    logger.info(str(f"Stopped container: {service_config.container_name}")
                 except Exception as e:
-                    logger.error(f"Error stopping container {service_config.container_name}: {e}")
+                    logger.error(str(f"Error stopping container {service_config.container_name}: {e}")
                     
             logger.info("Coordination system cleanup completed")
             
         except Exception as e:
-            logger.error(f"Error during cleanup: {e}")
+            logger.error(str(f"Error during cleanup: {e}")
 
 async def main():
     """Main function"""
@@ -866,7 +881,7 @@ async def main():
     except KeyboardInterrupt:
         logger.info("Coordination system interrupted by user")
     except Exception as e:
-        logger.error(f"Coordination system error: {e}")
+        logger.error(str(f"Coordination system error: {e}")
     finally:
         await coordination_system.cleanup()
 

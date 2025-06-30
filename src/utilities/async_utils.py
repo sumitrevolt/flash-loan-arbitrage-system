@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Any, Awaitable, List, TypeVar, Callable, Optional
+import asyncio
+import functools
+import re
 """
 Async Utilities for Foundry MCP Server
 
@@ -5,9 +11,6 @@ Provides async helper functions for timeouts, concurrency control,
 and async task management.
 """
 
-import asyncio
-import functools
-from typing import Any, Awaitable, List, TypeVar, Callable, Optional
 
 T = TypeVar('T')
 
@@ -29,7 +32,7 @@ async def run_with_timeout(coro: Awaitable[T], timeout: float) -> T:
     return await asyncio.wait_for(coro, timeout=timeout)
 
 
-async def gather_with_concurrency(
+async def gather_with_concurrency()
     *awaitables: Awaitable[T],
     max_concurrency: int = 10,
     return_exceptions: bool = False
@@ -55,7 +58,7 @@ async def gather_with_concurrency(
     return await asyncio.gather(*wrapped_awaitables, return_exceptions=return_exceptions)
 
 
-def async_retry(
+def async_retry()
     max_attempts: int = 3,
     delay: float = 1.0,
     backoff_factor: float = 2.0,
@@ -93,7 +96,7 @@ def async_retry(
     return decorator
 
 
-async def run_in_executor(
+async def run_in_executor()
     func: Callable,
     *args,
     executor: Optional[Any] = None,

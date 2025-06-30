@@ -1,20 +1,35 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Dict, List, Any, Optional
+import asyncio
+import json
+import logging
+
+from docker.client import DockerClient
+from docker.models.containers import Container
+import docker
 """
 LangChain System Status Monitor
 ==============================
 Monitor the status of all MCP servers and AI agents after coordination
 """
 
-import asyncio
-import docker
-from docker.models.containers import Container
-from docker.client import DockerClient
-import json
-from datetime import datetime
-from typing import Dict, List, Any, Optional
-import logging
 
 # Setup logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -29,10 +44,10 @@ class SystemStatusMonitor:
             self.docker_client = docker.from_env()
             if self.docker_client:
                 self.docker_client.ping()
-                logger.info("✅ Docker client connected successfully")
+                logger.info("[OK] Docker client connected successfully")
                 return True
         except Exception as e:
-            logger.error(f"❌ Failed to connect to Docker: {e}")
+            logger.error(str(f"[ERROR] Failed to connect to Docker: {e}")
             return False
         return False
     
@@ -41,12 +56,12 @@ class SystemStatusMonitor:
         if not self.docker_client:
             await self.initialize()
         
-        services_status: Dict[str, Dict[str, Any]] = {
+        services_status: Dict[str, Dict[str, Any]] = {}
             'infrastructure': {},
             'mcp_servers': {},
             'ai_agents': {},
             'monitoring': {}
-        }
+        
         
         try:
             if self.docker_client:
@@ -66,11 +81,11 @@ class SystemStatusMonitor:
                     image_tags = container.image.tags if hasattr(container, 'image') and container.image else []
                     image = image_tags[0] if image_tags else 'unknown'
                     
-                    service_info = {
+                    service_info = {}
                         'status': status,
                         'ports': ports,
                         'image': image
-                    }
+                    
                     
                     # Categorize services
                     name_lower = name.lower()
@@ -87,13 +102,13 @@ class SystemStatusMonitor:
             return services_status
             
         except Exception as e:
-            logger.error(f"❌ Failed to check services: {e}")
+            logger.error(str(f"[ERROR] Failed to check services: {e}")
             return {}
     
     def print_status_report(self, services_status: Dict[str, Dict[str, Any]]) -> None:
         """Print a formatted status report"""
         print("\n" + "="*80)
-        print("🎮 LANGCHAIN MASTER COORDINATION - SYSTEM STATUS REPORT")
+        print("[GAME] LANGCHAIN MASTER COORDINATION - SYSTEM STATUS REPORT")
         print("="*80)
         print(f"📅 Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print()
@@ -104,30 +119,30 @@ class SystemStatusMonitor:
         infra = services_status.get('infrastructure', {})
         if infra:
             for name, info in infra.items():
-                status_emoji = "✅" if info['status'] == 'running' else "❌"
+                status_emoji = "[OK]" if info['status'] == 'running' else "[ERROR]"
                 ports_str = ', '.join(info['ports']) if info['ports'] else 'none'
                 print(f"{status_emoji} {name:<30} | {info['status']:<10} | {ports_str}")
         else:
-            print("❌ No infrastructure services found")
+            print("[ERROR] No infrastructure services found")
         
         print()
         
         # MCP Servers
-        print("📦 MCP SERVERS:")
+        print("[PACKAGE] MCP SERVERS:")
         print("-" * 40)
         mcp = services_status.get('mcp_servers', {})
         if mcp:
             running_count = sum(1 for info in mcp.values() if info['status'] == 'running')
             total_count = len(mcp)
-            print(f"📊 Status: {running_count}/{total_count} MCP servers running")
+            print(f"[METRICS] Status: {running_count}/{total_count} MCP servers running")
             print()
             
             for name, info in mcp.items():
-                status_emoji = "✅" if info['status'] == 'running' else "❌"
+                status_emoji = "[OK]" if info['status'] == 'running' else "[ERROR]"
                 ports_str = ', '.join(info['ports']) if info['ports'] else 'none'
                 print(f"{status_emoji} {name:<30} | {info['status']:<10} | {ports_str}")
         else:
-            print("❌ No MCP servers found")
+            print("[ERROR] No MCP servers found")
         
         print()
         
@@ -138,50 +153,50 @@ class SystemStatusMonitor:
         if agents:
             running_count = sum(1 for info in agents.values() if info['status'] == 'running')
             total_count = len(agents)
-            print(f"📊 Status: {running_count}/{total_count} AI agents running")
+            print(f"[METRICS] Status: {running_count}/{total_count} AI agents running")
             print()
             
             for name, info in agents.items():
-                status_emoji = "✅" if info['status'] == 'running' else "❌"
+                status_emoji = "[OK]" if info['status'] == 'running' else "[ERROR]"
                 ports_str = ', '.join(info['ports']) if info['ports'] else 'none'
                 print(f"{status_emoji} {name:<30} | {info['status']:<10} | {ports_str}")
         else:
-            print("❌ No AI agents found")
+            print("[ERROR] No AI agents found")
         
         print()
         
         # Monitoring Services
-        print("📊 MONITORING SERVICES:")
+        print("[METRICS] MONITORING SERVICES:")
         print("-" * 40)
         monitoring = services_status.get('monitoring', {})
         if monitoring:
             for name, info in monitoring.items():
-                status_emoji = "✅" if info['status'] == 'running' else "❌"
+                status_emoji = "[OK]" if info['status'] == 'running' else "[ERROR]"
                 ports_str = ', '.join(info['ports']) if info['ports'] else 'none'
                 print(f"{status_emoji} {name:<30} | {info['status']:<10} | {ports_str}")
         else:
-            print("❌ No monitoring services found")
+            print("[ERROR] No monitoring services found")
         
         print()
         
         # Summary
         total_services = sum(len(category) for category in services_status.values())
-        running_services = sum(
+        running_services = sum()
             sum(1 for info in category.values() if info['status'] == 'running')
             for category in services_status.values()
-        )
         
-        print("📈 SYSTEM SUMMARY:")
+        
+        print("[GROWTH] SYSTEM SUMMARY:")
         print("-" * 40)
-        print(f"🎯 Total Services: {total_services}")
-        print(f"✅ Running Services: {running_services}")
-        print(f"❌ Failed Services: {total_services - running_services}")
-        print(f"📊 Success Rate: {(running_services/total_services)*100:.1f}%" if total_services > 0 else "0%")
+        print(f"[TASK] Total Services: {total_services}")
+        print(f"[OK] Running Services: {running_services}")
+        print(f"[ERROR] Failed Services: {total_services - running_services}")
+        print(f"[METRICS] Success Rate: {(running_services/total_services)*100:.1f}%" if total_services > 0 else "0%")
         
         print("\n" + "="*80)
         
         # Access Points
-        print("🌐 SERVICE ACCESS POINTS:")
+        print("[NETWORK] SERVICE ACCESS POINTS:")
         print("-" * 40)
         print("• Master Coordinator: http://localhost:3000")
         print("• Dashboard UI: http://localhost:8080") 
@@ -194,17 +209,17 @@ class SystemStatusMonitor:
     
     async def save_status_json(self, services_status: Dict[str, Dict[str, Any]]) -> None:
         """Save status to JSON file"""
-        report = {
+        report = {}
             'timestamp': datetime.now().isoformat(),
             'services_status': services_status,
-            'summary': {
+            'summary': {}
                 'total_services': sum(len(category) for category in services_status.values()),
-                'running_services': sum(
+                'running_services': sum()
                     sum(1 for info in category.values() if info['status'] == 'running')
                     for category in services_status.values()
-                )
-            }
-        }
+                
+            
+        
         
         with open('system_status_report.json', 'w') as f:
             json.dump(report, f, indent=2)
@@ -215,20 +230,20 @@ async def main() -> None:
     """Main monitoring function"""
     monitor = SystemStatusMonitor()
     
-    print("🔍 Initializing LangChain System Status Monitor...")
+    print("[SEARCH] Initializing LangChain System Status Monitor...")
     
     if not await monitor.initialize():
-        print("❌ Failed to initialize Docker connection")
+        print("[ERROR] Failed to initialize Docker connection")
         return
     
-    print("📊 Checking all services status...")
+    print("[METRICS] Checking all services status...")
     services_status = await monitor.check_all_services()
     
     if services_status:
         monitor.print_status_report(services_status)
         await monitor.save_status_json(services_status)
     else:
-        print("❌ Failed to retrieve services status")
+        print("[ERROR] Failed to retrieve services status")
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,28 +1,43 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from decimal import Decimal
+from pathlib import Path
+from typing import Dict, List, Any, Optional
+import asyncio
+import json
+import logging
+import os
+import threading
+import time
+
+from dataclasses import dataclass
+from flask import Flask, render_template, jsonify, request
+from flask_cors import CORS
+from flask_socketio import SocketIO, emit
+import aiohttp
+import requests
 """
 Enhanced DEX Calculations Dashboard
 Real-time DEX price monitoring with advanced arbitrage calculations and risk analysis
 Port 8005 - Enhanced DEX Calculations Dashboard
 """
 
-import asyncio
-import aiohttp
-import json
-import time
-import threading
-from datetime import datetime, timedelta
-from decimal import Decimal
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
-import logging
-from flask import Flask, render_template, jsonify, request
-from flask_socketio import SocketIO, emit
-from flask_cors import CORS
-import requests
-import os
-from pathlib import Path
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -104,7 +119,7 @@ class EnhancedDEXCalculator:
             return opportunities[:20]  # Top 20 opportunities
             
         except Exception as e:
-            logger.error(f"Error calculating enhanced arbitrage: {e}")
+            logger.error(str(f"Error calculating enhanced arbitrage: {e}")
             return []
     
     def _group_prices_by_pair(self, price_data: Dict) -> Dict[str, Dict]:
@@ -149,17 +164,17 @@ class EnhancedDEXCalculator:
                 
                 if spread_percent >= self.min_profit_threshold * 100:
                     # Enhanced calculations
-                    opportunity = self._calculate_enhanced_metrics(
+                    opportunity = self._calculate_enhanced_metrics()
                         pair, buy_dex, sell_dex, buy_price, sell_price,
                         spread_percent, buy_data, sell_data
-                    )
+                    
                     
                     if opportunity.net_profit > 0:
                         opportunities.append(opportunity)
         
         return opportunities
     
-    def _calculate_enhanced_metrics(self, pair: str, buy_dex: str, sell_dex: str,
+    def _calculate_enhanced_metrics(self, pair: str, buy_dex: str, sell_dex: str,)
                                   buy_price: float, sell_price: float, spread_percent: float,
                                   buy_data: Dict, sell_data: Dict) -> EnhancedArbitrageCalculation:
         """Calculate enhanced metrics for arbitrage opportunity"""
@@ -198,18 +213,18 @@ class EnhancedDEXCalculator:
         annualized_roi = roi_percent * 365 * 24 * 6  # Assuming 6 trades per hour
         
         # Risk assessment
-        confidence_score = self._calculate_confidence_score(
+        confidence_score = self._calculate_confidence_score()
             spread_percent, buy_liquidity, sell_liquidity, buy_volume, sell_volume
-        )
         
-        risk_level = self._assess_risk_level(
+        
+        risk_level = self._assess_risk_level()
             spread_percent, price_impact_buy + price_impact_sell, confidence_score
-        )
+        
         
         # Execution time estimation
         execution_time_ms = 500 + (1000 if max_trade_usd > 10000 else 0)
         
-        return EnhancedArbitrageCalculation(
+        return EnhancedArbitrageCalculation()
             token_pair=pair,
             buy_dex=buy_dex,
             sell_dex=sell_dex,
@@ -235,7 +250,7 @@ class EnhancedDEXCalculator:
             roi_percent=roi_percent,
             annualized_roi=annualized_roi,
             timestamp=datetime.now()
-        )
+        
     
     def _estimate_price_impact(self, trade_size: float, liquidity: float) -> float:
         """Estimate price impact based on trade size and liquidity"""
@@ -250,7 +265,7 @@ class EnhancedDEXCalculator:
         else:
             return min(impact_ratio * 2.0, 0.15)  # High impact, capped at 15%
     
-    def _calculate_confidence_score(self, spread_percent: float, buy_liquidity: float,
+    def _calculate_confidence_score(self, spread_percent: float, buy_liquidity: float,)
                                   sell_liquidity: float, buy_volume: float, sell_volume: float) -> float:
         """Calculate confidence score for the opportunity"""
         score = 0.0
@@ -299,14 +314,14 @@ class EnhancedDEXCalculator:
     def calculate_market_summary(self, opportunities: List[EnhancedArbitrageCalculation]) -> Dict:
         """Calculate market summary statistics"""
         if not opportunities:
-            return {
+            return {}
                 'total_opportunities': 0,
                 'total_potential_profit': 0,
                 'average_spread': 0,
                 'best_opportunity': None,
                 'risk_distribution': {'low': 0, 'medium': 0, 'high': 0},
                 'dex_performance': {}
-            }
+            
         
         total_profit = sum(opp.net_profit for opp in opportunities)
         avg_spread = sum(opp.spread_percent for opp in opportunities) / len(opportunities)
@@ -326,11 +341,11 @@ class EnhancedDEXCalculator:
                 dex_perf[dex]['count'] += 1
                 dex_perf[dex]['total_profit'] += opp.net_profit / 2  # Split between buy and sell
         
-        return {
+        return {}
             'total_opportunities': len(opportunities),
             'total_potential_profit': round(total_profit, 2),
             'average_spread': round(avg_spread, 2),
-            'best_opportunity': {
+            'best_opportunity': {}
                 'pair': best_opp.token_pair,
                 'profit': round(best_opp.net_profit, 2),
                 'spread': round(best_opp.spread_percent, 2),
@@ -338,7 +353,7 @@ class EnhancedDEXCalculator:
             },
             'risk_distribution': risk_dist,
             'dex_performance': dex_perf
-        }
+        
 
 # Global calculator instance
 calculator = EnhancedDEXCalculator()
@@ -366,10 +381,10 @@ def get_enhanced_calculations():
             enhanced_opportunities = calculator.calculate_enhanced_arbitrage(price_data)
             market_summary = calculator.calculate_market_summary(enhanced_opportunities)
             
-            return jsonify({
+            return jsonify({)}
                 'success': True,
-                'opportunities': [
-                    {
+                'opportunities': []
+                    {}
                         'token_pair': opp.token_pair,
                         'buy_dex': opp.buy_dex,
                         'sell_dex': opp.sell_dex,
@@ -392,49 +407,49 @@ def get_enhanced_calculations():
                         'volume_24h_buy': round(opp.volume_24h_buy, 2),
                         'volume_24h_sell': round(opp.volume_24h_sell, 2),
                         'timestamp': opp.timestamp.isoformat()
-                    }
+                    
                     for opp in enhanced_opportunities
                 ],
                 'summary': market_summary,
                 'timestamp': datetime.now().isoformat()
-            })
+            
         else:
             return jsonify({'success': False, 'error': 'DEX monitor unavailable'}), 503
             
     except Exception as e:
-        logger.error(f"Error getting enhanced calculations: {e}")
+        logger.error(str(f"Error getting enhanced calculations: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/market-analysis')
 def get_market_analysis():
     """Get detailed market analysis"""
     try:
-        analysis = {
-            'market_conditions': {
+        analysis = {}
+            'market_conditions': {}
                 'volatility_index': calculate_volatility_index(),
                 'liquidity_index': calculate_liquidity_index(),
                 'opportunity_index': len(enhanced_opportunities),
                 'market_efficiency': calculate_market_efficiency()
             },
-            'performance_metrics': {
+            'performance_metrics': {}
                 'total_volume_monitored': sum(opp.volume_24h_buy + opp.volume_24h_sell for opp in enhanced_opportunities),
                 'total_liquidity_monitored': sum(opp.liquidity_buy + opp.liquidity_sell for opp in enhanced_opportunities),
                 'average_execution_time': sum(opp.execution_time_ms for opp in enhanced_opportunities) / len(enhanced_opportunities) if enhanced_opportunities else 0,
                 'success_probability': sum(opp.confidence_score for opp in enhanced_opportunities) / len(enhanced_opportunities) if enhanced_opportunities else 0
             },
-            'risk_analysis': {
+            'risk_analysis': {}
                 'high_risk_opportunities': len([opp for opp in enhanced_opportunities if opp.risk_level == 'high']),
                 'medium_risk_opportunities': len([opp for opp in enhanced_opportunities if opp.risk_level == 'medium']),
                 'low_risk_opportunities': len([opp for opp in enhanced_opportunities if opp.risk_level == 'low']),
                 'average_price_impact': sum(opp.price_impact_buy + opp.price_impact_sell for opp in enhanced_opportunities) / (2 * len(enhanced_opportunities)) if enhanced_opportunities else 0
             },
             'timestamp': datetime.now().isoformat()
-        }
+        
         
         return jsonify(analysis)
         
     except Exception as e:
-        logger.error(f"Error getting market analysis: {e}")
+        logger.error(str(f"Error getting market analysis: {e}")
         return jsonify({'error': str(e)}), 500
 
 def calculate_volatility_index():
@@ -472,14 +487,14 @@ def update_calculations():
                 response = get_enhanced_calculations()
                 if hasattr(response, 'status_code') and response.status_code == 200:
                     # Emit update to connected clients
-                    socketio.emit('calculations_update', {
+                    socketio.emit('calculations_update', {)}
                         'opportunities': enhanced_opportunities[:10],  # Top 10
                         'summary': market_summary,
                         'timestamp': datetime.now().isoformat()
-                    })
+                    
                     
         except Exception as e:
-            logger.error(f"Error in background calculation update: {e}")
+            logger.error(str(f"Error in background calculation update: {e}")
             time.sleep(30)  # Wait longer on error
 
 if __name__ == "__main__":
@@ -487,8 +502,8 @@ if __name__ == "__main__":
     calc_thread = threading.Thread(target=update_calculations, daemon=True)
     calc_thread.start()
     
-    print("🚀 Starting Enhanced DEX Calculations Dashboard on http://localhost:8005")
-    print("📊 Features:")
+    print("[INIT] Starting Enhanced DEX Calculations Dashboard on http://localhost:8005")
+    print("[METRICS] Features:")
     print("  • Advanced arbitrage calculations with risk analysis")
     print("  • Real-time profit and ROI calculations")
     print("  • Price impact and slippage analysis")

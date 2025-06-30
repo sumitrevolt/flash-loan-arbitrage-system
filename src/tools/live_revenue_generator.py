@@ -1,5 +1,21 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+                        import random
+from datetime import datetime
+from decimal import Decimal, getcontext
+from typing import Dict, List, Optional
+import asyncio
+import json
+import logging
+import sys
+import threading
+import time
+
+            import requests
+    from dex_integrations import RealDEXIntegrations, DexPrice
+import aiohttp
 """
-🚀 LIVE REVENUE GENERATION SYSTEM
+[INIT] LIVE REVENUE GENERATION SYSTEM
 =================================
 
 NOW THAT THE CONTRACT IS DEPLOYED, LET'S START GENERATING REAL REVENUE!
@@ -10,36 +26,37 @@ This script activates the complete revenue generation system using:
 - Real-time opportunity detection
 - Automated profit extraction
 
-🎯 MISSION: Start earning real profits immediately!
+[TASK] MISSION: Start earning real profits immediately!
 """
 
-import requests
-import json
-import time
-import threading
-import logging
-from datetime import datetime
-import asyncio
-import sys
-from decimal import Decimal, getcontext
-import aiohttp
-from typing import Dict, List, Optional
 
 # Set precision for Decimal calculations
 getcontext().prec = 28
 
 # Setup logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
-)
+
 logger = logging.getLogger(__name__)
 
 # Import existing DEX integrations
 try:
-    from dex_integrations import RealDEXIntegrations, DexPrice
 except ImportError:
-    print("⚠️ DEX integrations not found, using fallback price fetching")
+    print("[WARN] DEX integrations not found, using fallback price fetching")
 
 class LiveRevenueGenerator:
     def __init__(self):
@@ -60,19 +77,19 @@ class LiveRevenueGenerator:
             self.dex_integrator = None
             
         # Popular token pairs to monitor
-        self.token_pairs = [
+        self.token_pairs = []
             "WETH/USDC", "WETH/USDT", "WETH/DAI", 
             "WBTC/WETH", "MATIC/WETH", "LINK/WETH",
             "UNI/WETH", "AAVE/WETH", "SUSHI/WETH"
-        ]
+        
         
         # DEX endpoints for real price data
-        self.dex_endpoints = {
+        self.dex_endpoints = {}
             "uniswap": "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3",
             "sushiswap": "https://api.thegraph.com/subgraphs/name/sushiswap/exchange", 
             "balancer": "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-v2",
             "1inch": "https://api.1inch.io/v5.0/1/quote"
-        }
+        
     
     async def fetch_real_dex_prices(self):
         """Fetch real-time prices from multiple DEXs"""
@@ -82,18 +99,18 @@ class LiveRevenueGenerator:
                 
                 # Fetch from CoinGecko API for real prices
                 coingecko_url = "https://api.coingecko.com/api/v3/simple/price"
-                params = {
+                params = {}
                     'ids': 'ethereum,bitcoin,matic-network,chainlink,uniswap,aave-aave,sushi',
                     'vs_currencies': 'usd',
                     'include_24hr_change': 'true'
-                }
+                
                 
                 async with session.get(coingecko_url, params=params) as response:
                     if response.status == 200:
                         data = await response.json()
                         
                         # Format price data
-                        prices = {
+                        prices = {}
                             'WETH': {'price': data.get('ethereum', {}).get('usd', 0), 'change': data.get('ethereum', {}).get('usd_24h_change', 0)},
                             'WBTC': {'price': data.get('bitcoin', {}).get('usd', 0), 'change': data.get('bitcoin', {}).get('usd_24h_change', 0)},
                             'MATIC': {'price': data.get('matic-network', {}).get('usd', 0), 'change': data.get('matic-network', {}).get('usd_24h_change', 0)},
@@ -104,12 +121,12 @@ class LiveRevenueGenerator:
                             'USDC': {'price': 1.0, 'change': 0},
                             'USDT': {'price': 1.0, 'change': 0},
                             'DAI': {'price': 1.0, 'change': 0}
-                        }
+                        
                 
                 return prices
                 
         except Exception as e:
-            print(f"❌ Error fetching real prices: {e}")
+            print(f"[ERROR] Error fetching real prices: {e}")
             return {}
     
     def calculate_arbitrage_opportunity(self, token_pair, prices_by_dex):
@@ -140,7 +157,7 @@ class LiveRevenueGenerator:
             net_profit = gross_profit - total_costs
             
             if net_profit > self.min_profit_per_trade:
-                return {
+                return {}
                     'token_pair': token_pair,
                     'buy_dex': best_buy_dex,
                     'sell_dex': best_sell_dex,
@@ -154,20 +171,20 @@ class LiveRevenueGenerator:
                     'total_costs': total_costs,
                     'net_profit': net_profit,
                     'profit_margin': (net_profit / trade_amount) * 100
-                }
+                
         except Exception as e:
-            logger.error(f"Error calculating arbitrage for {token_pair}: {e}")
+            logger.error(str(f"Error calculating arbitrage for {token_pair}: {e}")
         
         return None
     
     def display_real_time_prices(self, prices):
         """Display real-time DEX prices in a formatted table"""
         print("\n" + "="*80)
-        print("📊 REAL-TIME DEX PRICES & ARBITRAGE CALCULATIONS")
+        print("[METRICS] REAL-TIME DEX PRICES & ARBITRAGE CALCULATIONS")
         print("="*80)
         
         if not prices:
-            print("❌ No price data available")
+            print("[ERROR] No price data available")
             return
         
         # Header
@@ -180,7 +197,7 @@ class LiveRevenueGenerator:
             
             # Color coding for price changes
             if change > 0:
-                status = f"+{change:.2f}% 📈"
+                status = f"+{change:.2f}% [GROWTH]"
             elif change < 0:
                 status = f"{change:.2f}% 📉"
             else:
@@ -194,12 +211,12 @@ class LiveRevenueGenerator:
     def display_arbitrage_calculations(self, opportunities):
         """Display detailed arbitrage calculations"""
         print("\n" + "="*100)
-        print("🎯 ARBITRAGE OPPORTUNITY ANALYSIS")
+        print("[TASK] ARBITRAGE OPPORTUNITY ANALYSIS")
         print("="*100)
         
         if not opportunities:
-            print("🔍 No profitable arbitrage opportunities found at current prices")
-            print("💡 Continuing to monitor for price discrepancies...")
+            print("[SEARCH] No profitable arbitrage opportunities found at current prices")
+            print("[INFO] Continuing to monitor for price discrepancies...")
             return
         
         for i, opp in enumerate(opportunities, 1):
@@ -208,24 +225,24 @@ class LiveRevenueGenerator:
             print(f"   🛒 Buy from {opp['buy_dex']}: ${opp['buy_price']:.6f}")
             print(f"   🏪 Sell to {opp['sell_dex']}: ${opp['sell_price']:.6f}")
             print(f"   💵 Trade Amount: ${opp['trade_amount']:,}")
-            print(f"   📈 Gross Profit: ${opp['gross_profit']:.2f}")
+            print(f"   [GROWTH] Gross Profit: ${opp['gross_profit']:.2f}")
             print("\n   💸 COST BREAKDOWN:")
             print(f"   ⛽ Gas Cost: ${opp['gas_cost']:.2f}")
-            print(f"   📊 Slippage (0.5%): ${opp['slippage_cost']:.2f}")
+            print(f"   [METRICS] Slippage (0.5%): ${opp['slippage_cost']:.2f}")
             print(f"   🏦 Flash Loan Fee (0.09%): ${opp['flash_loan_fee']:.2f}")
             print(f"   ➖ Total Costs: ${opp['total_costs']:.2f}")
-            print(f"\n   ✅ NET PROFIT: ${opp['net_profit']:.2f} ({opp['profit_margin']:.3f}%)")
+            print(f"\n   [OK] NET PROFIT: ${opp['net_profit']:.2f} ({opp['profit_margin']:.3f}%)")
             
             if opp['net_profit'] >= self.min_profit_per_trade:
-                print(f"   🎯 STATUS: PROFITABLE - READY TO EXECUTE!")
+                print(f"   [TASK] STATUS: PROFITABLE - READY TO EXECUTE!")
             else:
-                print(f"   ⚠️ STATUS: Below minimum profit threshold")
+                print(f"   [WARN] STATUS: Below minimum profit threshold")
         
         print("="*100)
         
     def check_system_readiness(self):
         """Verify all systems are ready for live trading."""
-        print("🔍 CHECKING SYSTEM READINESS FOR LIVE TRADING")
+        print("[SEARCH] CHECKING SYSTEM READINESS FOR LIVE TRADING")
         print("=" * 60)
         
         # Check all MCP servers
@@ -237,16 +254,16 @@ class LiveRevenueGenerator:
                 total_count = len(mcp_status)
                 
                 if healthy_count == total_count:
-                    print(f"✅ ALL {total_count} MCP SERVERS: HEALTHY & READY")
+                    print(f"[OK] ALL {total_count} MCP SERVERS: HEALTHY & READY")
                 else:
-                    print(f"⚠️ MCP SERVERS: {healthy_count}/{total_count} healthy")
+                    print(f"[WARN] MCP SERVERS: {healthy_count}/{total_count} healthy")
                     return False
             else:
-                print("❌ Cannot check MCP server status")
+                print("[ERROR] Cannot check MCP server status")
                 return False
                 
         except Exception as e:
-            print(f"❌ MCP health check failed: {e}")
+            print(f"[ERROR] MCP health check failed: {e}")
             return False
         
         # Check revenue bot
@@ -257,30 +274,30 @@ class LiveRevenueGenerator:
                 revenue_bot_active = health_data.get('checks', {}).get('revenue_bot_active', False)
                 
                 if revenue_bot_active:
-                    print("✅ REVENUE BOT: ACTIVE & READY TO TRADE")
+                    print("[OK] REVENUE BOT: ACTIVE & READY TO TRADE")
                 else:
-                    print("❌ REVENUE BOT: NOT ACTIVE")
+                    print("[ERROR] REVENUE BOT: NOT ACTIVE")
                     return False            else:
-                print("❌ Cannot check revenue bot status")
+                print("[ERROR] Cannot check revenue bot status")
                 return False
         except Exception as e:
-            print(f"❌ Revenue bot check failed: {e}")
+            print(f"[ERROR] Revenue bot check failed: {e}")
             return False
         
-        print("✅ CONTRACT: DEPLOYED & READY FOR EXECUTION")
-        print("✅ SYSTEM STATUS: ALL SYSTEMS GO FOR LIVE TRADING!")
+        print("[OK] CONTRACT: DEPLOYED & READY FOR EXECUTION")
+        print("[OK] SYSTEM STATUS: ALL SYSTEMS GO FOR LIVE TRADING!")
         print("=" * 60)
         return True
       def start_opportunity_hunting_enhanced(self):
         """Enhanced opportunity hunting with real-time DEX price display (synchronous version)."""
-        print("🎯 STARTING ENHANCED OPPORTUNITY HUNTING WITH REAL-TIME PRICES")
+        print("[TASK] STARTING ENHANCED OPPORTUNITY HUNTING WITH REAL-TIME PRICES")
         print("-" * 80)
         
         hunt_count = 0
         
         while self.revenue_active:
             hunt_count += 1
-            print(f"\n🔍 HUNT #{hunt_count} - Fetching real-time DEX prices...")
+            print(f"\n[SEARCH] HUNT #{hunt_count} - Fetching real-time DEX prices...")
             
             try:
                 # Fetch real prices using synchronous method
@@ -300,30 +317,30 @@ class LiveRevenueGenerator:
                             
                             if profit >= self.min_profit_per_trade:
                                 print(f"   💰 Opportunity {i+1}: {token_pair} - ${profit:.2f} profit")
-                                print(f"      🎯 EXECUTING TRADE...")
+                                print(f"      [TASK] EXECUTING TRADE...")
                                 
                                 # Simulate trade execution (in real implementation, this would execute the trade)
                                 success = self.execute_arbitrage_trade(opp)
                                 if success:
                                     self.total_profit += profit
                                     self.trades_executed += 1
-                                    print(f"      ✅ TRADE SUCCESSFUL! Profit: ${profit:.2f}")
-                                    print(f"      📈 TOTAL PROFIT: ${self.total_profit:.2f}")
+                                    print(f"      [OK] TRADE SUCCESSFUL! Profit: ${profit:.2f}")
+                                    print(f"      [GROWTH] TOTAL PROFIT: ${self.total_profit:.2f}")
                                 else:
-                                    print(f"      ❌ TRADE FAILED - Moving to next opportunity")
+                                    print(f"      [ERROR] TRADE FAILED - Moving to next opportunity")
                             else:
-                                print(f"   📊 Opportunity {i+1}: {token_pair} - ${profit:.2f} (below minimum)")
+                                print(f"   [METRICS] Opportunity {i+1}: {token_pair} - ${profit:.2f} (below minimum)")
                         
                         self.opportunities_found += len(arbitrage_opportunities)
                     else:
-                        print("🔍 No profitable opportunities at this moment - continuing scan...")
+                        print("[SEARCH] No profitable opportunities at this moment - continuing scan...")
                 
                 # Get current revenue metrics
                 if self.total_profit >= self.daily_target:
-                    print("🎉 DAILY TARGET ACHIEVED! Continuing to maximize profits...")
+                    print("[CELEBRATE] DAILY TARGET ACHIEVED! Continuing to maximize profits...")
                 
             except Exception as e:
-                print(f"❌ Error during opportunity hunt: {e}")
+                print(f"[ERROR] Error during opportunity hunt: {e}")
             
             # Wait before next scan (aggressive timing for max profit)
             time.sleep(10)  # Scan every 10 seconds
@@ -331,22 +348,21 @@ class LiveRevenueGenerator:
     def fetch_real_prices_sync(self):
         """Synchronous version to fetch real-time prices"""
         try:
-            import requests
             
             # Fetch from CoinGecko API for real prices
             coingecko_url = "https://api.coingecko.com/api/v3/simple/price"
-            params = {
+            params = {}
                 'ids': 'ethereum,bitcoin,matic-network,chainlink,uniswap,aave-aave,sushi',
                 'vs_currencies': 'usd',
                 'include_24hr_change': 'true'
-            }
+            
             
             response = requests.get(coingecko_url, params=params, timeout=10)
             if response.status_code == 200:
                 data = response.json()
                 
                 # Format price data
-                prices = {
+                prices = {}
                     'WETH': {'price': data.get('ethereum', {}).get('usd', 0), 'change': data.get('ethereum', {}).get('usd_24h_change', 0)},
                     'WBTC': {'price': data.get('bitcoin', {}).get('usd', 0), 'change': data.get('bitcoin', {}).get('usd_24h_change', 0)},
                     'MATIC': {'price': data.get('matic-network', {}).get('usd', 0), 'change': data.get('matic-network', {}).get('usd_24h_change', 0)},
@@ -357,12 +373,12 @@ class LiveRevenueGenerator:
                     'USDC': {'price': 1.0, 'change': 0},
                     'USDT': {'price': 1.0, 'change': 0},
                     'DAI': {'price': 1.0, 'change': 0}
-                }
+                
                 
                 return prices
             
         except Exception as e:
-            print(f"❌ Error fetching real prices: {e}")
+            print(f"[ERROR] Error fetching real prices: {e}")
         
         return {}
     
@@ -380,15 +396,14 @@ class LiveRevenueGenerator:
                     
                     if base_price > 0 and quote_price > 0:
                         # Simulate price variations across different DEXs (±0.1% to 1.5%)
-                        import random
                         
-                        dex_prices = {
+                        dex_prices = {}
                             'Uniswap V3': base_price * (1 + random.uniform(-0.015, 0.015)),
                             'SushiSwap': base_price * (1 + random.uniform(-0.012, 0.012)),
                             'Balancer': base_price * (1 + random.uniform(-0.008, 0.008)),
                             '1inch': base_price * (1 + random.uniform(-0.010, 0.010)),
                             'Curve': base_price * (1 + random.uniform(-0.005, 0.005))
-                        }
+                        
                         
                         opportunity = self.calculate_arbitrage_opportunity(token_pair, dex_prices)
                         if opportunity:
@@ -400,23 +415,23 @@ class LiveRevenueGenerator:
                             
                             if profit >= self.min_profit_per_trade:
                                 print(f"   💰 Opportunity {i+1}: {token_pair} on {dex} - ${profit:.2f} profit")
-                                print(f"      🎯 EXECUTING TRADE...")
+                                print(f"      [TASK] EXECUTING TRADE...")
                                 
                                 # Simulate trade execution (in real implementation, this would execute the trade)
                                 success = self.execute_arbitrage_trade(opp)
                                 if success:
                                     self.total_profit += profit
                                     self.trades_executed += 1
-                                    print(f"      ✅ TRADE SUCCESSFUL! Profit: ${profit:.2f}")
-                                    print(f"      📈 TOTAL PROFIT: ${self.total_profit:.2f}")
+                                    print(f"      [OK] TRADE SUCCESSFUL! Profit: ${profit:.2f}")
+                                    print(f"      [GROWTH] TOTAL PROFIT: ${self.total_profit:.2f}")
                                 else:
-                                    print(f"      ❌ TRADE FAILED - Moving to next opportunity")
+                                    print(f"      [ERROR] TRADE FAILED - Moving to next opportunity")
                             else:
-                                print(f"   📊 Opportunity {i+1}: {token_pair} - ${profit:.2f} (below minimum)")
+                                print(f"   [METRICS] Opportunity {i+1}: {token_pair} - ${profit:.2f} (below minimum)")
                         
                         self.opportunities_found += active_count
                     else:
-                        print("🔍 No profitable opportunities at this moment - continuing scan...")
+                        print("[SEARCH] No profitable opportunities at this moment - continuing scan...")
                 
                 # Get current revenue metrics
                 metrics_response = requests.get(f"{self.production_server}/revenue/metrics", timeout=5)
@@ -426,17 +441,17 @@ class LiveRevenueGenerator:
                     system_trades = metrics.get('total_trades', 0)
                     
                     if system_profit > 0:
-                        print(f"📊 SYSTEM METRICS: ${system_profit:.4f} total revenue, {system_trades} trades")
+                        print(f"[METRICS] SYSTEM METRICS: ${system_profit:.4f} total revenue, {system_trades} trades")
                 
                 # Progress report
                 daily_progress = (self.total_profit / self.daily_target) * 100
-                print(f"📈 DAILY PROGRESS: ${self.total_profit:.2f}/${self.daily_target:.0f} ({daily_progress:.1f}%)")
+                print(f"[GROWTH] DAILY PROGRESS: ${self.total_profit:.2f}/${self.daily_target:.0f} ({daily_progress:.1f}%)")
                 
                 if self.total_profit >= self.daily_target:
-                    print("🎉 DAILY TARGET ACHIEVED! Continuing to maximize profits...")
+                    print("[CELEBRATE] DAILY TARGET ACHIEVED! Continuing to maximize profits...")
                 
             except Exception as e:
-                print(f"❌ Error during opportunity hunt: {e}")
+                print(f"[ERROR] Error during opportunity hunt: {e}")
             
             # Wait before next scan (aggressive timing for max profit)
             time.sleep(10)  # Scan every 10 seconds
@@ -453,7 +468,7 @@ class LiveRevenueGenerator:
             profit = opportunity.get('net_profit', 0)
             token_pair = opportunity.get('token_pair', 'Unknown')
             
-            print(f"      🔄 Executing flash loan arbitrage for {token_pair}...")
+            print(f"      [SYNC] Executing flash loan arbitrage for {token_pair}...")
             print(f"      📡 Using deployed contract on mainnet...")
             print(f"      ⛽ Optimizing gas for maximum profit...")
             
@@ -461,18 +476,17 @@ class LiveRevenueGenerator:
             time.sleep(1)
             
             # Simulate 90% success rate
-            import random
             success = random.random() > 0.1
             
             if success:
-                print(f"      ✅ Transaction confirmed! Profit secured: ${profit:.2f}")
+                print(f"      [OK] Transaction confirmed! Profit secured: ${profit:.2f}")
                 return True
             else:
-                print(f"      ❌ Transaction failed - network congestion or better opportunity taken")
+                print(f"      [ERROR] Transaction failed - network congestion or better opportunity taken")
                 return False
                 
         except Exception as e:
-            print(f"      ❌ Trade execution error: {e}")
+            print(f"      [ERROR] Trade execution error: {e}")
             return False
     
     def start_live_monitoring(self):
@@ -508,21 +522,21 @@ class LiveRevenueGenerator:
         """Run the complete live revenue generation system."""
         print("💰 FLASH LOAN ARBITRAGE BOT - LIVE REVENUE GENERATION")
         print("=" * 70)
-        print("🎯 CONTRACT DEPLOYED ✅")
-        print("🎯 ALL MCP SERVERS ACTIVE ✅") 
-        print("🎯 READY TO GENERATE REAL PROFITS ✅")
+        print("[TASK] CONTRACT DEPLOYED [OK]")
+        print("[TASK] ALL MCP SERVERS ACTIVE [OK]") 
+        print("[TASK] READY TO GENERATE REAL PROFITS [OK]")
         print("=" * 70)
         
         # Check system readiness
         if not self.check_system_readiness():
-            print("❌ System not ready for live trading")
+            print("[ERROR] System not ready for live trading")
             return False
         
-        print(f"\n🚀 STARTING LIVE REVENUE GENERATION")
+        print(f"\n[INIT] STARTING LIVE REVENUE GENERATION")
         print(f"💰 Daily Target: ${self.daily_target}")
         print(f"💵 Minimum Profit Per Trade: ${self.min_profit_per_trade}")
-        print(f"⚡ Aggressive Scanning: Every 10 seconds")
-        print(f"🎯 Using deployed contract for real arbitrage execution")
+        print(f"[FAST] Aggressive Scanning: Every 10 seconds")
+        print(f"[TASK] Using deployed contract for real arbitrage execution")
         print("-" * 70)
           # Start live monitoring
         monitor_thread = self.start_live_monitoring()
@@ -532,31 +546,31 @@ class LiveRevenueGenerator:
             self.start_opportunity_hunting_enhanced()
             
         except KeyboardInterrupt:
-            print("\n\n🛑 LIVE REVENUE GENERATION STOPPED BY USER")
+            print("\n\n[STOP] LIVE REVENUE GENERATION STOPPED BY USER")
             self.revenue_active = False
             
             # Final summary
             print("=" * 70)
-            print("📊 FINAL SESSION SUMMARY")
+            print("[METRICS] FINAL SESSION SUMMARY")
             print(f"💰 Total Profit Generated: ${self.total_profit:.4f}")
-            print(f"📈 Trades Executed: {self.trades_executed}")
-            print(f"🎯 Opportunities Found: {self.opportunities_found}")
+            print(f"[GROWTH] Trades Executed: {self.trades_executed}")
+            print(f"[TASK] Opportunities Found: {self.opportunities_found}")
             
             if self.trades_executed > 0:
                 avg_profit = self.total_profit / self.trades_executed
-                print(f"📊 Average Profit Per Trade: ${avg_profit:.2f}")
+                print(f"[METRICS] Average Profit Per Trade: ${avg_profit:.2f}")
             
             daily_progress = (self.total_profit / self.daily_target) * 100
-            print(f"🎯 Daily Target Progress: {daily_progress:.1f}%")
+            print(f"[TASK] Daily Target Progress: {daily_progress:.1f}%")
             
             if self.total_profit >= self.daily_target:
-                print("🎉 CONGRATULATIONS! Daily target achieved!")
+                print("[CELEBRATE] CONGRATULATIONS! Daily target achieved!")
             else:
                 remaining = self.daily_target - self.total_profit
-                print(f"📈 ${remaining:.2f} remaining to reach daily target")
+                print(f"[GROWTH] ${remaining:.2f} remaining to reach daily target")
             
             print("=" * 70)
-            print("🎉 Thank you for using the Flash Loan Arbitrage Bot!")
+            print("[CELEBRATE] Thank you for using the Flash Loan Arbitrage Bot!")
             
         return True
 
@@ -567,7 +581,7 @@ def main():
     try:
         generator.run_live_revenue_generation()
     except Exception as e:
-        print(f"❌ Live revenue generation error: {e}")
+        print(f"[ERROR] Live revenue generation error: {e}")
         return False
     
     return True

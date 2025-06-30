@@ -1,261 +1,694 @@
 {
   "servers": {
-    "copilot_client": {
-      "name": "copilot_client",
+    "enhanced_mcp_dashboard_with_chat": {
+      "name": "enhanced_mcp_dashboard_with_chat",
       "type": "python",
-      "path": "src/mcp_servers/copilot_mcp_client.py",
+      "path": "mcp_servers/enhanced_mcp_dashboard_with_chat.py",
       "port": 3000,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "copilot_client",
+        "MCP_SERVER_NAME": "enhanced_mcp_dashboard_with_chat",
         "PORT": "3000"
-      }
+      },
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "realtime_data",
+        "web_interface",
+        "database_integration",
+        "external_api_calls",
+        "monitoring_capabilities",
+        "security_features"
+      ],
+      "tools": [
+        "ascii",
+        "params",
+        "name"
+      ]
     },
-    "copilot_demo": {
-      "name": "copilot_demo",
+    "mcp_github_copilot_server_enhanced": {
+      "name": "mcp_github_copilot_server_enhanced",
       "type": "python",
-      "path": "src/mcp_servers/copilot_mcp_demo.py",
+      "path": "mcp_servers/mcp_github_copilot_server_enhanced.py",
       "port": 3001,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "copilot_demo",
+        "MCP_SERVER_NAME": "mcp_github_copilot_server_enhanced",
         "PORT": "3001"
-      }
+      },
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "database_integration",
+        "external_api_calls",
+        "security_features"
+      ],
+      "tools": [
+        "find_related_memories",
+        "query",
+        "text",
+        "node_type",
+        "search_memory",
+        "generate_tests",
+        "get_code_suggestions",
+        "source_id",
+        "create_memory_relationship",
+        "get_thinking_summary",
+        "start_thinking_sequence",
+        "ascii",
+        "node_id",
+        "reflect_on_thinking",
+        "add_thought_step",
+        "problem",
+        "fix_code_issues",
+        "store_memory",
+        "optimize_code",
+        "sequence_id",
+        "enhanced_code_analysis",
+        "explain_code",
+        "code"
+      ]
     },
-    "final_deployment_summary": {
-      "name": "final_deployment_summary",
+    "mcp_github_copilot_server": {
+      "name": "mcp_github_copilot_server",
       "type": "python",
-      "path": "src/mcp_servers/final_mcp_deployment_summary.py",
+      "path": "mcp_servers/mcp_github_copilot_server.py",
       "port": 3002,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "final_deployment_summary",
+        "MCP_SERVER_NAME": "mcp_github_copilot_server",
         "PORT": "3002"
-      }
+      },
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "database_integration",
+        "external_api_calls",
+        "security_features"
+      ],
+      "tools": [
+        "find_related_memories",
+        "query",
+        "text",
+        "node_type",
+        "search_memory",
+        "generate_tests",
+        "get_code_suggestions",
+        "source_id",
+        "create_memory_relationship",
+        "get_thinking_summary",
+        "start_thinking_sequence",
+        "ascii",
+        "node_id",
+        "reflect_on_thinking",
+        "add_thought_step",
+        "problem",
+        "fix_code_issues",
+        "store_memory",
+        "optimize_code",
+        "sequence_id",
+        "enhanced_code_analysis",
+        "explain_code",
+        "code"
+      ]
     },
-    "master_langchain_organizer": {
-      "name": "master_langchain_organizer",
+    "unified_mcp_orchestration_manager": {
+      "name": "unified_mcp_orchestration_manager",
       "type": "python",
-      "path": "src/mcp_servers/master_langchain_mcp_organizer.py",
+      "path": "mcp_servers/unified_mcp_orchestration_manager.py",
       "port": 3003,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "master_langchain_organizer",
+        "MCP_SERVER_NAME": "unified_mcp_orchestration_manager",
         "PORT": "3003"
-      }
+      },
+      "features": [
+        "arbitrage_detection",
+        "web_interface",
+        "database_integration",
+        "external_api_calls",
+        "monitoring_capabilities",
+        "security_features"
+      ],
+      "tools": []
     },
-    "bridge": {
-      "name": "bridge",
+    "langchain_mcp_orchestrator": {
+      "name": "langchain_mcp_orchestrator",
       "type": "python",
-      "path": "src/mcp_servers/mcp_bridge.py",
+      "path": "mcp_servers/langchain_mcp_orchestrator.py",
       "port": 3004,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "bridge",
+        "MCP_SERVER_NAME": "langchain_mcp_orchestrator",
         "PORT": "3004"
-      }
+      },
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "database_integration"
+      ],
+      "tools": [
+        "ascii",
+        "calculate_arbitrage",
+        "clean_context",
+        "create_session",
+        "get_gas_price"
+      ]
     },
-    "contract_verifier": {
-      "name": "contract_verifier",
+    "unified_mcp_coordinator_20250617_143120": {
+      "name": "unified_mcp_coordinator_20250617_143120",
       "type": "python",
-      "path": "src/mcp_servers/mcp_contract_verifier.py",
+      "path": "mcp_servers/unified_mcp_coordinator_20250617_143120.py",
       "port": 3005,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "contract_verifier",
+        "MCP_SERVER_NAME": "unified_mcp_coordinator_20250617_143120",
         "PORT": "3005"
-      }
+      },
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "external_api_calls",
+        "monitoring_capabilities"
+      ],
+      "tools": [
+        "ascii",
+        "arbitrage_trading"
+      ]
     },
-    "powered_deployment_system": {
-      "name": "powered_deployment_system",
+    "mcp_enhanced_coordinator": {
+      "name": "mcp_enhanced_coordinator",
       "type": "python",
-      "path": "src/mcp_servers/mcp_powered_deployment_system.py",
+      "path": "mcp_servers/mcp_enhanced_coordinator.py",
       "port": 3006,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "powered_deployment_system",
+        "MCP_SERVER_NAME": "mcp_enhanced_coordinator",
         "PORT": "3006"
-      }
+      },
+      "features": [
+        "flash_loan_support",
+        "monitoring_capabilities"
+      ],
+      "tools": [
+        "ascii",
+        "agent_heartbeat",
+        "create_task",
+        "jsonrpc",
+        "serverInfo",
+        "register_agent",
+        "task_id",
+        "get_system_status",
+        "name",
+        "operational",
+        "get_task_status",
+        "MCP_CONFIG_PATH",
+        "server_heartbeat",
+        "arguments",
+        "register_server"
+      ]
     },
-    "optimized_deployment_with_mcp": {
-      "name": "optimized_deployment_with_mcp",
+    "online_mcp_coordinator": {
+      "name": "online_mcp_coordinator",
       "type": "python",
-      "path": "src/mcp_servers/optimized_deployment_with_mcp.py",
+      "path": "mcp_servers/online_mcp_coordinator.py",
       "port": 3007,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "optimized_deployment_with_mcp",
+        "MCP_SERVER_NAME": "online_mcp_coordinator",
         "PORT": "3007"
-      }
+      },
+      "features": [
+        "arbitrage_detection",
+        "monitoring_capabilities"
+      ],
+      "tools": [
+        "ascii",
+        "medium",
+        "health",
+        "github",
+        "search_repositories",
+        "search_docs",
+        "libraryName",
+        "library_id",
+        "tools",
+        "status",
+        "create_or_update_file"
+      ]
     },
-    "robust_deployment": {
-      "name": "robust_deployment",
+    "unified_mcp_integration_manager": {
+      "name": "unified_mcp_integration_manager",
       "type": "python",
-      "path": "src/mcp_servers/robust_mcp_deployment.py",
+      "path": "mcp_servers/unified_mcp_integration_manager.py",
       "port": 3008,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "robust_deployment",
+        "MCP_SERVER_NAME": "unified_mcp_integration_manager",
         "PORT": "3008"
-      }
+      },
+      "features": [
+        "arbitrage_detection",
+        "external_api_calls",
+        "monitoring_capabilities",
+        "security_features"
+      ],
+      "tools": []
     },
-    "simple_trainer": {
-      "name": "simple_trainer",
+    "unified_mcp_coordinator": {
+      "name": "unified_mcp_coordinator",
       "type": "python",
-      "path": "src/mcp_servers/simple_mcp_trainer.py",
+      "path": "mcp_servers/unified_mcp_coordinator.py",
       "port": 3009,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "simple_trainer",
+        "MCP_SERVER_NAME": "unified_mcp_coordinator",
         "PORT": "3009"
-      }
+      },
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "monitoring_capabilities",
+        "security_features"
+      ],
+      "tools": []
     },
-    "simplified_organizer": {
-      "name": "simplified_organizer",
+    "dashboard_enhanced_mcp_dashboard_with_chat": {
+      "name": "dashboard_enhanced_mcp_dashboard_with_chat",
       "type": "python",
-      "path": "src/mcp_servers/simplified_mcp_organizer.py",
+      "path": "mcp_servers/dashboard_enhanced_mcp_dashboard_with_chat.py",
       "port": 3010,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "simplified_organizer",
+        "MCP_SERVER_NAME": "dashboard_enhanced_mcp_dashboard_with_chat",
         "PORT": "3010"
-      }
+      },
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "web_interface",
+        "monitoring_capabilities"
+      ],
+      "tools": []
     },
-    "train_aave_system": {
-      "name": "train_aave_system",
+    "real_time_price_mcp_server": {
+      "name": "real_time_price_mcp_server",
       "type": "python",
-      "path": "src/mcp_servers/train_aave_mcp_system.py",
+      "path": "mcp_servers/real_time_price_mcp_server.py",
       "port": 3011,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "train_aave_system",
+        "MCP_SERVER_NAME": "real_time_price_mcp_server",
         "PORT": "3011"
-      }
+      },
+      "features": [
+        "arbitrage_detection",
+        "monitoring_capabilities"
+      ],
+      "tools": [
+        "ascii",
+        "MCP_COORDINATOR_URL",
+        "jsonrpc",
+        "serverInfo",
+        "name",
+        "fetch_price",
+        "arguments"
+      ]
     },
-    "train_alls": {
-      "name": "train_alls",
+    "mcp_code_quality_server": {
+      "name": "mcp_code_quality_server",
       "type": "python",
-      "path": "src/mcp_servers/train_all_mcp_servers.py",
+      "path": "mcp_servers/mcp_code_quality_server.py",
       "port": 3012,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "train_alls",
+        "MCP_SERVER_NAME": "mcp_code_quality_server",
         "PORT": "3012"
-      }
+      },
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "database_integration",
+        "external_api_calls",
+        "security_features"
+      ],
+      "tools": [
+        "analyze_code_quality",
+        "check_code_standards",
+        "ascii",
+        "required",
+        "run_security_scan",
+        "bandit",
+        "python",
+        "results",
+        "fix_code_issues",
+        "type",
+        "path",
+        "mypy",
+        "generate_quality_report",
+        "tools",
+        "ruff",
+        "text"
+      ]
     },
-    "server_trainer": {
-      "name": "server_trainer",
+    "mcp_dashboard": {
+      "name": "mcp_dashboard",
       "type": "python",
-      "path": "src/mcp_servers/mcp_server_trainer.py",
+      "path": "mcp_servers/mcp_dashboard.py",
       "port": 3013,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "server_trainer",
+        "MCP_SERVER_NAME": "mcp_dashboard",
         "PORT": "3013"
-      }
+      },
+      "features": [
+        "arbitrage_detection",
+        "realtime_data",
+        "web_interface",
+        "external_api_calls",
+        "monitoring_capabilities"
+      ],
+      "tools": []
     },
-    "complete_langchain_integration": {
-      "name": "complete_langchain_integration",
+    "aave_flash_loan_mcp_server": {
+      "name": "aave_flash_loan_mcp_server",
       "type": "python",
-      "path": "src/mcp_servers/complete_langchain_mcp_integration.py",
+      "path": "mcp_servers/aave_flash_loan_mcp_server.py",
       "port": 3014,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "complete_langchain_integration",
+        "MCP_SERVER_NAME": "aave_flash_loan_mcp_server",
         "PORT": "3014"
-      }
+      },
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "database_integration",
+        "monitoring_capabilities"
+      ],
+      "tools": []
     },
-    "enhanced_manager": {
-      "name": "enhanced_manager",
+    "mcp_server_trainer": {
+      "name": "mcp_server_trainer",
       "type": "python",
-      "path": "src/mcp_servers/enhanced_mcp_server_manager.py",
+      "path": "mcp_servers/mcp_server_trainer.py",
       "port": 3015,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "enhanced_manager",
+        "MCP_SERVER_NAME": "mcp_server_trainer",
         "PORT": "3015"
-      }
+      },
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "realtime_data",
+        "database_integration",
+        "external_api_calls",
+        "monitoring_capabilities"
+      ],
+      "tools": [
+        "stopped"
+      ]
     },
-    "langchain_orchestrator": {
-      "name": "langchain_orchestrator",
+    "fix_all_local_mcp_servers": {
+      "name": "fix_all_local_mcp_servers",
       "type": "python",
-      "path": "src/mcp_servers/langchain_mcp_orchestrator.py",
+      "path": "mcp_servers/fix_all_local_mcp_servers.py",
       "port": 3016,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "langchain_orchestrator",
+        "MCP_SERVER_NAME": "fix_all_local_mcp_servers",
         "PORT": "3016"
-      }
+      },
+      "features": [],
+      "tools": [
+        "jsonrpc",
+        "serverInfo",
+        "get_status",
+        "name",
+        "arguments",
+        "logs"
+      ]
     },
-    "status_check": {
-      "name": "status_check",
+    "evm_mcp_server": {
+      "name": "evm_mcp_server",
       "type": "python",
-      "path": "src/mcp_servers/mcp_status_check.py",
+      "path": "mcp_servers/evm_mcp_server.py",
       "port": 3017,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "status_check",
+        "MCP_SERVER_NAME": "evm_mcp_server",
         "PORT": "3017"
-      }
+      },
+      "features": [
+        "external_api_calls",
+        "monitoring_capabilities"
+      ],
+      "tools": [
+        "ascii",
+        "get_network_status",
+        "call_contract",
+        "MCP_COORDINATOR_URL",
+        "register_with_coordinator",
+        "jsonrpc",
+        "serverInfo",
+        "name",
+        "get_gas_price",
+        "health_check",
+        "send_transaction",
+        "arguments"
+      ]
     },
-    "simple_orchestrator": {
-      "name": "simple_orchestrator",
+    "mcp_training_coordinator": {
+      "name": "mcp_training_coordinator",
       "type": "python",
-      "path": "src/mcp_servers/simple_mcp_orchestrator.py",
+      "path": "mcp_servers/mcp_training_coordinator.py",
       "port": 3018,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "simple_orchestrator",
+        "MCP_SERVER_NAME": "mcp_training_coordinator",
         "PORT": "3018"
-      }
+      },
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "database_integration",
+        "monitoring_capabilities",
+        "security_features"
+      ],
+      "tools": []
     },
-    "unified_coordinator": {
-      "name": "unified_coordinator",
+    "create_final_unified_mcp_manager": {
+      "name": "create_final_unified_mcp_manager",
       "type": "python",
-      "path": "src/mcp_servers/unified_mcp_coordinator.py",
+      "path": "mcp_servers/create_final_unified_mcp_manager.py",
       "port": 3019,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "unified_coordinator",
+        "MCP_SERVER_NAME": "create_final_unified_mcp_manager",
         "PORT": "3019"
-      }
+      },
+      "features": [
+        "arbitrage_detection",
+        "monitoring_capabilities"
+      ],
+      "tools": []
     },
-    "training_coordinator": {
-      "name": "training_coordinator",
+    "simple_mcp_orchestrator": {
+      "name": "simple_mcp_orchestrator",
       "type": "python",
-      "path": "src/mcp_servers/mcp_training_coordinator.py",
+      "path": "mcp_servers/simple_mcp_orchestrator.py",
       "port": 3020,
       "enabled": true,
+      "category": "local_server",
       "auto_restart": true,
       "environment_variables": {
-        "MCP_SERVER_NAME": "training_coordinator",
+        "MCP_SERVER_NAME": "simple_mcp_orchestrator",
         "PORT": "3020"
-      }
+      },
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection"
+      ],
+      "tools": [
+        "ascii",
+        "clean_context",
+        "simulate_flash_loan"
+      ]
+    },
+    "enhanced_mcp_server_manager": {
+      "name": "enhanced_mcp_server_manager",
+      "type": "python",
+      "path": "mcp_servers/enhanced_mcp_server_manager.py",
+      "port": 3030,
+      "enabled": true,
+      "category": "ai_agent",
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "enhanced_mcp_server_manager",
+        "PORT": "3030"
+      },
+      "features": [
+        "database_integration",
+        "external_api_calls",
+        "monitoring_capabilities",
+        "security_features"
+      ],
+      "tools": []
+    },
+    "complete_langchain_mcp_integration": {
+      "name": "complete_langchain_mcp_integration",
+      "type": "python",
+      "path": "mcp_servers/complete_langchain_mcp_integration.py",
+      "port": 3031,
+      "enabled": true,
+      "category": "ai_agent",
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "complete_langchain_mcp_integration",
+        "PORT": "3031"
+      },
+      "features": [
+        "realtime_data",
+        "web_interface",
+        "database_integration",
+        "external_api_calls",
+        "monitoring_capabilities",
+        "security_features"
+      ],
+      "tools": []
+    },
+    "llm_code_suggestion_mcp_server": {
+      "name": "llm_code_suggestion_mcp_server",
+      "type": "python",
+      "path": "mcp_servers/llm_code_suggestion_mcp_server.py",
+      "port": 3032,
+      "enabled": true,
+      "category": "ai_agent",
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "llm_code_suggestion_mcp_server",
+        "PORT": "3032"
+      },
+      "features": [
+        "external_api_calls"
+      ],
+      "tools": [
+        "DummyMCP",
+        "get_llm_code_suggestion",
+        "LLMCodeSuggestionMCPServer"
+      ]
+    },
+    "training_mcp_server": {
+      "name": "training_mcp_server",
+      "type": "python",
+      "path": "mcp_servers/training_mcp_server.py",
+      "port": 3033,
+      "enabled": true,
+      "category": "ai_agent",
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "training_mcp_server",
+        "PORT": "3033"
+      },
+      "features": [
+        "arbitrage_detection"
+      ],
+      "tools": [
+        "arbitrage_predictor",
+        "deployment_initiated",
+        "discovered_servers",
+        "training_status_retrieved",
+        "arbitrage",
+        "models_available"
+      ]
+    },
+    "copilot_mcp_mcp_server": {
+      "name": "copilot_mcp_mcp_server",
+      "type": "python",
+      "path": "mcp_servers/copilot_mcp_mcp_server.py",
+      "port": 3034,
+      "enabled": true,
+      "category": "ai_agent",
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "copilot_mcp_mcp_server",
+        "PORT": "3034"
+      },
+      "features": [],
+      "tools": [
+        "ascii",
+        "jsonrpc",
+        "serverInfo",
+        "get_status",
+        "name",
+        "arguments"
+      ]
+    },
+    "autodiscover_mcp_agents": {
+      "name": "autodiscover_mcp_agents",
+      "type": "python",
+      "path": "mcp_servers/autodiscover_mcp_agents.py",
+      "port": 3035,
+      "enabled": true,
+      "category": "ai_agent",
+      "auto_restart": true,
+      "environment_variables": {
+        "MCP_SERVER_NAME": "autodiscover_mcp_agents",
+        "PORT": "3035"
+      },
+      "features": [],
+      "tools": []
     }
   },
   "global_configuration": {
     "health_check_interval": 30,
     "auto_restart": true,
-    "log_level": "INFO"
+    "log_level": "INFO",
+    "organization": {
+      "local_servers_count": 21,
+      "ai_agents_count": 6,
+      "total_servers": 27,
+      "organization_date": "2025-06-26T21:19:48.065064"
+    }
   }
 }

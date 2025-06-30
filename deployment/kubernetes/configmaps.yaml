@@ -1,0 +1,395 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flash-loan-config
+  namespace: flash-loan-system
+  labels:
+    app: flash-loan-system
+    component: config
+data:
+  # System Configuration
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "WARNING"
+  
+  # Redis Configuration
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  
+  # PostgreSQL Configuration
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "flash_loan_arbitrage"
+  POSTGRES_USER: "postgres"
+  
+  # Service URLs
+  MCP_HUB_URL: "http://mcp-coordinator-service:8000"
+  LANGCHAIN_URL: "http://langchain-orchestrator-service:8002"
+  AUTOGEN_URL: "http://autogen-coordinator-service:8001"
+  
+  # Flash Loan Configuration
+  MIN_PROFIT_THRESHOLD: "0.001"
+  MAX_GAS_PRICE: "100000000000"
+  SLIPPAGE_TOLERANCE: "0.01"
+  
+  # Circuit Breaker Configuration
+  CIRCUIT_BREAKER_THRESHOLD: "3"
+  CIRCUIT_BREAKER_RECOVERY_TIMEOUT: "60"
+  
+  # Monitoring Configuration
+  PROMETHEUS_URL: "http://prometheus-service:9090"
+  GRAFANA_URL: "http://grafana-service:3000"
+  
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: flash-loan-system
+  labels:
+    app: flash-loan-system
+    component: nginx
+data:
+  nginx.conf: |
+    user nginx;
+    worker_processes auto;
+    error_log /var/log/nginx/error.log warn;
+    pid /var/run/nginx.pid;
+
+    events {
+        worker_connections 1024;
+        use epoll;
+        multi_accept on;
+    }
+
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+
+        # Logging
+        log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                        '$status $body_bytes_sent "$http_referer" '
+                        '"$http_user_agent" "$http_x_forwarded_for"';
+        access_log /var/log/nginx/access.log main;
+
+        # Performance
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        types_hash_max_size 2048;
+
+        # Gzip compression
+        gzip on;
+        gzip_vary on;
+        gzip_proxied any;
+        gzip_comp_level 6;
+        gzip_types
+            text/plain
+            text/css
+            text/xml
+            text/javascript
+            application/json
+            application/javascript
+            application/xml+rss
+            application/atom+xml
+            image/svg+xml;
+
+        # Rate limiting
+        limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+        limit_req_zone $binary_remote_addr zone=dashboard:10m rate=5r/s;
+
+        # Upstream services
+        upstream mcp_coordinator {
+            server mcp-coordinator-service:8000 max_fails=3 fail_timeout=30s;
+        }
+
+        upstream langchain_orchestrator {
+            server langchain-orchestrator-service:8002 max_fails=3 fail_timeout=30s;
+        }
+
+        upstream autogen_coordinator {
+            server autogen-coordinator-service:8001 max_fails=3 fail_timeout=30s;
+        }
+
+        upstream dashboard {
+            server mcp-coordinator-service:8080 max_fails=3 fail_timeout=30s;
+        }
+
+        # Main server block
+        server {
+            listen 80;
+            server_name _;
+
+            # Health check endpoint
+            location /health {
+                access_log off;
+                return 200 "healthy\n";
+                add_header Content-Type text/plain;
+            }
+
+            # Dashboard
+            location / {
+                limit_req zone=dashboard burst=10 nodelay;
+                proxy_pass http://dashboard;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_connect_timeout 30s;
+                proxy_send_timeout 30s;
+                proxy_read_timeout 30s;
+            }
+
+            # MCP Coordinator API
+            location /api/mcp/ {
+                limit_req zone=api burst=20 nodelay;
+                proxy_pass http://mcp_coordinator/;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_connect_timeout 60s;
+                proxy_send_timeout 60s;
+                proxy_read_timeout 300s;
+            }
+
+            # LangChain Orchestrator API
+            location /api/langchain/ {
+                limit_req zone=api burst=15 nodelay;
+                proxy_pass http://langchain_orchestrator/;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_connect_timeout 60s;
+                proxy_send_timeout 60s;
+                proxy_read_timeout 300s;
+            }
+
+            # AutoGen Coordinator API
+            location /api/autogen/ {
+                limit_req zone=api burst=10 nodelay;
+                proxy_pass http://autogen_coordinator/;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_connect_timeout 60s;
+                proxy_send_timeout 60s;
+                proxy_read_timeout 300s;
+            }
+        }
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: flash-loan-system
+  labels:
+    app: flash-loan-system
+    component: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    rule_files:
+      - "/etc/prometheus/rules/*.yml"
+
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+              - alertmanager-service:9093
+
+    scrape_configs:
+      # System services
+      - job_name: 'mcp-coordinator'
+        static_configs:
+          - targets: ['mcp-coordinator-service:8000']
+        metrics_path: '/metrics'
+        scrape_interval: 30s
+
+      - job_name: 'langchain-orchestrator'
+        static_configs:
+          - targets: ['langchain-orchestrator-service:8002']
+        metrics_path: '/metrics'
+        scrape_interval: 30s
+
+      - job_name: 'autogen-coordinator'
+        static_configs:
+          - targets: ['autogen-coordinator-service:8001']
+        metrics_path: '/metrics'
+        scrape_interval: 30s
+
+      # MCP Servers
+      - job_name: 'mcp-filesystem'
+        static_configs:
+          - targets: ['mcp-filesystem-service:3000']
+        metrics_path: '/metrics'
+        scrape_interval: 60s
+
+      - job_name: 'mcp-context7'
+        static_configs:
+          - targets: ['mcp-context7-service:3000']
+        metrics_path: '/metrics'
+        scrape_interval: 60s
+
+      - job_name: 'mcp-supermemory'
+        static_configs:
+          - targets: ['mcp-supermemory-service:3000']
+        metrics_path: '/metrics'
+        scrape_interval: 60s
+
+      - job_name: 'mcp-taskmanager'
+        static_configs:
+          - targets: ['mcp-taskmanager-service:3000']
+        metrics_path: '/metrics'
+        scrape_interval: 60s
+
+      # Flash Loan Services
+      - job_name: 'mcp-aave-flash-loan'
+        static_configs:
+          - targets: ['mcp-aave-flash-loan-service:3000']
+        metrics_path: '/metrics'
+        scrape_interval: 30s
+
+      - job_name: 'mcp-arbitrage-detector'
+        static_configs:
+          - targets: ['mcp-arbitrage-detector-service:3000']
+        metrics_path: '/metrics'
+        scrape_interval: 30s
+
+      - job_name: 'mcp-risk-analyzer'
+        static_configs:
+          - targets: ['mcp-risk-analyzer-service:3000']
+        metrics_path: '/metrics'
+        scrape_interval: 30s
+
+      # Infrastructure
+      - job_name: 'redis-exporter'
+        static_configs:
+          - targets: ['redis-exporter-service:9121']
+
+      - job_name: 'postgres-exporter'
+        static_configs:
+          - targets: ['postgres-exporter-service:9187']
+
+      - job_name: 'nginx-exporter'
+        static_configs:
+          - targets: ['nginx-exporter-service:9113']
+
+      # Kubernetes monitoring
+      - job_name: 'kubernetes-apiservers'
+        kubernetes_sd_configs:
+        - role: endpoints
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+          action: keep
+          regex: default;kubernetes;https
+
+      - job_name: 'kubernetes-nodes'
+        kubernetes_sd_configs:
+        - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+        - action: labelmap
+          regex: __meta_kubernetes_node_label_(.+)
+
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+        - role: pod
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+          action: keep
+          regex: true
+        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+          action: replace
+          target_label: __metrics_path__
+          regex: (.+)
+        - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+          action: replace
+          regex: ([^:]+)(?::\d+)?;(\d+)
+          replacement: $1:$2
+          target_label: __address__
+        - action: labelmap
+          regex: __meta_kubernetes_pod_label_(.+)
+        - source_labels: [__meta_kubernetes_namespace]
+          action: replace
+          target_label: kubernetes_namespace
+        - source_labels: [__meta_kubernetes_pod_name]
+          action: replace
+          target_label: kubernetes_pod_name
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: flash-loan-system
+  labels:
+    app: flash-loan-system
+    component: monitoring
+data:
+  alertmanager.yml: |
+    global:
+      smtp_smarthost: 'localhost:587'
+      smtp_from: 'alerts@flashloan-system.com'
+
+    route:
+      group_by: ['alertname']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 1h
+      receiver: 'web.hook'
+      routes:
+      - match:
+          severity: critical
+        receiver: 'critical-alerts'
+      - match:
+          severity: warning
+        receiver: 'warning-alerts'
+
+    receivers:
+    - name: 'web.hook'
+      webhook_configs:
+      - url: 'http://webhook-service:5000/webhook'
+
+    - name: 'critical-alerts'
+      email_configs:
+      - to: 'admin@flashloan-system.com'
+        subject: 'CRITICAL: Flash Loan System Alert'
+        body: |
+          Alert: {{ .GroupLabels.alertname }}
+          Description: {{ range .Alerts }}{{ .Annotations.description }}{{ end }}
+          Time: {{ .CommonAnnotations.timestamp }}
+          
+      webhook_configs:
+      - url: 'http://webhook-service:5000/critical'
+
+    - name: 'warning-alerts'
+      email_configs:
+      - to: 'ops@flashloan-system.com'
+        subject: 'WARNING: Flash Loan System Alert'
+        body: |
+          Alert: {{ .GroupLabels.alertname }}
+          Description: {{ range .Alerts }}{{ .Annotations.description }}{{ end }}
+          Time: {{ .CommonAnnotations.timestamp }}
+
+    inhibit_rules:
+    - source_match:
+        severity: 'critical'
+      target_match:
+        severity: 'warning'
+      equal: ['alertname', 'instance']

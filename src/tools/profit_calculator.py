@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from decimal import Decimal
+from typing import Dict, Any, Tuple
+import logging
 """
 Comprehensive profit calculator for Flash Loan Arbitrage System.
 Calculates net profit after all fees and costs.
 """
 
-import logging
-from typing import Dict, Any, Tuple
-from decimal import Decimal
 
 class ProfitCalculator:
     """Calculates accurate profits including all fees."""
@@ -13,7 +15,7 @@ class ProfitCalculator:
     def __init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
         
-    def calculate_net_profit(
+    def calculate_net_profit()
         self,
         trade_amount_usd: float,
         buy_price: float,
@@ -49,7 +51,7 @@ class ProfitCalculator:
         # ROI percentage
         roi_percentage = (net_profit / trade_amount_usd) * 100
         
-        return {
+        return {}
             "gross_profit": gross_profit,
             "aave_fee": aave_fee,
             "buy_dex_fee": buy_dex_fee,
@@ -60,4 +62,4 @@ class ProfitCalculator:
             "net_profit": net_profit,
             "roi_percentage": roi_percentage,
             "profitable": net_profit > 0
-        }
+        

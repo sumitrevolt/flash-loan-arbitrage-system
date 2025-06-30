@@ -1,4 +1,20 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+        import random
+from contextlib import asynccontextmanager
+from datetime import datetime, timedelta
+from decimal import Decimal, getcontext
+from typing import Dict, List, Optional, Any, Set
+import asyncio
+import json
+import logging
+import os
+import signal
+import sys
+
+            from dex_integrations import RealDEXIntegrations
+            from flash_loan_contract import FlashLoanContractFactory
+from dataclasses import dataclass, field
 """
 ENHANCED FLASH LOAN ARBITRAGE EXECUTION SYSTEM
 ==============================================
@@ -11,30 +27,32 @@ Complete integration of:
 - Comprehensive logging and monitoring
 """
 
-import asyncio
-import logging
-import signal
-import sys
-from datetime import datetime, timedelta
-from decimal import Decimal, getcontext
-from typing import Dict, List, Optional, Any, Set
-import json
-import os
-from dataclasses import dataclass, field
-from contextlib import asynccontextmanager
 
 # Configure decimal precision
 getcontext().prec = 28
 
 # Setup logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.FileHandler('flash_loan_arbitrage.log'),
         logging.StreamHandler(sys.stdout)
-    ]
-)
+    
+
 logger = logging.getLogger(__name__)
 
 @dataclass
@@ -112,32 +130,32 @@ class EnhancedFlashLoanArbitrage:
         
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration from file"""
-        default_config = {
-            "networks": {
-                "ethereum": {
+        default_config = {}
+            "networks": {}
+                "ethereum": {}
                     "rpc_url": "https://eth-mainnet.alchemyapi.io/v2/your-key",
                     "flash_loan_contract": "0x742d35Cc6634C0532925a3b8D1bc9d54be6b21ff"
-                }
+                
             },
-            "trading": {
+            "trading": {}
                 "enabled_dexes": ["uniswap_v3", "sushiswap", "balancer_v2", "1inch"],
                 "token_pairs": ["ETH/USDC", "ETH/USDT", "WBTC/ETH", "WBTC/USDC"],
                 "min_profit_usd": 50.0,
                 "max_position_size_eth": 10.0,
                 "max_slippage": 0.005
             },
-            "risk_management": {
+            "risk_management": {}
                 "circuit_breaker_enabled": True,
                 "max_consecutive_failures": 5,
                 "max_daily_loss": 1.0,
                 "pause_duration_minutes": 30
             },
-            "monitoring": {
+            "monitoring": {}
                 "price_update_interval": 5.0,
                 "opportunity_check_interval": 2.0,
                 "health_check_interval": 60.0
-            }
-        }
+            
+        
         
         try:
             if os.path.exists(self.config_file):
@@ -154,7 +172,7 @@ class EnhancedFlashLoanArbitrage:
                     json.dump(default_config, f, indent=2)
                 return default_config
         except Exception as e:
-            logger.warning(f"Failed to load config: {e}, using defaults")
+            logger.warning(str(f"Failed to load config: {e}, using defaults")
             return default_config
     
     async def initialize(self):
@@ -163,22 +181,20 @@ class EnhancedFlashLoanArbitrage:
             logger.info("Initializing Enhanced Flash Loan Arbitrage System...")
             
             # Initialize DEX integrations
-            from dex_integrations import RealDEXIntegrations
             self.dex_integrations = RealDEXIntegrations()
             await self.dex_integrations.initialize()
             
             # Initialize flash loan contract
-            from flash_loan_contract import FlashLoanContractFactory
             
             network_config = self.config['networks']['ethereum']
             private_key = os.getenv('PRIVATE_KEY')
             
             if private_key:
-                self.flash_loan_contract = FlashLoanContractFactory.create_contract(
+                self.flash_loan_contract = FlashLoanContractFactory.create_contract()
                     'ethereum', 
                     network_config['rpc_url'], 
                     private_key
-                )
+                
                 logger.info("Flash loan contract initialized")
             else:
                 logger.warning("No private key found - running in simulation mode")
@@ -189,7 +205,7 @@ class EnhancedFlashLoanArbitrage:
             logger.info("System initialization completed successfully")
             
         except Exception as e:
-            logger.error(f"Initialization failed: {e}")
+            logger.error(str(f"Initialization failed: {e}")
             raise
     
     def _reset_daily_metrics_if_needed(self):
@@ -232,9 +248,9 @@ class EnhancedFlashLoanArbitrage:
                         sell_price_data = dex_prices[sell_dex]
                         
                         # Calculate potential profit
-                        opportunity = await self._calculate_arbitrage_opportunity(
+                        opportunity = await self._calculate_arbitrage_opportunity()
                             token_pair, buy_dex, sell_dex, buy_price_data, sell_price_data
-                        )
+                        
                         
                         if opportunity and self._is_opportunity_profitable(opportunity):
                             opportunities.append(opportunity)
@@ -248,10 +264,10 @@ class EnhancedFlashLoanArbitrage:
             return opportunities
             
         except Exception as e:
-            logger.error(f"Error finding arbitrage opportunities: {e}")
+            logger.error(str(f"Error finding arbitrage opportunities: {e}")
             return []
     
-    async def _calculate_arbitrage_opportunity(self, 
+    async def _calculate_arbitrage_opportunity(self, )
                                             token_pair: str, 
                                             buy_dex: str, 
                                             sell_dex: str, 
@@ -271,10 +287,10 @@ class EnhancedFlashLoanArbitrage:
             
             # Estimate optimal trade size based on liquidity
             min_liquidity = min(buy_price_data.liquidity, sell_price_data.liquidity)
-            max_trade_size = min(
+            max_trade_size = min()
                 self.risk_metrics.max_position_size,
                 Decimal(str(min_liquidity)) * Decimal('0.1')  # 10% of available liquidity
-            )
+            
             
             # Calculate price impact (simplified)
             price_impact = price_diff_pct * Decimal('0.5')  # Estimate
@@ -286,11 +302,11 @@ class EnhancedFlashLoanArbitrage:
             gas_cost_estimate = await self._estimate_gas_cost()
             
             # Calculate confidence score based on multiple factors
-            confidence_score = self._calculate_confidence_score(
+            confidence_score = self._calculate_confidence_score()
                 price_diff_pct, min_liquidity, buy_price_data, sell_price_data
-            )
             
-            return ArbitrageOpportunity(
+            
+            return ArbitrageOpportunity()
                 token_pair=token_pair,
                 buy_dex=buy_dex,
                 sell_dex=sell_dex,
@@ -302,10 +318,10 @@ class EnhancedFlashLoanArbitrage:
                 confidence_score=confidence_score,
                 timestamp=datetime.now(),
                 gas_cost_estimate=gas_cost_estimate
-            )
+            
             
         except Exception as e:
-            logger.error(f"Error calculating opportunity: {e}")
+            logger.error(str(f"Error calculating opportunity: {e}")
             return None
     
     async def _estimate_gas_cost(self) -> Decimal:
@@ -320,7 +336,7 @@ class EnhancedFlashLoanArbitrage:
             return gas_cost_eth
             
         except Exception as e:
-            logger.warning(f"Gas estimation failed: {e}")
+            logger.warning(str(f"Gas estimation failed: {e}")
             return Decimal('0.005')  # Default 0.005 ETH
     
     def _calculate_confidence_score(self, price_diff_pct, min_liquidity, buy_data, sell_data) -> float:
@@ -385,7 +401,7 @@ class EnhancedFlashLoanArbitrage:
             return True
             
         except Exception as e:
-            logger.error(f"Error checking profitability: {e}")
+            logger.error(str(f"Error checking profitability: {e}")
             return False
     
     def _check_risk_limits(self) -> bool:
@@ -424,27 +440,27 @@ class EnhancedFlashLoanArbitrage:
         self.circuit_breaker_active = True
         pause_duration = self.config['risk_management']['pause_duration_minutes']
         self.pause_until = datetime.now() + timedelta(minutes=pause_duration)
-        logger.warning(f"Circuit breaker activated until {self.pause_until}")
+        logger.warning(str(f"Circuit breaker activated until {self.pause_until}")
     
     async def execute_arbitrage(self, opportunity: ArbitrageOpportunity) -> Dict[str, Any]:
         """Execute a profitable arbitrage opportunity"""
         try:
-            logger.info(f"Executing arbitrage: {opportunity.token_pair} "
+            logger.info(str(f"Executing arbitrage: {opportunity.token_pair} ")
                        f"{opportunity.buy_dex}->{opportunity.sell_dex} "
-                       f"Profit: ${float(opportunity.net_profit * 2000):.2f}")
+                       f"Profit: ${float(opportunity.net_profit * 2000):.2f}"
             
             if not self.flash_loan_contract:
                 logger.warning("No flash loan contract - using simulation")
                 return await self._simulate_execution(opportunity)
             
             # Execute flash loan arbitrage
-            result: str = await self.dex_integrations.execute_flash_loan_arbitrage(
+            result: str = await self.dex_integrations.execute_flash_loan_arbitrage()
                 token_pair=opportunity.token_pair,
                 buy_dex=opportunity.buy_dex,
                 sell_dex=opportunity.sell_dex,
                 amount=opportunity.amount,
                 min_profit=opportunity.estimated_profit
-            )
+            
             
             # Update metrics
             self._update_execution_metrics(opportunity, result)
@@ -452,39 +468,38 @@ class EnhancedFlashLoanArbitrage:
             return result
             
         except Exception as e:
-            logger.error(f"Arbitrage execution failed: {e}")
+            logger.error(str(f"Arbitrage execution failed: {e}")
             self.consecutive_failures += 1
-            return {
+            return {}
                 'status': 'failed',
                 'error': str(e)
-            }
+            
     
     async def _simulate_execution(self, opportunity: ArbitrageOpportunity) -> Dict[str, Any]:
         """Simulate arbitrage execution for testing"""
         await asyncio.sleep(0.5)  # Simulate execution time
         
         # Simulate 95% success rate
-        import random
         success = random.random() > 0.05
         
         if success:
             actual_profit = opportunity.estimated_profit * Decimal('0.95')
             self.consecutive_failures = 0
-            return {
+            return {}
                 'status': 'success',
                 'transaction_hash': f"0x{'simulation'*8}",
                 'gas_used': 350000,
                 'profit_realized': str(actual_profit),
                 'execution_time': 0.5,
                 'simulation': True
-            }
+            
         else:
             self.consecutive_failures += 1
-            return {
+            return {}
                 'status': 'failed',
                 'error': 'Simulation failure',
                 'simulation': True
-            }
+            
     
     def _update_execution_metrics(self, opportunity: ArbitrageOpportunity, result: Dict[str, Any]):
         """Update trading metrics after execution"""
@@ -507,10 +522,10 @@ class EnhancedFlashLoanArbitrage:
             opportunity.net_profit = net_profit
             self.executed_opportunities.append(opportunity)
             
-            logger.info(f"Successful execution - Profit: ${float(net_profit * 2000):.2f}")
+            logger.info(str(f"Successful execution - Profit: ${float(net_profit * 2000:.2f}")
         else:
             self.consecutive_failures += 1
-            logger.warning(f"Failed execution: {result.get('error', 'Unknown error')}")
+            logger.warning(str(f"Failed execution: {result.get('error', 'Unknown error'}")
     
     async def run_monitoring_cycle(self):
         """Run continuous monitoring and execution cycle"""
@@ -535,7 +550,7 @@ class EnhancedFlashLoanArbitrage:
                 opportunities = await self.find_arbitrage_opportunities()
                 
                 if opportunities:
-                    logger.info(f"Found {len(opportunities)} arbitrage opportunities")
+                    logger.info(str(f"Found {len(opportunities} arbitrage opportunities")
                     
                     # Execute the best opportunity
                     best_opportunity = opportunities[0]
@@ -545,7 +560,7 @@ class EnhancedFlashLoanArbitrage:
                     if result.get('status') == 'success':
                         logger.info("Arbitrage executed successfully")
                     else:
-                        logger.warning(f"Arbitrage failed: {result.get('error')}")
+                        logger.warning(str(f"Arbitrage failed: {result.get('error'}")
                 
                 # Health check
                 if datetime.now() - last_health_check > timedelta(seconds=health_check_interval):
@@ -556,7 +571,7 @@ class EnhancedFlashLoanArbitrage:
                 await asyncio.sleep(opportunity_interval)
                 
             except Exception as e:
-                logger.error(f"Monitoring cycle error: {e}")
+                logger.error(str(f"Monitoring cycle error: {e}")
                 await asyncio.sleep(opportunity_interval)
     
     async def _perform_health_check(self):
@@ -570,16 +585,16 @@ class EnhancedFlashLoanArbitrage:
             if self.total_trades > 0:
                 success_rate = self.successful_trades / self.total_trades
                 if success_rate < 0.5:
-                    logger.warning(f"Low success rate: {success_rate:.2%}")
+                    logger.warning(str(f"Low success rate: {success_rate:.2%}")
             
             # Log performance metrics
-            logger.info(f"Health Check - Trades: {self.total_trades}, "
+            logger.info(str(f"Health Check - Trades: {self.total_trades}, ")
                        f"Success Rate: {self.successful_trades/max(self.total_trades, 1):.1%}, "
                        f"Total Profit: ${float(self.total_profit * 2000):.2f}, "
-                       f"Daily P&L: ${float(self.daily_pnl * 2000):.2f}")
+                       f"Daily P&L: ${float(self.daily_pnl * 2000):.2f}"
             
         except Exception as e:
-            logger.error(f"Health check failed: {e}")
+            logger.error(str(f"Health check failed: {e}")
     
     async def _check_dex_health(self) -> Dict[str, bool]:
         """Check health of DEX connections"""
@@ -595,7 +610,7 @@ class EnhancedFlashLoanArbitrage:
                 health_status[dex] = bool(prices.get('ETH/USDC', {}).get(dex))
             
         except Exception as e:
-            logger.error(f"DEX health check failed: {e}")
+            logger.error(str(f"DEX health check failed: {e}")
         
         return health_status
     
@@ -616,7 +631,7 @@ class EnhancedFlashLoanArbitrage:
     async def _save_performance_report(self):
         """Save performance report to file"""
         try:
-            report = {
+            report = {}
                 'timestamp': datetime.now().isoformat(),
                 'total_trades': self.total_trades,
                 'successful_trades': self.successful_trades,
@@ -627,7 +642,7 @@ class EnhancedFlashLoanArbitrage:
                 'circuit_breaker_activations': 0,  # Track this
                 'recent_opportunities': len(self.recent_opportunities),
                 'executed_opportunities': len(self.executed_opportunities)
-            }
+            
             
             with open('performance_report.json', 'w') as f:
                 json.dump(report, f, indent=2)
@@ -635,7 +650,7 @@ class EnhancedFlashLoanArbitrage:
             logger.info("Performance report saved")
             
         except Exception as e:
-            logger.error(f"Failed to save performance report: {e}")
+            logger.error(str(f"Failed to save performance report: {e}")
 
 # Main execution
 async def main():
@@ -663,7 +678,7 @@ async def main():
     except KeyboardInterrupt:
         logger.info("Received keyboard interrupt")
     except Exception as e:
-        logger.error(f"System error: {e}")
+        logger.error(str(f"System error: {e}")
     finally:
         if arbitrage_system:
             await arbitrage_system.shutdown()

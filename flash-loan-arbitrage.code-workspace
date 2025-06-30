@@ -1,0 +1,45 @@
+{
+  "folders": [
+    {
+      "name": "Flash Loan Arbitrage",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "typescript.validate.enable": false,
+    "typescript.suggest.enabled": false,
+    "typescript.preferences.includePackageJsonAutoImports": "off",
+    "typescript.disableAutomaticTypeAcquisition": true,
+    "javascript.validate.enable": true,
+    "javascript.preferences.includePackageJsonAutoImports": "on",
+    "files.associations": {
+      "*.js": "javascript",
+      "*.json": "json",
+      "*.sol": "solidity"
+    },
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/cache": true,
+      "**/__pycache__": true,
+      "**/.mypy_cache": true,
+      "**/artifacts/build-info": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/cache": true,
+      "**/artifacts": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-vscode.vscode-json",
+      "ms-vscode.powershell",
+      "juanblanco.solidity"
+    ],
+    "unwantedRecommendations": [
+      "ms-vscode.vscode-typescript-next"
+    ]
+  }
+} 

@@ -1,11 +1,10 @@
-# Copyright Jonathan Hartley 2013. BSD 3-Clause license, see LICENSE file.
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import sys
-from unittest import TestCase, main
 
 from ..ansitowin32 import StreamWrapper, AnsiToWin32
 from .utils import pycharm, replace_by, replace_original_by, StreamTTY, StreamNonTTY
-
-
+from unittest import TestCase, main
 def is_a_tty(stream):
     return StreamWrapper(stream, None).isatty()
 

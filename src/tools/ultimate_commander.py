@@ -1,21 +1,23 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Any
+import argparse
+import asyncio
+import json
+import subprocess
+import sys
+import time
+
+from ultimate_langchain_coordinator import UltimateLangChainCoordinator
+import requests
 """
 Ultimate Flash Loan System Commander
 Command-line interface for managing all 21 MCP servers and AI agents
 """
 
-import asyncio
-import argparse
-import json
-import sys
-import time
-from datetime import datetime
-from pathlib import Path
-import requests
-import subprocess
-from typing import Dict, List, Any
 
-from ultimate_langchain_coordinator import UltimateLangChainCoordinator
 
 class FlashLoanCommander:
     """Command-line interface for the flash loan system"""
@@ -25,7 +27,7 @@ class FlashLoanCommander:
         
     async def deploy_system(self, args):
         """Deploy the entire system"""
-        print("🚀 Deploying Ultimate Flash Loan System...")
+        print("[INIT] Deploying Ultimate Flash Loan System...")
         print("=" * 60)
         
         # Clean deployment if requested
@@ -49,13 +51,13 @@ class FlashLoanCommander:
             
             # Show next steps
             if len(results['success']) == results['total']:
-                print("\\n🎉 All services deployed successfully!")
+                print("\\n[CELEBRATE] All services deployed successfully!")
                 print("\\nNext steps:")
                 print("  • Monitor service health: python ultimate_commander.py status")
                 print("  • View service logs: python ultimate_commander.py logs <service_name>")
                 print("  • Test system: python ultimate_commander.py test")
             else:
-                print("\\n⚠️  Some services failed to deploy")
+                print("\\n[WARN]  Some services failed to deploy")
                 print("\\nTroubleshooting:")
                 print("  • Check logs: python ultimate_commander.py logs")
                 print("  • Retry failed services: python ultimate_commander.py retry")
@@ -65,12 +67,12 @@ class FlashLoanCommander:
     
     async def stop_system(self, args):
         """Stop all system components"""
-        print("🛑 Stopping Ultimate Flash Loan System...")
+        print("[STOP] Stopping Ultimate Flash Loan System...")
         
         try:
             # Get all running containers
-            result: str = subprocess.run(['docker', 'ps', '-q', '--filter', 'name=mcp-', '--filter', 'name=ai-agent-'], 
-                                  capture_output=True, text=True)
+            result: str = subprocess.run(['docker', 'ps', '-q', '--filter', 'name=mcp-', '--filter', 'name=ai-agent-'], )
+                                  capture_output=True, text=True
             
             container_ids = result.stdout.strip().split('\\n') if result.stdout.strip() else []
             
@@ -89,16 +91,16 @@ class FlashLoanCommander:
                         if container_id:
                             subprocess.run(['docker', 'rm', container_id], capture_output=True)
                 
-                print("✅ System stopped successfully")
+                print("[OK] System stopped successfully")
             else:
                 print("ℹ️ No running containers found")
                 
         except Exception as e:
-            print(f"❌ Error stopping system: {e}")
+            print(f"[ERROR] Error stopping system: {e}")
     
     async def check_status(self, args):
         """Check system status"""
-        print("📊 Ultimate Flash Loan System Status")
+        print("[METRICS] Ultimate Flash Loan System Status")
         print("=" * 60)
         
         # Perform health check
@@ -109,7 +111,7 @@ class FlashLoanCommander:
         healthy_count = health_status.get('healthy_count', 0)
         total_count = health_status.get('total_count', 0)
         
-        status_icon = {
+        status_icon = {}
             'excellent': '🟢',
             'good': '🟡',
             'fair': '🟠',
@@ -118,46 +120,46 @@ class FlashLoanCommander:
         }.get(overall_health, '⚪')
         
         print(f"\\n{status_icon} Overall Health: {overall_health.upper()}")
-        print(f"📈 Services Online: {healthy_count}/{total_count} ({healthy_count/total_count*100:.1f}%)")
+        print(f"[GROWTH] Services Online: {healthy_count}/{total_count} ({healthy_count/total_count*100:.1f}%)")
         
         # Infrastructure status
         print("\\n🏗️ Infrastructure Services:")
         infra_status = health_status.get('infrastructure', {})
         for name, status in infra_status.items():
-            icon = '✅' if status.get('healthy', False) else '❌'
+            icon = '[OK]' if status.get('healthy', False) else '[ERROR]'
             port = status.get('port', 'N/A')
             print(f"   {icon} {name:20} Port: {port}")
           # MCP servers status
-        print("\\n🔧 MCP Servers:")
+        print("\\n[SETUP] MCP Servers:")
         services_status = health_status.get('services', {})
-        mcp_services = {k: v for k, v in services_status.items() 
-                       if self.coordinator.services.get(k) and self.coordinator.services[k].service_type == 'mcp'}
+        mcp_services = {k: v for k, v in services_status.items() }
+                       if self.coordinator.services.get(k) and self.coordinator.services[k].service_type == 'mcp'
         
         for name, status in mcp_services.items():
-            icon = '✅' if status.get('healthy', False) else '❌'
+            icon = '[OK]' if status.get('healthy', False) else '[ERROR]'
             port = status.get('port', 'N/A')
             role = status.get('role', 'N/A')
             print(f"   {icon} {name:20} Port: {port:5} Role: {role}")
           # AI agents status
         print("\\n🤖 AI Agents:")
-        ai_services = {k: v for k, v in services_status.items() 
-                      if self.coordinator.services.get(k) and self.coordinator.services[k].service_type == 'ai_agent'}
+        ai_services = {k: v for k, v in services_status.items() }
+                      if self.coordinator.services.get(k) and self.coordinator.services[k].service_type == 'ai_agent'
         
         for name, status in ai_services.items():
-            icon = '✅' if status.get('healthy', False) else '❌'
+            icon = '[OK]' if status.get('healthy', False) else '[ERROR]'
             port = status.get('port', 'N/A')
             role = status.get('role', 'N/A')
             print(f"   {icon} {name:20} Port: {port:5} Role: {role}")
         
         # Performance metrics
-        print("\\n📊 Performance Metrics:")
+        print("\\n[METRICS] Performance Metrics:")
         if healthy_count == total_count:
-            print("   🎯 All systems operational")
-            print("   🚀 Ready for flash loan operations")
+            print("   [TASK] All systems operational")
+            print("   [INIT] Ready for flash loan operations")
         else:
             failed_count = total_count - healthy_count
-            print(f"   ⚠️  {failed_count} services need attention")
-            print("   🔧 System requires maintenance")
+            print(f"   [WARN]  {failed_count} services need attention")
+            print("   [SETUP] System requires maintenance")
         
         return health_status
     
@@ -175,14 +177,14 @@ class FlashLoanCommander:
             elif service_name in self.coordinator.services:
                 container_name = self.coordinator.services[service_name].container_name
             else:
-                print(f"❌ Service '{service_name}' not found")
+                print(f"[ERROR] Service '{service_name}' not found")
                 return
             
             try:
                 # Get logs
                 tail_count = args.lines if hasattr(args, 'lines') else 50
-                result: str = subprocess.run(['docker', 'logs', '--tail', str(tail_count), container_name], 
-                                      capture_output=True, text=True)
+                result: str = subprocess.run(['docker', 'logs', '--tail', str(tail_count), container_name], )
+                                      capture_output=True, text=True
                 
                 if result.stdout:
                     print(result.stdout)
@@ -190,7 +192,7 @@ class FlashLoanCommander:
                     print("STDERR:", result.stderr)
                     
             except Exception as e:
-                print(f"❌ Error getting logs: {e}")
+                print(f"[ERROR] Error getting logs: {e}")
         else:
             print("📋 System Logs Overview")
             print("=" * 60)
@@ -206,8 +208,8 @@ class FlashLoanCommander:
                     else:
                         container_name = self.coordinator.services[service].container_name
                     
-                    result: str = subprocess.run(['docker', 'logs', '--tail', '10', container_name], 
-                                          capture_output=True, text=True)
+                    result: str = subprocess.run(['docker', 'logs', '--tail', '10', container_name], )
+                                          capture_output=True, text=True
                     
                     if result.stdout:
                         lines = result.stdout.split('\\n')[-5:]  # Last 5 lines
@@ -215,22 +217,22 @@ class FlashLoanCommander:
                             if line.strip():
                                 print(f"  {line}")
                 except Exception as e:
-                    print(f"  ❌ Error: {e}")
+                    print(f"  [ERROR] Error: {e}")
             
-            print(f"\\n💡 Use 'python ultimate_commander.py logs <service_name>' for specific service logs")
+            print(f"\\n[INFO] Use 'python ultimate_commander.py logs <service_name>' for specific service logs")
     
     async def test_system(self, args):
         """Test system functionality"""
         print("🧪 Testing Ultimate Flash Loan System")
         print("=" * 60)
         
-        test_results = {
+        test_results = {}
             'infrastructure_tests': {},
             'mcp_server_tests': {},
             'ai_agent_tests': {},
             'integration_tests': {},
             'overall_score': 0
-        }
+        
         
         total_tests = 0
         passed_tests = 0
@@ -241,22 +243,22 @@ class FlashLoanCommander:
             total_tests += 1
             try:
                 if name == 'redis':
-                    result: str = subprocess.run(['docker', 'exec', config.container_name, 'redis-cli', 'ping'], 
-                                          capture_output=True, text=True, timeout=10)
+                    result: str = subprocess.run(['docker', 'exec', config.container_name, 'redis-cli', 'ping'], )
+                                          capture_output=True, text=True, timeout=10
                     success = 'PONG' in result.stdout
                 elif name == 'postgres':
-                    result: str = subprocess.run(['docker', 'exec', config.container_name, 'pg_isready', '-U', 'postgres'], 
-                                          capture_output=True, text=True, timeout=10)
+                    result: str = subprocess.run(['docker', 'exec', config.container_name, 'pg_isready', '-U', 'postgres'], )
+                                          capture_output=True, text=True, timeout=10
                     success = 'accepting connections' in result.stdout
                 elif name == 'rabbitmq':
-                    result: str = subprocess.run(['docker', 'exec', config.container_name, 'rabbitmqctl', 'status'], 
-                                          capture_output=True, text=True, timeout=10)
+                    result: str = subprocess.run(['docker', 'exec', config.container_name, 'rabbitmqctl', 'status'], )
+                                          capture_output=True, text=True, timeout=10
                     success = result.returncode == 0
                 else:
                     success = False
                 
                 test_results['infrastructure_tests'][name] = success
-                status = '✅ PASS' if success else '❌ FAIL'
+                status = '[OK] PASS' if success else '[ERROR] FAIL'
                 print(f"  {status} {name}")
                 
                 if success:
@@ -264,12 +266,12 @@ class FlashLoanCommander:
                     
             except Exception as e:
                 test_results['infrastructure_tests'][name] = False
-                print(f"  ❌ FAIL {name} - {e}")
+                print(f"  [ERROR] FAIL {name} - {e}")
         
         # Test MCP servers
-        print("\\n🔧 Testing MCP Servers...")
-        mcp_services = {k: v for k, v in self.coordinator.services.items() 
-                       if v.service_type == 'mcp'}
+        print("\\n[SETUP] Testing MCP Servers...")
+        mcp_services = {k: v for k, v in self.coordinator.services.items() }
+                       if v.service_type == 'mcp'
         
         for name, config in list(mcp_services.items())[:5]:  # Test first 5
             total_tests += 1
@@ -278,7 +280,7 @@ class FlashLoanCommander:
                 success = response.status_code == 200
                 
                 test_results['mcp_server_tests'][name] = success
-                status = '✅ PASS' if success else '❌ FAIL'
+                status = '[OK] PASS' if success else '[ERROR] FAIL'
                 print(f"  {status} {name} (port {config.port})")
                 
                 if success:
@@ -286,12 +288,12 @@ class FlashLoanCommander:
                     
             except Exception as e:
                 test_results['mcp_server_tests'][name] = False
-                print(f"  ❌ FAIL {name} - {e}")
+                print(f"  [ERROR] FAIL {name} - {e}")
         
         # Test AI agents
         print("\\n🤖 Testing AI Agents...")
-        ai_services = {k: v for k, v in self.coordinator.services.items() 
-                      if v.service_type == 'ai_agent'}
+        ai_services = {k: v for k, v in self.coordinator.services.items() }
+                      if v.service_type == 'ai_agent'
         
         for name, config in ai_services.items():
             total_tests += 1
@@ -300,7 +302,7 @@ class FlashLoanCommander:
                 success = response.status_code == 200
                 
                 test_results['ai_agent_tests'][name] = success
-                status = '✅ PASS' if success else '❌ FAIL'
+                status = '[OK] PASS' if success else '[ERROR] FAIL'
                 print(f"  {status} {name} (port {config.port})")
                 
                 if success:
@@ -308,15 +310,15 @@ class FlashLoanCommander:
                     
             except Exception as e:
                 test_results['ai_agent_tests'][name] = False
-                print(f"  ❌ FAIL {name} - {e}")
+                print(f"  [ERROR] FAIL {name} - {e}")
         
         # Integration tests
         print("\\n🔗 Testing Integration...")
-        integration_tests = [
+        integration_tests = []
             ('coordinator_communication', 'http://localhost:3000/status'),
             ('ai_coordination', 'http://localhost:5001/status'),
             ('service_discovery', 'http://localhost:4001/status')
-        ]
+        
         
         for test_name, url in integration_tests:
             total_tests += 1
@@ -325,7 +327,7 @@ class FlashLoanCommander:
                 success = response.status_code == 200
                 
                 test_results['integration_tests'][test_name] = success
-                status = '✅ PASS' if success else '❌ FAIL'
+                status = '[OK] PASS' if success else '[ERROR] FAIL'
                 print(f"  {status} {test_name}")
                 
                 if success:
@@ -333,24 +335,24 @@ class FlashLoanCommander:
                     
             except Exception as e:
                 test_results['integration_tests'][test_name] = False
-                print(f"  ❌ FAIL {test_name} - {e}")
+                print(f"  [ERROR] FAIL {test_name} - {e}")
         
         # Calculate overall score
         test_results['overall_score'] = (passed_tests / total_tests * 100) if total_tests > 0 else 0
         
         # Print results
-        print(f"\\n📊 Test Results:")
+        print(f"\\n[METRICS] Test Results:")
         print(f"   Tests Passed: {passed_tests}/{total_tests}")
         print(f"   Success Rate: {test_results['overall_score']:.1f}%")
         
         if test_results['overall_score'] >= 90:
-            print("   Status: 🎉 EXCELLENT - System ready for production")
+            print("   Status: [CELEBRATE] EXCELLENT - System ready for production")
         elif test_results['overall_score'] >= 75:
-            print("   Status: ✅ GOOD - System operational with minor issues")
+            print("   Status: [OK] GOOD - System operational with minor issues")
         elif test_results['overall_score'] >= 50:
-            print("   Status: ⚠️ FAIR - System needs attention")
+            print("   Status: [WARN] FAIR - System needs attention")
         else:
-            print("   Status: ❌ POOR - System requires immediate fixes")
+            print("   Status: [ERROR] POOR - System requires immediate fixes")
         
         # Save test results
         test_file = f"test_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -364,22 +366,22 @@ class FlashLoanCommander:
     async def restart_service(self, args):
         """Restart a specific service"""
         service_name = args.service
-        print(f"🔄 Restarting service: {service_name}")
+        print(f"[SYNC] Restarting service: {service_name}")
         
         if service_name in self.coordinator.infrastructure:
             container_name = self.coordinator.infrastructure[service_name].container_name
         elif service_name in self.coordinator.services:
             container_name = self.coordinator.services[service_name].container_name
         else:
-            print(f"❌ Service '{service_name}' not found")
+            print(f"[ERROR] Service '{service_name}' not found")
             return
         
         try:
-            result: str = subprocess.run(['docker', 'restart', container_name], 
-                                  capture_output=True, text=True, timeout=60)
+            result: str = subprocess.run(['docker', 'restart', container_name], )
+                                  capture_output=True, text=True, timeout=60
             
             if result.returncode == 0:
-                print(f"✅ Service {service_name} restarted successfully")
+                print(f"[OK] Service {service_name} restarted successfully")
                 
                 # Wait and check health
                 print("⏳ Checking service health...")
@@ -390,22 +392,22 @@ class FlashLoanCommander:
                     try:
                         response = requests.get(f'http://localhost:{config.port}/health', timeout=10)
                         if response.status_code == 200:
-                            print(f"✅ Service {service_name} is healthy")
+                            print(f"[OK] Service {service_name} is healthy")
                         else:
-                            print(f"⚠️ Service {service_name} health check failed")
+                            print(f"[WARN] Service {service_name} health check failed")
                     except:
-                        print(f"⚠️ Cannot reach service {service_name}")
+                        print(f"[WARN] Cannot reach service {service_name}")
                 else:
                     print(f"ℹ️ Infrastructure service {service_name} restarted")
             else:
-                print(f"❌ Failed to restart {service_name}: {result.stderr}")
+                print(f"[ERROR] Failed to restart {service_name}: {result.stderr}")
                 
         except Exception as e:
-            print(f"❌ Error restarting service: {e}")
+            print(f"[ERROR] Error restarting service: {e}")
     
     async def interactive_mode(self):
         """Interactive command mode"""
-        print("🎮 Ultimate Flash Loan System - Interactive Mode")
+        print("[GAME] Ultimate Flash Loan System - Interactive Mode")
         print("=" * 60)
         print("Available commands:")
         print("  deploy    - Deploy the system")
@@ -420,7 +422,7 @@ class FlashLoanCommander:
         
         while True:
             try:
-                command = input("🚀 flashloan> ").strip().lower()
+                command = input("[INIT] flashloan> ").strip().lower()
                 
                 if command == 'exit' or command == 'quit':
                     print("👋 Goodbye!")
@@ -451,7 +453,7 @@ class FlashLoanCommander:
                     args = argparse.Namespace(service=service_name, lines=50)
                     await self.show_logs(args)
                 else:
-                    print(f"❌ Unknown command: {command}")
+                    print(f"[ERROR] Unknown command: {command}")
                     print("Type 'help' for available commands")
                 
                 print()  # Empty line for readability
@@ -460,18 +462,18 @@ class FlashLoanCommander:
                 print("\\n👋 Goodbye!")
                 break
             except Exception as e:
-                print(f"❌ Error: {e}")
+                print(f"[ERROR] Error: {e}")
     
     def print_deployment_results(self, results: Dict[str, Any]):
         """Print deployment results in a formatted way"""
-        print("\\n📊 Deployment Results:")
-        print(f"   ✅ Successfully deployed: {len(results['success'])}")
+        print("\\n[METRICS] Deployment Results:")
+        print(f"   [OK] Successfully deployed: {len(results['success'])}")
         if results['success']:
             for service in results['success']:
                 print(f"      • {service}")
         
         if results['failed']:
-            print(f"   ❌ Failed to deploy: {len(results['failed'])}")
+            print(f"   [ERROR] Failed to deploy: {len(results['failed'])}")
             for service in results['failed']:
                 print(f"      • {service}")
         
@@ -481,7 +483,7 @@ class FlashLoanCommander:
                 print(f"      • {service}")
         
         print(f"\\n⏱️ Total deployment time: {results['duration']:.1f} seconds")
-        print(f"📈 Success rate: {len(results['success'])/results['total']*100:.1f}%")
+        print(f"[GROWTH] Success rate: {len(results['success'])/results['total']*100:.1f}%")
 
 async def main():
     """Main function"""
@@ -542,7 +544,7 @@ async def main():
     except KeyboardInterrupt:
         print("\\n👋 Operation cancelled by user")
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[ERROR] Error: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

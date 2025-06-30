@@ -1,20 +1,23 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Dict, Any, Optional, Tuple
+import json
+import logging
+import math
+import os
+import time
+
+    from src.utils.web3_provider import Web3, TxParams, Wei, ChecksumAddress
+    from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
 """
 Dynamic slippage calculation module for flash loan arbitrage.
 This module provides functions to calculate optimal slippage tolerance
 based on token volatility, trade size, and market conditions.
 """
 
-import time
-import logging
-import math
-from typing import Dict, Any, Optional, Tuple
-import json
-import os
 
 # Import from central web3_provider - no mock fallback
 try:
-    from src.utils.web3_provider import Web3, TxParams, Wei, ChecksumAddress
-    from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
     WEB3_IMPORTED = True
 except ImportError as e:
     logging.getLogger(__name__).error(f"Failed to import Web3: {e}")
@@ -49,16 +52,16 @@ class DynamicSlippageCalculator:
                 with open(self.config_path, 'r') as f:
                     return json.load(f)
         except Exception as e:
-            self.logger.error(f"Error loading slippage config: {e}")
+            self.logger.error(str(f"Error loading slippage config: {e}")
             
         # Default configuration
-        return {
+        return {}
             "base_slippage": 0.5,  # 0.5% base slippage
             "max_slippage": 3.0,   # 3% maximum slippage
             "volatility_factor": 0.5,  # How much volatility affects slippage
             "size_factor": 0.3,    # How much trade size affects slippage
             "gas_factor": 0.2,     # How much gas price affects slippage
-            "token_specific_adjustments": {
+            "token_specific_adjustments": {}
                 "WETH": 0.8,  # Reduce slippage for stable tokens
                 "WBTC": 0.8,
                 "USDC": 0.5,
@@ -70,23 +73,23 @@ class DynamicSlippageCalculator:
                 "UNI": 1.1,
                 "SUSHI": 1.2
             },
-            "dex_specific_adjustments": {
+            "dex_specific_adjustments": {}
                 "QuickSwap": 1.0,
                 "SushiSwap": 1.1,
                 "UniswapV3": 0.9
-            }
-        }
+            
+        
         
     def save_config(self):
         """Save the current configuration to file."""
         try:
             with open(self.config_path, 'w') as f:
                 json.dump(self.config, f, indent=2)
-            self.logger.info(f"Saved slippage configuration to {self.config_path}")
+            self.logger.info(str(f"Saved slippage configuration to {self.config_path}")
         except Exception as e:
-            self.logger.error(f"Error saving slippage config: {e}")
+            self.logger.error(str(f"Error saving slippage config: {e}")
             
-    def calculate_slippage(
+    def calculate_slippage()
         self, 
         token_symbol: str, 
         trade_size_usd: float, 
@@ -140,9 +143,9 @@ class DynamicSlippageCalculator:
         buy_slippage = min(buy_slippage, max_slippage)
         sell_slippage = min(sell_slippage, max_slippage)
         
-        self.logger.info(f"Calculated slippage for {token_symbol}: buy={buy_slippage:.2f}%, sell={sell_slippage:.2f}%")
-        self.logger.debug(f"Slippage components - Base: {base_slippage}, Volatility: {volatility_component:.2f}, " +
-                         f"Size: {size_component:.2f}, Gas: {gas_component:.2f}, Token Adj: {token_adjustment}")
+        self.logger.info(str(f"Calculated slippage for {token_symbol}: buy={buy_slippage:.2f}%, sell={sell_slippage:.2f}%")
+        self.logger.debug(str(f"Slippage components - Base: {base_slippage}, Volatility: {volatility_component:.2f}, ") +)
+                         f"Size: {size_component:.2f}, Gas: {gas_component:.2f}, Token Adj: {token_adjustment}"
         
         return buy_slippage, sell_slippage
         
@@ -204,11 +207,11 @@ class DynamicSlippageCalculator:
                 price = self._fetch_real_dex_price(token_symbol, dex_name)
                 if price and price > 0:
                     prices[dex_name] = price
-                    self.logger.debug(f"Real price from {dex_name} for {token_symbol}: ${price:.6f}")
+                    self.logger.debug(str(f"Real price from {dex_name} for {token_symbol}: ${price:.6f}")
                 else:
-                    self.logger.warning(f"Could not get real price from {dex_name} for {token_symbol}")
+                    self.logger.warning(str(f"Could not get real price from {dex_name} for {token_symbol}")
             except Exception as e:
-                self.logger.error(f"Error fetching real price from {dex_name} for {token_symbol}: {e}")
+                self.logger.error(str(f"Error fetching real price from {dex_name} for {token_symbol}: {e}")
                 
         return prices
     
@@ -226,7 +229,7 @@ class DynamicSlippageCalculator:
         """
         # TODO: Implement actual DEX price fetching here
         # This should query real DEX contracts or APIs
-        self.logger.info(f"Fetching real price for {token_symbol} from {dex_name}")
+        self.logger.info(str(f"Fetching real price for {token_symbol} from {dex_name}")
         
         # For now, return None to indicate real implementation needed
         return None

@@ -1,37 +1,55 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+    import random
+from datetime import datetime
+from decimal import Decimal, getcontext
+from pathlib import Path
+from typing import Dict, Any, List
+import asyncio
+import json
+import logging
+import os
+import platform
+import threading
+import time
+
+            from { opacity: 0; transform: translateY(20px); }
+        import requests
+    from dex_price_monitor import price_monitor
+from dataclasses import dataclass
+from flask import Flask, render_template, jsonify, request
+from flask_cors import CORS
+from flask_socketio import SocketIO, emit
+import aiohttp
 """
 Enhanced MCP Dashboard with Chat Interface and DEX Price Monitoring
 Real-time monitoring dashboard with integrated chat and DEX price monitoring
 Port 8004 - Main MCP Dashboard with DEX Integration
 """
 
-import threading
-import time
-import asyncio
-import os
-import logging
-import requests
-from datetime import datetime
-from flask import Flask, render_template, jsonify, request
-from flask_socketio import SocketIO, emit  # type: ignore
-from flask_cors import CORS
-import aiohttp
-from pathlib import Path
-from typing import Dict, Any, List
-from decimal import Decimal, getcontext
-from dataclasses import dataclass
-import json
 
 # Set high precision for financial calculations
 getcontext().prec = 28
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # DEX Price Monitor imports
 try:
-    from dex_price_monitor import price_monitor
     dex_monitor_available = True
 except ImportError:
     logger.warning("DEX price monitor not available")
@@ -74,7 +92,6 @@ class ArbitrageMetrics:
     execution_time_avg: float = 0.0
 
 # Fix for Windows event loop issue
-import platform
 if platform.system() == 'Windows':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
@@ -92,7 +109,7 @@ arbitrage_metrics = ArbitrageMetrics()
 live_opportunities: List[ArbitrageOpportunity] = []
 
 # Enhanced arbitrage calculation state
-arbitrage_stats: Dict[str, Any] = {
+arbitrage_stats: Dict[str, Any] = {}
     "total_opportunities": 0,
     "profitable_opportunities": 0,
     "average_profit": 0.0,
@@ -105,16 +122,16 @@ arbitrage_stats: Dict[str, Any] = {
     "liquidity_analysis": {},
     "price_impact_analysis": {},
     "slippage_analysis": {}
-}
+
 
 # MCP Server URLs
-MCP_SERVERS = {
+MCP_SERVERS = {}
     'copilot': 'http://localhost:8003',  # Enhanced Copilot MCP Server
     'foundry': 'http://localhost:8001',  # Enhanced Foundry MCP Server
     'unified': 'http://localhost:8000',  # Unified Flash Loan MCP Server
     'production': 'http://localhost:8002',  # Production MCP Server (placeholder)
     'dex-price': 'http://localhost:8008',  # DEX Price Monitor MCP Server
-}
+
 
 COPILOT_URL = os.getenv("COPILOT_MCP_URL", "http://localhost:8003/chat")
 FOUNDRY_URL = os.getenv("FOUNDRY_MCP_URL", "http://localhost:8001/chat")
@@ -123,8 +140,8 @@ PRODUCTION_URL = os.getenv("PRODUCTION_MCP_URL", "http://localhost:8002/chat")
 DEX_PRICE_URL = os.getenv("DEX_PRICE_MCP_URL", "http://localhost:8008")
 
 # Update MCP server configuration to match actual running servers
-mcp_servers: Dict[str, Dict[str, Any]] = {
-    "copilot-agent": {
+mcp_servers: Dict[str, Dict[str, Any]] = {}
+    "copilot-agent": {}
         "name": "Enhanced Copilot Agent",
         "status": "running",
         "port": 8003,
@@ -139,7 +156,7 @@ mcp_servers: Dict[str, Dict[str, Any]] = {
         "health": {"status": "healthy", "uptime": "2h 15m"},
         "url": "http://localhost:8001/chat"
     },
-    "unified-server": {
+    "unified-server": {}
         "name": "Unified Flash Loan MCP Server",
         "status": "running",
         "port": 8000,
@@ -147,7 +164,7 @@ mcp_servers: Dict[str, Dict[str, Any]] = {
         "health": {"status": "healthy", "uptime": "2h 15m"},
         "url": "http://localhost:8000/chat"
     },
-    "production-server": {
+    "production-server": {}
         "name": "Production MCP Server",
         "status": "stopped",
         "port": 8002,
@@ -155,7 +172,7 @@ mcp_servers: Dict[str, Dict[str, Any]] = {
         "health": {"status": "offline", "uptime": "0m"},
         "url": "http://localhost:8002/chat"
     },
-    "flash-loan": {
+    "flash-loan": {}
         "name": "Flash Loan Revenue Bot",
         "status": "stopped",
         "port": 5000,
@@ -170,17 +187,17 @@ mcp_servers: Dict[str, Dict[str, Any]] = {
         "health": {"status": "healthy", "uptime": "1h 45m"},
         "url": "http://localhost:8007/chat"
     },
-    "dex-price-monitor": {
+    "dex-price-monitor": {}
         "name": "DEX Price Monitor",
         "status": "running",
         "port": 8008,
         "connected": True,
         "health": {"status": "healthy", "uptime": "1h 30m"},
         "url": "http://localhost:8008/dashboard-data"
-    }
-}
+    
 
-system_metrics: Dict[str, Any] = {
+
+system_metrics: Dict[str, Any] = {}
     "cpu_usage": 45.2,
     "memory_usage": 62.8,
     "network_io": {"in": 125.5, "out": 89.3},
@@ -195,10 +212,10 @@ system_metrics: Dict[str, Any] = {
     "active_opportunities": 0,
     "best_opportunity": 0.0,
     "dex_monitor_status": "running"
-}
 
-active_tasks: List[Dict[str, Any]] = [
-    {
+
+active_tasks: List[Dict[str, Any]] = []
+    {}
         "id": "task-001",
         "server": "copilot-agent",
         "type": "code_optimization",
@@ -207,7 +224,7 @@ active_tasks: List[Dict[str, Any]] = [
         "started": "2025-01-06T09:30:00",
         "eta": "3 minutes"
     },
-    {
+    {}
         "id": "task-002",
         "server": "foundry-server",
         "type": "contract_deployment",
@@ -215,8 +232,8 @@ active_tasks: List[Dict[str, Any]] = [
         "progress": 100,
         "started": "2025-01-06T09:25:00",
         "completed": "2025-01-06T09:28:00"
-    }
-]
+    
+
 
 # Dashboard routes
 @app.route('/')
@@ -257,7 +274,7 @@ def get_dex_prices():
         else:
             return jsonify({'error': 'DEX price service unavailable'}), 503
     except Exception as e:
-        logger.error(f"Error fetching DEX prices: {e}")
+        logger.error(str(f"Error fetching DEX prices: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/dex/opportunities')
@@ -272,7 +289,7 @@ def get_arbitrage_opportunities():
         else:
             return jsonify({'opportunities': []}), 200
     except Exception as e:
-        logger.error(f"Error fetching arbitrage opportunities: {e}")
+        logger.error(str(f"Error fetching arbitrage opportunities: {e}")
         return jsonify({'opportunities': []}), 200
 
 @app.route('/api/dex/dashboard-data')
@@ -283,15 +300,15 @@ def get_dex_dashboard_data():
         if response.status_code == 200:
             return response.json()
         else:
-            return jsonify({
+            return jsonify({)}
                 'prices': {},
                 'opportunities': [],
                 'dex_stats': {},
                 'monitoring_status': 'unavailable'
             }), 200
     except Exception as e:
-        logger.error(f"Error fetching DEX dashboard data: {e}")
-        return jsonify({
+        logger.error(str(f"Error fetching DEX dashboard data: {e}")
+        return jsonify({)}
             'prices': {},
             'opportunities': [],
             'dex_stats': {},
@@ -309,7 +326,7 @@ def dex_control(action: str):
         else:
             return jsonify({'success': False, 'error': 'DEX service unavailable'}), 503
     except Exception as e:
-        logger.error(f"Error controlling DEX service: {e}")
+        logger.error(str(f"Error controlling DEX service: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # Chat proxy endpoint for direct API access
@@ -330,15 +347,14 @@ def copilot_chat():
             return jsonify({'error': 'Missing message'}), 400
 
         # Use requests for synchronous HTTP call
-        import requests
         
         # Forward to Copilot MCP
         try:
-            response = requests.post(
+            response = requests.post()
                 COPILOT_URL,
                 json={"message": user_msg},
                 timeout=30
-            )
+            
             
             if response.status_code != 200:
                 return jsonify({'error': 'Copilot MCP error'}), 502
@@ -352,7 +368,7 @@ def copilot_chat():
         return jsonify({"answer": answer})
         
     except Exception as e:
-        logger.error(f"Error in copilot_chat endpoint: {e}")
+        logger.error(str(f"Error in copilot_chat endpoint: {e}")
         return jsonify({'error': str(e)}), 500
 
 # WebSocket events
@@ -360,7 +376,7 @@ def copilot_chat():
 def handle_connect() -> None:
     """Handle client connection"""
     sid = getattr(request, 'sid', 'unknown')
-    logger.info(f"Client connected: {sid}")
+    logger.info(str(f"Client connected: {sid}")
     emit('connection_status', {'status': 'connected', 'sid': sid})
     
     # Send initial data
@@ -377,7 +393,7 @@ def handle_connect() -> None:
             emit('arbitrage_opportunities_update', dex_data.get('opportunities', []))
             emit('dex_stats_update', dex_data.get('dex_stats', {}))
     except Exception as e:
-        logger.warning(f"Could not fetch initial DEX data: {e}")
+        logger.warning(str(f"Could not fetch initial DEX data: {e}")
         emit('dex_prices_update', {})
         emit('arbitrage_opportunities_update', [])
         emit('dex_stats_update', {})
@@ -386,7 +402,7 @@ def handle_connect() -> None:
 def handle_disconnect() -> None:
     """Handle client disconnection"""
     sid = getattr(request, 'sid', 'unknown')
-    logger.info(f"Client disconnected: {sid}")
+    logger.info(str(f"Client disconnected: {sid}")
 
 @socketio.on('server_action')
 def handle_server_action(data: Dict[str, Any]) -> None:
@@ -415,10 +431,10 @@ def handle_server_action(data: Dict[str, Any]) -> None:
             socketio.start_background_task(restart_server, server_id)
         
         socketio.emit('servers_update', mcp_servers, to='/')  # type: ignore
-        emit('action_result', {
+        emit('action_result', {)}
             'success': True,
             'message': f"Server {server_id} {action} successful"
-        })
+        
 
 @socketio.on('chat_message')
 def handle_chat_message(data: Dict[str, Any]) -> None:
@@ -426,30 +442,30 @@ def handle_chat_message(data: Dict[str, Any]) -> None:
     message = data.get('message', '')
     user = data.get('user', 'Anonymous')
     
-    logger.info(f"📩 Received chat message from {user}: {message}")
+    logger.info(str(f"📩 Received chat message from {user}: {message}")
     
     if message:
         timestamp = datetime.now().isoformat()
-        chat_entry: Dict[str, Any] = {
+        chat_entry: Dict[str, Any] = {}
             'id': f"msg-{len(chat_history)}",
             'user': user,
             'message': message,
             'timestamp': timestamp,
             'type': 'user'
-        }
+        
         
         chat_history.append(chat_entry)
-        logger.info(f"📤 Broadcasting user message to all clients")
+        logger.info(str(f"📤 Broadcasting user message to all clients")
         
         # Broadcast user message to all clients
         socketio.emit('new_message', chat_entry, to='/')  # type: ignore
         
         # Process commands if message starts with /
         if message.startswith('/'):
-            logger.info(f"🔧 Processing command: {message}")
+            logger.info(str(f"[SETUP] Processing command: {message}")
             process_chat_command(message, user)
         else:
-            logger.info(f"🤖 Sending to MCP servers for AI response")
+            logger.info(str(f"🤖 Sending to MCP servers for AI response")
             # Send message to MCP servers for AI-powered response
             socketio.start_background_task(handle_mcp_chat_sync, message, user)
 
@@ -461,7 +477,7 @@ def handle_execute_task(data: Dict[str, Any]) -> None:
     parameters = data.get('parameters', {})
     
     task_id = f"task-{len(active_tasks) + 1:03d}"
-    new_task: Dict[str, Any] = {
+    new_task: Dict[str, Any] = {}
         'id': task_id,
         'server': server_id,
         'type': task_type,
@@ -469,7 +485,7 @@ def handle_execute_task(data: Dict[str, Any]) -> None:
         'progress': 0,
         'started': datetime.now().isoformat(),
         'parameters': parameters
-    }
+    
     
     active_tasks.append(new_task)
     socketio.emit('tasks_update', active_tasks, to='/')  # type: ignore
@@ -493,36 +509,36 @@ def handle_mcp_chat_sync(message: str, user: str) -> None:
             # No event loop exists, create a new one
             asyncio.run(process_mcp_chat_message(message, user))
     except Exception as e:
-        logger.error(f"Error in sync chat handler: {e}")
+        logger.error(str(f"Error in sync chat handler: {e}")
         # Fallback to local processing
         local_response = process_local_chat_response(message)
-        bot_response: Dict[str, Any] = {
+        bot_response: Dict[str, Any] = {}
             'id': f"msg-{len(chat_history)}",
             'user': 'Local Assistant',
             'message': local_response,
             'timestamp': datetime.now().isoformat(),
             'type': 'system'
-        }
+        
         chat_history.append(bot_response)
         socketio.emit('new_message', bot_response, to='/')  # type: ignore
 
 async def process_mcp_chat_message(message: str, user: str) -> None:
     """Process chat message with MCP servers for AI-powered responses"""
     try:
-        logger.info(f"🤖 Processing MCP chat message: {message}")
+        logger.info(str(f"🤖 Processing MCP chat message: {message}")
         # Try Copilot MCP Server first (primary AI assistant)
         copilot_response = await query_mcp_server("http://localhost:8003/chat", message, "Enhanced Copilot")
         
         if copilot_response and copilot_response.get('success'):
-            logger.info(f"✅ Got response from Copilot MCP server")
-            bot_response: Dict[str, Any] = {
+            logger.info(str(f"[OK] Got response from Copilot MCP server")
+            bot_response: Dict[str, Any] = {}
                 'id': f"msg-{len(chat_history)}",
                 'user': 'Enhanced Copilot Agent',
                 'message': copilot_response.get('response', 'No response available'),                'timestamp': datetime.now().isoformat(),
                 'type': 'assistant'
-            }
+            
             chat_history.append(bot_response)
-            logger.info(f"📤 Emitting Copilot response to all clients: {bot_response['message'][:100]}...")
+            logger.info(str(f"📤 Emitting Copilot response to all clients: {bot_response['message'][:100]}...")
             socketio.emit('new_message', bot_response, to='/')  # type: ignore
             return
         
@@ -530,13 +546,13 @@ async def process_mcp_chat_message(message: str, user: str) -> None:
         foundry_response = await query_mcp_server("http://localhost:8001/chat", message, "Foundry")
         
         if foundry_response and foundry_response.get('success'):
-            bot_response: Dict[str, Any] = {
+            bot_response: Dict[str, Any] = {}
                 'id': f"msg-{len(chat_history)}",
                 'user': 'Foundry MCP Server',
                 'message': foundry_response.get('response', 'No response available'),
                 'timestamp': datetime.now().isoformat(),
                 'type': 'assistant'
-            }
+            
             chat_history.append(bot_response)
             socketio.emit('new_message', bot_response, to='/')  # type: ignore
             return
@@ -544,38 +560,38 @@ async def process_mcp_chat_message(message: str, user: str) -> None:
         unified_response = await query_mcp_server("http://localhost:8000/chat", message, "Unified")
         
         if unified_response and unified_response.get('success'):
-            bot_response: Dict[str, Any] = {
+            bot_response: Dict[str, Any] = {}
                 'id': f"msg-{len(chat_history)}",
                 'user': 'Unified Flash Loan Server',
                 'message': unified_response.get('response', 'No response available'),
                 'timestamp': datetime.now().isoformat(),
                 'type': 'assistant'
-            }
+            
             chat_history.append(bot_response)
             socketio.emit('new_message', bot_response, to='/')  # type: ignore
             return
         
         # Fallback to local processing if MCP servers are unavailable
         local_response = process_local_chat_response(message)
-        bot_response: Dict[str, Any] = {
+        bot_response: Dict[str, Any] = {}
             'id': f"msg-{len(chat_history)}",
             'user': 'Local Assistant',
             'message': local_response,
             'timestamp': datetime.now().isoformat(),
             'type': 'system'
-        }
+        
         chat_history.append(bot_response)
         socketio.emit('new_message', bot_response, to='/')  # type: ignore
         
     except Exception as e:
-        logger.error(f"Error processing MCP chat message: {e}")
-        error_response: Dict[str, Any] = {
+        logger.error(str(f"Error processing MCP chat message: {e}")
+        error_response: Dict[str, Any] = {}
             'id': f"msg-{len(chat_history)}",
             'user': 'System',
             'message': f"Sorry, I encountered an error: {str(e)}",
             'timestamp': datetime.now().isoformat(),
             'type': 'error'
-        }
+        
         chat_history.append(error_response)
         socketio.emit('new_message', error_response, to='/')  # type: ignore
 
@@ -583,20 +599,20 @@ async def query_mcp_server(url: str, message: str, server_name: str) -> Dict[str
     """Query an MCP server with a message"""
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(
+            async with session.post()
                 url,
                 json={'message': message, 'user_id': 'dashboard_user'},
                 timeout=aiohttp.ClientTimeout(total=15)
             ) as response:
                 if response.status == 200:
                     data = await response.json()
-                    logger.info(f"Successfully queried {server_name} MCP server")
+                    logger.info(str(f"Successfully queried {server_name} MCP server")
                     return data
                 else:
-                    logger.warning(f"{server_name} MCP server returned status {response.status}")
+                    logger.warning(str(f"{server_name} MCP server returned status {response.status}")
                     return {'success': False, 'error': f"HTTP {response.status}"}
     except Exception as e:
-        logger.warning(f"Could not reach {server_name} MCP server: {e}")
+        logger.warning(str(f"Could not reach {server_name} MCP server: {e}")
         return {'success': False, 'error': str(e)}
 
 def process_local_chat_response(message: str) -> str:
@@ -613,7 +629,7 @@ def process_local_chat_response(message: str) -> str:
                 opportunities = data.get('opportunities', [])
                 
                 if prices:
-                    price_summary = "📊 **Current DEX Prices:**\n\n"
+                    price_summary = "[METRICS] **Current DEX Prices:**\n\n"
                     for pair, pair_data in prices.items():
                         price_summary += f"**{pair}:**\n"
                         for dex, dex_data in pair_data.items():
@@ -621,17 +637,17 @@ def process_local_chat_response(message: str) -> str:
                         price_summary += "\n"
                     
                     if opportunities:
-                        price_summary += f"\n🎯 **Active Opportunities:** {len(opportunities)}\n"
+                        price_summary += f"\n[TASK] **Active Opportunities:** {len(opportunities)}\n"
                         best_op = max(opportunities, key=lambda x: Any: Any: x.get('net_profit', 0))
                         price_summary += f"• Best: {best_op['token_pair']} - ${best_op['net_profit']:.2f} profit\n"
                     
                     return price_summary
                 else:
-                    return "📊 DEX price monitoring is active but no current price data available. Please check if the DEX Price Monitor server is running on port 8008."
+                    return "[METRICS] DEX price monitoring is active but no current price data available. Please check if the DEX Price Monitor server is running on port 8008."
             else:
-                return "❌ DEX Price Monitor service is not responding. Please ensure the DEX Price MCP Server is running on port 8008."
+                return "[ERROR] DEX Price Monitor service is not responding. Please ensure the DEX Price MCP Server is running on port 8008."
         except Exception as e:
-            return f"⚠️ Could not fetch DEX prices: {str(e)}\n\nTo enable DEX price monitoring:\n1. Start the DEX Price MCP Server on port 8008\n2. Ensure dex_price_monitor.py is running\n3. Check network connectivity"
+            return f"[WARN] Could not fetch DEX prices: {str(e)}\n\nTo enable DEX price monitoring:\n1. Start the DEX Price MCP Server on port 8008\n2. Ensure dex_price_monitor.py is running\n3. Check network connectivity"
     
     if any(word in message_lower for word in ['arbitrage', 'opportunity', 'opportunities', 'profit']):
         try:
@@ -640,26 +656,26 @@ def process_local_chat_response(message: str) -> str:
                 opportunities = response.json().get('opportunities', [])
                 
                 if opportunities:
-                    arb_summary = f"🎯 **Arbitrage Opportunities Found: {len(opportunities)}**\n\n"
+                    arb_summary = f"[TASK] **Arbitrage Opportunities Found: {len(opportunities)}**\n\n"
                     
                     # Show top 3 opportunities
                     top_ops = sorted(opportunities, key=lambda x: Any: Any: x.get('net_profit', 0), reverse=True)[:3]
                     
                     for i, op in enumerate(top_ops, 1):
-                        alert_emoji = "🚨" if op.get('alert_level') == 'high' else "⚡" if op.get('alert_level') == 'medium' else "💡"
+                        alert_emoji = "[ALERT]" if op.get('alert_level') == 'high' else "[FAST]" if op.get('alert_level') == 'medium' else "[INFO]"
                         arb_summary += f"**{i}. {alert_emoji} {op['token_pair']}**\n"
                         arb_summary += f"• Route: {op['buy_dex']} → {op['sell_dex']}\n"
                         arb_summary += f"• Net Profit: ${op['net_profit']:.2f} ({op['profit_percentage']:.2f}%)\n"
                         arb_summary += f"• Trade Amount: ${op['trade_amount']:.0f}\n"
                         arb_summary += f"• Gas Cost: ${op['gas_cost']:.2f}\n\n"
                     
-                    return arb_summary + "🚀 Ready to execute? Say 'Start the revenue bot' to begin automated trading!"
+                    return arb_summary + "[INIT] Ready to execute? Say 'Start the revenue bot' to begin automated trading!"
                 else:
-                    return "🔍 No profitable arbitrage opportunities detected at the moment.\n\nThe system is continuously monitoring for:\n• Price spreads > 1%\n• Sufficient liquidity\n• Favorable gas costs\n\nOpportunities will appear here when market conditions are favorable."
+                    return "[SEARCH] No profitable arbitrage opportunities detected at the moment.\n\nThe system is continuously monitoring for:\n• Price spreads > 1%\n• Sufficient liquidity\n• Favorable gas costs\n\nOpportunities will appear here when market conditions are favorable."
             else:
-                return "❌ Could not fetch arbitrage opportunities. Please ensure the DEX Price Monitor is running."
+                return "[ERROR] Could not fetch arbitrage opportunities. Please ensure the DEX Price Monitor is running."
         except Exception as e:
-            return f"⚠️ Error fetching opportunities: {str(e)}"
+            return f"[WARN] Error fetching opportunities: {str(e)}"
 
     elif any(word in message_lower for word in ['hello', 'hi', 'hey']):
         return """Hello! 👋 I'm your Enhanced Copilot Agent for the Flash Loan Revenue System!
@@ -671,7 +687,7 @@ def process_local_chat_response(message: str) -> str:
 • Real-time system status and metrics
 • Trading insights and risk assessment
 
-💡 **Try asking:**
+[INFO] **Try asking:**
 • "Start the revenue bot"
 • "What's the current status?"
 • "Show me opportunities"
@@ -682,14 +698,14 @@ def process_local_chat_response(message: str) -> str:
 
     elif any(word in message_lower for word in ['status', 'health', 'running']):
         active_servers = sum(1 for s in mcp_servers.values() if s['status'] == 'running')
-        return f"""📊 **System Status Overview:**
+        return f"""[METRICS] **System Status Overview:**
 
 🖥️ **MCP Servers:** {active_servers}/{len(mcp_servers)} running
 💰 **Revenue Metrics:** ${system_metrics['total_revenue']:.2f} total (system initializing)
-📈 **Active Tasks:** {len([t for t in active_tasks if t['status'] in ['queued', 'in_progress']])}
-⚡ **System Health:** {system_metrics['cpu_usage']}% CPU, {system_metrics['memory_usage']}% Memory
+[GROWTH] **Active Tasks:** {len([t for t in active_tasks if t['status'] in ['queued', 'in_progress']])}
+[FAST] **System Health:** {system_metrics['cpu_usage']}% CPU, {system_metrics['memory_usage']}% Memory
 
-🔧 **Available MCP Servers:**
+[SETUP] **Available MCP Servers:**
 • Enhanced Copilot Agent (Port 8003): AI optimization & analysis
 • Enhanced Foundry Server (Port 8002): Smart contract deployment  
 • Production MCP Server (Port 8001): Production management
@@ -699,15 +715,15 @@ def process_local_chat_response(message: str) -> str:
 Ready to help optimize your flash loan revenue system!"""
 
     elif any(word in message_lower for word in ['help', 'commands', 'what can you do']):
-        return """🚀 **Enhanced Copilot Agent - Command Center**
+        return """[INIT] **Enhanced Copilot Agent - Command Center**
 
-💡 **Smart Trading Commands:**
+[INFO] **Smart Trading Commands:**
 • "Start the revenue bot" - Initialize automated trading
 • "Stop the bot" - Halt trading operations
 • "Show opportunities" - Display current arbitrage opportunities
 • "Revenue report" - Get detailed profit/loss analysis
 
-🔧 **System Management:**
+[SETUP] **System Management:**
 • "Server status" - Check all MCP server health
 • "System metrics" - View performance statistics
 • "Restart servers" - Restart unresponsive services
@@ -718,17 +734,17 @@ Ready to help optimize your flash loan revenue system!"""
 • "Best practices for [topic]" - Development guidance
 • "Security audit [contract]" - Vulnerability detection
 
-📊 **Monitoring & Reports:**
+[METRICS] **Monitoring & Reports:**
 • "Daily revenue" - Today's earnings summary
 • "Transaction history" - Recent activity log
 • "Performance metrics" - System efficiency stats
 
-Type any natural language request - I'm designed to understand and help! 🎯"""
+Type any natural language request - I'm designed to understand and help! [TASK]"""
 
     elif any(word in message_lower for word in ['opportunity', 'opportunities', 'arbitrage']):
-        return """🎯 **Flash Loan Arbitrage Opportunities** (Demo Mode)
+        return """[TASK] **Flash Loan Arbitrage Opportunities** (Demo Mode)
 
-⚡ **Current Market Analysis:**
+[FAST] **Current Market Analysis:**
 • ETH/USDC: 0.23% price difference between Uniswap-Sushiswap
 • WBTC/ETH: 0.31% spread on Curve vs Balancer  
 • DAI/USDC: 0.08% opportunity on 1inch vs Paraswap
@@ -738,26 +754,26 @@ Type any natural language request - I'm designed to understand and help! 🎯"""
 • Capital: $50,000 → Potential: $125-225 per trade
 • Capital: $100,000 → Potential: $250-450 per trade
 
-⚠️ **Note:** This is demo data. Connect to live MCP servers for real-time opportunity analysis!
+[WARN] **Note:** This is demo data. Connect to live MCP servers for real-time opportunity analysis!
 
 **Ready to start?** Say "Start the revenue bot" to begin automated trading."""
 
     elif any(word in message_lower for word in ['revenue', 'profit', 'earnings', 'made']):
         return f"""💰 **Revenue Dashboard** (Demo Mode)
 
-📊 **Current Performance:**
+[METRICS] **Current Performance:**
 • Total Revenue: ${system_metrics['total_revenue']:.2f} (System initializing)
 • Daily Revenue: ${system_metrics['daily_revenue']:.2f}  
 • Success Rate: {system_metrics['success_rate']:.1f}%
 • Total Trades: {len(active_tasks)}
 
-📈 **Performance Metrics:**
+[GROWTH] **Performance Metrics:**
 • Average Profit per Trade: N/A
 • Best Trade: N/A
 • Active Opportunities: Scanning...
 • Risk Level: Low
 
-🔄 **System Status:**
+[SYNC] **System Status:**
 • CPU Usage: {system_metrics['cpu_usage']}%
 • Memory Usage: {system_metrics['memory_usage']}%
 • Network I/O: {system_metrics['network_io']['in']:.1f} MB/s
@@ -765,11 +781,11 @@ Type any natural language request - I'm designed to understand and help! 🎯"""
 **Ready to start earning?** Connect MCP servers and say "Start the revenue bot"!"""
 
     elif any(word in message_lower for word in ['optimize', 'optimization', 'gas', 'efficiency']):
-        return """🔧 **AI-Powered Code Optimization** 
+        return """[SETUP] **AI-Powered Code Optimization** 
 
 I excel at optimizing smart contracts for maximum efficiency! Here's what I can help with:
 
-⚡ **Gas Optimization:**
+[FAST] **Gas Optimization:**
 • Loop unrolling and batching
 • Storage vs memory optimization  
 • Function visibility improvements
@@ -781,7 +797,7 @@ I excel at optimizing smart contracts for maximum efficiency! Here's what I can 
 • Access control improvements
 • Emergency pause mechanisms
 
-📈 **Performance Improvements:**
+[GROWTH] **Performance Improvements:**
 • Assembly optimizations
 • Calldata vs memory usage
 • Event emission efficiency
@@ -790,23 +806,23 @@ I excel at optimizing smart contracts for maximum efficiency! Here's what I can 
 **To get started:** Share your contract code and I'll provide specific optimization recommendations with estimated gas savings!"""
 
     elif any(word in message_lower for word in ['start', 'revenue bot', 'trading']):
-        return """🚀 **Starting Flash Loan Revenue Bot**
+        return """[INIT] **Starting Flash Loan Revenue Bot**
 
 Initializing automated arbitrage trading system...
 
-✅ **Pre-flight Checks:**
+[OK] **Pre-flight Checks:**
 • Smart contracts deployed: ✓
 • DEX connections established: ✓
 • Wallet balance verified: ✓
 • Gas price optimization: ✓
 
-📊 **Bot Configuration:**
+[METRICS] **Bot Configuration:**
 • Max transaction size: $50,000
 • Minimum profit threshold: 0.5%
 • Slippage tolerance: 1%
 • Gas limit: 500,000
 
-⚠️ **Important:** This is demo mode. To activate real trading:
+[WARN] **Important:** This is demo mode. To activate real trading:
 1. Ensure MCP servers are running
 2. Configure wallet private keys
 3. Set up exchange API connections
@@ -907,13 +923,13 @@ def process_chat_command(message: str, user: str) -> None:
         response_message = f"Unknown command: {command}. Type /help for available commands."
     
     # Send bot response
-    bot_response: Dict[str, Any] = {
+    bot_response: Dict[str, Any] = {}
         'id': f"msg-{len(chat_history)}",
         'user': 'System',
         'message': response_message,
         'timestamp': datetime.now().isoformat(),
         'type': 'system'
-    }
+    
     
     chat_history.append(bot_response)
     socketio.emit('new_message', bot_response, to='/')  # type: ignore
@@ -928,7 +944,7 @@ class ArbitrageCalculator:
         self.metrics_cache = ArbitrageMetrics()
         self.last_update = datetime.now()
         
-    def calculate_arbitrage_profit(self, buy_price: float, sell_price: float, 
+    def calculate_arbitrage_profit(self, buy_price: float, sell_price: float, )
                                  trade_amount: float, gas_cost: float = 0.0,
                                  slippage: float = 0.005) -> Dict[str, float]:
         """Calculate arbitrage profit with fees and slippage"""
@@ -945,26 +961,26 @@ class ArbitrageCalculator:
             # Calculate profit percentage
             profit_percentage = (net_profit / (buy_price * trade_amount)) * 100 if buy_price > 0 else 0
             
-            return {
+            return {}
                 'gross_profit': gross_profit,
                 'net_profit': net_profit,
                 'profit_percentage': profit_percentage,
                 'gas_cost': gas_cost,
                 'slippage_cost': slippage_cost,
                 'total_costs': gas_cost + slippage_cost
-            }
+            
         except Exception as e:
-            logger.error(f"Error calculating arbitrage profit: {e}")
-            return {
+            logger.error(str(f"Error calculating arbitrage profit: {e}")
+            return {}
                 'gross_profit': 0.0,
                 'net_profit': 0.0,
                 'profit_percentage': 0.0,
                 'gas_cost': gas_cost,
                 'slippage_cost': 0.0,
                 'total_costs': gas_cost
-            }
+            
     
-    def assess_risk_level(self, profit_percentage: float, liquidity: float,
+    def assess_risk_level(self, profit_percentage: float, liquidity: float,)
                          price_volatility: float = 0.0) -> str:
         """Assess risk level for arbitrage opportunity"""
         try:
@@ -1000,7 +1016,7 @@ class ArbitrageCalculator:
                 return "low"
                 
         except Exception as e:
-            logger.error(f"Error assessing risk level: {e}")
+            logger.error(str(f"Error assessing risk level: {e}")
             return "medium"
     
     def analyze_dex_performance(self, opportunities: List[ArbitrageOpportunity]) -> Dict[str, Any]:
@@ -1015,14 +1031,14 @@ class ArbitrageCalculator:
                 # Initialize DEX stats
                 for dex in [buy_dex, sell_dex]:
                     if dex not in dex_stats:
-                        dex_stats[dex] = {
+                        dex_stats[dex] = {}
                             'total_opportunities': 0,
                             'total_profit': 0.0,
                             'average_profit': 0.0,
                             'as_buy_dex': 0,
                             'as_sell_dex': 0,
                             'risk_distribution': {'low': 0, 'medium': 0, 'high': 0}
-                        }
+                        
                 
                 # Update stats
                 dex_stats[buy_dex]['as_buy_dex'] += 1
@@ -1049,7 +1065,7 @@ class ArbitrageCalculator:
             return dex_stats
             
         except Exception as e:
-            logger.error(f"Error analyzing DEX performance: {e}")
+            logger.error(str(f"Error analyzing DEX performance: {e}")
             return {}
     
     def analyze_token_performance(self, opportunities: List[ArbitrageOpportunity]) -> Dict[str, Any]:
@@ -1061,14 +1077,14 @@ class ArbitrageCalculator:
                 token_pair = opp.token_pair
                 
                 if token_pair not in token_stats:
-                    token_stats[token_pair] = {
+                    token_stats[token_pair] = {}
                         'total_opportunities': 0,
                         'total_profit': 0.0,
                         'average_profit': 0.0,
                         'best_profit': 0.0,
                         'average_confidence': 0.0,
                         'risk_distribution': {'low': 0, 'medium': 0, 'high': 0}
-                    }
+                    
                 
                 stats = token_stats[token_pair]
                 stats['total_opportunities'] += 1
@@ -1087,7 +1103,7 @@ class ArbitrageCalculator:
             return token_stats
             
         except Exception as e:
-            logger.error(f"Error analyzing token performance: {e}")
+            logger.error(str(f"Error analyzing token performance: {e}")
             return {}
 
 # Initialize arbitrage calculator
@@ -1105,28 +1121,28 @@ def calculate_arbitrage():
         slippage = float(request.args.get('slippage', 0.005))
         
         # Calculate profit
-        profit_calc = arbitrage_calculator.calculate_arbitrage_profit(
+        profit_calc = arbitrage_calculator.calculate_arbitrage_profit()
             buy_price, sell_price, trade_amount, gas_cost, slippage
-        )
+        
         
         # Assess risk
-        risk_level = arbitrage_calculator.assess_risk_level(
+        risk_level = arbitrage_calculator.assess_risk_level()
             profit_calc['profit_percentage'], trade_amount * 10
-        )
         
-        result: str = {
+        
+        result: str = {}
             'calculation': profit_calc,
             'risk_level': risk_level,
             'trade_amount': trade_amount,
             'buy_price': buy_price,
             'sell_price': sell_price,
             'timestamp': datetime.now().isoformat()
-        }
+        
         
         return jsonify(result)
         
     except Exception as e:
-        logger.error(f"Error in arbitrage calculation: {e}")
+        logger.error(str(f"Error in arbitrage calculation: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/arbitrage/opportunities')
@@ -1148,7 +1164,7 @@ def get_enhanced_arbitrage_opportunities():
                     opportunities_data.append(enhanced_opp)
                     
         except Exception as e:
-            logger.warning(f"Could not fetch from MCP server: {e}")
+            logger.warning(str(f"Could not fetch from MCP server: {e}")
         
         # If no MCP data, generate sample data for demo
         if not opportunities_data:
@@ -1163,24 +1179,24 @@ def get_enhanced_arbitrage_opportunities():
         token_performance = arbitrage_calculator.analyze_token_performance(live_opportunities)
         
         # Update global stats
-        arbitrage_stats.update({
+        arbitrage_stats.update({)}
             'total_opportunities': len(live_opportunities),
             'profitable_opportunities': sum(1 for opp in live_opportunities if opp.profit_usd > 0),
             'average_profit': sum(opp.profit_usd for opp in live_opportunities) / len(live_opportunities) if live_opportunities else 0,
             'best_opportunity': max((opp.profit_usd for opp in live_opportunities), default=0),
             'dex_performance': dex_performance,
             'token_performance': token_performance
-        })
         
-        return jsonify({
+        
+        return jsonify({)}
             'opportunities': opportunities_data,
             'metrics': arbitrage_stats,
             'total_count': len(opportunities_data),
             'timestamp': datetime.now().isoformat()
-        })
+        
         
     except Exception as e:
-        logger.error(f"Error fetching enhanced arbitrage opportunities: {e}")
+        logger.error(str(f"Error fetching enhanced arbitrage opportunities: {e}")
         return jsonify({'error': str(e)}), 500
 
 def enhance_opportunity_data(raw_opportunity: Dict[str, Any]) -> Dict[str, Any]:
@@ -1192,16 +1208,16 @@ def enhance_opportunity_data(raw_opportunity: Dict[str, Any]) -> Dict[str, Any]:
         trade_amount = float(raw_opportunity.get('trade_amount', 1000))
         
         # Calculate enhanced metrics
-        profit_calc = arbitrage_calculator.calculate_arbitrage_profit(
+        profit_calc = arbitrage_calculator.calculate_arbitrage_profit()
             buy_price, sell_price, trade_amount
-        )
         
-        risk_level = arbitrage_calculator.assess_risk_level(
+        
+        risk_level = arbitrage_calculator.assess_risk_level()
             profit_calc['profit_percentage'], trade_amount * 10
-        )
+        
         
         # Create enhanced opportunity
-        enhanced = {
+        enhanced = {}
             'id': raw_opportunity.get('id', f"opp_{int(time.time())}"),
             'token_pair': raw_opportunity.get('token_pair', 'WETH/USDC'),
             'dex_buy': raw_opportunity.get('dex_buy', 'UniswapV3'),
@@ -1218,17 +1234,16 @@ def enhance_opportunity_data(raw_opportunity: Dict[str, Any]) -> Dict[str, Any]:
             'gas_cost': profit_calc['gas_cost'],
             'slippage_impact': profit_calc['slippage_cost'],
             'liquidity_available': float(raw_opportunity.get('liquidity_available', 100000))
-        }
+        
         
         return enhanced
         
     except Exception as e:
-        logger.error(f"Error enhancing opportunity data: {e}")
+        logger.error(str(f"Error enhancing opportunity data: {e}")
         return raw_opportunity
 
 def generate_sample_opportunities() -> List[Dict[str, Any]]:
     """Generate sample arbitrage opportunities for demo purposes"""
-    import random
     
     sample_opportunities = []
     tokens = ['WETH/USDC', 'WMATIC/USDT', 'WBTC/WETH', 'USDC/DAI', 'AAVE/WETH']
@@ -1243,11 +1258,11 @@ def generate_sample_opportunities() -> List[Dict[str, Any]]:
         sell_price = round(buy_price * (1 + random.uniform(0.001, 0.02)), 2)
         trade_amount = round(random.uniform(500, 5000), 2)
         
-        profit_calc = arbitrage_calculator.calculate_arbitrage_profit(
+        profit_calc = arbitrage_calculator.calculate_arbitrage_profit()
             buy_price, sell_price, trade_amount
-        )
         
-        opportunity = {
+        
+        opportunity = {}
             'id': f"demo_opp_{i+1}",
             'token_pair': token_pair,
             'dex_buy': dex_buy,
@@ -1258,7 +1273,7 @@ def generate_sample_opportunities() -> List[Dict[str, Any]]:
             'profit_percentage': profit_calc['profit_percentage'],
             'trade_amount': trade_amount,
             'confidence_score': round(random.uniform(0.6, 0.95), 2),
-            'risk_level': arbitrage_calculator.assess_risk_level(
+            'risk_level': arbitrage_calculator.assess_risk_level()
                 profit_calc['profit_percentage'], trade_amount * 10
             ),
             'execution_priority': random.randint(1, 5),
@@ -1266,7 +1281,7 @@ def generate_sample_opportunities() -> List[Dict[str, Any]]:
             'gas_cost': profit_calc['gas_cost'],
             'slippage_impact': profit_calc['slippage_cost'],
             'liquidity_available': round(random.uniform(50000, 500000), 2)
-        }
+        
         
         sample_opportunities.append(opportunity)
     
@@ -1280,8 +1295,8 @@ def get_arbitrage_metrics():
         total_opps = len(live_opportunities)
         profitable_opps = sum(1 for opp in live_opportunities if opp.profit_usd > 0)
         
-        metrics = {
-            'overview': {
+        metrics = {}
+            'overview': {}
                 'total_opportunities': total_opps,
                 'profitable_opportunities': profitable_opps,
                 'success_rate': (profitable_opps / total_opps * 100) if total_opps > 0 else 0,
@@ -1289,15 +1304,15 @@ def get_arbitrage_metrics():
                 'best_opportunity': max((opp.profit_usd for opp in live_opportunities), default=0),
                 'total_potential_profit': sum(opp.profit_usd for opp in live_opportunities if opp.profit_usd > 0)
             },
-            'risk_analysis': {
-                'risk_distribution': {
+            'risk_analysis': {}
+                'risk_distribution': {}
                     'low': sum(1 for opp in live_opportunities if opp.risk_level == 'low'),
                     'medium': sum(1 for opp in live_opportunities if opp.risk_level == 'medium'),
                     'high': sum(1 for opp in live_opportunities if opp.risk_level == 'high')
                 },
                 'average_confidence': sum(opp.confidence_score for opp in live_opportunities) / total_opps if total_opps > 0 else 0
             },
-            'cost_analysis': {
+            'cost_analysis': {}
                 'total_gas_costs': sum(opp.gas_cost for opp in live_opportunities),
                 'average_gas_cost': sum(opp.gas_cost for opp in live_opportunities) / total_opps if total_opps > 0 else 0,
                 'total_slippage_impact': sum(opp.slippage_impact for opp in live_opportunities),
@@ -1306,12 +1321,12 @@ def get_arbitrage_metrics():
             'dex_performance': arbitrage_calculator.analyze_dex_performance(live_opportunities),
             'token_performance': arbitrage_calculator.analyze_token_performance(live_opportunities),
             'timestamp': datetime.now().isoformat()
-        }
+        
         
         return jsonify(metrics)
         
     except Exception as e:
-        logger.error(f"Error calculating arbitrage metrics: {e}")
+        logger.error(str(f"Error calculating arbitrage metrics: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/arbitrage/execute/<opportunity_id>', methods=['POST'])
@@ -1329,44 +1344,44 @@ def execute_arbitrage_opportunity(opportunity_id: str):
             return jsonify({'error': 'Opportunity not found'}), 404
         
         # Send execution request to flash loan MCP server
-        execution_data = {
+        execution_data = {}
             'opportunity_id': opportunity_id,
             'token_pair': opportunity.token_pair,
             'dex_buy': opportunity.dex_buy,
             'dex_sell': opportunity.dex_sell,
             'trade_amount': opportunity.trade_amount,
             'expected_profit': opportunity.profit_usd
-        }
+        
         
         try:
-            response = requests.post(
+            response = requests.post()
                 f"{MCP_SERVERS['unified']}/execute",
                 json=execution_data,
                 timeout=10
-            )
+            
             
             if response.status_code == 200:
                 result: str = response.json()
-                return jsonify({
+                return jsonify({)}
                     'message': 'Execution request sent successfully',
                     'execution_id': result.get('execution_id'),
                     'status': 'pending'
-                })
+                
             else:
-                return jsonify({
+                return jsonify({)}
                     'message': 'Execution request failed',
                     'status': 'failed'
-                })
+                
                 
         except Exception as e:
-            logger.warning(f"Could not send to MCP server: {e}")
-            return jsonify({
+            logger.warning(str(f"Could not send to MCP server: {e}")
+            return jsonify({)}
                 'message': 'Execution request queued (MCP server offline)',
                 'status': 'queued'
-            })
+            
         
     except Exception as e:
-        logger.error(f"Error executing arbitrage opportunity: {e}")
+        logger.error(str(f"Error executing arbitrage opportunity: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/arbitrage/simulate/<opportunity_id>', methods=['POST'])
@@ -1384,7 +1399,7 @@ def simulate_arbitrage_opportunity(opportunity_id: str):
             return jsonify({'error': 'Opportunity not found'}), 404
         
         # Send simulation request to Foundry MCP server
-        simulation_data = {
+        simulation_data = {}
             'opportunity_id': opportunity_id,
             'token_pair': opportunity.token_pair,
             'dex_buy': opportunity.dex_buy,
@@ -1392,37 +1407,37 @@ def simulate_arbitrage_opportunity(opportunity_id: str):
             'trade_amount': opportunity.trade_amount,
             'buy_price': opportunity.buy_price,
             'sell_price': opportunity.sell_price
-        }
+        
         
         try:
-            response = requests.post(
+            response = requests.post()
                 f"{MCP_SERVERS['foundry']}/simulate",
                 json=simulation_data,
                 timeout=15
-            )
+            
             
             if response.status_code == 200:
                 result: str = response.json()
-                return jsonify({
+                return jsonify({)}
                     'message': f"Simulation completed. Gas estimate: ${result.get('gas_cost', 50):.2f}",
                     'simulation_result': result,
                     'status': 'completed'
-                })
+                
             else:
-                return jsonify({
+                return jsonify({)}
                     'message': 'Simulation failed',
                     'status': 'failed'
-                })
+                
                 
         except Exception as e:
-            logger.warning(f"Could not simulate with Foundry MCP: {e}")
-            return jsonify({
+            logger.warning(str(f"Could not simulate with Foundry MCP: {e}")
+            return jsonify({)}
                 'message': 'Simulation unavailable (Foundry MCP offline)',
                 'status': 'unavailable'
-            })
+            
         
     except Exception as e:
-        logger.error(f"Error simulating arbitrage opportunity: {e}")
+        logger.error(str(f"Error simulating arbitrage opportunity: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/arbitrage/analyze/<opportunity_id>', methods=['POST'])
@@ -1454,34 +1469,34 @@ def analyze_arbitrage_opportunity(opportunity_id: str):
         """
         
         try:
-            response = requests.post(
+            response = requests.post()
                 f"{MCP_SERVERS['copilot']}/analyze",
                 json={'prompt': analysis_prompt},
                 timeout=20
-            )
+            
             
             if response.status_code == 200:
                 result: str = response.json()
                 analysis = result.get('analysis', 'Analysis completed successfully')
-                return jsonify({
+                return jsonify({)}
                     'analysis': analysis,
                     'status': 'completed'
-                })
+                
             else:
-                return jsonify({
+                return jsonify({)}
                     'analysis': 'Analysis failed',
                     'status': 'failed'
-                })
+                
                 
         except Exception as e:
-            logger.warning(f"Could not analyze with Copilot MCP: {e}")
-            return jsonify({
+            logger.warning(str(f"Could not analyze with Copilot MCP: {e}")
+            return jsonify({)}
                 'analysis': f'Analysis unavailable (Copilot MCP offline). Basic assessment: {opportunity.risk_level} risk opportunity with {opportunity.profit_percentage:.3f}% profit potential.',
                 'status': 'fallback'
-            })
+            
         
     except Exception as e:
-        logger.error(f"Error analyzing arbitrage opportunity: {e}")
+        logger.error(str(f"Error analyzing arbitrage opportunity: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/arbitrage/status')
@@ -1502,7 +1517,7 @@ def get_arbitrage_status():
         total_servers = len(server_status)
         health_score = (healthy_servers / total_servers) * 100 if total_servers > 0 else 0
         
-        status = {
+        status = {}
             'system_health': health_score,
             'server_status': server_status,
             'active_opportunities': len(live_opportunities),
@@ -1511,12 +1526,12 @@ def get_arbitrage_status():
             'last_update': datetime.now().isoformat(),
             'arbitrage_calculator_active': arbitrage_calculator is not None,
             'monitoring_active': True
-        }
+        
         
         return jsonify(status)
         
     except Exception as e:
-        logger.error(f"Error getting arbitrage status: {e}")
+        logger.error(str(f"Error getting arbitrage status: {e}")
         return jsonify({'error': str(e)}), 500
 # Background tasks
 def update_dex_prices() -> None:
@@ -1549,7 +1564,7 @@ def update_dex_prices() -> None:
                     system_metrics['active_opportunities'] = 0
                     
         except Exception as e:
-            logger.warning(f"Error updating DEX prices: {e}")
+            logger.warning(str(f"Error updating DEX prices: {e}")
             # Update server status if DEX service is down
             if 'dex-price-monitor' in mcp_servers:
                 mcp_servers['dex-price-monitor']['status'] = 'stopped'
@@ -1609,14 +1624,14 @@ def create_dashboard_template() -> None:
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
+        body { }
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
             color: #333; 
             min-height: 100vh;
-        }
+        
         .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-        .header { 
+        .header { }
             background: rgba(255, 255, 255, 0.95); 
             padding: 30px; 
             border-radius: 15px; 
@@ -1624,23 +1639,23 @@ def create_dashboard_template() -> None:
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .header h1 { 
+        
+        .header h1 { }
             color: #2c3e50; 
             font-size: 2.5em; 
             margin-bottom: 10px;
             background: linear-gradient(45deg, #667eea, #764ba2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-        }
+        
         .header p { color: #666; font-size: 1.1em; }
-        .dashboard-grid { 
+        .dashboard-grid { }
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
             gap: 20px; 
             margin-bottom: 20px; 
-        }
-        .card { 
+        
+        .card { }
             background: rgba(255, 255, 255, 0.95); 
             padding: 25px; 
             border-radius: 15px; 
@@ -1648,17 +1663,17 @@ def create_dashboard_template() -> None:
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             transition: transform 0.3s ease;
-        }
+        
         .card:hover { transform: translateY(-5px); }
-        .card h2 { 
+        .card h2 { }
             color: #34495e; 
             margin-bottom: 20px; 
             font-size: 1.4em;
             display: flex;
             align-items: center;
             gap: 10px;
-        }
-        .server-item { 
+        
+        .server-item { }
             padding: 15px; 
             margin: 8px 0; 
             border-radius: 10px; 
@@ -1666,43 +1681,43 @@ def create_dashboard_template() -> None:
             justify-content: space-between; 
             align-items: center;
             transition: all 0.3s ease;
-        }
+        
         .server-running { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border-left: 4px solid #4caf50; }
         .server-stopped { background: linear-gradient(135deg, #ffebee, #ffcdd2); border-left: 4px solid #f44336; }
         .server-restarting { background: linear-gradient(135deg, #fff3e0, #ffe0b2); border-left: 4px solid #ff9800; }
-        .status-indicator { 
+        .status-indicator { }
             width: 12px; 
             height: 12px; 
             border-radius: 50%; 
             display: inline-block; 
             margin-right: 8px;
             animation: pulse 2s infinite;
-        }
+        
         .status-running { background: #4caf50; }
         .status-stopped { background: #f44336; animation: none; }
         .status-restarting { background: #ff9800; }
-        @keyframes pulse {
+        @keyframes pulse {}
             0% { opacity: 1; }
             50% { opacity: 0.5; }
             100% { opacity: 1; }
-        }
-        .metric-value { 
+        
+        .metric-value { }
             font-size: 2.2em; 
             font-weight: bold; 
             background: linear-gradient(45deg, #2196f3, #21cbf3);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-        }
+        
         .chat-container { display: grid; grid-template-columns: 1fr 350px; gap: 20px; }
-        .chat-main { 
+        .chat-main { }
             background: rgba(255, 255, 255, 0.95); 
             padding: 25px; 
             border-radius: 15px; 
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .chat-messages { 
+        
+        .chat-messages { }
             height: 450px; 
             overflow-y: auto; 
             border: 2px solid #e1f5fe; 
@@ -1710,18 +1725,18 @@ def create_dashboard_template() -> None:
             padding: 15px; 
             margin-bottom: 15px;
             background: #f8f9fa;
-        }
+        
         .chat-input-group { display: flex; gap: 10px; }
-        .chat-input { 
+        .chat-input { }
             flex: 1; 
             padding: 12px; 
             border: 2px solid #e1f5fe; 
             border-radius: 25px; 
             outline: none;
             transition: border-color 0.3s ease;
-        }
+        
         .chat-input:focus { border-color: #2196f3; }
-        .chat-send { 
+        .chat-send { }
             padding: 12px 25px; 
             background: linear-gradient(45deg, #2196f3, #21cbf3); 
             color: white; 
@@ -1729,41 +1744,40 @@ def create_dashboard_template() -> None:
             border-radius: 25px; 
             cursor: pointer;
             transition: all 0.3s ease;
-        }
+        
         .chat-send:hover { transform: scale(1.05); }
-        .message { 
+        .message { }
             margin: 10px 0; 
             padding: 12px; 
             border-radius: 12px;
             animation: slideIn 0.3s ease;
-        }
-        .message-user { 
+        
+        .message-user { }
             background: linear-gradient(135deg, #e3f2fd, #bbdefb); 
             margin-left: 20px;
-        }
-        .message-system { 
+        
+        .message-system { }
             background: linear-gradient(135deg, #f5f5f5, #eeeeee); 
             font-style: italic; 
-        }
-        .message-assistant { 
+        
+        .message-assistant { }
             background: linear-gradient(135deg, #e8f5e9, #c8e6c9); 
             margin-right: 20px;
-        }
-        .message-error { 
+        
+        .message-error { }
             background: linear-gradient(135deg, #ffebee, #ffcdd2); 
-        }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(20px); }
+        
+        @keyframes slideIn {}
             to { opacity: 1; transform: translateY(0); }
-        }
-        .task-item { 
+        
+        .task-item { }
             padding: 15px; 
             margin: 8px 0; 
             border-radius: 10px; 
             background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
             border-left: 4px solid #2196f3;
-        }
-        .progress-bar { 
+        
+        .progress-bar { }
             width: 100%; 
             height: 8px; 
             background: #e0e0e0; 
@@ -1771,13 +1785,13 @@ def create_dashboard_template() -> None:
             border-radius: 4px; 
             overflow: hidden; 
             margin: 8px 0; 
-        }
-        .progress-fill { 
+        
+        .progress-fill { }
             height: 100%; 
             background: linear-gradient(90deg, #4caf50, #8bc34a); 
             transition: width 0.5s ease; 
-        }
-        .action-button { 
+        
+        .action-button { }
             padding: 8px 15px; 
             margin: 0 3px; 
             border: none; 
@@ -1785,13 +1799,13 @@ def create_dashboard_template() -> None:
             cursor: pointer; 
             font-size: 0.9em;
             transition: all 0.3s ease;
-        }
+        
         .btn-start { background: linear-gradient(45deg, #4caf50, #8bc34a); color: white; }
         .btn-stop { background: linear-gradient(45deg, #f44336, #e57373); color: white; }
         .btn-restart { background: linear-gradient(45deg, #ff9800, #ffb74d); color: white; }
         .action-button:hover { transform: scale(1.1); }
         .quick-actions { display: grid; gap: 10px; }
-        .quick-action-btn { 
+        .quick-action-btn { }
             width: 100%; 
             padding: 15px; 
             border: none; 
@@ -1800,7 +1814,7 @@ def create_dashboard_template() -> None:
             color: white; 
             cursor: pointer;
             transition: all 0.3s ease;
-        }
+        
         .quick-action-btn:hover { transform: scale(1.05); }
         .emoji { font-size: 1.5em; margin-right: 8px; }
     </style>
@@ -1808,7 +1822,7 @@ def create_dashboard_template() -> None:
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 Enhanced MCP Revenue Hub</h1>
+            <h1>[INIT] Enhanced MCP Revenue Hub</h1>
             <p>Conversational AI-Powered Arbitrage Trading System - Port 8004</p>
         </div>
         
@@ -1819,12 +1833,12 @@ def create_dashboard_template() -> None:
             </div>
             
             <div class="card">
-                <h2><span class="emoji">📊</span>System Metrics</h2>
+                <h2><span class="emoji">[METRICS]</span>System Metrics</h2>
                 <div id="metricsDisplay"></div>
             </div>
             
             <div class="card">
-                <h2><span class="emoji">⚡</span>Active Tasks</h2>
+                <h2><span class="emoji">[FAST]</span>Active Tasks</h2>
                 <div id="tasksList"></div>
             </div>
         </div>
@@ -1836,19 +1850,19 @@ def create_dashboard_template() -> None:
                     <div class="message message-assistant">
                         <strong>Enhanced Copilot Agent</strong> <small>Ready</small><br>
                         Welcome! I'm your Enhanced Copilot Agent, powered by external AI-driven MCP servers with advanced optimization capabilities!<br><br>
-                        💡 <strong>Smart Trading Commands:</strong><br>
+                        [INFO] <strong>Smart Trading Commands:</strong><br>
                         • "Start the revenue bot"<br>
                         • "What's the current status?"<br>
                         • "Show me opportunities"<br>
                         • "How much have we made?"<br>
                         • "Optimize my contract code"<br><br>
-                        🔧 <strong>AI-Powered Assistance:</strong><br>
+                        [SETUP] <strong>AI-Powered Assistance:</strong><br>
                         • Code optimization and analysis<br>
                         • Smart contract efficiency tips<br>
                         • Gas cost reduction strategies<br>
                         • Security vulnerability detection<br>
                         • Performance recommendations<br><br>
-                        Ask me anything - I'm here to help maximize your revenue! 🎯
+                        Ask me anything - I'm here to help maximize your revenue! [TASK]
                     </div>
                 </div>
                 <div class="chat-input-group">
@@ -1858,13 +1872,13 @@ def create_dashboard_template() -> None:
             </div>
             
             <div class="card">
-                <h2><span class="emoji">⚡</span>Quick Actions</h2>
+                <h2><span class="emoji">[FAST]</span>Quick Actions</h2>
                 <div class="quick-actions">
-                    <button class="quick-action-btn" onclick="sendMessage('What is the current status?')">📊 System Status</button>
-                    <button class="quick-action-btn" onclick="sendMessage('Show me opportunities')">🎯 Market Opportunities</button>
-                    <button class="quick-action-btn" onclick="sendMessage('Start the revenue bot')">🚀 Start Revenue Bot</button>
+                    <button class="quick-action-btn" onclick="sendMessage('What is the current status?')">[METRICS] System Status</button>
+                    <button class="quick-action-btn" onclick="sendMessage('Show me opportunities')">[TASK] Market Opportunities</button>
+                    <button class="quick-action-btn" onclick="sendMessage('Start the revenue bot')">[INIT] Start Revenue Bot</button>
                     <button class="quick-action-btn" onclick="sendMessage('How much have we made?')">💰 Revenue Report</button>
-                    <button class="quick-action-btn" onclick="executeQuickAction('refresh')">🔄 Refresh All</button>
+                    <button class="quick-action-btn" onclick="executeQuickAction('refresh')">[SYNC] Refresh All</button>
                 </div>
             </div>
         </div>
@@ -1874,36 +1888,36 @@ def create_dashboard_template() -> None:
         const socket = io();
         
         // Socket event handlers
-        socket.on('connect', () => {
+        socket.on('connect', () => {)}
             console.log('Connected to Enhanced MCP Dashboard on port 8004');
         });
         
-        socket.on('servers_update', (servers) => {
+        socket.on('servers_update', (servers) => {)}
             updateServerList(servers);
         });
         
-        socket.on('metrics_update', (metrics) => {
+        socket.on('metrics_update', (metrics) => {)}
             updateMetrics(metrics);
         });
         
-        socket.on('tasks_update', (tasks) => {
+        socket.on('tasks_update', (tasks) => {)}
             updateTasks(tasks);
         });
         
-        socket.on('new_message', (message) => {
+        socket.on('new_message', (message) => {)}
             addChatMessage(message);
         });
         
-        socket.on('chat_cleared', () => {
+        socket.on('chat_cleared', () => {)}
             document.getElementById('chatMessages').innerHTML = '';
         });
         
         // Update functions
-        function updateServerList(servers) {
+        function updateServerList(servers) {}
             const container = document.getElementById('serverList');
             container.innerHTML = '';
             
-            Object.entries(servers).forEach(([id, server]) => {
+            Object.entries(servers).forEach(([id, server]) => {)}
                 const div = document.createElement('div');
                 div.className = `server-item server-${server.status}`;
                 div.innerHTML = `
@@ -1920,9 +1934,9 @@ def create_dashboard_template() -> None:
                 `;
                 container.appendChild(div);
             });
-        }
         
-        function updateMetrics(metrics) {
+        
+        function updateMetrics(metrics) {}
             const container = document.getElementById('metricsDisplay');
             container.innerHTML = `
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -1931,15 +1945,15 @@ def create_dashboard_template() -> None:
                         <div class="metric-value">$${metrics.total_revenue.toFixed(2)}</div>
                     </div>
                     <div>
-                        <small>📈 Daily Revenue</small>
+                        <small>[GROWTH] Daily Revenue</small>
                         <div class="metric-value">$${metrics.daily_revenue.toFixed(2)}</div>
                     </div>
                     <div>
-                        <small>🎯 Success Rate</small>
+                        <small>[TASK] Success Rate</small>
                         <div class="metric-value">${metrics.success_rate.toFixed(1)}%</div>
                     </div>
                     <div>
-                        <small>⚡ CPU Usage</small>
+                        <small>[FAST] CPU Usage</small>
                         <div class="metric-value">${metrics.cpu_usage}%</div>
                     </div>
                     <div>
@@ -1947,26 +1961,26 @@ def create_dashboard_template() -> None:
                         <div class="metric-value">${metrics.memory_usage}%</div>
                     </div>
                     <div>
-                        <small>🌐 Network I/O</small>
+                        <small>[NETWORK] Network I/O</small>
                         <div class="metric-value">${metrics.network_io.in.toFixed(1)} MB/s</div>
                     </div>
                 </div>
             `;
-        }
         
-        function updateTasks(tasks) {
+        
+        function updateTasks(tasks) {}
             const container = document.getElementById('tasksList');
             container.innerHTML = '';
             
-            if (tasks.length === 0) {
+            if (tasks.length === 0) {}
                 container.innerHTML = '<p style="text-align: center; color: #666;">No active tasks</p>';
                 return;
-            }
             
-            tasks.forEach(task => {
+            
+            tasks.forEach(task => {)}
                 const div = document.createElement('div');
                 div.className = 'task-item';
-                const statusEmoji = task.status === 'completed' ? '✅' : task.status === 'in_progress' ? '🔄' : '⏳';
+                const statusEmoji = task.status === 'completed' ? '[OK]' : task.status === 'in_progress' ? '[SYNC]' : '⏳';
                 div.innerHTML = `
                     <div>
                         ${statusEmoji} <strong>${task.type}</strong> on ${task.server}
@@ -1979,9 +1993,9 @@ def create_dashboard_template() -> None:
                 `;
                 container.appendChild(div);
             });
-        }
         
-        function addChatMessage(message) {
+        
+        function addChatMessage(message) {}
             const container = document.getElementById('chatMessages');
             const div = document.createElement('div');
             div.className = `message message-${message.type}`;
@@ -1992,47 +2006,47 @@ def create_dashboard_template() -> None:
             
             container.appendChild(div);
             container.scrollTop = container.scrollHeight;
-        }
+        
         
         // Action functions
-        function sendMessage(predefinedMessage = null) {
+        function sendMessage(predefinedMessage = null) {}
             const input = document.getElementById('chatInput');
             const message = predefinedMessage || input.value.trim();
             
-            if (message) {
-                socket.emit('chat_message', {
+            if (message) {}
+                socket.emit('chat_message', {)}
                     message: message,
                     user: 'User'
                 });
-                if (!predefinedMessage) {
+                if (!predefinedMessage) {}
                     input.value = '';
-                }
-            }
-        }
+                
+            
         
-        function serverAction(serverId, action) {
-            socket.emit('server_action', {
+        
+        function serverAction(serverId, action) {}
+            socket.emit('server_action', {)}
                 server_id: serverId,
                 action: action
             });
-        }
         
-        function executeQuickAction(action) {
-            if (action === 'refresh') {
+        
+        function executeQuickAction(action) {}
+            if (action === 'refresh') {}
                 location.reload();
-            }
-        }
+            
+        
         
         // Enter key to send message
-        document.getElementById('chatInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {)}
+            if (e.key === 'Enter') {}
                 sendMessage();
-            }
+            
         });
         
         // Initial welcome message
-        setTimeout(() => {
-            addChatMessage({
+        setTimeout(() => {)}
+            addChatMessage({)}
                 user: 'System',
                 message: 'Enhanced MCP Dashboard initialized successfully on port 8004! All systems ready.',
                 timestamp: new Date().toISOString(),
@@ -2063,10 +2077,10 @@ if __name__ == '__main__':
     dex_thread = threading.Thread(target=update_dex_prices, daemon=True)
     dex_thread.start()
       # Add welcome message to chat history
-    welcome_message: Dict[str, Any] = {
+    welcome_message: Dict[str, Any] = {}
         'id': 'msg-welcome',
         'user': 'Enhanced Copilot Agent',
-        'message': '''Welcome to the Enhanced MCP Revenue Hub with DEX Price Monitoring! 🚀
+        'message': '''Welcome to the Enhanced MCP Revenue Hub with DEX Price Monitoring! [INIT]
 
 I'm your AI-powered assistant with integrated real-time DEX price monitoring capabilities:
 
@@ -2082,21 +2096,21 @@ I'm your AI-powered assistant with integrated real-time DEX price monitoring cap
 • Production MCP Server (Port 8001) - Production management
 • DEX Price Monitor (Port 8008) - Real-time price monitoring
 
-💡 **Try asking:**
+[INFO] **Try asking:**
 • "Show current DEX prices"
 • "What arbitrage opportunities are available?"
 • "Start the revenue bot"
 • "Analyze profit potential"
 • "Optimize my trading strategy"
 
-Ready to maximize your flash loan revenue with real-time market intelligence! 🎯''',
+Ready to maximize your flash loan revenue with real-time market intelligence! [TASK]''',
         'timestamp': datetime.now().isoformat(),
         'type': 'assistant'
-    }
+    
     chat_history.append(welcome_message)
       # Run the application on port 8004
-    print("🚀 Starting Enhanced MCP Dashboard with DEX Price Monitoring on http://localhost:8004")
-    print("📊 Dashboard Features:")
+    print("[INIT] Starting Enhanced MCP Dashboard with DEX Price Monitoring on http://localhost:8004")
+    print("[METRICS] Dashboard Features:")
     print("  • Real-time MCP server monitoring")
     print("  • AI-powered chat with Copilot Agent")
     print("  • Live DEX price monitoring (Uniswap V3, SushiSwap, QuickSwap)")
@@ -2115,3 +2129,1586 @@ Ready to maximize your flash loan revenue with real-time market intelligence! �
     print("🔗 DEX Price Monitor API: http://localhost:8008")
     
     socketio.run(app, debug=True, port=8004, host='0.0.0.0')  # type: ignore
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+
+# Merged utility functions:
+
+# From removed file:
+def run_command(cmd):
+    """Run a command and return output"""
+    try:
+        result: str = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+        # WARNING: This is a security risk
+        # WARNING: This is a security risk
+        return result.stdout.strip(), result.returncode == 0
+    except Exception as e:
+        return str(e), False
+
+# From removed file:
+def check_container_status():
+    """Check Docker container status"""
+    print("🐳 DOCKER CONTAINER STATUS")
+    print("=" * 50)
+    
+    cmd = 'docker ps --format "table {{.Names}}\\t{{.Status}}\\t{{.Ports}}" | findstr mcp-'
+    output, success = run_command(cmd)
+    
+    if success and output:
+        lines = output.split('\n')
+        running_containers = len(lines)
+        print(f"[OK] {running_containers} MCP containers running")
+        for line in lines:
+            if line.strip():
+                print(f"   {line}")
+    else:
+        print("[ERROR] No MCP containers found or Docker not running")
+    
+    print()
+
+# From removed file:
+def check_service_health():
+    """Check service health endpoints"""
+    print("🏥 SERVICE HEALTH CHECKS")
+    print("=" * 50)
+    
+    services = []
+        {"name": "MCP Coordinator", "url": "http://localhost:3000/health"},
+        {"name": "Enhanced Coordinator", "url": "http://localhost:3001/health"},
+        {"name": "Token Scanner", "url": "http://localhost:3003/health"},
+        {"name": "Grafana", "url": "http://localhost:3030/api/health"},
+        {"name": "Prometheus", "url": "http://localhost:9090/-/healthy"},
+    
+    
+    for service in services:
+        try:
+            response = requests.get(service["url"], timeout=3)
+            if response.status_code == 200:
+                print(f"[OK] {service['name']} - Healthy")
+            else:
+                print(f"[WARN]  {service['name']} - Status {response.status_code}")
+        except requests.exceptions.ConnectionError:
+            print(f"[ERROR] {service['name']} - Not reachable")
+        except Exception as e:
+            print(f"[ERROR] {service['name']} - Error: {str(e)[:50]}")
+    
+    print()
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[]
+        logging.StreamHandler(sys.stderr),
+        logging.FileHandler(os.path.join("logs", "context7_mcp_server.log"))
+    
+
+logger = logging.getLogger("context7-mcp-server")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(level=logging.INFO, stream=sys.stderr)
+logger = logging.getLogger("matic-mcp-server")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# Configuration from environment variables
+SANDBOX_BASE_PATH = Path(os.getenv("SANDBOX_BASE_PATH", "/tmp/code_sandbox"))
+CODEBASE_ROOT = Path(os.getenv("CODEBASE_ROOT", "/app"))
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record: logging.LogRecord):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stderr),
+        logging.FileHandler(os.path.join("logs", "context7_mcp_server.log"))
+
+
+
+logger = logging.getLogger("context7-mcp-server")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("DEXAggregatorMCP")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Cache for system status
+service_status_cache: Dict[str, Any] = {}
+    'mcp_servers': {},
+    'agents': {},
+    'last_update': None
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(level=logging.INFO, stream=sys.stderr)
+logger = logging.getLogger("flash-loan-mcp")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(level=logging.INFO, stream=sys.stderr)
+logger = logging.getLogger("foundry-mcp")
+
+
+# Merged utility functions:
+
+# From removed file:
+def check_aave_pool_balance(token_address):
+    pool_contract = w3.eth.contract()
+        address=AAVE_POOL_ADDRESS,
+        abi=AAVE_POOL_ABI
+    
+    
+    balance = pool_contract.functions.getReserveData(token_address).call()
+    return balance
+
+# Example: Execute flash loan
+
+# From removed file:
+def execute_flash_loan(asset, amount, params):
+    flash_loan_contract = w3.eth.contract()
+        address=FLASH_LOAN_CONTRACT,
+        abi=FLASH_LOAN_ABI
+    
+    
+    tx = flash_loan_contract.functions.flashLoan()
+        asset, amount, params
+    ).build_transaction({}
+        'from': w3.eth.default_account,
+        'gas': 500000,
+        'gasPrice': w3.to_wei('20', 'gwei')
+    
+    
+    signed_tx = w3.eth.account.sign_transaction(tx, private_key)
+    tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+    return tx_hash
+```
+                """,
+                "contracts": """
+# Smart Contract Interaction with Web3.py
+
+## Contract Deployment
+```python
+# Deploy a new contract
+contract = w3.eth.contract(abi=contract_abi, bytecode=contract_bytecode)
+tx_hash = contract.constructor().transact()
+tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+contract_instance = w3.eth.contract()
+    address=tx_receipt.contractAddress,
+    abi=contract_abi
+
+```
+
+## Flash Loan Contract Example
+```python
+
+# From removed file:
+async def execute_arbitrage(request: ArbitrageRequest):
+    # Execute arbitrage logic
+    result = await process_arbitrage()
+        request.token_pair, 
+        request.amount, 
+        request.max_slippage
+    
+    return {"status": "success", "result": result}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+```
+
+## Flash Loan API Integration
+```python
+@app.post("/flash-loan/execute")
+async def execute_flash_loan()
+    asset: str,
+    amount: float,
+    strategy: str
+):
+    try:
+        # Validate parameters
+        if amount <= 0:
+            raise HTTPException(400, "Invalid amount")
+        
+        # Execute flash loan
+        result = await flash_loan_service.execute(asset, amount, strategy)
+        
+        return {}
+            "transaction_hash": result.tx_hash,
+            "profit": result.profit,
+            "gas_used": result.gas_used
+        
+    
+    except Exception as e:
+        raise HTTPException(500, f"Flash loan failed: {str(e)}")
+
+@app.get("/opportunities")
+async def get_arbitrage_opportunities():
+    opportunities = await arbitrage_scanner.scan_all_pairs()
+    return {}
+        "opportunities": opportunities,
+        "count": len(opportunities),
+        "timestamp": datetime.utcnow().isoformat()
+    
+```
+                """,
+                "async": """
+# Async Programming with FastAPI
+
+## Async Route Handlers
+```python
+
+@app.post("/background-arbitrage")
+async def start_background_arbitrage(background_tasks: BackgroundTasks):
+    background_tasks.add_task(monitor_arbitrage_opportunities)
+    return {"message": "Arbitrage monitoring started"}
+
+async def monitor_arbitrage_opportunities():
+    while True:
+        opportunities = await scan_opportunities()
+        for opp in opportunities:
+            if opp.profit_potential > MIN_PROFIT:
+                await execute_arbitrage(opp)
+        
+        await asyncio.sleep(1)  # Check every second
+```
+
+## WebSocket for Real-time Updates
+```python
+
+@app.websocket("/ws/arbitrage")
+async def arbitrage_websocket(websocket: WebSocket):
+    await websocket.accept()
+    
+    async def send_updates():
+        while True:
+            opportunities = await get_current_opportunities()
+            await websocket.send_json({)}
+                "type": "opportunities",
+                "data": opportunities
+            
+            await asyncio.sleep(0.5)
+    
+    await send_updates()
+```
+                """
+            
+        
+        
+        # Get docs for the library
+        for lib_id, docs in docs_map.items():
+            if library_id == lib_id:
+                if topic and topic in docs:
+                    content = docs[topic]
+                else:
+                    content = docs.get("general", "Documentation not available")
+                
+                return {}
+                    "library_id": library_id,
+                    "topic": topic or "general",
+                    "content": content,
+                    "tokens_used": min(len(content), tokens),
+                    "source_links": []
+                        f"https://github.com{library_id}",
+                        f"https://docs.python.org/{library_id.split('/')[-1]}"
+                    
+                
+        
+        return {}
+            "library_id": library_id,
+            "topic": topic or "general",
+            "content": "Documentation not found for this library",
+            "tokens_used": 50,
+            "source_links": []
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="External API Client MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Arbitrage Detection MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Authentication & Authorization MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Cache Management MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def test_mcp_server_startup(server_name, server_path, timeout=10):
+    """Test if an MCP server can start without errors"""
+    try:
+        # Set environment variables
+        env = os.environ.copy()
+        env['PYTHONPATH'] = r"C:\Users\Ratanshila\Documents\flash loan\mcp_servers;C:\Users\Ratanshila\Documents\flash loan"
+        
+        # Start the server process
+        process = subprocess.Popen()
+            [r"C:\Program Files\Python311\python.exe", server_path, "--help"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=env
+        
+        
+        # Wait for process to complete or timeout
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+            
+            if process.returncode == 0:
+                print(f"✓ {server_name} - Server can start successfully")
+                return True
+            else:
+                print(f"✗ {server_name} - Server failed to start")
+                if stderr:
+                    print(f"  Error: {stderr[:200]}...")
+                return False
+                
+        except subprocess.TimeoutExpired:
+            process.kill()
+            print(f"✗ {server_name} - Server startup timed out")
+            return False
+            
+    except Exception as e:
+        print(f"✗ {server_name} - Exception during startup test: {e}")
+        return False
+
+# From removed file:
+def test_key_mcp_servers():
+    """Test key MCP servers that are essential for flash loan system"""
+    servers_to_test = []
+        ("Enhanced Copilot", r"C:\Users\Ratanshila\Documents\flash loan\mcp_servers\ai_integration\working_enhanced_copilot_mcp_server.py"),
+        ("EVM MCP Server", r"C:\Users\Ratanshila\Documents\flash loan\mcp_servers\blockchain_integration\evm-mcp-server\evm_mcp_server.py"),
+        ("Matic MCP Server", r"C:\Users\Ratanshila\Documents\flash loan\mcp_servers\blockchain_integration\matic-mcp-server\matic_mcp_server.py"),
+        ("Unified Flash Loan", r"C:\Users\Ratanshila\Documents\flash loan\mcp_servers\execution\working_unified_flash_loan_mcp_server.py")
+    
+    
+    success_count = 0
+    total_count = len(servers_to_test)
+    
+    print("Testing MCP Server Startup...")
+    print("=" * 50)
+    
+    for server_name, server_path in servers_to_test:
+        if Path(server_path).exists():
+            if test_mcp_server_startup(server_name, server_path):
+                success_count += 1
+        else:
+            print(f"✗ {server_name} - File not found: {server_path}")
+    
+    print("=" * 50)
+    print(f"Server Startup Test Results: {success_count}/{total_count} servers passed")
+    
+    return success_count == total_count
+
+# From removed file:
+def check_mcp_config():
+    """Check if MCP configuration file is properly formatted"""
+    config_path = r"c:\Users\Ratanshila\AppData\Roaming\Code\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json"
+    
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+            
+        server_count = len(config.get('mcpServers', {}))
+        flash_loan_servers = [name for name in config.get('mcpServers', {}).keys() if 'flash_loan' in name.lower()]
+        
+        print(f"✓ MCP Configuration loaded successfully")
+        print(f"  Total servers configured: {server_count}")
+        print(f"  Flash loan servers: {len(flash_loan_servers)}")
+        print(f"  Flash loan server names: {', '.join(flash_loan_servers)}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"✗ MCP Configuration error: {e}")
+        return False
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="MCP Coordination MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Database Operations MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Data Analysis MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="DeFi Protocol Analysis MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def test_python_path():
+    """Test the Python executable path"""
+    print(f"Python executable: {sys.executable}")
+    print(f"Python version: {sys.version}")
+    return True
+
+# From removed file:
+def test_required_packages():
+    """Test that all required packages are importable"""
+    required_packages = []
+        'aiohttp',
+        'aiofiles', 
+        'web3',
+        'mcp',
+        'asyncio',
+        'json',
+        'logging',
+        'typing',
+        'pathlib'
+    
+    
+    failed_imports = []
+    
+    for package in required_packages:
+        try:
+            __import__(package)
+            print(f"✓ {package} - OK")
+        except ImportError as e:
+            print(f"✗ {package} - FAILED: {e}")
+            failed_imports.append(package)
+    
+    if failed_imports:
+        print(f"\nFailed imports: {failed_imports}")
+        return False
+    else:
+        print("\nAll required packages are available!")
+        return True
+
+# From removed file:
+def test_mcp_server_syntax():
+    """Test that MCP server files have valid Python syntax"""
+    server_files = []
+        r"C:\Users\Ratanshila\Documents\flash loan\mcp_servers\ai_integration\working_enhanced_copilot_mcp_server.py",
+        r"C:\Users\Ratanshila\Documents\flash loan\mcp_servers\blockchain_integration\evm-mcp-server\evm_mcp_server.py",
+        r"C:\Users\Ratanshila\Documents\flash loan\mcp_servers\blockchain_integration\matic-mcp-server\matic_mcp_server.py"
+    
+    
+    for server_file in server_files:
+        try:
+            with open(server_file, 'r', encoding='utf-8') as f:
+                code = f.read()
+            compile(code, server_file, 'exec')
+            print(f"✓ {server_file} - Syntax OK")
+        except FileNotFoundError:
+            print(f"✗ {server_file} - File not found")
+        except SyntaxError as e:
+            print(f"✗ {server_file} - Syntax Error: {e}")
+        except Exception as e:
+            print(f"✗ {server_file} - Error: {e}")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="File System Operations MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="File Processing MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Flash Loan Core Logic MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("github-actions-mcp")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Liquidity Management MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="System Monitoring MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Notification Service MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Portfolio Management MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Price Feed Aggregation MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Risk Assessment MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Security Operations MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Flash Loan MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[]
+        logging.FileHandler("/app/logs/mcp_server.log"),
+        logging.StreamHandler()
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format=f'%(asctime)s - MCP-{SERVER_ID} - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(f"MCP-{SERVER_ID}")
+
+# From removed file:
+async def initialize(self):
+        logger.info("Initializing web scraper server")
+        self.session = None
+    
+    async def process_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        """Process web scraping requests"""
+        url = request.get('url')
+        if not url:
+            return {"error": "URL required"}
+        
+        try:
+            if not self.session:
+                self.session = aiohttp.ClientSession()
+            
+            async with self.session.get(url) as response:
+                content = await response.text()
+                return {}
+                    "status": "success",
+                    "url": url,
+                    "status_code": response.status,
+                    "content_length": len(content)
+                
+        except Exception as e:
+            return {"error": str(e)}
+
+# From removed file:
+async def initialize(self):
+        logger.info("Initializing database manager server")
+        self.connection = None
+        # Database connection would be established here
+    
+    async def process_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        """Process database requests"""
+        query = request.get('query')
+        if not query:
+            return {"error": "Query required"}
+        
+        # Simulate database operation
+        return {}
+            "status": "success", 
+            "query": query, 
+            "rows_affected": 1
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[]
+        logging.StreamHandler(),
+        logging.FileHandler('mcp_startup.log')
+    
+
+logger = logging.getLogger("MCPSimpleStartup")
+
+
+# Merged utility functions:
+
+# From removed file:
+def test_mcp_server(name, port):
+    """Test MCP server health and capabilities"""
+    try:
+        # Test health endpoint
+        health_response = requests.get(f"http://localhost:{port}/health", timeout=3)
+        health_ok = health_response.status_code == 200
+        health_data = health_response.json() if health_ok else {}
+        
+        # Test capabilities endpoint
+        cap_response = requests.get(f"http://localhost:{port}/mcp/capabilities", timeout=3)
+        cap_ok = cap_response.status_code == 200
+        cap_data = cap_response.json() if cap_ok else {}
+        
+        return {}
+            'name': name,
+            'port': port,
+            'health_ok': health_ok,
+            'capabilities_ok': cap_ok,
+            'health_data': health_data,
+            'capabilities': cap_data.get('capabilities', {}),
+            'status': 'online' if health_ok and cap_ok else 'offline'
+        
+    except Exception as e:
+        return {}
+            'name': name,
+            'port': port,
+            'health_ok': False,
+            'capabilities_ok': False,
+            'error': str(e),
+            'status': 'offline'
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Task Queue Management MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Web Scraping MCP Server", version="1.0.0")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("MonitoringMCP")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logger = logging.getLogger(__name__)
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("ProfitOptimizerMCP")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(level=logging.INFO, stream=sys.stderr)
+logger = logging.getLogger("simple-flash-loan-mcp-server")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[]
+        logging.FileHandler('mcp_coordinator.log'),
+        logging.StreamHandler(sys.stdout)
+    
+
+logger = logging.getLogger(__name__)
+
+@dataclass
+
+
+# Merged utility functions:
+
+# From removed file:
+def run_command(cmd, capture=True):
+    """Run a command"""
+    try:
+        if capture:
+            result: str = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        else:
+            result: str = subprocess.run(cmd, check=False)
+        return result
+    except Exception as e:
+        print(f"[ERROR] Error: {e}")
+        return None
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("supermemory-mcp")
+
+# Configuration
+SUPERMEMORY_API_BASE = "https://api.supermemory.ai"
+SUPERMEMORY_API_KEY = os.getenv("SUPERMEMORY_API_KEY", "")
+
+
+# Merged utility functions:
+
+# From removed file:
+async def test_context7_mcp_server():
+    """Test the Context7 MCP server functionality"""
+    
+    print("Testing Context7 MCP Server...")
+    print("=" * 50)
+    
+    # Test cases
+    test_cases = [
+        {
+            "name": "Initialize",
+            "method": "initialize",
+            "params": {},
+            "expected": "protocolVersion"
+        },
+        {
+            "name": "List Tools",
+            "method": "tools/list",
+            "params": {},
+            "expected": "tools"
+        },
+        {
+            "name": "Search Documentation",
+            "method": "tools/call",
+            "params": {
+                "name": "search_docs",
+                "arguments": {
+                    "library": "python",
+                    "query": "asyncio"
+
+            },
+            "expected": "results"
+        },
+        {
+            "name": "Get Library Info",
+            "method": "tools/call",
+            "params": {
+                "name": "get_library_info",
+                "arguments": {
+                    "library": "requests"
+
+            },
+            "expected": "description"
+        },
+        {
+            "name": "Health Check",
+            "method": "tools/call",
+            "params": {
+                "name": "health_check",
+                "arguments": {}
+            },
+            "expected": "status"
+
+
+    
+    # Start the server process
+    print("Starting Context7 MCP Server...")
+    process = subprocess.Popen(
+        [sys.executable, "mcp_servers/context7_mcp_server.py"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+
+    
+    try:
+        # Wait a moment for server to start
+        await asyncio.sleep(2)
+        
+        # Run test cases
+        for i, test_case in enumerate(test_cases, 1):
+            print(f"\nTest {i}: {test_case['name']}")
+            print("-" * 30)
+            
+            # Prepare message
+            message = {
+                "jsonrpc": "2.0",
+                "id": i,
+                "method": test_case["method"],
+                "params": test_case["params"]
+
+            
+            # Send message to server
+            message_str = json.dumps(message) + "\n"
+            process.stdin.write(message_str)
+            process.stdin.flush()
+            
+            # Read response
+            response_line = process.stdout.readline()
+            if response_line:
+                try:
+                    response = json.loads(response_line.strip())
+                    
+                    # Check for errors
+                    if "error" in response:
+                        print(f"❌ Error: {response['error']}")
+                        continue
+                    
+                    # Check result
+                    result = response.get("result", {})
+                    if test_case["expected"] in str(result):
+                        print(f"✅ Success: {test_case['name']}")
+                        print(f"   Response: {json.dumps(result, indent=2)[:200]}...")
+                    else:
+                        print(f"❌ Failed: Expected '{test_case['expected']}' not found in response")
+                        print(f"   Response: {json.dumps(result, indent=2)}")
+                        
+                except json.JSONDecodeError as e:
+                    print(f"❌ JSON Parse Error: {e}")
+                    print(f"   Raw response: {response_line}")
+            else:
+                print(f"❌ No response received for {test_case['name']}")
+        
+        print("\n" + "=" * 50)
+        print("Context7 MCP Server Test Complete!")
+        
+    except Exception as e:
+        print(f"❌ Test Error: {e}")
+    
+    finally:
+        # Clean up
+        print("\nStopping Context7 MCP Server...")
+        process.terminate()
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+        
+        # Check for any errors
+        stderr_output = process.stderr.read()
+        if stderr_output:
+            print(f"Server stderr: {stderr_output}")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+logger = logging.getLogger(__name__)
+
+@dataclass
+
+
+# Merged utility functions:
+
+# From removed file:
+def verify_docker_compose_files():
+    """Verify docker compose files have correct configurations"""
+    print("[SEARCH] VERIFYING DOCKER COMPOSE CONFIGURATIONS")
+    print("=" * 60)
+    
+    # Check MCP servers file
+    servers_file = Path("docker/compose/docker-compose.mcp-servers.yml")
+    if servers_file.exists():
+        with open(servers_file, 'r') as f:
+            content = f.read()
+            server_count = content.count('container_name: mcp-')
+            print(f"[OK] MCP Servers file: {server_count} servers configured")
+    else:
+        print("[ERROR] MCP servers compose file not found")
+    
+    # Check AI agents file
+    agents_file = Path("docker/compose/docker-compose.ai-agents.yml")
+    if agents_file.exists():
+        with open(agents_file, 'r') as f:
+            content = f.read()
+            agent_count = content.count('container_name: mcp-')
+            print(f"[OK] AI Agents file: {agent_count} agents configured")
+    else:
+        print("[ERROR] AI agents compose file not found")
+
+# From removed file:
+def verify_agent_manifest():
+    """Verify agent manifest has correct configuration"""
+    print("\n[SEARCH] VERIFYING AGENT MANIFEST")
+    print("=" * 60)
+    
+    manifest_file = Path("config/agent_manifest.json")
+    if manifest_file.exists():
+        try:
+            with open(manifest_file, 'r') as f:
+                manifest = json.load(f)
+                
+            total_agents = manifest.get('total_agents', 0)
+            print(f"[OK] Total agents configured: {total_agents}")
+            
+            if 'agent_roles' in manifest:
+                for role, config in manifest['agent_roles'].items():
+                    count = config.get('count', 0)
+                    print(f"[OK] {role}: {count} agents")
+            
+            if 'summary' in manifest:
+                summary = manifest['summary']
+                print(f"[OK] Port range: {summary.get('port_range', 'N/A')}")
+                print(f"[OK] High priority agents: {summary.get('high_priority_agents', 0)}")
+                print(f"[OK] Critical agents: {summary.get('critical_priority_agents', 0)}")
+                
+        except json.JSONDecodeError:
+            print("[ERROR] Agent manifest file is corrupted")
+    else:
+        print("[ERROR] Agent manifest file not found")
+
+# From removed file:
+def verify_infrastructure():
+    """Verify infrastructure containers are properly configured"""
+    print("\n[SEARCH] VERIFYING INFRASTRUCTURE")
+    print("=" * 60)
+    
+    try:
+        result: str = subprocess.run(['docker', 'ps', '--filter', 'name=mcp-', '--format', '{{.Names}}'], )
+                              capture_output=True, text=True
+        if result.returncode == 0:
+            containers = [line.strip() for line in result.stdout.split('\n') if line.strip()]
+            print(f"[OK] Running MCP containers: {len(containers)}")
+            for container in containers:
+                print(f"   • {container}")
+        else:
+            print("[ERROR] Could not check Docker containers")
+    except Exception as e:
+        print(f"[ERROR] Error checking containers: {e}")
+
+
+# Merged utility functions:
+
+# From removed file:
+def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[]
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('flash_loan_mcp.log', mode='a')
+
+
+# Merged functions from other servers:
+
+def main():
+    """Main execution function"""
+    project_root = Path(__file__).parent
+    organizer = MCPProjectOrganizer(str(project_root))
+    
+    # Run the organization
+    report = asyncio.run(organizer.run_full_organization())
+    
+    # Save report
+    report_path = project_root / "PROJECT_ORGANIZATION_REPORT.json"
+    with open(report_path, 'w') as f:
+        json.dump(report, f, indent=2)
+    
+    print(f"\n📋 Organization Report saved to: {report_path}")
+    print(f"[OK] Project organization completed successfully!")
+    
+    return report
+
+if __name__ == "__main__":
+    main()
+
+
+
+# Merged functions from other servers:
+
+    def load_risk_model(self):
+        """Load the trained risk assessment model"""
+        try:
+            model_path = "models/risk_regressor.pkl"
+            if os.path.exists(model_path):
+                with open(model_path, 'rb') as f:
+                    self.risk_model = pickle.load(f)
+                logger.info("Risk assessment model loaded successfully")
+            else:
+                logger.warning("Risk model not found, using heuristic risk assessment")
+        except Exception as e:
+            logger.error(str(f"Error loading risk model: {e}")
+    
+
+    async def start_server(self):
+        """Start the MCP server"""
+        self.running = True
+        logger.info(str(f"Starting {self.server_name} on port {self.port}")
+        
+        try:
+            while self.running:
+                # Periodic risk monitoring
+                await asyncio.sleep(60)  # Monitor every minute
+                logger.info(str(f"{self.server_name} monitoring - Risk model: {'[OK]' if self.risk_model else '[ERROR]'}")
+                
+        except Exception as e:
+            logger.error(str(f"Server error: {e}")
+        finally:
+            logger.info(str(f"{self.server_name} shutting down")
+    
+
+    def stop_server(self):
+        """Stop the MCP server"""
+        self.running = False
+
+
+async def main():
+    """Main server function"""
+    server = RiskManagementMCPServer()
+    
+    try:
+        logger.info("=" * 50)
+        logger.info("RISK MANAGEMENT MCP SERVER")
+        logger.info("=" * 50)
+        logger.info("Advanced risk assessment for AAVE flash loans")
+        logger.info("ML-powered risk scoring and recommendations")
+        logger.info("=" * 50)
+        
+        await server.start_server()
+        
+    except KeyboardInterrupt:
+        logger.info("Received shutdown signal")
+        server.stop_server()
+    except Exception as e:
+        logger.error(str(f"Server startup error: {e}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+

@@ -1,13 +1,17 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+                    import time
+        import traceback
+from typing import Dict, Any, Tuple, Optional
+import os
+
+from dotenv import load_dotenv
+from eth_account import Account
+from web3 import Web3
 """
 DEX Management Utility
 Standalone utility for managing DEX approvals without the WebSocket server
 """
-import os
-from dotenv import load_dotenv
-from web3 import Web3
-from eth_account import Account
-from typing import Dict, Any, Tuple, Optional
 
 # Load environment variables
 load_dotenv()
@@ -21,37 +25,37 @@ class DEXManagerUtility:
         self.private_key = os.getenv("PRIVATE_KEY")
         
         # DEX configurations
-        self.supported_dexes: Dict[str, Dict[str, str]] = {
-            "quickswap": {
+        self.supported_dexes: Dict[str, Dict[str, str]] = {}
+            "quickswap": {}
                 "name": "QuickSwap",
                 "address": "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff"
             },
-            "uniswap_v3": {
+            "uniswap_v3": {}
                 "name": "Uniswap V3",
                 "address": "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45"
             },
-            "sushiswap": {
+            "sushiswap": {}
                 "name": "SushiSwap",
                 "address": "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506"
             },
-            "curve": {
+            "curve": {}
                 "name": "Curve Finance",
                 "address": "0x8f942C20D02bEfc377D41445793068908E2250D0"
             },
-            "balancer": {
+            "balancer": {}
                 "name": "Balancer",
                 "address": "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
             },
-            "dodo": {
+            "dodo": {}
                 "name": "DODO",
                 "address": "0xa222f9c040d7E29b5B9c4bC24d7a8Ba83e7bd47b"
-            }
-        }
+            
+        
         
         # Contract ABI
-        self.contract_abi: list[dict[str, Any]] = [
-            {
-                "inputs": [
+        self.contract_abi: list[dict[str, Any]] = []
+            {}
+                "inputs": []
                     {"internalType": "address", "name": "dex", "type": "address"},
                     {"internalType": "bool", "name": "status", "type": "bool"}
                 ],
@@ -60,27 +64,27 @@ class DEXManagerUtility:
                 "stateMutability": "nonpayable",
                 "type": "function"
             },
-            {
-                "inputs": [
+            {}
+                "inputs": []
                     {"internalType": "address", "name": "", "type": "address"}
                 ],
                 "name": "approvedDexes",
-                "outputs": [
+                "outputs": []
                     {"internalType": "bool", "name": "", "type": "bool"}
                 ],
                 "stateMutability": "view",
                 "type": "function"
             },
-            {
+            {}
                 "inputs": [],
                 "name": "owner",
-                "outputs": [
+                "outputs": []
                     {"internalType": "address", "name": "", "type": "address"}
                 ],
                 "stateMutability": "view",
                 "type": "function"
-            }
-        ]
+            
+        
         
         self.web3: Optional[Web3] = None
         self.contract = None
@@ -89,48 +93,48 @@ class DEXManagerUtility:
     def initialize(self) -> bool:
         """Initialize Web3 connection and contract"""
         try:
-            print("🔧 Initializing DEX Manager...")
+            print("[SETUP] Initializing DEX Manager...")
             
             # Setup Web3
             self.web3 = Web3(Web3.HTTPProvider(self.polygon_rpc))
             if not self.web3.is_connected():
-                print("❌ Failed to connect to Polygon network")
+                print("[ERROR] Failed to connect to Polygon network")
                 return False
             
-            print(f"✅ Connected to Polygon (Chain ID: {self.web3.eth.chain_id})")
+            print(f"[OK] Connected to Polygon (Chain ID: {self.web3.eth.chain_id})")
             
             # Setup contract
-            self.contract = self.web3.eth.contract(
+            self.contract = self.web3.eth.contract()
                 address=Web3.to_checksum_address(self.contract_address),
                 abi=self.contract_abi
-            )
+            
             
             # Setup account
             if self.private_key:
                 self.account = Account.from_key(self.private_key)
-                print(f"✅ Account loaded: {self.account.address}")
+                print(f"[OK] Account loaded: {self.account.address}")
                 
                 # Check if user is owner
                 owner = self.contract.functions.owner().call()
                 is_owner = owner.lower() == self.account.address.lower()
-                print(f"🔑 Contract owner: {owner}")
+                print(f"[KEY] Contract owner: {owner}")
                 print(f"👤 User is owner: {'Yes' if is_owner else 'No'}")
                 
                 if not is_owner:
-                    print("⚠️ Warning: You are not the contract owner. DEX approval will fail.")
+                    print("[WARN] Warning: You are not the contract owner. DEX approval will fail.")
             else:
-                print("⚠️ No private key provided - read-only mode")
+                print("[WARN] No private key provided - read-only mode")
             
-            print("✅ DEX Manager initialized successfully")
+            print("[OK] DEX Manager initialized successfully")
             return True
             
         except Exception as e:
-            print(f"❌ Initialization failed: {e}")
+            print(f"[ERROR] Initialization failed: {e}")
             return False
     
     def check_dex_statuses(self) -> Tuple[int, int]:
         """Check approval status of all DEXes"""
-        print("\n📊 Checking DEX approval statuses...")
+        print("\n[METRICS] Checking DEX approval statuses...")
         print("=" * 60)
         
         approved_count = 0
@@ -138,69 +142,69 @@ class DEXManagerUtility:
         
         for dex_key, dex_info in self.supported_dexes.items():
             try:
-                is_approved = self.contract.functions.approvedDexes(
+                is_approved = self.contract.functions.approvedDexes()
                     Web3.to_checksum_address(dex_info["address"])
-                ).call()
+                ).call(
                 
-                status = "✅ APPROVED" if is_approved else "❌ NOT APPROVED"
+                status = "[OK] APPROVED" if is_approved else "[ERROR] NOT APPROVED"
                 print(f"{dex_info['name']:15} | {status}")
                 
                 if is_approved:
                     approved_count += 1
                     
             except Exception as e:
-                print(f"{dex_info['name']:15} | ❌ ERROR: {e}")
+                print(f"{dex_info['name']:15} | [ERROR] ERROR: {e}")
         
         print("=" * 60)
-        print(f"📈 Summary: {approved_count}/{total_count} DEXes approved")
+        print(f"[GROWTH] Summary: {approved_count}/{total_count} DEXes approved")
         
         return approved_count, total_count
     
     def approve_dex(self, dex_key: str, status: bool = True) -> bool:
         """Approve or disapprove a specific DEX"""
         if not self.account:
-            print("❌ No private key provided - cannot send transactions")
+            print("[ERROR] No private key provided - cannot send transactions")
             return False
         
         if dex_key not in self.supported_dexes:
-            print(f"❌ Unknown DEX: {dex_key}")
+            print(f"[ERROR] Unknown DEX: {dex_key}")
             return False
         
         dex_info = self.supported_dexes[dex_key]
         
         try:
             # Check current status
-            current_status = self.contract.functions.approvedDexes(
+            current_status = self.contract.functions.approvedDexes()
                 Web3.to_checksum_address(dex_info["address"])
-            ).call()
+            ).call(
             
             if current_status == status:
                 action = "approved" if status else "disapproved"
-                print(f"✅ {dex_info['name']} is already {action}")
+                print(f"[OK] {dex_info['name']} is already {action}")
                 return True
             
-            print(f"🚀 {'Approving' if status else 'Disapproving'} {dex_info['name']}...")
+            print(f"[INIT] {'Approving' if status else 'Disapproving'} {dex_info['name']}...")
             
             # Build transaction
             gas_price = self.web3.eth.gas_price
             nonce = self.web3.eth.get_transaction_count(self.account.address)
             
-            txn = self.contract.functions.approveDex(
+            txn = self.contract.functions.approveDex()
                 Web3.to_checksum_address(dex_info["address"]),
                 status
-            ).build_transaction({
+            ).build_transaction({}
                 'from': self.account.address,
                 'gas': 100000,
                 'gasPrice': gas_price,
                 'nonce': nonce,
                 'chainId': 137
-            })
+            
             
             # Sign and send
             signed_txn = self.web3.eth.account.sign_transaction(txn, self.private_key)
             tx_hash = self.web3.eth.send_raw_transaction(signed_txn.raw_transaction)
             
-            print(f"📝 Transaction sent: {tx_hash.hex()}")
+            print(f"[LOG] Transaction sent: {tx_hash.hex()}")
             print("⏳ Waiting for confirmation...")
             
             # Wait for receipt
@@ -208,32 +212,32 @@ class DEXManagerUtility:
             
             if receipt["status"] == 1:
                 action = "approved" if status else "disapproved"
-                print(f"✅ {dex_info['name']} {action} successfully!")
+                print(f"[OK] {dex_info['name']} {action} successfully!")
                 print(f"⛽ Gas used: {receipt['gasUsed']:,}")
                 return True
             else:
-                print("❌ Transaction failed")
+                print("[ERROR] Transaction failed")
                 return False
                 
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f"[ERROR] Error: {e}")
             return False
     
     def approve_all_unapproved(self) -> bool:
         """Approve all unapproved DEXes"""
-        print("\n🔧 Approving all unapproved DEXes...")
+        print("\n[SETUP] Approving all unapproved DEXes...")
         
         if not self.account:
-            print("❌ No private key provided - cannot send transactions")
+            print("[ERROR] No private key provided - cannot send transactions")
             return False
         
         success_count = 0
         
         for dex_key, dex_info in self.supported_dexes.items():
             try:
-                is_approved = self.contract.functions.approvedDexes(
+                is_approved = self.contract.functions.approvedDexes()
                     Web3.to_checksum_address(dex_info["address"])
-                ).call()
+                ).call(
                 
                 if not is_approved:
                     print(f"\n📡 Processing {dex_info['name']}...")
@@ -241,16 +245,15 @@ class DEXManagerUtility:
                         success_count += 1
                     
                     # Small delay between transactions
-                    import time
                     time.sleep(2)
                 else:
-                    print(f"✅ {dex_info['name']} already approved")
+                    print(f"[OK] {dex_info['name']} already approved")
                     success_count += 1
                     
             except Exception as e:
-                print(f"❌ Error with {dex_info['name']}: {e}")
+                print(f"[ERROR] Error with {dex_info['name']}: {e}")
         
-        print(f"\n📊 Results: {success_count}/{len(self.supported_dexes)} DEXes approved")
+        print(f"\n[METRICS] Results: {success_count}/{len(self.supported_dexes)} DEXes approved")
         return success_count == len(self.supported_dexes)
 
 def main():
@@ -258,7 +261,7 @@ def main():
     print("🏗️  Flash Loan Arbitrage DEX Manager Utility")
     print("=" * 60)
     print(f"📋 Contract: 0x153dDf13D58397740c40E9D1a6e183A8c0F36c32")
-    print(f"🌐 Network: Polygon Mainnet")
+    print(f"[NETWORK] Network: Polygon Mainnet")
     print("")
     
     try:
@@ -268,7 +271,7 @@ def main():
         
         print("Initializing...")
         if not manager.initialize():
-            print("❌ Failed to initialize DEX manager")
+            print("[ERROR] Failed to initialize DEX manager")
             return
         print("Initialization successful")
 
@@ -287,23 +290,22 @@ def main():
                     success = manager.approve_all_unapproved()
                     
                     if success:
-                        print("\n🎉 All DEXes approved successfully!")
+                        print("\n[CELEBRATE] All DEXes approved successfully!")
                         print("\n📋 Final Status:")
                         manager.check_dex_statuses()
                     else:
-                        print("\n❌ Some DEX approvals failed. Check the output above.")
+                        print("\n[ERROR] Some DEX approvals failed. Check the output above.")
                 else:
-                    print("❌ Operation cancelled by user")
+                    print("[ERROR] Operation cancelled by user")
             else:
-                print("\n⚠️ Cannot approve DEXes - no private key provided")
+                print("\n[WARN] Cannot approve DEXes - no private key provided")
         else:
-            print("\n✅ All DEXes are already approved!")
+            print("\n[OK] All DEXes are already approved!")
         
-        print("\n🎯 DEX Management completed")
+        print("\n[TASK] DEX Management completed")
         
     except Exception as e:
-        print(f"❌ Error in main: {e}")
-        import traceback
+        print(f"[ERROR] Error in main: {e}")
         traceback.print_exc()
         return
 

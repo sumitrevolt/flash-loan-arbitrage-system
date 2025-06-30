@@ -1,0 +1,36 @@
+{
+  "status": "complete",
+  "contract_address": "0x153ddf13d58397740c40e9d1a6e183a8c0f36c32",
+  "wallet_address": "0xaCd9a5B2438EF62bc7b725c574cDb23bf8D0314D",
+  "analysis_steps": [
+    "Contract information retrieved",
+    "Contract balance: 0 MATIC",
+    "Contract ABI retrieved successfully",
+    "Found 1 withdrawal functions"
+  ],
+  "contract_name": "FlashLoanArbitrageFixed",
+  "contract_verified": true,
+  "contract_balance": 0.0,
+  "abi_available": true,
+  "withdrawal_functions": [
+    {
+      "name": "withdrawToken",
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    }
+  ],
+  "balance_functions": [],
+  "emergency_functions": [],
+  "total_functions": 31
+}

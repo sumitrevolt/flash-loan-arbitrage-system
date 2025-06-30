@@ -1,27 +1,42 @@
-#!/usr/bin/env python3
-"""
-Enhanced Discord Bot for Flash Loan Arbitrage System
-Integrates with all 21 MCP servers and provides comprehensive control
-"""
-
-import discord
-from discord.ext import commands, tasks
-import aiohttp
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from decimal import Decimal
+from typing import Dict, List, Optional, Any
 import asyncio
 import json
 import logging
 import os
 import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
-from decimal import Decimal
+
+from discord.ext import commands, tasks
+import aiohttp
+import discord
 import redis
+"""
+Enhanced Discord Bot for Flash Loan Arbitrage System
+Integrates with all 21 MCP servers and provides comprehensive control
+"""
+
 
 # Setup logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+
 logger = logging.getLogger('FlashLoanDiscordBot')
 
 class FlashLoanBot(commands.Bot):
@@ -32,20 +47,20 @@ class FlashLoanBot(commands.Bot):
         intents.message_content = True
         intents.guilds = True
         
-        super().__init__(
+        super().__init__()
             command_prefix='!',
             intents=intents,
             description='Flash Loan Arbitrage System Control Bot'
-        )
+        
         
         # Configuration
-        self.config = {
+        self.config = {}
             'mcp_coordinator_url': os.getenv('MCP_COORDINATOR_URL', 'http://mcp-coordinator:9000'),
             'aave_executor_url': os.getenv('AAVE_EXECUTOR_URL', 'http://aave-flash-loan-executor:8001'),
             'price_oracle_url': os.getenv('PRICE_ORACLE_URL', 'http://price-oracle-mcp:8005'),
             'arbitrage_detector_url': os.getenv('ARBITRAGE_DETECTOR_URL', 'http://arbitrage-detector:8010'),
             'redis_url': os.getenv('REDIS_URL', 'redis://redis:6379')
-        }
+        
         
         # State management
         self.system_status = {}
@@ -55,18 +70,18 @@ class FlashLoanBot(commands.Bot):
         
         # Redis connection
         try:
-            self.redis_client = redis.from_url(self.config['redis_url'], decode_responses=True)
+            self.redis_client = redis.from_url(self.config['redis_url'], decode_responses=True, decode_responses=True, encoding="utf-8")
             self.redis_client.ping()
             logger.info("Connected to Redis")
         except Exception as e:
-            logger.error(f"Redis connection failed: {e}")
+            logger.error(str(f"Redis connection failed: {e}")
             self.redis_client = None
         
         # HTTP session
         self.session = None
         
         # MCP server endpoints
-        self.mcp_servers = {
+        self.mcp_servers = {}
             'coordinator': self.config['mcp_coordinator_url'],
             'aave_executor': self.config['aave_executor_url'],
             'price_oracle': self.config['price_oracle_url'],
@@ -78,7 +93,7 @@ class FlashLoanBot(commands.Bot):
             'foundry': 'http://foundry-mcp:8007',
             'contract_executor': 'http://contract-executor-mcp:3005',
             'flash_loan_strategist': 'http://flash-loan-strategist-mcp:3004'
-        }
+        
     
     async def setup_hook(self):
         """Setup hook called when bot starts"""
@@ -105,13 +120,13 @@ class FlashLoanBot(commands.Bot):
     
     async def on_ready(self):
         """Called when bot is ready"""
-        logger.info(f'Bot logged in as {self.user} (ID: {self.user.id})')
+        logger.info(f'Bot logged in as {self.user} (ID: {self.user.id}')
         
         # Set bot status
-        activity = discord.Activity(
+        activity = discord.Activity()
             type=discord.ActivityType.watching,
             name="Flash Loan Opportunities"
-        )
+        
         await self.change_presence(activity=activity)
         
         # Send startup message to configured channel
@@ -119,12 +134,12 @@ class FlashLoanBot(commands.Bot):
         if startup_channel_id:
             channel = self.get_channel(int(startup_channel_id))
             if channel:
-                embed = discord.Embed(
-                    title="🚀 Flash Loan Bot Online",
+                embed = discord.Embed()
+                    title="[INIT] Flash Loan Bot Online",
                     description="All systems operational. Ready for arbitrage!",
                     color=discord.Color.green(),
                     timestamp=datetime.utcnow()
-                )
+                
                 await channel.send(embed=embed)
     
     async def make_request(self, url: str, method: str = 'GET', data: Dict = None) -> Optional[Dict]:
@@ -147,7 +162,7 @@ class FlashLoanBot(commands.Bot):
             return None
             
         except Exception as e:
-            logger.error(f"Request failed to {url}: {e}")
+            logger.error(str(f"Request failed to {url}: {e}")
             return None
     
     @tasks.loop(minutes=1)
@@ -162,41 +177,41 @@ class FlashLoanBot(commands.Bot):
                 status = await self.make_request(health_url)
                 
                 if status:
-                    server_status[server_name] = {
+                    server_status[server_name] = {}
                         'status': 'healthy',
                         'last_check': datetime.utcnow().isoformat(),
                         'details': status
-                    }
+                    
                 else:
-                    server_status[server_name] = {
+                    server_status[server_name] = {}
                         'status': 'unhealthy',
                         'last_check': datetime.utcnow().isoformat(),
                         'details': None
-                    }
+                    
             
             self.system_status = server_status
             
             # Store in Redis
             if self.redis_client:
-                self.redis_client.setex(
+                self.redis_client.setex()
                     'system_status',
                     300,  # 5 minutes TTL
-                    json.dumps(server_status, default=str)
-                )
+                    json.dumps(server_status, default=str, ensure_ascii=True, default=str)
+                
             
             # Check for critical failures
-            unhealthy_servers = [
+            unhealthy_servers = []
                 name for name, status in server_status.items()
                 if status['status'] == 'unhealthy'
-            ]
+            
             
             if unhealthy_servers and self.alerts_enabled:
-                await self.send_alert(
-                    f"⚠️ **System Alert**: {len(unhealthy_servers)} servers unhealthy: {', '.join(unhealthy_servers)}"
-                )
+                await self.send_alert()
+                    f"[WARN] **System Alert**: {len(unhealthy_servers)} servers unhealthy: {', '.join(unhealthy_servers)}"
+                
             
         except Exception as e:
-            logger.error(f"Error monitoring system: {e}")
+            logger.error(str(f"Error monitoring system: {e}")
     
     @tasks.loop(minutes=5)
     async def check_opportunities(self):
@@ -210,26 +225,26 @@ class FlashLoanBot(commands.Bot):
                 
                 if top_opportunities:
                     # Send opportunity alert
-                    embed = discord.Embed(
+                    embed = discord.Embed()
                         title="💰 Arbitrage Opportunities Detected",
                         color=discord.Color.gold(),
                         timestamp=datetime.utcnow()
-                    )
+                    
                     
                     for i, opp in enumerate(top_opportunities, 1):
                         profit_pct = opp.get('profit_percentage', 0)
                         if profit_pct > 0.5:  # Only show significant opportunities
-                            embed.add_field(
+                            embed.add_field()
                                 name=f"#{i} {opp.get('pair', 'Unknown')}",
                                 value=f"Profit: {profit_pct:.2f}%\nBuy: {opp.get('buy_dex', 'Unknown')}\nSell: {opp.get('sell_dex', 'Unknown')}",
                                 inline=True
-                            )
+                            
                     
                     if embed.fields:  # Only send if there are significant opportunities
                         await self.send_alert(embed=embed)
             
         except Exception as e:
-            logger.error(f"Error checking opportunities: {e}")
+            logger.error(str(f"Error checking opportunities: {e}")
     
     @tasks.loop(minutes=10)
     async def update_metrics(self):
@@ -244,14 +259,14 @@ class FlashLoanBot(commands.Bot):
                 
                 # Store in Redis
                 if self.redis_client:
-                    self.redis_client.setex(
+                    self.redis_client.setex()
                         'performance_metrics',
                         600,  # 10 minutes TTL
-                        json.dumps(metrics, default=str)
-                    )
+                        json.dumps(metrics, default=str, ensure_ascii=True, default=str)
+                    
             
         except Exception as e:
-            logger.error(f"Error updating metrics: {e}")
+            logger.error(str(f"Error updating metrics: {e}")
     
     async def send_alert(self, message: str = None, embed: discord.Embed = None):
         """Send alert to configured channel"""
@@ -270,7 +285,7 @@ class FlashLoanBot(commands.Bot):
                 await channel.send(message)
             
         except Exception as e:
-            logger.error(f"Error sending alert: {e}")
+            logger.error(str(f"Error sending alert: {e}")
 
 # Bot commands
 bot = FlashLoanBot()
@@ -279,50 +294,50 @@ bot = FlashLoanBot()
 async def status_command(ctx):
     """Get system status"""
     try:
-        embed = discord.Embed(
+        embed = discord.Embed()
             title="🏦 Flash Loan System Status",
             color=discord.Color.blue(),
             timestamp=datetime.utcnow()
-        )
+        
         
         if bot.system_status:
             healthy_count = sum(1 for s in bot.system_status.values() if s['status'] == 'healthy')
             total_count = len(bot.system_status)
             
-            embed.add_field(
+            embed.add_field()
                 name="System Health",
                 value=f"{healthy_count}/{total_count} servers healthy",
                 inline=False
-            )
+            
             
             # Show unhealthy servers
             unhealthy = [name for name, status in bot.system_status.items() if status['status'] == 'unhealthy']
             if unhealthy:
-                embed.add_field(
-                    name="⚠️ Unhealthy Servers",
+                embed.add_field()
+                    name="[WARN] Unhealthy Servers",
                     value=", ".join(unhealthy),
                     inline=False
-                )
+                
             
             # Performance metrics
             if bot.performance_metrics:
                 metrics = bot.performance_metrics
-                embed.add_field(
-                    name="📊 Performance",
+                embed.add_field()
+                    name="[METRICS] Performance",
                     value=f"Active Tasks: {metrics.get('active_tasks', 0)}\nSuccess Rate: {metrics.get('success_rate', 0):.1%}",
                     inline=True
-                )
+                
         else:
-            embed.add_field(
+            embed.add_field()
                 name="Status",
                 value="System status not available",
                 inline=False
-            )
+            
         
         await ctx.send(embed=embed)
         
     except Exception as e:
-        await ctx.send(f"❌ Error getting status: {e}")
+        await ctx.send(f"[ERROR] Error getting status: {e}")
 
 @bot.command(name='opportunities')
 async def opportunities_command(ctx):
@@ -332,41 +347,41 @@ async def opportunities_command(ctx):
         data = await bot.make_request(opportunities_url)
         
         if not data or not data.get('opportunities'):
-            await ctx.send("📊 No arbitrage opportunities found at the moment.")
+            await ctx.send("[METRICS] No arbitrage opportunities found at the moment.")
             return
         
         opportunities = data['opportunities'][:5]  # Top 5
         
-        embed = discord.Embed(
+        embed = discord.Embed()
             title="💰 Current Arbitrage Opportunities",
             color=discord.Color.gold(),
             timestamp=datetime.utcnow()
-        )
+        
         
         for i, opp in enumerate(opportunities, 1):
             profit_pct = opp.get('profit_percentage', 0)
             net_profit = opp.get('net_profit', 0)
             
-            embed.add_field(
+            embed.add_field()
                 name=f"#{i} {opp.get('pair', 'Unknown')}",
                 value=f"💰 Profit: {profit_pct:.3f}% (${net_profit:.2f})\n"
-                      f"📈 Buy: {opp.get('buy_dex', 'Unknown')} @ ${opp.get('buy_price', 0):.6f}\n"
+                      f"[GROWTH] Buy: {opp.get('buy_dex', 'Unknown')} @ ${opp.get('buy_price', 0):.6f}\n"
                       f"📉 Sell: {opp.get('sell_dex', 'Unknown')} @ ${opp.get('sell_price', 0):.6f}\n"
                       f"⏰ Confidence: {opp.get('confidence_score', 0):.1%}",
                 inline=False
-            )
+            
         
         await ctx.send(embed=embed)
         
     except Exception as e:
-        await ctx.send(f"❌ Error getting opportunities: {e}")
+        await ctx.send(f"[ERROR] Error getting opportunities: {e}")
 
 @bot.command(name='execute')
 async def execute_flash_loan(ctx, opportunity_id: str = None):
     """Execute a flash loan arbitrage"""
     try:
         if not opportunity_id:
-            await ctx.send("❌ Please provide an opportunity ID. Use `!opportunities` to see available opportunities.")
+            await ctx.send("[ERROR] Please provide an opportunity ID. Use `!opportunities` to see available opportunities.")
             return
         
         # Get opportunity details
@@ -374,68 +389,68 @@ async def execute_flash_loan(ctx, opportunity_id: str = None):
         opportunity = await bot.make_request(opp_url)
         
         if not opportunity:
-            await ctx.send(f"❌ Opportunity {opportunity_id} not found or expired.")
+            await ctx.send(f"[ERROR] Opportunity {opportunity_id} not found or expired.")
             return
         
         # Confirm execution
-        embed = discord.Embed(
-            title="⚡ Flash Loan Execution Request",
+        embed = discord.Embed()
+            title="[FAST] Flash Loan Execution Request",
             description=f"Executing opportunity: {opportunity.get('pair', 'Unknown')}",
             color=discord.Color.orange()
-        )
         
-        embed.add_field(
+        
+        embed.add_field()
             name="Details",
             value=f"Expected Profit: {opportunity.get('profit_percentage', 0):.3f}%\n"
                   f"Net Profit: ${opportunity.get('net_profit', 0):.2f}\n"
                   f"Buy DEX: {opportunity.get('buy_dex', 'Unknown')}\n"
                   f"Sell DEX: {opportunity.get('sell_dex', 'Unknown')}",
             inline=False
-        )
+        
         
         await ctx.send(embed=embed)
         
         # Execute via coordinator
         execute_url = f"{bot.config['mcp_coordinator_url']}/execute_flash_loan"
-        execution_data = {
+        execution_data = {}
             'opportunity_id': opportunity_id,
             'asset': opportunity.get('pair', '').split('/')[0],
             'amount': 10000,  # Default amount
             'expected_profit': opportunity.get('net_profit', 0),
-            'arbitrage_path': [
+            'arbitrage_path': []
                 {'dex': opportunity.get('buy_dex'), 'action': 'buy'},
                 {'dex': opportunity.get('sell_dex'), 'action': 'sell'}
-            ]
-        }
+            
+        
         
         result: str = await bot.make_request(execute_url, 'POST', execution_data)
         
         if result:
-            embed = discord.Embed(
-                title="✅ Flash Loan Executed",
+            embed = discord.Embed()
+                title="[OK] Flash Loan Executed",
                 description=f"Task ID: {result.get('task_id', 'Unknown')}",
                 color=discord.Color.green()
-            )
             
-            embed.add_field(
+            
+            embed.add_field()
                 name="Status",
                 value=result.get('status', 'Unknown'),
                 inline=True
-            )
+            
             
             await ctx.send(embed=embed)
             
             # Store active trade
-            bot.active_trades[result.get('task_id')] = {
+            bot.active_trades[result.get('task_id')] = {}
                 'opportunity_id': opportunity_id,
                 'started_at': datetime.utcnow(),
                 'status': 'executing'
-            }
+            
         else:
-            await ctx.send("❌ Failed to execute flash loan. Check system status.")
+            await ctx.send("[ERROR] Failed to execute flash loan. Check system status.")
         
     except Exception as e:
-        await ctx.send(f"❌ Error executing flash loan: {e}")
+        await ctx.send(f"[ERROR] Error executing flash loan: {e}")
 
 @bot.command(name='prices')
 async def prices_command(ctx, symbol: str = None):
@@ -447,43 +462,43 @@ async def prices_command(ctx, symbol: str = None):
             data = await bot.make_request(price_url)
             
             if data:
-                embed = discord.Embed(
+                embed = discord.Embed()
                     title=f"💰 {symbol.upper()} Price",
                     color=discord.Color.blue()
-                )
                 
-                embed.add_field(
+                
+                embed.add_field()
                     name="Current Price",
                     value=f"${data.get('price', 0):.6f}",
                     inline=True
-                )
                 
-                embed.add_field(
+                
+                embed.add_field()
                     name="Source",
                     value=data.get('source', 'Unknown'),
                     inline=True
-                )
                 
-                embed.add_field(
+                
+                embed.add_field()
                     name="Confidence",
                     value=f"{data.get('confidence', 0):.1%}",
                     inline=True
-                )
+                
                 
                 await ctx.send(embed=embed)
             else:
-                await ctx.send(f"❌ Price not found for {symbol.upper()}")
+                await ctx.send(f"[ERROR] Price not found for {symbol.upper()}")
         else:
             # Get all prices
             prices_url = f"{bot.config['price_oracle_url']}/prices"
             data = await bot.make_request(prices_url)
             
             if data:
-                embed = discord.Embed(
+                embed = discord.Embed()
                     title="💰 Current Token Prices",
                     color=discord.Color.blue(),
                     timestamp=datetime.utcnow()
-                )
+                
                 
                 # Show top tokens
                 count = 0
@@ -491,56 +506,56 @@ async def prices_command(ctx, symbol: str = None):
                     if count >= 10:  # Limit to 10 tokens
                         break
                     
-                    embed.add_field(
+                    embed.add_field()
                         name=symbol,
                         value=f"${price_data.get('price', 0):.6f}",
                         inline=True
-                    )
+                    
                     count += 1
                 
                 await ctx.send(embed=embed)
             else:
-                await ctx.send("❌ Unable to fetch prices")
+                await ctx.send("[ERROR] Unable to fetch prices")
         
     except Exception as e:
-        await ctx.send(f"❌ Error getting prices: {e}")
+        await ctx.send(f"[ERROR] Error getting prices: {e}")
 
 @bot.command(name='metrics')
 async def metrics_command(ctx):
     """Get performance metrics"""
     try:
         if not bot.performance_metrics:
-            await ctx.send("📊 Performance metrics not available")
+            await ctx.send("[METRICS] Performance metrics not available")
             return
         
         metrics = bot.performance_metrics
         
-        embed = discord.Embed(
-            title="📊 Performance Metrics",
+        embed = discord.Embed()
+            title="[METRICS] Performance Metrics",
             color=discord.Color.purple(),
             timestamp=datetime.utcnow()
-        )
         
-        embed.add_field(
+        
+        embed.add_field()
             name="System Stats",
             value=f"Active Agents: {len([a for a in bot.system_status.values() if a['status'] == 'healthy'])}\n"
                   f"Active Tasks: {metrics.get('active_tasks', 0)}\n"
                   f"Success Rate: {metrics.get('success_rate', 0):.1%}",
             inline=True
-        )
         
-        embed.add_field(
+        
+        embed.add_field()
             name="Trading Stats",
             value=f"Total Profit: ${metrics.get('total_profit', 0):.2f}\n"
                   f"Avg Execution Time: {metrics.get('average_execution_time', 0):.1f}s\n"
                   f"Opportunities Found: {metrics.get('opportunities_detected', 0)}",
             inline=True
-        )
+        
         
         await ctx.send(embed=embed)
         
     except Exception as e:
-        await ctx.send(f"❌ Error getting metrics: {e}")
+        await ctx.send(f"[ERROR] Error getting metrics: {e}")
 
 @bot.command(name='alerts')
 async def toggle_alerts(ctx, enabled: str = None):
@@ -558,21 +573,21 @@ async def toggle_alerts(ctx, enabled: str = None):
             bot.alerts_enabled = False
             await ctx.send("🔕 Alerts **disabled**")
         else:
-            await ctx.send("❌ Use 'on' or 'off' to toggle alerts")
+            await ctx.send("[ERROR] Use 'on' or 'off' to toggle alerts")
         
     except Exception as e:
-        await ctx.send(f"❌ Error toggling alerts: {e}")
+        await ctx.send(f"[ERROR] Error toggling alerts: {e}")
 
 @bot.command(name='help')
 async def help_command(ctx):
     """Show available commands"""
-    embed = discord.Embed(
+    embed = discord.Embed()
         title="🤖 Flash Loan Bot Commands",
         description="Available commands for the Flash Loan Arbitrage System",
         color=discord.Color.blue()
-    )
     
-    commands_list = [
+    
+    commands_list = []
         ("!status", "Get system health status"),
         ("!opportunities", "View current arbitrage opportunities"),
         ("!execute <id>", "Execute a flash loan arbitrage"),
@@ -580,7 +595,7 @@ async def help_command(ctx):
         ("!metrics", "View performance metrics"),
         ("!alerts [on/off]", "Toggle system alerts"),
         ("!help", "Show this help message")
-    ]
+    
     
     for cmd, desc in commands_list:
         embed.add_field(name=cmd, value=desc, inline=False)
@@ -597,7 +612,7 @@ def main():
     try:
         bot.run(token)
     except Exception as e:
-        logger.error(f"Bot failed to start: {e}")
+        logger.error(str(f"Bot failed to start: {e}")
 
 if __name__ == '__main__':
     main()

@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python3
 """
 Restricted unpickler for secure deserialization of pickle data.
@@ -5,10 +9,7 @@ Restricted unpickler for secure deserialization of pickle data.
 
 
 # Use secure_serialization for safe deserialization
-from src.utils.secure_serialization import safe_deserialize
 
-import io
-from typing import Any, List, Type, Optional
 
 class RestrictedUnpickler:
     """

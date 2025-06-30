@@ -1,0 +1,57 @@
+# LangChain Master Orchestrator Requirements
+# Flash Loan Arbitrage System - LangChain Integration
+
+# Core async and networking
+aiohttp>=3.8.0
+asyncio-mqtt>=0.11.0
+websockets>=11.0.0
+
+# Redis for state management
+redis[hiredis]>=4.5.0
+aioredis>=2.0.0
+
+# Database support
+asyncpg>=0.28.0
+sqlalchemy[asyncio]>=2.0.0
+alembic>=1.11.0
+
+# Data validation and serialization
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# Configuration management
+PyYAML>=6.0.0
+python-dotenv>=1.0.0
+
+# Monitoring and observability
+prometheus-client>=0.17.0
+structlog>=23.0.0
+
+# HTTP client enhancements
+httpx>=0.24.0
+tenacity>=8.2.0
+
+# Development and testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.11.0
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.4.0
+
+# Optional: LangChain dependencies (if using official LangChain)
+# langchain>=0.1.0
+# langchain-community>=0.0.20
+# langchain-core>=0.1.0
+
+# Optional: AutoGen integration
+# pyautogen>=0.2.0
+
+# Optional: Enhanced crypto/blockchain libraries
+# web3>=6.8.0
+# eth-account>=0.9.0
+# eth-utils>=2.2.0
+
+# Production deployment
+gunicorn>=21.0.0
+uvloop>=0.17.0  # For better async performance on Unix

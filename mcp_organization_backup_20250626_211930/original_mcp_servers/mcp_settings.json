@@ -1,0 +1,13 @@
+{
+  "servers": {
+    "github.com/supabase-community/supabase-mcp": {
+      "command": "cmd /c npx -y ./supabase-mcp",
+      "working_dir": "mcp_servers/taskmanager",
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJrZ2F0b3VvY3lrc21nYXBpdGhuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MDY5NDM1MCwiZXhwIjoyMDY2MjcwMzUwfQ.FICVd84g2tGPKQDjIO8Sro_PGuepx_M0PLA3RZL_hYI",
+        "SUPABASE_PROJECT_REF": "rkgatouocyksmgapithn"
+      },
+      "read_only": true
+    }
+  }
+}

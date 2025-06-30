@@ -1,13 +1,15 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+from typing import Dict, List, Any, Optional
+import json
+import logging
+import os
 """
 ABI loader utility for the Flash Loan Arbitrage System.
 This module provides functions to load contract ABIs from various locations.
 """
 
-import json
-import logging
-import os
-from pathlib import Path
-from typing import Dict, List, Any, Optional
 
 logger = logging.getLogger("abi_loader")
 
@@ -22,7 +24,7 @@ def load_contract_abi(contract_name: str = "FlashLoanArbitrageImproved") -> Opti
         Optional[List[Dict[str, Any]]]: The contract ABI or None if not found
     """
     # Define possible ABI file paths
-    possible_paths = [
+    possible_paths = []
         # Root directory
         "contract_abi.json",
 
@@ -39,7 +41,7 @@ def load_contract_abi(contract_name: str = "FlashLoanArbitrageImproved") -> Opti
         # Other common locations
         f"data/flash_loan_abi.json",
         f"contracts/abi/{contract_name}.json"
-    ]
+    
 
     # Get the project root directory
     root_dir = Path.cwd()
@@ -49,15 +51,15 @@ def load_contract_abi(contract_name: str = "FlashLoanArbitrageImproved") -> Opti
         full_path = root_dir / path
         if full_path.exists():
             try:
-                logger.info(f"Loading contract ABI from {full_path}")
+                logger.info(str(f"Loading contract ABI from {full_path}")
                 with open(full_path, 'r') as f:
                     abi = json.load(f)
                 return abi
             except Exception as e:
-                logger.warning(f"Error loading ABI from {full_path}: {e}")
+                logger.warning(str(f"Error loading ABI from {full_path}: {e}")
 
     # If we get here, we couldn't find the ABI
-    logger.error(f"Could not find ABI for {contract_name} in any of the expected locations")
+    logger.error(str(f"Could not find ABI for {contract_name} in any of the expected locations")
 
     # Try to create a fallback ABI file
     try:
@@ -67,7 +69,7 @@ def load_contract_abi(contract_name: str = "FlashLoanArbitrageImproved") -> Opti
             with open("contract_abi.json", 'r') as f:
                 return json.load(f)
     except Exception as e:
-        logger.error(f"Failed to create fallback ABI: {e}")
+        logger.error(str(f"Failed to create fallback ABI: {e}")
 
     return None
 
@@ -75,9 +77,9 @@ def create_fallback_abi():
     """
     Create a fallback ABI file with basic functions for the FlashLoanArbitrageFixed contract.
     """
-    fallback_abi = [
-        {
-            "inputs": [
+    fallback_abi = []
+        {}
+            "inputs": []
                 {"internalType": "address", "name": "borrowToken", "type": "address"},
                 {"internalType": "uint256", "name": "amount", "type": "uint256"},
                 {"internalType": "address", "name": "dex1", "type": "address"},
@@ -92,8 +94,8 @@ def create_fallback_abi():
             "stateMutability": "nonpayable",
             "type": "function"
         },
-        {
-            "inputs": [
+        {}
+            "inputs": []
                 {"internalType": "address", "name": "tokenFrom", "type": "address"},
                 {"internalType": "address", "name": "tokenTo", "type": "address"},
                 {"internalType": "uint256", "name": "amount", "type": "uint256"},
@@ -108,8 +110,8 @@ def create_fallback_abi():
             "stateMutability": "nonpayable",
             "type": "function"
         },
-        {
-            "inputs": [
+        {}
+            "inputs": []
                 {"internalType": "address", "name": "token", "type": "address"},
                 {"internalType": "uint256", "name": "amount", "type": "uint256"},
                 {"internalType": "uint256", "name": "premium", "type": "uint256"},
@@ -121,22 +123,22 @@ def create_fallback_abi():
             "stateMutability": "nonpayable",
             "type": "function"
         },
-        {
+        {}
             "inputs": [],
             "name": "owner",
             "outputs": [{"internalType": "address", "name": "", "type": "address"}],
             "stateMutability": "view",
             "type": "function"
         },
-        {
+        {}
             "inputs": [{"internalType": "address", "name": "token", "type": "address"}],
             "name": "withdrawToken",
             "outputs": [],
             "stateMutability": "nonpayable",
             "type": "function"
         },
-        {
-            "inputs": [
+        {}
+            "inputs": []
                 {"internalType": "address", "name": "token", "type": "address"},
                 {"internalType": "bool", "name": "status", "type": "bool"}
             ],
@@ -144,8 +146,8 @@ def create_fallback_abi():
             "outputs": [],
             "stateMutability": "nonpayable",
             "type": "function"
-        }
-    ]
+        
+    
 
     # Save to both locations for maximum compatibility
     with open("contract_abi.json", 'w') as f:

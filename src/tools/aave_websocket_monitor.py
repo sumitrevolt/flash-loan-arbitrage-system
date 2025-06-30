@@ -1,20 +1,22 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from decimal import Decimal, getcontext
+from typing import Dict, Set, Any
+import asyncio
+import json
+import logging
+import os
+
+from dotenv import load_dotenv
+from web3 import Web3
+from web3.providers.websocket.websocket import WebsocketProvider
+import websockets
 """
 Aave Flash Loan WebSocket Monitor
 Real-time monitoring with WebSocket for live updates and alerts
 """
 
-import asyncio
-import json
-import logging
-from datetime import datetime
-from decimal import Decimal, getcontext
-from typing import Dict, Set, Any
-import websockets
-from web3 import Web3
-from web3.providers.websocket.websocket import WebsocketProvider
-from dotenv import load_dotenv
-import os
 
 # Load environment
 load_dotenv()
@@ -23,19 +25,32 @@ load_dotenv()
 getcontext().prec = 50
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+
 logger = logging.getLogger(__name__)
 
 # Event signatures for monitoring
 FLASH_LOAN_EVENT_SIGNATURE = Web3.keccak(text="FlashLoan(address,address,address,uint256,uint8,uint256,uint16)").hex()
-SWAP_EVENT_SIGNATURES = {
+SWAP_EVENT_SIGNATURES = {}
     'UniswapV2': Web3.keccak(text="Swap(address,uint256,uint256,uint256,uint256,address)").hex(),
     'UniswapV3': Web3.keccak(text="Swap(address,address,int256,int256,uint160,uint128,int24)").hex(),
     'SushiSwap': Web3.keccak(text="Swap(address,uint256,uint256,uint256,uint256,address)").hex(),
-}
+
 
 class AaveWebSocketMonitor:
     """WebSocket-based real-time monitor for Aave flash loans"""
@@ -50,37 +65,37 @@ class AaveWebSocketMonitor:
         
         # Addresses to monitor
         self.aave_pool_address = Web3.to_checksum_address(self.config['aave']['pool_address'])
-        self.monitored_tokens = {
+        self.monitored_tokens = {}
             Web3.to_checksum_address(addr): symbol 
             for addr, symbol in self.config.get('monitored_tokens', {}).items()
-        }
+        
         
         # Active subscriptions
         self.subscriptions: Set[str] = set()
         self.event_handlers: Dict[str, Any] = {}
         
         # Alert thresholds
-        self.alert_thresholds: Dict[str, Any] = {
+        self.alert_thresholds: Dict[str, Any] = {}
             'min_profit': Decimal('100'),  # Alert on profits > $100
             'high_gas': 150,  # Alert on gas > 150 gwei
             'large_loan': Decimal('100000'),  # Alert on loans > $100k
-        }
+        
         
     async def subscribe_to_flash_loans(self) -> None:
         """Subscribe to Aave flash loan events"""
         try:
             # Create filter for flash loan events
-            flash_loan_filter = {
+            flash_loan_filter = {}
                 'address': self.aave_pool_address,
                 'topics': [FLASH_LOAN_EVENT_SIGNATURE]
-            }
+            
             
             # TODO: web3.py does not support eth.subscribe. Use polling or another library for real-time events.
-            logger.info("Subscribed to Aave flash loan events (placeholder, polling not implemented)")
+            logger.info("Subscribed to Aave flash loan events (placeholder, polling not implemented")
             return None
             
         except Exception as e:
-            logger.error(f"Failed to subscribe to flash loans: {e}")
+            logger.error(str(f"Failed to subscribe to flash loans: {e}")
             return None
     
     async def subscribe_to_dex_swaps(self, dex_addresses: Dict[str, str]) -> Dict[str, Any]:
@@ -97,16 +112,16 @@ class AaveWebSocketMonitor:
                     continue
                 
                 # Create filter
-                swap_filter = {
+                swap_filter = {}
                     'address': checksum_address,
                     'topics': [event_signature]
-                }
+                
                 
                 # TODO: web3.py does not support eth.subscribe. Use polling or another library for real-time events.
-                logger.info(f"Subscribed to {dex_name} swap events (placeholder, polling not implemented)")
+                logger.info(str(f"Subscribed to {dex_name} swap events (placeholder, polling not implemented")
                 
             except Exception as e:
-                logger.error(f"Failed to subscribe to {dex_name}: {e}")
+                logger.error(str(f"Failed to subscribe to {dex_name}: {e}")
         
         return subscriptions
     
@@ -129,26 +144,26 @@ class AaveWebSocketMonitor:
             
             # Extract loan details from logs
             # This is simplified - in production you'd decode the actual event data
-            loan_data = {
+            loan_data = {}
                 'tx_hash': tx_hash,
                 'block': block_number,
                 'from': tx['from'],
                 'gas_cost': gas_cost_usd,
                 'success': tx_receipt['status'] == 1,
                 'timestamp': datetime.now()
-            }
+            
             
             # Check for alerts
             if gas_cost_usd > self.alert_thresholds['high_gas']:
                 await self.send_alert('HIGH_GAS', loan_data)
             
             # Log the event
-            logger.info(f"Flash loan detected: {tx_hash} - Gas: ${gas_cost_usd:.2f}")
+            logger.info(str(f"Flash loan detected: {tx_hash} - Gas: ${gas_cost_usd:.2f}")
             
             return loan_data
             
         except Exception as e:
-            logger.error(f"Error handling flash loan event: {e}")
+            logger.error(str(f"Error handling flash loan event: {e}")
             return None
     
     async def handle_swap_event(self, event: Dict[str, Any], dex_name: str) -> Dict[str, Any] | None:
@@ -157,19 +172,19 @@ class AaveWebSocketMonitor:
             # Check if this swap involves monitored tokens
             # This is simplified - in production you'd decode the actual event
             
-            swap_data = {
+            swap_data = {}
                 'dex': dex_name,
                 'tx_hash': event['transactionHash'].hex(),
                 'block': event['blockNumber'],
                 'timestamp': datetime.now()
-            }
             
-            logger.debug(f"Swap detected on {dex_name}: {swap_data['tx_hash']}")
+            
+            logger.debug(str(f"Swap detected on {dex_name}: {swap_data['tx_hash']}")
             
             return swap_data
             
         except Exception as e:
-            logger.error(f"Error handling swap event: {e}")
+            logger.error(str(f"Error handling swap event: {e}")
             return None
     
     async def monitor_gas_prices(self) -> None:
@@ -185,25 +200,25 @@ class AaveWebSocketMonitor:
                 await asyncio.sleep(10)  # Check every 10 seconds
                 
             except Exception as e:
-                logger.error(f"Error monitoring gas: {e}")
+                logger.error(str(f"Error monitoring gas: {e}")
                 await asyncio.sleep(30)
     
     async def send_alert(self, alert_type: str, data: Dict[str, Any]) -> None:
         """Send alert notification"""
-        alert = {
+        alert = {}
             'type': alert_type,
             'timestamp': datetime.now().isoformat(),
             'data': data
-        }
         
-        logger.warning(f"🚨 ALERT: {alert_type} - {json.dumps(data, default=str)}")
+        
+        logger.warning(str(f"[ALERT] ALERT: {alert_type} - {json.dumps(data, default=str, ensure_ascii=True, default=str}")
         
         # In production, this would send to Discord, Telegram, etc.
         # For now, just log it prominently
         print(f"\n{'='*60}")
-        print(f"🚨 ALERT: {alert_type}")
+        print(f"[ALERT] ALERT: {alert_type}")
         print(f"Time: {alert['timestamp']}")
-        print(f"Data: {json.dumps(data, indent=2, default=str)}")
+        print(f"Data: {json.dumps(data, indent=2, default=str, ensure_ascii=True, default=str)}")
         print(f"{'='*60}\n")
     
     async def start_monitoring(self) -> None:
@@ -214,10 +229,10 @@ class AaveWebSocketMonitor:
         await self.subscribe_to_flash_loans()
         
         # Subscribe to DEX events
-        dex_addresses = {
+        dex_addresses = {}
             'UniswapV3': self.config['dexes']['uniswapv3']['router'],
             'SushiSwap': self.config['dexes']['sushiswap']['router'],
-        }
+        
         await self.subscribe_to_dex_swaps(dex_addresses)
         
         # Start gas monitoring
@@ -243,7 +258,7 @@ class AaveWebSocketMonitor:
                 await self.handle_swap_event(event_data, 'Unknown')
                 
         except Exception as e:
-            logger.error(f"Error processing event: {e}")
+            logger.error(str(f"Error processing event: {e}")
 
 class AaveMonitorWebSocketServer:
     """WebSocket server for broadcasting monitor updates to clients"""
@@ -252,39 +267,39 @@ class AaveMonitorWebSocketServer:
         self.host = host
         self.port = port
         self.clients: Set[websockets.WebSocketServerProtocol] = set()
-        self.monitor_data: Dict[str, Any] = {
+        self.monitor_data: Dict[str, Any] = {}
             'flash_loans': [],
             'opportunities': [],
             'alerts': [],
             'metrics': {}
-        }
+        
     
     async def register_client(self, websocket: websockets.WebSocketServerProtocol) -> None:
         """Register a new client"""
         self.clients.add(websocket)
-        logger.info(f"Client connected: {websocket.remote_address}")
+        logger.info(str(f"Client connected: {websocket.remote_address}")
         
         # Send current state
-        await websocket.send(json.dumps({
+        await websocket.send(json.dumps({))}
             'type': 'initial_state',
             'data': self.monitor_data
-        }))
+        }, ensure_ascii=True, default=str
     
     async def unregister_client(self, websocket: websockets.WebSocketServerProtocol) -> None:
         """Unregister a client"""
         self.clients.remove(websocket)
-        logger.info(f"Client disconnected: {websocket.remote_address}")
+        logger.info(str(f"Client disconnected: {websocket.remote_address}")
     
     async def broadcast_update(self, update_type: str, data: Dict[str, Any]) -> None:
         """Broadcast update to all connected clients"""
         if not self.clients:
             return
         
-        message = json.dumps({
+        message = json.dumps({)}
             'type': update_type,
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(, ensure_ascii=True, default=str).isoformat(),
             'data': data
-        }, default=str)
+        }, default=str
         
         # Send to all clients
         disconnected: Set[websockets.WebSocketServerProtocol] = set()
@@ -308,7 +323,7 @@ class AaveMonitorWebSocketServer:
                 data = json.loads(message)
                 
                 if data.get('type') == 'ping':
-                    await websocket.send(json.dumps({'type': 'pong'}))
+                    await websocket.send(json.dumps({'type': 'pong'}, ensure_ascii=True, default=str))
                     
         except websockets.exceptions.ConnectionClosed:
             pass
@@ -317,7 +332,7 @@ class AaveMonitorWebSocketServer:
     
     async def start_server(self) -> None:
         """Start the WebSocket server"""
-        logger.info(f"Starting WebSocket server on {self.host}:{self.port}")
+        logger.info(str(f"Starting WebSocket server on {self.host}:{self.port}")
         
         async with websockets.serve(self.handle_client, self.host, self.port):
             await asyncio.Future()  # Run forever
@@ -334,13 +349,13 @@ async def main():
     ws_server = AaveMonitorWebSocketServer()
     
     # Run both concurrently
-    await asyncio.gather(
+    await asyncio.gather()
         monitor.start_monitoring(),
         ws_server.start_server()
-    )
+    
 
 if __name__ == "__main__":
-    print("🚀 Starting Aave Flash Loan WebSocket Monitor...")
+    print("[INIT] Starting Aave Flash Loan WebSocket Monitor...")
     print("📡 WebSocket server will be available at ws://localhost:8765")
     print("Press Ctrl+C to stop")
     

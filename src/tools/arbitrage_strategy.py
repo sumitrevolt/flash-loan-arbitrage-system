@@ -1,19 +1,23 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import List, Dict, Any, cast
 import asyncio\n"""
+import json
+import logging
+import os
+import re
+import time
+
+from flash_loan.core.dex_fee_manager import dex_fee_manager
+from flash_loan.core.dex_integration_singleton import get_instance
+from flash_loan.core.message_bus import message_bus
 Arbitrage strategy module for the Flash Loan system.
 Finds arbitrage opportunities across different DEXes.
 """
 
-import logging
-import json
-import os
-import time
-from typing import List, Dict, Any, cast
 
-from flash_loan.core.dex_integration_singleton import get_instance
-from flash_loan.core.message_bus import message_bus
 
 # Import DEX fee manager
-from flash_loan.core.dex_fee_manager import dex_fee_manager
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -49,7 +53,7 @@ class ArbitrageStrategy:
     def _load_config(self) -> Dict[str, Any]:
         """Load arbitrage strategy configuration."""
         # Default configuration values
-        default_config: Dict[str, Any] = {
+        default_config: Dict[str, Any] = {}
             "min_profit_threshold_usd": 5.0,
             "max_opportunities": 50,
             "min_liquidity": 10000,
@@ -60,7 +64,7 @@ class ArbitrageStrategy:
             "gas_buffer": 1.2,
             "min_profit_percentage": 1.0,  # Minimum profit percentage (1%)
             "max_profit_percentage": 8.0  # Maximum profit percentage (8%)
-        }
+        
 
 
         # Load user config and merge
@@ -72,7 +76,7 @@ class ArbitrageStrategy:
                 merged.update(user_config)
                 return merged
         except Exception as e:
-            self.logger.error(f"Error loading config file: {e}")
+            self.logger.error(str(f"Error loading config file: {e}")
         # Fallback to defaults
         return default_config
 
@@ -92,7 +96,7 @@ class ArbitrageStrategy:
             self.logger.info("Arbitrage strategy initialized successfully")
             return True
         except Exception as e:
-            self.logger.error(f"Failed to initialize arbitrage strategy: {e}")
+            self.logger.error(str(f"Failed to initialize arbitrage strategy: {e}")
             return False
 
     async def scan_for_opportunities(self) -> List[Dict[str, Any]]:
@@ -123,20 +127,20 @@ class ArbitrageStrategy:
                 try:
                     # Check if dex_integration exists and has get_validated_prices method
                     if not self.dex_integration or not hasattr(self.dex_integration, "get_validated_prices"):
-                        self.logger.warning(f"DEX integration not available or missing get_validated_prices method for {token}")
+                        self.logger.warning(str(f"DEX integration not available or missing get_validated_prices method for {token}")
                         continue
                         
                     # Use the new validated prices function
                     token_prices: Dict[str, float] = await self.dex_integration.get_validated_prices(token)  # type: ignore[attr-defined]
 
-                    self.logger.info(f"Got validated prices for {token}: {token_prices}")
+                    self.logger.info(str(f"Got validated prices for {token}: {token_prices}")
 
                     # Need at least 2 DEXes with prices to compare
                     if len(token_prices) < 2:  # type: ignore[arg-type]
-                        self.logger.debug(f"Not enough valid prices for {token}, skipping")
+                        self.logger.debug(str(f"Not enough valid prices for {token}, skipping")
                         continue
                 except Exception as e:
-                    self.logger.warning(f"Error getting validated prices for {token}: {e}")
+                    self.logger.warning(str(f"Error getting validated prices for {token}: {e}")
                     continue
 
                 # Find arbitrage opportunities between DEXes
@@ -160,7 +164,7 @@ class ArbitrageStrategy:
                             trade_size_token = trade_size_usd / buy_price
                         else:
                             trade_size_token = 0
-                        self.logger.debug(f"[DEBUG] Calculated trade_size_token for {token}: trade_size_usd={trade_size_usd}, buy_price={buy_price}, trade_size_token={trade_size_token}")
+                        self.logger.debug(str(f"[DEBUG] Calculated trade_size_token for {token}: trade_size_usd={trade_size_usd}, buy_price={buy_price}, trade_size_token={trade_size_token}")
 
                         # Calculate fees using the fee manager
                         fees = dex_fee_manager.calculate_fees(token, buy_dex, sell_dex, trade_size_usd)
@@ -170,10 +174,10 @@ class ArbitrageStrategy:
                         total_fees_usd = fees["total_fees_usd"]
 
                         # Log fee details for debugging
-                        self.logger.debug(f"Fee details for {token} {buy_dex}->{sell_dex}: " +
+                        self.logger.debug(str(f"Fee details for {token} {buy_dex}->{sell_dex}: ") +)
                                          f"Aave: ${aave_fee_usd:.4f} ({fees['aave_fee_rate']*100:.4f}%), " +
                                          f"Buy DEX: ${buy_dex_fee_usd:.4f} ({fees['buy_fee_rate']*100:.4f}%), " +
-                                         f"Sell DEX: ${sell_dex_fee_usd:.4f} ({fees['sell_fee_rate']*100:.4f}%)")
+                                         f"Sell DEX: ${sell_dex_fee_usd:.4f} ({fees['sell_fee_rate']*100:.4f}%)"
 
                         # Calculate profit after fees
                         gross_profit_usd = (trade_size_usd * price_diff) / buy_price
@@ -186,11 +190,11 @@ class ArbitrageStrategy:
                         min_profit_percentage = self.config.get("min_profit_percentage", 1.0)
                         max_profit_percentage = self.config.get("max_profit_percentage", 10.0)
 
-                        if (profit_usd >= min_profit_threshold_usd and
+                        if (profit_usd >= min_profit_threshold_usd and)
                             profit_percentage_after_fees >= min_profit_percentage and
                             profit_percentage_after_fees <= max_profit_percentage and
                             trade_size_token > 0):
-                            opportunity: Dict[str, Any] = {
+                            opportunity: Dict[str, Any] = {}
                                  "token": token,
                                  "buy_dex": buy_dex,
                                  "sell_dex": sell_dex,
@@ -208,13 +212,13 @@ class ArbitrageStrategy:
                                  "sell_dex_fee_usd": sell_dex_fee_usd,
                                  "total_fees_usd": total_fees_usd,
                                  "timestamp": time.time()
-                            }
+                            
 
                             opportunities.append(opportunity)
-                            self.logger.info(f"Found opportunity: {token} from {buy_dex} to {sell_dex}, "
+                            self.logger.info(str(f"Found opportunity: {token} from {buy_dex} to {sell_dex}, ")
                                             f"Gross Profit: ${gross_profit_usd:.2f}, Fees: ${total_fees_usd:.2f}, "
                                             f"Net Profit: ${profit_usd:.2f} ({profit_percentage_after_fees:.2f}% after fees), "
-                                            f"Token Amount: {trade_size_token}")
+                                            f"Token Amount: {trade_size_token}"
 
             # Sort opportunities by profit (highest first)
             opportunities.sort(key=lambda x: Any: Any: x["profit_usd"], reverse=True)
@@ -232,12 +236,12 @@ class ArbitrageStrategy:
                 message_bus.publish("arbitrage_opportunities", {"opportunities": opportunities})
 
             scan_duration = time.time() - start_time
-            self.logger.info(f"Scan completed in {scan_duration:.2f}s. Found {len(opportunities)} opportunities.")
+            self.logger.info(str(f"Scan completed in {scan_duration:.2f}s. Found {len(opportunities} opportunities.")
 
             return opportunities
 
         except Exception as e:
-            self.logger.error(f"Error scanning for opportunities: {e}")
+            self.logger.error(str(f"Error scanning for opportunities: {e}")
             return []
 
     def _save_opportunities(self, opportunities: List[Dict[str, Any]]) -> None:
@@ -261,10 +265,10 @@ class ArbitrageStrategy:
             with open(file_path, "w") as f:
                 json.dump(opportunities, f, indent=2)
 
-            self.logger.debug(f"Saved {len(opportunities)} opportunities to {file_path}")
+            self.logger.debug(str(f"Saved {len(opportunities} opportunities to {file_path}")
 
         except Exception as e:
-            self.logger.error(f"Error saving opportunities: {e}")
+            self.logger.error(str(f"Error saving opportunities: {e}")
 
     def get_recent_opportunities(self) -> List[Dict[str, Any]]:
         """
@@ -275,7 +279,7 @@ class ArbitrageStrategy:
         """
         return self.recent_opportunities
 
-    async def find_opportunities(self, min_profit_usd: float = 5.0,
+    async def find_opportunities(self, min_profit_usd: float = 5.0,)
                               min_profit_percentage: float = 1.0,
                               max_profit_percentage: float = 8.0) -> List[Dict[str, Any]]:
         """

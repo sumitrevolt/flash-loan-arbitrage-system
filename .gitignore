@@ -56,3 +56,13 @@ config/*_settings.json
 
 # Backup files
 *.bak
+
+# Prevent TypeScript configs in wrong locations
+config/tsconfig.json
+config/tsconfig*.json
+scripts/tsconfig.json
+scripts/tsconfig*.json
+
+# Microsoft Edge Tools cache
+.vs/
+*.tmp

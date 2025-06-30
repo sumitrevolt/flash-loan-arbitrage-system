@@ -1,20 +1,34 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import List
+import asyncio
+import logging
+import subprocess
+import sys
 """
 LangChain MCP System Fix - All Services Recovery
 ===============================================
 """
 
-import subprocess
-import asyncio
-import logging
-import sys
-from typing import List
+
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # All services from docker-compose.yml
-ALL_SERVICES = [
+ALL_SERVICES = []
     "redis", "postgres", "mcp-coordinator", "health-monitor", "prometheus", "grafana", 
     "web-dashboard", "discord-bot", "grok3-mcp", "simulation-mcp", "planner-1", 
     "price-oracle-mcp", "aave-flash-loan-executor", "builder-2", "coordinator-2", 
@@ -26,27 +40,27 @@ ALL_SERVICES = [
     "foundry-mcp", "performance-metrics-mcp", "planner-2", "validation-mcp", 
     "arbitrage-detector", "builder-1", "code-indexer-1", "contract-executor-mcp", 
     "flash-loan-blockchain-mcp"
-]
+
 
 # Critical infrastructure services
 INFRASTRUCTURE_SERVICES = ["redis", "postgres", "mcp-coordinator", "health-monitor"]
 
 # MCP servers
-MCP_SERVICES = [
+MCP_SERVICES = []
     "grok3-mcp", "simulation-mcp", "price-oracle-mcp", "dex-price-mcp", "gas-optimizer-mcp",
     "market-data-mcp", "context7-mcp", "enhanced-coordinator-mcp", "circuit-breaker-mcp",
     "dex-liquidity-mcp", "alert-system-mcp", "integration-bridge-mcp", "matic-mcp",
     "risk-assessment-mcp", "transaction-manager-mcp", "analytics-dashboard-mcp",
     "enhanced-copilot-mcp", "evm-mcp", "flash-loan-strategist-mcp", "foundry-mcp",
     "performance-metrics-mcp", "validation-mcp", "contract-executor-mcp", "flash-loan-blockchain-mcp"
-]
+
 
 # AI/execution agents
-AI_AGENT_SERVICES = [
+AI_AGENT_SERVICES = []
     "planner-1", "aave-flash-loan-executor", "builder-2", "coordinator-2", "code-indexer-2",
     "executor-1", "coordinator-1", "executor-2", "planner-2", "arbitrage-detector",
     "builder-1", "code-indexer-1"
-]
+
 
 # Dashboard and monitoring
 DASHBOARD_SERVICES = ["prometheus", "grafana", "web-dashboard", "discord-bot"]
@@ -63,22 +77,22 @@ async def run_command(cmd: List[str], timeout: int = 60) -> tuple:
 
 async def fix_service_group(group_name: str, services: List[str]):
     """Fix a group of services"""
-    logger.info(f"=== Fixing {group_name} ({len(services)} services) ===")
+    logger.info(str(f"=== Fixing {group_name} ({len(services} services) ===")))
     
     # Start services in group
     cmd = ["docker-compose", "up", "-d"] + services
-    logger.info(f"Starting {group_name}...")
+    logger.info(str(f"Starting {group_name}...")
     
     success, stdout, stderr = await run_command(cmd, timeout=300)
     
     if success:
-        logger.info(f"✅ Successfully started {group_name}")
+        logger.info(str(f"[OK] Successfully started {group_name}")
         if stdout.strip():
-            logger.info(f"Output: {stdout.strip()}")
+            logger.info(str(f"Output: {stdout.strip(}")
     else:
-        logger.error(f"❌ Failed to start {group_name}")
+        logger.error(str(f"[ERROR] Failed to start {group_name}")
         if stderr.strip():
-            logger.error(f"Error: {stderr.strip()}")
+            logger.error(str(f"Error: {stderr.strip(}")
     
     # Wait for services to stabilize
     await asyncio.sleep(10)
@@ -101,20 +115,20 @@ async def check_system_status():
         healthy_containers = sum(1 for line in lines if "Up" in line and "healthy" in line)
         running_containers = sum(1 for line in lines if "Up" in line)
         
-        logger.info(f"Summary: {running_containers}/{total_containers} containers running, {healthy_containers} healthy")
+        logger.info(str(f"Summary: {running_containers}/{total_containers} containers running, {healthy_containers} healthy")
         return running_containers, total_containers, healthy_containers
     else:
-        logger.error(f"Failed to check status: {stderr}")
+        logger.error(str(f"Failed to check status: {stderr}")
         return 0, 0, 0
 
 async def langchain_coordinate_fixes():
     """Main LangChain coordination function"""
-    logger.info("🚀 LangChain MCP System Coordinator Starting...")
-    logger.info(f"Total services to manage: {len(ALL_SERVICES)}")
-    logger.info(f"- Infrastructure: {len(INFRASTRUCTURE_SERVICES)}")
-    logger.info(f"- MCP Servers: {len(MCP_SERVICES)}")
-    logger.info(f"- AI Agents: {len(AI_AGENT_SERVICES)}")
-    logger.info(f"- Dashboards: {len(DASHBOARD_SERVICES)}")
+    logger.info("[INIT] LangChain MCP System Coordinator Starting...")
+    logger.info(str(f"Total services to manage: {len(ALL_SERVICES}")
+    logger.info(str(f"- Infrastructure: {len(INFRASTRUCTURE_SERVICES}")
+    logger.info(str(f"- MCP Servers: {len(MCP_SERVICES}")
+    logger.info(str(f"- AI Agents: {len(AI_AGENT_SERVICES}")
+    logger.info(str(f"- Dashboards: {len(DASHBOARD_SERVICES}")
     
     # Step 1: Ensure infrastructure is running
     await fix_service_group("Infrastructure Services", INFRASTRUCTURE_SERVICES)
@@ -133,33 +147,33 @@ async def langchain_coordinate_fixes():
     running, total, healthy = await check_system_status()
     
     if running == total:
-        logger.info("🎉 ALL SERVICES ARE RUNNING!")
+        logger.info("[CELEBRATE] ALL SERVICES ARE RUNNING!")
     elif running > total * 0.8:  # 80% success rate
-        logger.info(f"✅ Most services running ({running}/{total})")
+        logger.info(str(f"[OK] Most services running ({running}/{total}")
     else:
-        logger.warning(f"⚠️ Some services still having issues ({running}/{total})")
+        logger.warning(str(f"[WARN] Some services still having issues ({running}/{total}")
     
     # Step 6: Try to restart any failed services one more time
     if running < total:
-        logger.info("🔄 Attempting to restart failed services...")
+        logger.info("[SYNC] Attempting to restart failed services...")
         cmd = ["docker-compose", "up", "-d"] + ALL_SERVICES
         success, stdout, stderr = await run_command(cmd, timeout=600)
         
         if success:
-            logger.info("✅ Final restart command completed")
+            logger.info("[OK] Final restart command completed")
             await asyncio.sleep(15)
             await check_system_status()
         else:
-            logger.error(f"❌ Final restart failed: {stderr}")
+            logger.error(str(f"[ERROR] Final restart failed: {stderr}")
     
     logger.info("🏁 LangChain MCP System Coordination Complete!")
 
 if __name__ == "__main__":
     try:
         asyncio.run(langchain_coordinate_fixes())
-        print("\n🎉 LangChain coordination completed successfully!")
+        print("\n[CELEBRATE] LangChain coordination completed successfully!")
     except KeyboardInterrupt:
-        print("\n🛑 LangChain coordination interrupted by user")
+        print("\n[STOP] LangChain coordination interrupted by user")
     except Exception as e:
-        print(f"\n❌ LangChain coordination failed: {e}")
+        print(f"\n[ERROR] LangChain coordination failed: {e}")
         sys.exit(1)

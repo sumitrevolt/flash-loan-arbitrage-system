@@ -1,14 +1,15 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+from typing import Dict, Tuple, List
+import platform
+import subprocess
+import time
 """
 Docker Troubleshooting and Fix Script for Flash Loan Arbitrage System
 Diagnoses and fixes common Docker issues automatically
 """
 
-import subprocess
-import time
-import platform
-from pathlib import Path
-from typing import Dict, Tuple, List
 
 class DockerTroubleshooter:
     def __init__(self):
@@ -24,7 +25,7 @@ class DockerTroubleshooter:
             else:
                 full_command = command
                 
-            result: str = subprocess.run(
+            result: str = subprocess.run()
                 full_command, 
                 shell=True, 
         # WARNING: This is a security risk
@@ -33,7 +34,7 @@ class DockerTroubleshooter:
                 text=True, 
                 timeout=timeout,
                 cwd=self.project_root
-            )
+            
             return result.returncode == 0, result.stdout + result.stderr
         except subprocess.TimeoutExpired:
             return False, f"Command timed out after {timeout} seconds"
@@ -42,13 +43,13 @@ class DockerTroubleshooter:
 
     def print_status(self, message: str, status: str = "info"):
         """Print colored status messages."""
-        colors = {
-            "success": "✅",
-            "error": "❌", 
-            "warning": "⚠️",
+        colors = {}
+            "success": "[OK]",
+            "error": "[ERROR]", 
+            "warning": "[WARN]",
             "info": "ℹ️",
-            "working": "🔄"
-        }
+            "working": "[SYNC]"
+        
         print(f"{colors.get(status, 'ℹ️')} {message}")
 
     def check_docker_installation(self) -> bool:
@@ -160,10 +161,10 @@ class DockerTroubleshooter:
         """Check if required Docker files exist."""
         self.print_status("Checking Docker configuration files...", "working")
         
-        required_files = [
+        required_files = []
             "docker-compose.yml",
             "docker-compose-fixed.yml"
-        ]
+        
         
         missing_files: List[str] = []
         for file_name in required_files:
@@ -452,7 +453,7 @@ def main():
     troubleshooter = DockerTroubleshooter()
     
     if troubleshooter.run_troubleshooting():
-        print("\n🎉 Docker troubleshooting completed successfully!")
+        print("\n[CELEBRATE] Docker troubleshooting completed successfully!")
         print("\n📋 Next steps:")
         print("1. Check service status: docker compose ps")
         print("2. View logs: docker compose logs -f")
@@ -461,13 +462,13 @@ def main():
         print("   - MCP Coordinator: http://localhost:8900")
         print("   - PostgreSQL: localhost:5432")
         print("   - Redis: localhost:6379")
-        print("\n🛠️  Useful commands:")
+        print("\n[TOOL]  Useful commands:")
         print("- Stop services: docker compose down")
         print("- Restart services: docker compose restart")
         print("- View service status: docker compose ps")
         print("- Follow logs: docker compose logs -f")
     else:
-        print("\n❌ Docker troubleshooting failed!")
+        print("\n[ERROR] Docker troubleshooting failed!")
         print("Please check the errors above and try again.")
         print("\n🆘 If problems persist, try:")
         print("1. Restart Docker Desktop")

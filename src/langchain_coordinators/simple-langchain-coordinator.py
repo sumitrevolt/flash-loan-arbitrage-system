@@ -1,4 +1,17 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Any
+import asyncio
+import json
+import logging
+import signal
+import subprocess
+import sys
+
+import aiohttp
+import docker
 """
 Simple LangChain MCP Coordinator - Fix All 21 MCP Servers and 10 AI Agents
 ===========================================================================
@@ -13,27 +26,29 @@ Author: GitHub Copilot Assistant
 Date: June 15, 2025
 """
 
-import asyncio
-import logging
-import json
-import subprocess
-import docker
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Optional, Any
-import aiohttp
-import signal
-import sys
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(),
         logging.FileHandler('langchain_mcp_coordinator.log')
-    ]
-)
+    
+
 logger = logging.getLogger(__name__)
 
 class SimpleMCPCoordinator:
@@ -50,7 +65,7 @@ class SimpleMCPCoordinator:
         self.logs_path.mkdir(exist_ok=True)
         
         # Define services to fix
-        self.mcp_servers = [
+        self.mcp_servers = []
             {"name": "context7-mcp", "port": 8004, "critical": True},
             {"name": "grok3-mcp", "port": 3003, "critical": False},
             {"name": "enhanced-copilot-mcp", "port": 8006, "critical": True},
@@ -72,9 +87,9 @@ class SimpleMCPCoordinator:
             {"name": "orchestration-mcp", "port": 8060, "critical": True},
             {"name": "task-management-mcp", "port": 8061, "critical": True},
             {"name": "coordination-mcp", "port": 8062, "critical": True}
-        ]
         
-        self.ai_agents = [
+        
+        self.ai_agents = []
             {"name": "arbitrage-agent", "port": 9001, "critical": True},
             {"name": "risk-management-agent", "port": 9002, "critical": True},
             {"name": "market-analysis-agent", "port": 9003, "critical": False},
@@ -85,21 +100,21 @@ class SimpleMCPCoordinator:
             {"name": "coordination-agent", "port": 9008, "critical": True},
             {"name": "learning-agent", "port": 9009, "critical": False},
             {"name": "reporting-agent", "port": 9010, "critical": False}
-        ]
+        
         
         logger.info("Simple MCP Coordinator initialized")
 
     async def fix_all_services(self):
         """Main method to fix all 21 MCP servers and 10 AI agents"""
-        logger.info("🚀 Starting comprehensive fix of all services...")
+        logger.info("[INIT] Starting comprehensive fix of all services...")
         
         # Create fix report
-        fix_report = {
+        fix_report = {}
             "timestamp": datetime.now().isoformat(),
             "mcp_servers": {},
             "ai_agents": {},
             "overall_status": "in_progress"
-        }
+        
         
         try:
             # Step 1: Check Docker status
@@ -109,7 +124,7 @@ class SimpleMCPCoordinator:
             await self._start_infrastructure()
             
             # Step 3: Fix MCP servers
-            logger.info("🔧 Fixing 21 MCP servers...")
+            logger.info("[SETUP] Fixing 21 MCP servers...")
             for server in self.mcp_servers:
                 fix_result: str = await self._fix_service(server)
                 fix_report["mcp_servers"][server["name"]] = fix_result
@@ -130,10 +145,10 @@ class SimpleMCPCoordinator:
             # Save fix report
             await self._save_fix_report(fix_report)
             
-            logger.info("✅ All services fixed successfully!")
+            logger.info("[OK] All services fixed successfully!")
             
         except Exception as e:
-            logger.error(f"❌ Error during fix process: {e}")
+            logger.error(str(f"[ERROR] Error during fix process: {e}")
             fix_report["overall_status"] = "failed"
             fix_report["error"] = str(e)
             await self._save_fix_report(fix_report)
@@ -143,18 +158,18 @@ class SimpleMCPCoordinator:
         """Check Docker daemon status"""
         try:
             self.docker_client.ping()
-            logger.info("✅ Docker daemon is running")
+            logger.info("[OK] Docker daemon is running")
         except Exception as e:
-            logger.error(f"❌ Docker daemon issue: {e}")
+            logger.error(str(f"[ERROR] Docker daemon issue: {e}")
             # Try to start Docker Desktop
             try:
                 subprocess.run(["powershell", "-Command", "Start-Process 'Docker Desktop'"], check=False)
                 logger.info("🐳 Starting Docker Desktop...")
                 await asyncio.sleep(30)  # Wait for Docker to start
                 self.docker_client.ping()
-                logger.info("✅ Docker daemon started successfully")
+                logger.info("[OK] Docker daemon started successfully")
             except Exception as start_error:
-                logger.error(f"❌ Failed to start Docker: {start_error}")
+                logger.error(str(f"[ERROR] Failed to start Docker: {start_error}")
                 raise
 
     async def _start_infrastructure(self):
@@ -164,22 +179,22 @@ class SimpleMCPCoordinator:
         try:
             # Start Redis and PostgreSQL
             cmd = "docker-compose up -d redis postgres"
-            process = await asyncio.create_subprocess_shell(
+            process = await asyncio.create_subprocess_shell()
                 cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=str(self.project_root)
-            )
+            
             stdout, stderr = await process.communicate()
             
             if process.returncode == 0:
-                logger.info("✅ Infrastructure services started")
+                logger.info("[OK] Infrastructure services started")
                 await asyncio.sleep(10)  # Wait for services to be ready
             else:
-                logger.error(f"❌ Failed to start infrastructure: {stderr.decode()}")
+                logger.error(str(f"[ERROR] Failed to start infrastructure: {stderr.decode(}")
                 
         except Exception as e:
-            logger.error(f"❌ Infrastructure startup error: {e}")
+            logger.error(str(f"[ERROR] Infrastructure startup error: {e}")
 
     async def _fix_service(self, service: Dict[str, Any]) -> Dict[str, Any]:
         """Fix a single service (MCP server or AI agent)"""
@@ -187,22 +202,22 @@ class SimpleMCPCoordinator:
         service_port = service["port"]
         is_critical = service["critical"]
         
-        logger.info(f"🔧 Fixing service: {service_name}")
+        logger.info(str(f"[SETUP] Fixing service: {service_name}")
         
         try:
             # Step 1: Check if service is running
             is_running = await self._check_service_health(service_name, service_port)
             
             if is_running:
-                logger.info(f"✅ {service_name} is already running")
-                return {
+                logger.info(str(f"[OK] {service_name} is already running")
+                return {}
                     "status": "healthy",
                     "actions_taken": ["health_check"],
                     "critical": is_critical
-                }
+                
             
             # Step 2: Try to restart the service
-            logger.info(f"🔄 Restarting {service_name}...")
+            logger.info(str(f"[SYNC] Restarting {service_name}...")
             restart_success = await self._restart_service(service_name)
             
             if restart_success:
@@ -211,15 +226,15 @@ class SimpleMCPCoordinator:
                 is_running = await self._check_service_health(service_name, service_port)
                 
                 if is_running:
-                    logger.info(f"✅ {service_name} restarted successfully")
-                    return {
+                    logger.info(str(f"[OK] {service_name} restarted successfully")
+                    return {}
                         "status": "fixed_by_restart",
                         "actions_taken": ["restart", "health_check"],
                         "critical": is_critical
-                    }
+                    
             
             # Step 3: Try to rebuild the service
-            logger.info(f"🏗️ Rebuilding {service_name}...")
+            logger.info(str(f"🏗️ Rebuilding {service_name}...")
             rebuild_success = await self._rebuild_service(service_name)
             
             if rebuild_success:
@@ -227,41 +242,41 @@ class SimpleMCPCoordinator:
                 is_running = await self._check_service_health(service_name, service_port)
                 
                 if is_running:
-                    logger.info(f"✅ {service_name} rebuilt successfully")
-                    return {
+                    logger.info(str(f"[OK] {service_name} rebuilt successfully")
+                    return {}
                         "status": "fixed_by_rebuild",
                         "actions_taken": ["restart", "rebuild", "health_check"],
                         "critical": is_critical
-                    }
+                    
             
             # Step 4: Service still not working
-            logger.error(f"❌ Failed to fix {service_name}")
-            return {
+            logger.error(str(f"[ERROR] Failed to fix {service_name}")
+            return {}
                 "status": "failed",
                 "actions_taken": ["restart", "rebuild", "health_check"],
                 "critical": is_critical,
                 "error": "Service could not be restored"
-            }
+            
             
         except Exception as e:
-            logger.error(f"❌ Error fixing {service_name}: {e}")
-            return {
+            logger.error(str(f"[ERROR] Error fixing {service_name}: {e}")
+            return {}
                 "status": "error",
                 "actions_taken": [],
                 "critical": is_critical,
                 "error": str(e)
-            }
+            
 
     async def _check_service_health(self, service_name: str, port: int) -> bool:
         """Check if service is healthy"""
         try:
             # Try to connect to the service health endpoint
             async with aiohttp.ClientSession() as session:
-                health_urls = [
+                health_urls = []
                     f"http://localhost:{port}/health",
                     f"http://localhost:{port}/status",
                     f"http://localhost:{port}/ping"
-                ]
+                
                 
                 for url in health_urls:
                     try:
@@ -279,30 +294,30 @@ class SimpleMCPCoordinator:
                 return False
                 
         except Exception as e:
-            logger.debug(f"Health check failed for {service_name}: {e}")
+            logger.debug(str(f"Health check failed for {service_name}: {e}")
             return False
 
     async def _restart_service(self, service_name: str) -> bool:
         """Restart a service"""
         try:
             cmd = f"docker-compose restart {service_name}"
-            process = await asyncio.create_subprocess_shell(
+            process = await asyncio.create_subprocess_shell()
                 cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=str(self.project_root)
-            )
+            
             stdout, stderr = await process.communicate()
             
             if process.returncode == 0:
-                logger.info(f"✅ Restarted {service_name}")
+                logger.info(str(f"[OK] Restarted {service_name}")
                 return True
             else:
-                logger.error(f"❌ Failed to restart {service_name}: {stderr.decode()}")
+                logger.error(str(f"[ERROR] Failed to restart {service_name}: {stderr.decode(}")
                 return False
                 
         except Exception as e:
-            logger.error(f"❌ Restart error for {service_name}: {e}")
+            logger.error(str(f"[ERROR] Restart error for {service_name}: {e}")
             return False
 
     async def _rebuild_service(self, service_name: str) -> bool:
@@ -310,42 +325,42 @@ class SimpleMCPCoordinator:
         try:
             # Build the service
             cmd = f"docker-compose build --no-cache {service_name}"
-            process = await asyncio.create_subprocess_shell(
+            process = await asyncio.create_subprocess_shell()
                 cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=str(self.project_root)
-            )
+            
             stdout, stderr = await process.communicate()
             
             if process.returncode != 0:
-                logger.error(f"❌ Build failed for {service_name}: {stderr.decode()}")
+                logger.error(str(f"[ERROR] Build failed for {service_name}: {stderr.decode(}")
                 return False
             
             # Start the service
             cmd = f"docker-compose up -d {service_name}"
-            process = await asyncio.create_subprocess_shell(
+            process = await asyncio.create_subprocess_shell()
                 cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=str(self.project_root)
-            )
+            
             stdout, stderr = await process.communicate()
             
             if process.returncode == 0:
-                logger.info(f"✅ Rebuilt {service_name}")
+                logger.info(str(f"[OK] Rebuilt {service_name}")
                 return True
             else:
-                logger.error(f"❌ Failed to start rebuilt {service_name}: {stderr.decode()}")
+                logger.error(str(f"[ERROR] Failed to start rebuilt {service_name}: {stderr.decode(}")
                 return False
                 
         except Exception as e:
-            logger.error(f"❌ Rebuild error for {service_name}: {e}")
+            logger.error(str(f"[ERROR] Rebuild error for {service_name}: {e}")
             return False
 
     async def _verify_all_services(self):
         """Verify all services are working correctly"""
-        logger.info("🔍 Verifying all services...")
+        logger.info("[SEARCH] Verifying all services...")
         
         all_healthy = True
         
@@ -353,9 +368,9 @@ class SimpleMCPCoordinator:
         logger.info("Checking MCP servers...")
         for server in self.mcp_servers:
             healthy = await self._check_service_health(server["name"], server["port"])
-            status_icon = "✅" if healthy else "❌"
+            status_icon = "[OK]" if healthy else "[ERROR]"
             critical_text = " (CRITICAL)" if server["critical"] and not healthy else ""
-            logger.info(f"   {server['name']}: {status_icon}{critical_text}")
+            logger.info(str(f"   {server['name']}: {status_icon}{critical_text}")
             
             if server["critical"] and not healthy:
                 all_healthy = False
@@ -364,17 +379,17 @@ class SimpleMCPCoordinator:
         logger.info("Checking AI agents...")
         for agent in self.ai_agents:
             healthy = await self._check_service_health(agent["name"], agent["port"])
-            status_icon = "✅" if healthy else "❌"
+            status_icon = "[OK]" if healthy else "[ERROR]"
             critical_text = " (CRITICAL)" if agent["critical"] and not healthy else ""
-            logger.info(f"   {agent['name']}: {status_icon}{critical_text}")
+            logger.info(str(f"   {agent['name']}: {status_icon}{critical_text}")
             
             if agent["critical"] and not healthy:
                 all_healthy = False
         
         if all_healthy:
-            logger.info("🎉 All critical services are healthy!")
+            logger.info("[CELEBRATE] All critical services are healthy!")
         else:
-            logger.warning("⚠️ Some critical services are not healthy")
+            logger.warning("[WARN] Some critical services are not healthy")
 
     async def _save_fix_report(self, report: Dict[str, Any]):
         """Save fix report"""
@@ -384,7 +399,7 @@ class SimpleMCPCoordinator:
         with open(report_path, 'w') as f:
             json.dump(report, f, indent=2)
         
-        logger.info(f"📊 Fix report saved to {report_path}")
+        logger.info(str(f"[METRICS] Fix report saved to {report_path}")
         
         # Also create a summary
         summary = self._create_summary(report)
@@ -393,18 +408,18 @@ class SimpleMCPCoordinator:
         with open(summary_path, 'w') as f:
             f.write(summary)
         
-        logger.info(f"📋 Fix summary saved to {summary_path}")
+        logger.info(str(f"📋 Fix summary saved to {summary_path}")
 
     def _create_summary(self, report: Dict[str, Any]) -> str:
         """Create a human-readable summary"""
-        summary = [
+        summary = []
             "="*60,
             "LANGCHAIN MCP COORDINATOR - FIX SUMMARY",
             "="*60,
             f"Timestamp: {report.get('timestamp', 'Unknown')}",
             f"Overall Status: {report.get('overall_status', 'Unknown')}",
             ""
-        ]
+        
         
         if 'completion_time' in report:
             summary.append(f"Completion Time: {report['completion_time']}")
@@ -447,7 +462,7 @@ class SimpleMCPCoordinator:
 
 def signal_handler(signum, frame):
     """Handle shutdown signals"""
-    logger.info("🛑 Received shutdown signal, cleaning up...")
+    logger.info("[STOP] Received shutdown signal, cleaning up...")
     sys.exit(0)
 
 async def main():
@@ -456,7 +471,7 @@ async def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
     
-    logger.info("🚀 Simple LangChain MCP Coordinator Starting...")
+    logger.info("[INIT] Simple LangChain MCP Coordinator Starting...")
     logger.info("   - 21 MCP Servers to fix")
     logger.info("   - 10 AI Agents to fix")
     logger.info("   - Docker orchestration")
@@ -465,12 +480,12 @@ async def main():
     try:
         coordinator = SimpleMCPCoordinator()
         await coordinator.fix_all_services()
-        logger.info("✅ All services coordination completed!")
+        logger.info("[OK] All services coordination completed!")
         
     except KeyboardInterrupt:
-        logger.info("🛑 Process interrupted by user")
+        logger.info("[STOP] Process interrupted by user")
     except Exception as e:
-        logger.error(f"❌ Fatal error: {e}")
+        logger.error(str(f"[ERROR] Fatal error: {e}")
         raise
 
 if __name__ == "__main__":

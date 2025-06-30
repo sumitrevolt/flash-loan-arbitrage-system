@@ -1,14 +1,15 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+import json
+import os
+import subprocess
+import sys
+import time
 """
 MCP Server Connection Test
 Tests that MCP servers can actually start and respond properly
 """
-import subprocess
-import sys
-import time
-import json
-import os
-from pathlib import Path
 
 def test_mcp_server_startup(server_name, server_path, timeout=10):
     """Test if an MCP server can start without errors"""
@@ -18,13 +19,13 @@ def test_mcp_server_startup(server_name, server_path, timeout=10):
         env['PYTHONPATH'] = r"C:\Users\Ratanshila\Documents\flash loan\mcp_servers;C:\Users\Ratanshila\Documents\flash loan"
         
         # Start the server process
-        process = subprocess.Popen(
+        process = subprocess.Popen()
             [r"C:\Program Files\Python311\python.exe", server_path, "--help"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
             env=env
-        )
+        
         
         # Wait for process to complete or timeout
         try:
@@ -50,12 +51,12 @@ def test_mcp_server_startup(server_name, server_path, timeout=10):
 
 def test_key_mcp_servers():
     """Test key MCP servers that are essential for flash loan system"""
-    servers_to_test = [
+    servers_to_test = []
         ("Enhanced Copilot", r"C:\Users\Ratanshila\Documents\flash loan\mcp_servers\ai_integration\working_enhanced_copilot_mcp_server.py"),
         ("EVM MCP Server", r"C:\Users\Ratanshila\Documents\flash loan\mcp_servers\blockchain_integration\evm-mcp-server\evm_mcp_server.py"),
         ("Matic MCP Server", r"C:\Users\Ratanshila\Documents\flash loan\mcp_servers\blockchain_integration\matic-mcp-server\matic_mcp_server.py"),
         ("Unified Flash Loan", r"C:\Users\Ratanshila\Documents\flash loan\mcp_servers\execution\working_unified_flash_loan_mcp_server.py")
-    ]
+    
     
     success_count = 0
     total_count = len(servers_to_test)
@@ -108,17 +109,17 @@ def main():
     
     print(f"\n=== Final Results ===")
     if config_ok and servers_ok:
-        print("🎉 SUCCESS: All MCP servers are ready!")
-        print("\n✅ Dependencies installed correctly")
-        print("✅ Python path configured properly") 
-        print("✅ MCP configuration is valid")
-        print("✅ Key servers can start without errors")
-        print("\n🚀 Next Steps:")
+        print("[CELEBRATE] SUCCESS: All MCP servers are ready!")
+        print("\n[OK] Dependencies installed correctly")
+        print("[OK] Python path configured properly") 
+        print("[OK] MCP configuration is valid")
+        print("[OK] Key servers can start without errors")
+        print("\n[INIT] Next Steps:")
         print("1. Restart VS Code or the Cline extension")
         print("2. MCP servers should now connect without 'ModuleNotFoundError'")
         print("3. Flash loan arbitrage system should be operational")
     else:
-        print("❌ Some issues remain:")
+        print("[ERROR] Some issues remain:")
         if not config_ok:
             print("- MCP configuration needs attention")
         if not servers_ok:

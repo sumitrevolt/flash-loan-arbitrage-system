@@ -1,20 +1,26 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+            import subprocess
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Any, Tuple
+import asyncio
+import json
+import logging
+import os
+import platform
+import sys
+
+            from production_arbitrage_bot import ArbitrageEngine
+            from realtime_data_connector import RealTimeDataConnector
+            from web3 import Web3
+from dotenv import load_dotenv
+import aiohttp
 """
 Enhanced Production Readiness Check with Real-time Data Validation
 Validates all components including Foundry MCP Server integration
 """
 
-import asyncio
-import json
-import logging
-import os
-import sys
-import platform
-import aiohttp
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Any, Tuple
-from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
@@ -24,6 +30,19 @@ if platform.system() == 'Windows':
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 # Setup logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -38,10 +57,10 @@ class EnhancedProductionChecker:
         
     async def run_all_checks(self) -> bool:
         """Run all production readiness checks"""
-        print("🔍 Enhanced Production Readiness Check")
+        print("[SEARCH] Enhanced Production Readiness Check")
         print("=" * 50)
         
-        checks = [
+        checks = []
             ("Environment Variables", self.check_environment_variables),
             ("Configuration Files", self.check_configuration_files),
             ("Python Dependencies", self.check_python_dependencies),
@@ -51,7 +70,7 @@ class EnhancedProductionChecker:
             ("Contract Deployment", self.check_contract_deployment),
             ("Risk Management", self.check_risk_management),
             ("Logging Configuration", self.check_logging_configuration)
-        ]
+        
         
         for check_name, check_func in checks:
             try:
@@ -59,10 +78,10 @@ class EnhancedProductionChecker:
                 success = await check_func()
                 
                 if success:
-                    print(f"✅ {check_name}: PASSED")
+                    print(f"[OK] {check_name}: PASSED")
                     self.checks_passed += 1
                 else:
-                    print(f"❌ {check_name}: FAILED")
+                    print(f"[ERROR] {check_name}: FAILED")
                     self.checks_failed += 1
                     
             except Exception as e:
@@ -77,11 +96,11 @@ class EnhancedProductionChecker:
     
     async def check_environment_variables(self) -> bool:
         """Check required environment variables"""
-        required_vars = [
+        required_vars = []
             "POLYGON_RPC_URL",
             "PRIVATE_KEY",
             "FLASH_LOAN_CONTRACT"
-        ]
+        
         
         missing_vars = []
         for var in required_vars:
@@ -107,10 +126,10 @@ class EnhancedProductionChecker:
     
     async def check_configuration_files(self) -> bool:
         """Check configuration files"""
-        config_files = [
+        config_files = []
             "production_config.json",
             "contract_abi.json"
-        ]
+        
         
         missing_files = []
         for file_path in config_files:
@@ -126,11 +145,11 @@ class EnhancedProductionChecker:
             with open("production_config.json", 'r') as f:
                 config = json.load(f)
                 
-            required_sections = [
+            required_sections = []
                 "deployment", "tokens", "dexes", "aave", 
                 "trading", "risk_management", "monitoring",
                 "foundry_mcp_server", "data_sources"
-            ]
+            
             
             missing_sections = []
             for section in required_sections:
@@ -150,10 +169,10 @@ class EnhancedProductionChecker:
     
     async def check_python_dependencies(self) -> bool:
         """Check Python dependencies"""
-        required_modules = [
+        required_modules = []
             "web3", "aiohttp", "websockets", "eth_account",
             "json", "asyncio", "logging", "decimal"
-        ]
+        
         
         missing_modules = []
         for module in required_modules:
@@ -168,8 +187,6 @@ class EnhancedProductionChecker:
             return False
           # Check custom modules
         try:
-            from production_arbitrage_bot import ArbitrageEngine
-            from realtime_data_connector import RealTimeDataConnector
             print(f"   All dependencies available")
             return True
         except ImportError as e:
@@ -186,12 +203,11 @@ class EnhancedProductionChecker:
                 return False
             
             # Check if server is running using PowerShell first (most reliable on Windows)
-            import subprocess
             try:
-                result: str = subprocess.run([
+                result: str = subprocess.run([)]
                     "powershell", "-Command", 
                     "try { $response = Invoke-RestMethod -Uri 'http://localhost:8001/health' -TimeoutSec 10; Write-Host $response.status } catch { Write-Host 'error' }"
-                ], capture_output=True, text=True, timeout=15)
+                ], capture_output=True, text=True, timeout=15
                 
                 if result.returncode == 0 and "healthy" in result.stdout:
                     print(f"   MCP Server running and healthy")
@@ -249,7 +265,6 @@ class EnhancedProductionChecker:
     async def check_realtime_connector(self) -> bool:
         """Check real-time data connector"""
         try:
-            from realtime_data_connector import RealTimeDataConnector
             
             # Load config for connector
             with open("production_config.json", 'r') as f:
@@ -274,7 +289,6 @@ class EnhancedProductionChecker:
     async def check_network_connectivity(self) -> bool:
         """Check network connectivity"""
         try:
-            from web3 import Web3
             
             rpc_url = os.getenv('POLYGON_RPC_URL')
             if not rpc_url:
@@ -305,7 +319,6 @@ class EnhancedProductionChecker:
     async def check_contract_deployment(self) -> bool:
         """Check contract deployment"""
         try:
-            from web3 import Web3
             
             rpc_url = os.getenv('POLYGON_RPC_URL')
             w3 = Web3(Web3.HTTPProvider(rpc_url))
@@ -345,11 +358,11 @@ class EnhancedProductionChecker:
             risk_config = config.get('risk_management', {})
             
             # Check required risk parameters
-            required_params = [
+            required_params = []
                 'max_daily_trades', 'max_daily_loss_usd', 
                 'circuit_breaker_loss_threshold', 'max_consecutive_failures',
                 'emergency_stop_enabled'
-            ]
+            
             
             missing_params = []
             for param in required_params:
@@ -405,24 +418,24 @@ class EnhancedProductionChecker:
     def print_summary(self):
         """Print check summary"""
         print("\n" + "=" * 50)
-        print("📊 PRODUCTION READINESS SUMMARY")
+        print("[METRICS] PRODUCTION READINESS SUMMARY")
         print("=" * 50)
-        print(f"✅ Checks Passed: {self.checks_passed}")
-        print(f"❌ Checks Failed: {self.checks_failed}")
-        print(f"⚠️  Warnings: {self.warnings}")
+        print(f"[OK] Checks Passed: {self.checks_passed}")
+        print(f"[ERROR] Checks Failed: {self.checks_failed}")
+        print(f"[WARN]  Warnings: {self.warnings}")
         
         if self.errors:
-            print(f"\n🚨 ERRORS:")
+            print(f"\n[ALERT] ERRORS:")
             for error in self.errors:
                 print(f"   - {error}")
         
         if self.checks_failed == 0:
-            print(f"\n🎉 SYSTEM READY FOR PRODUCTION!")
+            print(f"\n[CELEBRATE] SYSTEM READY FOR PRODUCTION!")
             print(f"   Real-time data integration: ENABLED")
             print(f"   MCP Server integration: ACTIVE")
             print(f"   All safety checks: PASSED")
         else:
-            print(f"\n⚠️  SYSTEM NOT READY - Fix errors before production use")
+            print(f"\n[WARN]  SYSTEM NOT READY - Fix errors before production use")
         
         print("=" * 50)
 

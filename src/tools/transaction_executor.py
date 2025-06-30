@@ -1,21 +1,54 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+            import logging
+        import asyncio
+from decimal import Decimal
+from typing import Dict, Any, Optional, Tuple, List, cast
+import json
+import os
+import time
+
+                    from web3 import Web3
+                from web3.types import TxParams, Wei
+            from eth_typing import ChecksumAddress
+        from flash_loan.core.aave_liquidity_checker import aave_liquidity_checker
+    from agents.aave_integration import aave_integration
+    from eth_account import Account
+    from util.web3_middleware import apply_web3_middleware
+from web3.exceptions import TransactionNotFound
+import requests
+
+                    from src.utils.middleware_compat import apply_poa_middleware
+                from src.flash_loan.core.enhanced_rpc_manager import EnhancedRpcManager
+        from src.blockchain.wallet_manager import get_wallet_manager
+        from src.utils.abi_utils import encode_abi, decode_abi  # Updated import
+        from src.utils.middleware_utils import get_poa_middleware, apply_poa_middleware
+        from src.utils.web3_middleware_utils import apply_web3_middleware
+    from src.flash_loan.core.aave_liquidity_checker import aave_liquidity_checker
+    from src.flash_loan.core.circuit_breaker import CircuitBreaker
+    from src.flash_loan.core.dynamic_slippage import DynamicSlippageCalculator
+    from src.flash_loan.core.enhanced_rpc_manager import enhanced_rpc_manager
+    from src.flash_loan.core.parameter_tuning_manager import ParameterTuningManager
+    from src.flash_loan.core.price_impact import PriceImpactCalculator
+    from src.flash_loan.core.transaction_analyzer import TransactionAnalyzer
+    from src.flash_loan.core.transaction_monitor import TransactionMonitor as ExternalTransactionMonitor
+    from src.utils.abi_loader import load_contract_abi
+    from src.utils.web3_v7_middleware import get_compatible_middleware
+from src.blockchain.gas_price_monitor import get_gas_price_monitor
+from src.blockchain.rpc_manager import RPCManager
+from src.config.config_manager import get_config_manager
+from src.flash_loan.core.dex_fee_manager import dex_fee_manager
+from src.flash_loan.core.dex_integration_singleton import initialize as dex_integration_initialize, get_instance as get_dex_integration
+from src.flash_loan.core.intermediate_token_selector import intermediate_token_selector
+from src.flash_loan.utils.token_utils import TokenUtils
 """
 Transaction executor for Flash Loan Arbitrage System.
 Handles transaction building, signing, and execution with proper error handling.
 """
 
-import asyncio
-import logging
-import time
-from typing import Dict, Any, Optional, Tuple, List, cast
-from decimal import Decimal
-import json
-import os
 
 # Import Web3 with proper error handling
 try:
-    from web3 import Web3
-    from web3.types import TxParams, Wei
-    from eth_account import Account
     WEB3_IMPORTED = True
 except ImportError as e:
     logging.getLogger(__name__).error(f"Failed to import Web3: {e}")
@@ -34,27 +67,16 @@ class TransactionMonitor:
 
 # Import standardized middleware utility
 try:
-    from util.web3_middleware import apply_web3_middleware
 except ImportError:
     try:
-        from src.utils.web3_middleware_utils import apply_web3_middleware
     except ImportError:
         # Define inline fallback if needed
         pass
 
-import logging
-from src.flash_loan.core.intermediate_token_selector import intermediate_token_selector
-import requests  # Added import for requests library
 
 # Import our new modules - avoid name conflicts by using aliases
 try:
-    from src.flash_loan.core.dynamic_slippage import DynamicSlippageCalculator
-    from src.flash_loan.core.transaction_analyzer import TransactionAnalyzer
-    from src.flash_loan.core.price_impact import PriceImpactCalculator
-    from src.flash_loan.core.circuit_breaker import CircuitBreaker
     # Import with alias to avoid conflict with our local TransactionMonitor
-    from src.flash_loan.core.transaction_monitor import TransactionMonitor as ExternalTransactionMonitor
-    from src.flash_loan.core.parameter_tuning_manager import ParameterTuningManager
     ENHANCED_MODULES_AVAILABLE = True
 except ImportError as e:
     ENHANCED_MODULES_AVAILABLE = False
@@ -62,54 +84,38 @@ except ImportError as e:
 
 # Import Aave integration for flash loan fee calculation and liquidity checking
 try:
-    from agents.aave_integration import aave_integration
 except ImportError:
     aave_integration = None
 
 # Import Aave liquidity checker
 try:
-    from src.flash_loan.core.aave_liquidity_checker import aave_liquidity_checker
 except ImportError:
     try:
-        from flash_loan.core.aave_liquidity_checker import aave_liquidity_checker
     except ImportError:
         aave_liquidity_checker = None
 
 # Import DEX fee manager
-from src.flash_loan.core.dex_fee_manager import dex_fee_manager
 
 # Import utilities for Web3.py compatibility (optional)
 try:
     # Try to import the new v7 compatible middleware
-    from src.utils.web3_v7_middleware import get_compatible_middleware
-    from src.utils.abi_loader import load_contract_abi
     geth_poa_middleware = get_compatible_middleware()
 except ImportError as e:
     # Fall back to older middleware if available
     try:
-        from src.utils.middleware_utils import get_poa_middleware, apply_poa_middleware
-        from src.utils.abi_utils import encode_abi, decode_abi  # Updated import
         geth_poa_middleware = get_poa_middleware()
     except ImportError as e2:
         logging.getLogger("transaction_executor").warning(f"Could not import compatibility utilities: {e2}. Some features may not work correctly.")
         geth_poa_middleware = None
 
-from web3 import Web3
-from web3.exceptions import TransactionNotFound
 
 # Import the enhanced RPC manager for better rate limit handling
 try:
-    from src.flash_loan.core.enhanced_rpc_manager import enhanced_rpc_manager
     ENHANCED_RPC_AVAILABLE = True
 except ImportError:
     ENHANCED_RPC_AVAILABLE = False
     logging.getLogger("transaction_executor").warning("Enhanced RPC Manager not available. Falling back to standard RPC Manager.")
 
-from src.config.config_manager import get_config_manager  # Adjusted for direct src import
-from src.blockchain.rpc_manager import RPCManager  # Adjusted for direct src import
-from src.blockchain.gas_price_monitor import get_gas_price_monitor  # Adjusted for direct src import
-from src.flash_loan.utils.token_utils import TokenUtils
-from src.flash_loan.core.dex_integration_singleton import initialize as dex_integration_initialize, get_instance as get_dex_integration  # Use singleton
 
 class TransactionExecutor:
     """
@@ -137,7 +143,7 @@ class TransactionExecutor:
             try:
                 contract_owner = self.flashloan_contract.functions.owner().call()
             except Exception as e:
-                self.logger.error(f"Error fetching contract owner: {e}")
+                self.logger.error(str(f"Error fetching contract owner: {e}")
                 return False, "Error fetching contract owner"
 
             if not contract_owner or contract_owner.lower() != wallet_address.lower():
@@ -148,64 +154,64 @@ class TransactionExecutor:
                 wallet = self.web3.to_checksum_address(wallet_address)
                 token = self.web3.to_checksum_address(token_address)
             except Exception as e:
-                self.logger.error(f"Invalid address format: {e}")
+                self.logger.error(str(f"Invalid address format: {e}")
                 return False, "Invalid address format"
 
             try:
                 current_status = self.flashloan_contract.functions.whitelistedTokens(token).call()
                 failed_count = self.flashloan_contract.functions.failedTransactionsCount().call()
             except Exception as e:
-                self.logger.error(f"Error fetching contract state: {e}")
+                self.logger.error(str(f"Error fetching contract state: {e}")
                 return False, "Error fetching contract state"
 
-            self.logger.info(f"Current state - Failed count: {failed_count}, Token whitelisted: {current_status}")
+            self.logger.info(str(f"Current state - Failed count: {failed_count}, Token whitelisted: {current_status}")
 
             for i in range(2):
                 try:
                     nonce = self.web3.eth.get_transaction_count(wallet) + i
-                    tx_params = {
+                    tx_params = {}
                         'from': wallet,
                         'nonce': nonce,
                         'gas': 100000,
                         'gasPrice': self.web3.eth.gas_price,
                         'chainId': self.web3.eth.chain_id
-                    }
-                    tx = self.flashloan_contract.functions.whitelistToken(
+                    
+                    tx = self.flashloan_contract.functions.whitelistToken()
                         token,
                         not current_status if i == 0 else current_status
-                    ).build_transaction(tx_params)
+                    ).build_transaction(tx_params
                     signed = self.wallet_manager.sign_transaction(dict(tx))
                     if not signed:
-                        self.logger.error(f"Failed to sign transaction {i+1}")
+                        self.logger.error(str(f"Failed to sign transaction {i+1}")
                         return False, f"Failed to sign transaction {i+1}"
                     # Try both attribute names for compatibility
                     raw_tx = getattr(signed, 'rawTransaction', None) or getattr(signed, 'raw_transaction', None)
                     if not raw_tx:
-                        self.logger.error(f"Could not extract raw transaction bytes from signed transaction {i+1}")
+                        self.logger.error(str(f"Could not extract raw transaction bytes from signed transaction {i+1}")
                         return False, f"Failed to extract raw transaction data for transaction {i+1}"
                     tx_hash = self.web3.eth.send_raw_transaction(raw_tx)
                     receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
                     if not receipt or receipt.get('status') != 1:
-                        self.logger.error(f"Transaction {i+1} failed")
+                        self.logger.error(str(f"Transaction {i+1} failed")
                         return False, f"Transaction {i+1} failed"
-                    self.logger.info(f"Reset transaction {i+1} succeeded: {tx_hash.hex()}")
+                    self.logger.info(str(f"Reset transaction {i+1} succeeded: {tx_hash.hex(}")
                 except Exception as e:
-                    self.logger.error(f"Error in reset transaction {i+1}: {e}")
+                    self.logger.error(str(f"Error in reset transaction {i+1}: {e}")
                     return False, f"Error in reset transaction {i+1}: {e}"
 
             time.sleep(2)
             try:
                 new_count = self.flashloan_contract.functions.failedTransactionsCount().call()
             except Exception as e:
-                self.logger.error(f"Error fetching new failed transaction count: {e}")
+                self.logger.error(str(f"Error fetching new failed transaction count: {e}")
                 return False, "Error fetching new failed transaction count"
-            self.logger.info(f"New failed transaction count: {new_count}")
+            self.logger.info(str(f"New failed transaction count: {new_count}")
             if new_count < failed_count:
                 return True, "Circuit breaker reset successful"
             else:
                 return False, "Circuit breaker reset verification failed"
         except Exception as e:
-            self.logger.error(f"Circuit breaker reset failed: {str(e)}", exc_info=True)
+            self.logger.error(str(f"Circuit breaker reset failed: {str(e}"), exc_info=True)
             return False, f"Reset failed: {str(e)}"
 
     async def calculate_gas_cost_usd(self, estimated_gas: int) -> float:
@@ -243,7 +249,7 @@ class TransactionExecutor:
                     if resp.ok:
                         matic_price_usd = resp.json().get("matic-network", {}).get("usd", 0.0)
             except Exception as e:
-                self.logger.warning(f"Failed to fetch MATIC price: {e}")
+                self.logger.warning(str(f"Failed to fetch MATIC price: {e}")
                 matic_price_usd = 0.0
 
             if not matic_price_usd or matic_price_usd <= 0:
@@ -258,7 +264,7 @@ class TransactionExecutor:
             gas_cost_usd = total_gas_cost_matic * matic_price_usd
             return float(gas_cost_usd)
         except Exception as e:
-            self.logger.error(f"Error calculating gas cost in USD: {e}")
+            self.logger.error(str(f"Error calculating gas cost in USD: {e}")
             return 0.0
 
     def calculate_aave_fee_usd(self, amount: int, token_price_usd: float, token_decimals: int = 18) -> float:
@@ -279,7 +285,7 @@ class TransactionExecutor:
             fee_usd = fee_token * float(token_price_usd)
             return float(fee_usd)
         except Exception as e:
-            self.logger.error(f"Error calculating Aave fee in USD: {e}")
+            self.logger.error(str(f"Error calculating Aave fee in USD: {e}")
             return 0.0
     """
     Executes blockchain transactions for the flash loan system
@@ -313,14 +319,13 @@ class TransactionExecutor:
         self.gas_price_monitor = get_gas_price_monitor()
 
         # Use the singleton wallet manager to ensure consistent state
-        from src.blockchain.wallet_manager import get_wallet_manager
         self.wallet_manager = get_wallet_manager(self.web3) if self.web3 else None
 
         # Log wallet manager status
         if self.wallet_manager:
             wallet_address = self.wallet_manager.get_wallet_address()
             if wallet_address:
-                self.logger.info(f"Wallet manager initialized with address: {wallet_address}")
+                self.logger.info(str(f"Wallet manager initialized with address: {wallet_address}")
             else:
                 self.logger.warning("Wallet manager initialized but no wallet address is available")
 
@@ -334,12 +339,12 @@ class TransactionExecutor:
                 self.dex_integration = get_dex_integration()
                 self.logger.info("DexIntegration initialized successfully.")
             except Exception as e:
-                self.logger.error(f"Failed to initialize DexIntegration: {e}", exc_info=True)
+                self.logger.error(str(f"Failed to initialize DexIntegration: {e}"), exc_info=True)
         else:
-            self.logger.warning(
+            self.logger.warning()
                 "RPC Manager not available, so DexIntegration was not initialized. "
                 "DEX-related price fetching for MATIC in get_current_matic_price might be limited to fallbacks."
-            )
+            
 
         # Initialize enhanced modules
         self.dynamic_slippage = None
@@ -355,7 +360,7 @@ class TransactionExecutor:
                 self.dynamic_slippage = DynamicSlippageCalculator()
                 self.logger.info("Dynamic slippage calculator initialized successfully.")
             except Exception as e:
-                self.logger.error(f"Failed to initialize dynamic slippage calculator: {e}", exc_info=True)
+                self.logger.error(str(f"Failed to initialize dynamic slippage calculator: {e}"), exc_info=True)
 
             # Initialize transaction analyzer
             if self.web3:
@@ -363,35 +368,35 @@ class TransactionExecutor:
                     self.transaction_analyzer = TransactionAnalyzer(self.web3, debug_mode=True)
                     self.logger.info("Transaction analyzer initialized successfully.")
                 except Exception as e:
-                    self.logger.error(f"Failed to initialize transaction analyzer: {e}", exc_info=True)
+                    self.logger.error(str(f"Failed to initialize transaction analyzer: {e}"), exc_info=True)
 
             # Initialize price impact calculator
             try:
                 self.price_impact_calculator = PriceImpactCalculator()
                 self.logger.info("Price impact calculator initialized successfully.")
             except Exception as e:
-                self.logger.error(f"Failed to initialize price impact calculator: {e}", exc_info=True)
+                self.logger.error(str(f"Failed to initialize price impact calculator: {e}"), exc_info=True)
 
             # Initialize circuit breaker
             try:
                 self.circuit_breaker = CircuitBreaker()
                 self.logger.info("Circuit breaker initialized successfully.")
             except Exception as e:
-                self.logger.error(f"Failed to initialize circuit breaker: {e}", exc_info=True)
+                self.logger.error(str(f"Failed to initialize circuit breaker: {e}"), exc_info=True)
 
             # Initialize transaction monitor
             try:
                 self.transaction_monitor = TransactionMonitor()
                 self.logger.info("Transaction monitor initialized successfully.")
             except Exception as e:
-                self.logger.error(f"Failed to initialize transaction monitor: {e}", exc_info=True)
+                self.logger.error(str(f"Failed to initialize transaction monitor: {e}"), exc_info=True)
 
             # Initialize parameter tuning manager
             try:
                 self.parameter_tuning_manager = ParameterTuningManager()
                 self.logger.info("Parameter tuning manager initialized successfully.")
             except Exception as e:
-                self.logger.error(f"Failed to initialize parameter tuning manager: {e}", exc_info=True)
+                self.logger.error(str(f"Failed to initialize parameter tuning manager: {e}"), exc_info=True)
 
         # Set retry parameters
         self.max_retries = self.auto_executor_config.get('max_retries', 3)
@@ -413,7 +418,7 @@ class TransactionExecutor:
         self.flashloan_contract = None
         try:
             # Try to load the contract ABI from multiple locations
-            possible_paths = [
+            possible_paths = []
                 # Current working directory
                 'contract_abi.json',
 
@@ -429,13 +434,13 @@ class TransactionExecutor:
                 # Other common locations
                 os.path.join(os.getcwd(), 'contracts_fixed', 'FlashLoanArbitrageImproved.abi.json'),
                 os.path.join(os.getcwd(), 'contracts', 'FlashLoanArbitrageImproved.abi.json')
-            ]
+            
 
             # Try each path
             contract_abi = None
             for path in possible_paths:
                 if os.path.exists(path):
-                    self.logger.info(f"Loading contract ABI from {path}")
+                    self.logger.info(str(f"Loading contract ABI from {path}")
                     with open(path, 'r') as f:
                         contract_abi = json.load(f)
                         break
@@ -443,9 +448,9 @@ class TransactionExecutor:
             # If we couldn't find the ABI, create a fallback
             if not contract_abi:
                 self.logger.warning("Contract ABI not found in any location, creating fallback ABI")
-                fallback_abi = [
-                    {
-                        "inputs": [
+                fallback_abi = []
+                    {}
+                        "inputs": []
                             {"internalType": "address", "name": "token", "type": "address"},
                             {"internalType": "uint256", "name": "amount", "type": "uint256"},
                             {"internalType": "address", "name": "sourceRouter", "type": "address"},
@@ -458,21 +463,21 @@ class TransactionExecutor:
                         "stateMutability": "nonpayable",
                         "type": "function"
                     },
-                    {
+                    {}
                         "inputs": [],
                         "name": "owner",
                         "outputs": [{"internalType": "address", "name": "", "type": "address"}],
                         "stateMutability": "view",
                         "type": "function"
                     },
-                    {
+                    {}
                         "inputs": [{"internalType": "address", "name": "token", "type": "address"}],
                         "name": "withdrawToken",
                         "outputs": [],
                         "stateMutability": "nonpayable",
                         "type": "function"
-                    }
-                ]
+                    
+                
                 contract_abi = fallback_abi
 
             # Get contract address from network config
@@ -483,7 +488,7 @@ class TransactionExecutor:
                 checksum_addr = Web3.to_checksum_address(addr)
                 # Create contract instance
                 self.flashloan_contract = self.web3.eth.contract(address=checksum_addr, abi=contract_abi)
-                self.logger.info(f"Flash loan contract loaded at address: {checksum_addr}")
+                self.logger.info(str(f"Flash loan contract loaded at address: {checksum_addr}")
                 
                 # Verify contract deployment and ABI match
                 try:
@@ -496,10 +501,10 @@ class TransactionExecutor:
                     # Test view functions from ABI
                     fail_count = self.flashloan_contract.functions.failedTransactionsCount().call()
                     max_fails = self.flashloan_contract.functions.maxFailedTransactions().call()
-                    self.logger.info(f"Contract state verified: failedCount={fail_count}, maxFails={max_fails}")
+                    self.logger.info(str(f"Contract state verified: failedCount={fail_count}, maxFails={max_fails}")
                     self.logger.info("Contract deployment matches ABI")
                 except Exception as e:
-                    self.logger.error(f"Contract verification failed: {e}")
+                    self.logger.error(str(f"Contract verification failed: {e}")
             elif not contract_abi:
                 self.logger.error("Contract ABI could not be loaded from any location")
             elif not self.web3:
@@ -507,10 +512,10 @@ class TransactionExecutor:
             elif not addr:
                 self.logger.error("Flash loan contract address is missing in network config")
             else:
-                self.logger.error(f"Invalid flash loan contract address format: {addr}")
+                self.logger.error(str(f"Invalid flash loan contract address format: {addr}")
 
         except Exception as e:
-            self.logger.error(f"Failed to load flash loan contract: {e}", exc_info=True)
+            self.logger.error(str(f"Failed to load flash loan contract: {e}"), exc_info=True)
 
     async def initialize(self):
         """
@@ -545,14 +550,14 @@ class TransactionExecutor:
             str: DEX name
         """
         # Common router addresses on Polygon
-        router_to_dex = {
+        router_to_dex = {}
             "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff": "QuickSwap",
             "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506": "SushiSwap",
             "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45": "UniswapV3",
             "0xE592427A0AEce92De3Edee1F18E0157C05861564": "UniswapV3",
             "0xf5b509bB0909a69B1c207E495f687a596C168E12": "Quickswap",
             "0xC0788A3aD43d79aa53B09c2EaCc313A787d1d607": "ApeSwap"
-        }
+        
 
         # Normalize address
         normalized_address = router_address.lower()
@@ -579,37 +584,37 @@ class TransactionExecutor:
                 with open(config_path, 'r') as f:
                     return json.load(f)
             else:
-                self.logger.warning(f"DEX V2 fee configuration file not found at {config_path}. Using default values.")
-                return {
-                    "uniswapv3": {
+                self.logger.warning(str(f"DEX V2 fee configuration file not found at {config_path}. Using default values.")
+                return {}
+                    "uniswapv3": {}
                         "default": 0.003,
                         "fee_tiers": [0.0005, 0.003, 0.01]
                     },
-                    "quickswap": {
+                    "quickswap": {}
                         "default": 0.003,
                         "fee_tiers": [0.003]
                     },
-                    "sushiswap": {
+                    "sushiswap": {}
                         "default": 0.003,
                         "fee_tiers": [0.003]
-                    }
-                }
+                    
+                
         except Exception as e:
-            self.logger.error(f"Error loading DEX V2 fee configuration: {e}")
-            return {
-                "uniswapv3": {
+            self.logger.error(str(f"Error loading DEX V2 fee configuration: {e}")
+            return {}
+                "uniswapv3": {}
                     "default": 0.003,
                     "fee_tiers": [0.0005, 0.003, 0.01]
                 },
-                "quickswap": {
+                "quickswap": {}
                     "default": 0.003,
                     "fee_tiers": [0.003]
                 },
-                "sushiswap": {
+                "sushiswap": {}
                     "default": 0.003,
                     "fee_tiers": [0.003]
-                }
-            }
+                
+            
 
 
     def _get_dex_fee_tier(self, router_address, token_symbol=None):
@@ -622,7 +627,7 @@ class TransactionExecutor:
             # Get DEX name from router address
             dex_name = self._get_dex_name_from_router(router_address)
             if not dex_name:
-                self.logger.debug(f"Unknown DEX router: {router_address}, using default fee tier {default_fee_tier}")
+                self.logger.debug(str(f"Unknown DEX router: {router_address}, using default fee tier {default_fee_tier}")
                 return default_fee_tier
 
             # Load fee tier configuration
@@ -634,14 +639,14 @@ class TransactionExecutor:
                     with open(config_path, 'r') as f:
                         fee_tier_config = json.load(f)
                 except Exception as e:
-                    self.logger.warning(f"Error loading DEX fee tier config: {e}")
+                    self.logger.warning(str(f"Error loading DEX fee tier config: {e}")
 
             # Check for token-specific fee tiers first
             if token_symbol and "token_specific_fee_tiers" in fee_tier_config:
                 token_specific = fee_tier_config.get("token_specific_fee_tiers", {}).get(token_symbol, {})
                 if dex_name.lower() in token_specific:
                     fee_tier = token_specific[dex_name.lower()]
-                    self.logger.debug(f"Using token-specific fee tier for {token_symbol} on {dex_name}: {fee_tier}")
+                    self.logger.debug(str(f"Using token-specific fee tier for {token_symbol} on {dex_name}: {fee_tier}")
                     return fee_tier
 
             # Check for DEX-specific default fee tiers
@@ -649,7 +654,7 @@ class TransactionExecutor:
                 dex_fees = fee_tier_config.get("default_fee_tiers", {})
                 if dex_name.lower() in dex_fees:
                     fee_tier = dex_fees[dex_name.lower()]
-                    self.logger.debug(f"Using dex-specific fee tier for {dex_name}: {fee_tier}")
+                    self.logger.debug(str(f"Using dex-specific fee tier for {dex_name}: {fee_tier}")
                     return fee_tier
 
             # Hardcoded fee tiers as fallback
@@ -659,43 +664,43 @@ class TransactionExecutor:
                 if fee_manager:
                     real_fee = fee_manager.get_dex_fee(dex_name)
                     if real_fee:
-                        self.logger.debug(f"Using real fee tier for {dex_name}: {real_fee}")
+                        self.logger.debug(str(f"Using real fee tier for {dex_name}: {real_fee}")
                         return real_fee
                 
                 # If fee manager unavailable, query DEX directly for real fees
                 real_fee_tier = self._query_dex_fee_tier(dex_name)
                 if real_fee_tier:
-                    self.logger.debug(f"Queried real fee tier for {dex_name}: {real_fee_tier}")
+                    self.logger.debug(str(f"Queried real fee tier for {dex_name}: {real_fee_tier}")
                     return real_fee_tier
                     
             except Exception as e:
-                self.logger.error(f"Failed to get real fee tier for {dex_name}: {e}")
+                self.logger.error(str(f"Failed to get real fee tier for {dex_name}: {e}")
                 raise ValueError(f"Cannot determine real fee tier for {dex_name}")
 
             # Special handling for UniswapV3 tokens that typically use specific fee tiers
             if dex_name.lower() == "uniswapv3" and token_symbol:
                 if token_symbol in ["USDC", "USDT", "DAI"]:
                     # Stablecoins often use 0.05% fee tier (500)
-                    self.logger.debug(f"Using stablecoin fee tier for {token_symbol} on UniswapV3: 500")
+                    self.logger.debug(str(f"Using stablecoin fee tier for {token_symbol} on UniswapV3: 500")
                     return 500
                 elif token_symbol in ["WETH", "WBTC"]:
                     # Major tokens often use 0.3% fee tier (3000)
-                    self.logger.debug(f"Using major token fee tier for {token_symbol} on UniswapV3: 3000")
+                    self.logger.debug(str(f"Using major token fee tier for {token_symbol} on UniswapV3: 3000")
                     return 3000
                 elif token_symbol in ["WMATIC", "LINK", "AAVE", "UNI", "SUSHI"]:
                     # Medium volatility tokens often use 0.3% fee tier (3000)
-                    self.logger.debug(f"Using medium volatility token fee tier for {token_symbol} on UniswapV3: 3000")
+                    self.logger.debug(str(f"Using medium volatility token fee tier for {token_symbol} on UniswapV3: 3000")
                     return 3000
                 else:
                     # Other tokens often use 1% fee tier (10000)
-                    self.logger.debug(f"Using high volatility token fee tier for {token_symbol} on UniswapV3: 10000")
+                    self.logger.debug(str(f"Using high volatility token fee tier for {token_symbol} on UniswapV3: 10000")
                     return 10000
 
-            self.logger.debug(f"No specific fee tier found for {dex_name}, using default: {default_fee_tier}")
+            self.logger.debug(str(f"No specific fee tier found for {dex_name}, using default: {default_fee_tier}")
             return default_fee_tier
 
         except Exception as e:
-            self.logger.warning(f"Error determining fee tier: {e}")
+            self.logger.warning(str(f"Error determining fee tier: {e}")
             return default_fee_tier
 
     def _query_dex_fee_tier(self, dex_name: str) -> Optional[int]:
@@ -713,11 +718,11 @@ class TransactionExecutor:
                 return None
                 
             # Map DEX names to their factory contract methods
-            dex_query_methods = {
+            dex_query_methods = {}
                 "uniswapv3": self._query_uniswap_v3_fees,
                 "quickswap": self._query_quickswap_fees,
                 "sushiswap": self._query_sushiswap_fees
-            }
+            
             
             query_method = dex_query_methods.get(dex_name.lower())
             if query_method:
@@ -726,7 +731,7 @@ class TransactionExecutor:
             return None
             
         except Exception as e:
-            self.logger.error(f"Error querying DEX fee tier for {dex_name}: {e}")
+            self.logger.error(str(f"Error querying DEX fee tier for {dex_name}: {e}")
             return None
             
     def _query_uniswap_v3_fees(self) -> Optional[int]:
@@ -739,13 +744,13 @@ class TransactionExecutor:
         for a given token pair.
         """
         try:
-            self.logger.warning("CRITICAL WARNING: _query_uniswap_v3_fees is returning a hardcoded default fee tier (3000), NOT a real on-chain queried fee.")
+            self.logger.warning("CRITICAL WARNING: _query_uniswap_v3_fees is returning a hardcoded default fee tier (3000, NOT a real on-chain queried fee.")
             # UniswapV3 has multiple fee tiers, return the most common one
             # In practice, you would query the factory contract for pool fees
             # For now, return the standard 0.3% fee tier
             return 3000
         except Exception as e:
-            self.logger.error(f"Error querying UniswapV3 fees: {e}")
+            self.logger.error(str(f"Error querying UniswapV3 fees: {e}")
             return None
             
     def _query_quickswap_fees(self) -> Optional[int]:
@@ -758,12 +763,12 @@ class TransactionExecutor:
         and regularly verified.
         """
         try:
-            self.logger.warning("CRITICAL WARNING: _query_quickswap_fees is returning a hardcoded default fee tier (3000), NOT a real on-chain queried fee.")
+            self.logger.warning("CRITICAL WARNING: _query_quickswap_fees is returning a hardcoded default fee tier (3000, NOT a real on-chain queried fee.")
             # QuickSwap typically uses 0.3% fees
             # In practice, you would query their factory contract
             return 3000
         except Exception as e:
-            self.logger.error(f"Error querying QuickSwap fees: {e}")
+            self.logger.error(str(f"Error querying QuickSwap fees: {e}")
             return None
             
     def _query_sushiswap_fees(self) -> Optional[int]:
@@ -776,12 +781,12 @@ class TransactionExecutor:
         and regularly verified.
         """
         try:
-            self.logger.warning("CRITICAL WARNING: _query_sushiswap_fees is returning a hardcoded default fee tier (3000), NOT a real on-chain queried fee.")
+            self.logger.warning("CRITICAL WARNING: _query_sushiswap_fees is returning a hardcoded default fee tier (3000, NOT a real on-chain queried fee.")
             # SushiSwap typically uses 0.3% fees
             # In practice, you would query their factory contract
             return 3000
         except Exception as e:
-            self.logger.error(f"Error querying SushiSwap fees: {e}")
+            self.logger.error(str(f"Error querying SushiSwap fees: {e}")
             return None
 
     def wait_for_transaction_receipt(self, tx_hash, timeout=None):
@@ -798,19 +803,18 @@ class TransactionExecutor:
         if timeout is None:
             timeout = self.max_confirmations_wait
 
-        self.logger.info(f"Waiting for transaction receipt (timeout: {timeout}s)...")
+        self.logger.info(str(f"Waiting for transaction receipt (timeout: {timeout}s...")
 
         # Check if we're using the enhanced RPC manager and it has the wait_for_transaction_receipt method
         if self.use_enhanced_rpc:
             # Import the enhanced RPC manager directly to check if it's the correct type
             try:
-                from src.flash_loan.core.enhanced_rpc_manager import EnhancedRpcManager
                 if isinstance(self.rpc_manager, EnhancedRpcManager) and hasattr(self.rpc_manager, 'wait_for_transaction_receipt'):
                     try:
                         self.logger.info("Using enhanced RPC manager's wait_for_transaction_receipt method")
                         return self.rpc_manager.wait_for_transaction_receipt(tx_hash, timeout=timeout)
                     except Exception as e:
-                        self.logger.error(f"Error waiting for receipt with enhanced RPC: {e}")
+                        self.logger.error(str(f"Error waiting for receipt with enhanced RPC: {e}")
                         # Fall back to standard method
             except ImportError:
                 self.logger.warning("Could not import EnhancedRpcManager, falling back to standard method")
@@ -825,7 +829,7 @@ class TransactionExecutor:
             self.logger.info("Using standard Web3 wait_for_transaction_receipt method")
             return self.web3.eth.wait_for_transaction_receipt(tx_hash, timeout=timeout)
         except Exception as e:
-            self.logger.error(f"Error waiting for transaction receipt: {e}")
+            self.logger.error(str(f"Error waiting for transaction receipt: {e}")
             raise
 
     async def check_aave_liquidity(self, token_address: str, amount_in_wei: int) -> Tuple[bool, int]:
@@ -844,24 +848,24 @@ class TransactionExecutor:
             return True, 0  # Assume liquidity is sufficient if checker is not available
 
         try:
-            self.logger.info(f"Checking Aave liquidity for token {token_address}, amount: {amount_in_wei} wei")
-            available_liquidity_wei = await asyncio.to_thread(
+            self.logger.info(str(f"Checking Aave liquidity for token {token_address}, amount: {amount_in_wei} wei")
+            available_liquidity_wei = await asyncio.to_thread()
                 aave_liquidity_checker.get_aave_available_liquidity,
                 token_address,
                 self.web3
-            )
+            
 
             if available_liquidity_wei is None:
-                self.logger.warning(f"Could not retrieve Aave liquidity for token {token_address}. Assuming sufficient.")
+                self.logger.warning(str(f"Could not retrieve Aave liquidity for token {token_address}. Assuming sufficient.")
                 return True, 0
 
-            self.logger.info(f"Aave available liquidity for {token_address}: {available_liquidity_wei} wei")
+            self.logger.info(str(f"Aave available liquidity for {token_address}: {available_liquidity_wei} wei")
             if available_liquidity_wei >= amount_in_wei:
                 return True, available_liquidity_wei
             else:
                 return False, available_liquidity_wei
         except Exception as e:
-            self.logger.error(f"Error checking Aave liquidity for {token_address}: {e}", exc_info=True)
+            self.logger.error(str(f"Error checking Aave liquidity for {token_address}: {e}"), exc_info=True)
             return False, 0 # Assume insufficient liquidity on error to be safe
 
     async def execute_flash_loan_arbitrage(self, opportunity: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
@@ -886,7 +890,7 @@ class TransactionExecutor:
 
         # --- FIX: Prevent zero or negative amount transactions ---
         if amount is None or amount <= 0:
-            self.logger.error(f"Invalid arbitrage amount: {amount}. Skipping opportunity.")
+            self.logger.error(str(f"Invalid arbitrage amount: {amount}. Skipping opportunity.")
             return False, "Invalid arbitrage amount (must be > 0)"
 
         if not self.web3:
@@ -913,20 +917,20 @@ class TransactionExecutor:
             # Check circuit breaker state
             failed_count = self.flashloan_contract.functions.failedTransactionsCount().call()
             max_failed = self.flashloan_contract.functions.maxFailedTransactions().call()
-            self.logger.info(f"- Failed transactions count: {failed_count}")
-            self.logger.info(f"- Max failed transactions: {max_failed}")
+            self.logger.info(str(f"- Failed transactions count: {failed_count}")
+            self.logger.info(str(f"- Max failed transactions: {max_failed}")
             
             # Convert values to integers for comparison
             failed_count_int = int(failed_count)
             max_failed_int = int(max_failed)
-            self.logger.info(f"- Circuit breaker status: {'TRIPPED' if failed_count_int >= max_failed_int else 'OK'}")
+            self.logger.info(str(f"- Circuit breaker status: {'TRIPPED' if failed_count_int >= max_failed_int else 'OK'}")
 
             # Log contract address and ABI
             self.logger.info("\n2. Contract Configuration:")
-            self.logger.info(f"- Contract address: {self.flashloan_contract.address}")
+            self.logger.info(str(f"- Contract address: {self.flashloan_contract.address}")
             self.logger.info("- Available functions:")
             for fn in self.flashloan_contract.all_functions():
-                self.logger.info(f"  * {fn}")
+                self.logger.info(str(f"  * {fn}")
                 
             self.logger.info("\n3. Circuit Breaker Check:")
             # Check if circuit breaker is tripped
@@ -943,14 +947,13 @@ class TransactionExecutor:
                     # Check if wallet is contract owner
                     contract_owner = self.flashloan_contract.functions.owner().call()
                     is_owner = contract_owner.lower() == wallet_address.lower()
-                    self.logger.info(f"Owner check - Contract: {contract_owner}, Wallet: {wallet_address}, Is Owner: {is_owner}")
+                    self.logger.info(str(f"Owner check - Contract: {contract_owner}, Wallet: {wallet_address}, Is Owner: {is_owner}")
                     
                     if not is_owner:
                         self.logger.error("Wallet is not contract owner - cannot perform recovery")
                         return False, "Not contract owner"
 
                     # Prepare transaction parameters
-                    from web3 import Web3
                     nonce = self.web3.eth.get_transaction_count(Web3.to_checksum_address(wallet_address))
                     gas_price_wei = self.web3.eth.gas_price
                     
@@ -962,12 +965,12 @@ class TransactionExecutor:
                     
                     # Get current whitelist status (we'll toggle it and back)
                     current_status = self.flashloan_contract.functions.whitelistedTokens(token).call()
-                    self.logger.info(f"Current whitelist status for {token}: {current_status}")
+                    self.logger.info(str(f"Current whitelist status for {token}: {current_status}")
                 except Exception as e:
-                    self.logger.error(f"Error checking wallet owner status: {e}")
+                    self.logger.error(str(f"Error checking wallet owner status: {e}")
                     return False, f"Error checking owner status: {e}"
         except Exception as e:
-            self.logger.error(f"Error checking contract circuit breaker: {e}")
+            self.logger.error(str(f"Error checking contract circuit breaker: {e}")
             # Continue execution as this is just diagnostic info
 
         # Check gas price
@@ -989,22 +992,22 @@ class TransactionExecutor:
                         try:
                             gas_price_gwei_decimal = Decimal(str(gas_price_raw))
                         except Exception:
-                            self.logger.error(f"Invalid gas price type/value: {gas_price_raw}. Aborting.")
+                            self.logger.error(str(f"Invalid gas price type/value: {gas_price_raw}. Aborting.")
                             if self.circuit_breaker: self.circuit_breaker.record_failure(token_symbol=token_symbol, dex_name=opportunity.get("buy_dex_name"), loss_usd=float(opportunity.get("expected_profit", 0.0)))
                             return False, "Invalid gas price format"
 
                     gas_price_wei = int(gas_price_gwei_decimal * Decimal('1e9'))
-                    self.logger.info(f"Using gas price: {gas_price_gwei_decimal:.2f} Gwei ({gas_price_wei} Wei)")
+                    self.logger.info(str(f"Using gas price: {gas_price_gwei_decimal:.2f} Gwei ({gas_price_wei} Wei")
                 # Removed 'else:' and the line below it, as it seemed to be a misplaced block.
             except Exception as e:
-                self.logger.warning(f"Error checking network conditions: {e}")
+                self.logger.warning(str(f"Error checking network conditions: {e}")
 
         # Check circuit breaker
         if self.circuit_breaker:
             if hasattr(self.circuit_breaker, 'check_circuit'):
                 is_allowed, reason = self.circuit_breaker.check_circuit(token_symbol=token_symbol, dex_name=opportunity.get("buy_dex_name"))
                 if not is_allowed:
-                    self.logger.warning(f"Circuit breaker tripped for {token_symbol} on {opportunity.get('buy_dex_name')}: {reason}. Skipping transaction.")
+                    self.logger.warning(str(f"Circuit breaker tripped for {token_symbol} on {opportunity.get('buy_dex_name'}: {reason}. Skipping transaction.")
                     return False, f"Circuit breaker tripped: {reason}"
             else:
                 self.logger.warning("CircuitBreaker does not have check_circuit method. Skipping circuit breaker check.")
@@ -1027,8 +1030,8 @@ class TransactionExecutor:
         safe_buy_router = str(buy_dex_router) if buy_dex_router is not None else "UNKNOWN"
         safe_sell_router = str(sell_dex_router) if sell_dex_router is not None else "UNKNOWN"
 
-        self.logger.info(f"Attempting to execute flash loan: {amount_readable} of token {safe_token_symbol or safe_token_address} "
-                         f"from {safe_buy_router} to {safe_sell_router}")
+        self.logger.info(str(f"Attempting to execute flash loan: {amount_readable} of token {safe_token_symbol or safe_token_address} ")
+                         f"from {safe_buy_router} to {safe_sell_router}"
 
         # Get DEX fee tiers - use safe strings
         buy_dex_fee_tier = self._get_dex_fee_tier(safe_buy_router, safe_token_symbol)
@@ -1037,13 +1040,12 @@ class TransactionExecutor:
         # Use safe router addresses for _get_dex_name_from_router
         buy_dex_name = self._get_dex_name_from_router(safe_buy_router)
         sell_dex_name = self._get_dex_name_from_router(safe_sell_router)
-        self.logger.info(f"Using fee tiers: Buy DEX ({buy_dex_name}) -> {buy_dex_fee_tier}, "
-                         f"Sell DEX ({sell_dex_name}) -> {sell_dex_fee_tier}")
+        self.logger.info(str(f"Using fee tiers: Buy DEX ({buy_dex_name} -> {buy_dex_fee_tier}, ")
+                         f"Sell DEX ({sell_dex_name}) -> {sell_dex_fee_tier}"
 
 
         try:
             # Import Web3 to avoid unbound variable errors
-            from web3 import Web3
             
             # Get Web3 instance
             w3 = self.rpc_manager.get_web3() if self.rpc_manager else None
@@ -1062,7 +1064,7 @@ class TransactionExecutor:
                 return False, "Invalid wallet address"
 
             nonce = self.web3.eth.get_transaction_count(wallet_checksum)
-            self.logger.info(f"Using nonce: {nonce}")
+            self.logger.info(str(f"Using nonce: {nonce}")
 
             # Prepare transaction - add null checks for all addresses
             token_address_cs = Web3.to_checksum_address(token_address) if token_address is not None else None
@@ -1071,9 +1073,9 @@ class TransactionExecutor:
 
             # Determine the best intermediate token for this opportunity
             # Ensure token_symbol is always a string
-            intermediate_token_address = intermediate_token_selector.get_best_intermediate_token(
+            intermediate_token_address = intermediate_token_selector.get_best_intermediate_token()
                 str(token_symbol), buy_dex_name, sell_dex_name
-            )
+            
             intermediate_token_cs = Web3.to_checksum_address(intermediate_token_address)
 
             # Validate all addresses are available
@@ -1085,29 +1087,28 @@ class TransactionExecutor:
             if missing:
                 return False, f"Missing required addresses: {', '.join(missing)}"
 
-            tx_params = {
+            tx_params = {}
                 'from': wallet_address,
                 'nonce': nonce,
                 'gasPrice': gas_price_wei,
-            }
+            
 
             if 'chainId' not in tx_params:
                 tx_params['chainId'] = self.web3.eth.chain_id
 
             # Calculate deadline for the transaction
             deadline: str = int(time.time()) + self.auto_executor_config.get('transaction_deadline_seconds', 300) # Default 5 mins
-            self.logger.info(f"Calculated deadline for transaction: {deadline} (timestamp)")
+            self.logger.info(str(f"Calculated deadline for transaction: {deadline} (timestamp")
 
-            self.logger.info(f"Building transaction for flash loan contract function: executeArbitrage with params: "
+            self.logger.info(str(f"Building transaction for flash loan contract function: executeArbitrage with params: ")
                              f"borrowToken={token_address_cs}, amount={amount}, dex1={buy_dex_router_cs}, "
                              f"dex2={sell_dex_router_cs}, intermediateToken={intermediate_token_cs}, "
-                             f"dex1Fee={buy_dex_fee_tier}, dex2Fee={sell_dex_fee_tier}, deadline={deadline}")
+                             f"dex1Fee={buy_dex_fee_tier}, dex2Fee={sell_dex_fee_tier}, deadline={deadline}"
 
             # Estimate gas
             try:
-                from web3.types import TxParams, Wei
                 estimate_tx = {'from': wallet_address, 'value': 0}
-                estimated_gas = self.flashloan_contract.functions.executeArbitrage(
+                estimated_gas = self.flashloan_contract.functions.executeArbitrage()
                     token_address_cs,  # borrowToken
                     amount,
                     buy_dex_router_cs, # dex1
@@ -1116,21 +1117,17 @@ class TransactionExecutor:
                     buy_dex_fee_tier,  # dex1Fee
                     sell_dex_fee_tier, # dex2Fee
                     deadline
-                ).estimate_gas(estimate_tx)
+                ).estimate_gas(estimate_tx
 
                 tx_params['gas'] = int(estimated_gas * self.gas_buffer)
-                self.logger.info(f"Estimated gas: {estimated_gas}, Gas with buffer: {tx_params['gas']}")
+                self.logger.info(str(f"Estimated gas: {estimated_gas}, Gas with buffer: {tx_params['gas']}")
             except Exception as e:
-                self.logger.warning(f"Failed to estimate gas: {e}. Using default gas limit.")
+                self.logger.warning(str(f"Failed to estimate gas: {e}. Using default gas limit.")
                 tx_params['gas'] = self.auto_executor_config.get('default_gas_limit_flash_loan', 1500000)
                 
             # Sign and send transaction
-            self.logger.info(f"Signing and sending transaction with parameters: {tx_params}")
+            self.logger.info(str(f"Signing and sending transaction with parameters: {tx_params}")
 
-            from web3 import Web3
-            from web3.types import TxParams, Wei
-            from eth_typing import ChecksumAddress
-            import logging
             
             # Ensure tx_params is correctly typed for build_transaction
             # Create a new dictionary with all keys as strings to satisfy TxParams type
@@ -1141,7 +1138,7 @@ class TransactionExecutor:
             # Cast to TxParams type
             tx_params_cast = cast(TxParams, tx_params_dict)
             
-            transaction = self.flashloan_contract.functions.executeArbitrage(
+            transaction = self.flashloan_contract.functions.executeArbitrage()
                 token_address_cs,  # borrowToken
                 amount,
                 buy_dex_router_cs, # dex1
@@ -1150,7 +1147,7 @@ class TransactionExecutor:
                 buy_dex_fee_tier,  # dex1Fee
                 sell_dex_fee_tier, # dex2Fee
                 deadline
-            ).build_transaction(tx_params_cast)
+            ).build_transaction(tx_params_cast
 
             # Convert transaction to Dict[str, Any] as expected by sign_transaction
             # Use a dictionary comprehension to ensure all keys are strings
@@ -1174,19 +1171,19 @@ class TransactionExecutor:
             if raw_tx is None and isinstance(signed_tx, dict):
                 raw_tx = signed_tx.get('rawTransaction') or signed_tx.get('raw_transaction')
             if raw_tx is None:
-                self.logger.error(f"Could not extract raw transaction bytes from signed transaction. Type: {type(signed_tx)}. Dir: {dir(signed_tx)}")
+                self.logger.error(str(f"Could not extract raw transaction bytes from signed transaction. Type: {type(signed_tx}. Dir: {dir(signed_tx)}")))
                 if self.circuit_breaker:
                     self.circuit_breaker.record_failure(token_symbol=token_symbol, dex_name=opportunity.get("buy_dex_name"), loss_usd=float(opportunity.get("expected_profit", 0.0)))
                 return False, "Could not extract raw transaction bytes from signed transaction"
 
             tx_hash_hex = self.web3.eth.send_raw_transaction(raw_tx).hex()
-            self.logger.info(f"Transaction sent with hash: {tx_hash_hex}")
+            self.logger.info(str(f"Transaction sent with hash: {tx_hash_hex}")
 
             # Wait for receipt
             receipt = self.wait_for_transaction_receipt(tx_hash_hex, timeout=self.max_confirmations_wait)
 
             if receipt and receipt.get('status') == 1:
-                self.logger.info(f"Flash loan arbitrage successful. Tx: {tx_hash_hex}")
+                self.logger.info(str(f"Flash loan arbitrage successful. Tx: {tx_hash_hex}")
                 if self.circuit_breaker: self.circuit_breaker.record_success(token_symbol=token_symbol, dex_name=opportunity.get("buy_dex_name"), profit_usd=float(opportunity.get("expected_profit", 0.0)))
                 if self.transaction_monitor: self.transaction_monitor.add_successful_transaction(tx_hash_hex, "flash_loan_arbitrage", amount, token_symbol or token_address)
                 return True, tx_hash_hex
@@ -1197,7 +1194,7 @@ class TransactionExecutor:
                 if self.transaction_monitor: self.transaction_monitor.add_failed_transaction(tx_hash_hex, "flash_loan_arbitrage", error_message)
                 if self.transaction_analyzer:
                     analysis = self.transaction_analyzer.analyze_transaction(tx_hash_hex)
-                    self.logger.info(f"Failed transaction analysis: {analysis}")
+                    self.logger.info(str(f"Failed transaction analysis: {analysis}")
                 return False, error_message
 
         except Exception as e:
@@ -1222,21 +1219,20 @@ class TransactionExecutor:
         Returns:
             Tuple[bool, Optional[str]]: (True if successful, transaction hash) or (False, error reason/message)
         '''
-        self.logger.debug(f"execute_arbitrage wrapper called with: token_address={token_address}, amount={amount}, " +
-                        f"buy_dex_router={buy_dex_router}, sell_dex_router={sell_dex_router}, expected_profit={expected_profit}")
+        self.logger.debug(str(f"execute_arbitrage wrapper called with: token_address={token_address}, amount={amount}, ") +)
+                        f"buy_dex_router={buy_dex_router}, sell_dex_router={sell_dex_router}, expected_profit={expected_profit}"
 
         # Create the opportunity dictionary
-        opportunity = {
+        opportunity = {}
             "token_address": token_address,
             "amount": amount,
             "buy_dex_router": buy_dex_router,
             "sell_dex_router": sell_dex_router,
             "expected_profit": expected_profit,
             "token_symbol": token_symbol
-        }
+        
 
         # Since execute_flash_loan_arbitrage is async, we need to run it synchronously
-        import asyncio
         try:
             # Get the event loop or create one if it doesn't exist
             loop = asyncio.get_event_loop()
@@ -1247,7 +1243,7 @@ class TransactionExecutor:
             # Run the async function and return its result
             return loop.run_until_complete(self.execute_flash_loan_arbitrage(opportunity))
         except Exception as e:
-            self.logger.error(f"Error executing arbitrage: {e}")
+            self.logger.error(str(f"Error executing arbitrage: {e}")
             return False, str(e)
 
     def _prepare_transaction(self, contract_function, value=0, gas_limit=None):
@@ -1269,21 +1265,21 @@ class TransactionExecutor:
             
             # Estimate gas with buffer
             try:
-                gas_estimate_tx = {
+                gas_estimate_tx = {}
                     'from': wallet_checksum,
                     'to': self.flashloan_contract.address if self.flashloan_contract else wallet_checksum,
                     'value': value,
                     'data': contract_function._encode_transaction_data() if hasattr(contract_function, '_encode_transaction_data') else b'',
-                }
+                
 
                 estimated_gas = self.web3.eth.estimate_gas(gas_estimate_tx)
                 gas_limit = int(estimated_gas * self.gas_buffer) if gas_limit is None else gas_limit
             except Exception as e:
-                self.logger.warning(f"Gas estimation failed: {e}, using default gas limit")
+                self.logger.warning(str(f"Gas estimation failed: {e}, using default gas limit")
                 gas_limit = gas_limit or 2000000
 
             # Prepare transaction dictionary
-            tx = {
+            tx = {}
                 'from': wallet_checksum,
                 'to': self.flashloan_contract.address if self.flashloan_contract else wallet_checksum,
                 'data': contract_function._encode_transaction_data() if hasattr(contract_function, '_encode_transaction_data') else b'',
@@ -1292,11 +1288,11 @@ class TransactionExecutor:
                 'gasPrice': gas_price,
                 'nonce': nonce,
                 'chainId': self.web3.eth.chain_id
-            }
+            
 
             return tx
         except Exception as e:
-            self.logger.error(f"Error preparing transaction: {e}")
+            self.logger.error(str(f"Error preparing transaction: {e}")
             return None
 
     async def reset_circuit_breaker(self):
@@ -1312,13 +1308,13 @@ class TransactionExecutor:
                 return None
                 
             wallet_checksum = Web3.to_checksum_address(wallet_address)
-            tx = self.flashloan_contract.functions.resetFailedTransactions().build_transaction({
+            tx = self.flashloan_contract.functions.resetFailedTransactions().build_transaction({)}
                 'from': wallet_checksum,
                 'nonce': self.web3.eth.get_transaction_count(wallet_checksum),
                 'gasPrice': self.web3.eth.gas_price,
                 'chainId': self.web3.eth.chain_id,
                 'gas': 200000
-            })
+            
             signed_tx = self.wallet_manager.sign_transaction(dict(tx))
             if not signed_tx:
                 self.logger.error("Failed to sign circuit breaker reset transaction")
@@ -1330,10 +1326,10 @@ class TransactionExecutor:
                 self.logger.error("Could not extract raw transaction bytes from signed circuit breaker reset transaction")
                 return None
             tx_hash = self.web3.eth.send_raw_transaction(raw_tx)
-            self.logger.info(f"Circuit breaker reset transaction sent: {tx_hash.hex()}")
+            self.logger.info(str(f"Circuit breaker reset transaction sent: {tx_hash.hex(}")
             return tx_hash
         except Exception as e:
-            self.logger.error(f"Failed to reset circuit breaker: {e}")
+            self.logger.error(str(f"Failed to reset circuit breaker: {e}")
             return None
 
     async def _prepare_web3_instance(self, endpoint: str) -> Optional[Any]:
@@ -1343,15 +1339,14 @@ class TransactionExecutor:
             if w3.is_connected():
                 # Apply POA middleware if needed
                 try:
-                    from src.utils.middleware_compat import apply_poa_middleware
                     apply_poa_middleware(w3)
                 except ImportError:
                     self.logger.warning("Could not import apply_poa_middleware")
                 except Exception as e:
-                    self.logger.warning(f"Could not apply POA middleware: {e}")
+                    self.logger.warning(str(f"Could not apply POA middleware: {e}")
                 return w3
         except Exception as e:
-            self.logger.error(f"Failed to prepare web3 instance: {e}")
+            self.logger.error(str(f"Failed to prepare web3 instance: {e}")
         return None
 
 # Create a singleton instance of the TransactionExecutor

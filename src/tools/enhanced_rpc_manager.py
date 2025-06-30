@@ -1,23 +1,30 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Dict, List, Optional, Any, Union, Callable
+import asyncio
+import json
+import logging
+import os
+import time
+
+                    import secrets
+    from web3.providers import HTTPProvider
+    from web3.types import Wei, TxParams
+
+                            from src.utils.middleware_compat import apply_poa_middleware
+                        from src.utils.web3_v7_middleware import get_compatible_middleware, apply_middleware
+    from src.utils.middleware_compat import get_poa_middleware, inject_middleware, apply_poa_middleware
+    from src.utils.web3_provider import Web3
+    from src.utils.web3_provider import Web3Exception
 """
 Enhanced RPC Manager with failover, performance tracking, and reliability features
 """
 
-import asyncio
-import logging
-import time
-import os
-import json
-from typing import Dict, List, Optional, Any, Union, Callable
 
 # Import Web3 with error handling
 try:
     # Import from central web3_provider
-    from src.utils.web3_provider import Web3
-    from web3.types import Wei, TxParams
-    from web3.providers import HTTPProvider
     # Import exceptions from central provider
-    from src.utils.web3_provider import Web3Exception
     WEB3_IMPORTED = True
 except ImportError as e:
     logging.getLogger(__name__).error(f"Failed to import Web3: {e}")
@@ -30,7 +37,6 @@ except ImportError as e:
 
 # Import middleware compatibility utilities
 try:
-    from src.utils.middleware_compat import get_poa_middleware, inject_middleware, apply_poa_middleware
 except ImportError:
     def get_poa_middleware():
         return None
@@ -46,8 +52,8 @@ class EnhancedRpcManager:
             self.logger.error("Web3 not available - RPC manager will have limited functionality")
             
         # Default configuration with optimized settings
-        self.default_config = {
-            "rpc_urls": [
+        self.default_config = {}
+            "rpc_urls": []
                 "https://polygon.gateway.tenderly.co",
                 "https://polygon-bor.publicnode.com",
                 "https://polygon.drpc.org",
@@ -66,8 +72,8 @@ class EnhancedRpcManager:
             "max_retries": 3,  # Reduced retries for faster failover
             "retry_delay": 1,  # Reduced delay for faster recovery
             "connection_pool_size": 10,  # Connection pooling for better performance
-            "rate_limit_detection": {
-                "keywords": [
+            "rate_limit_detection": {}
+                "keywords": []
                     "rate limit",
                     "too many requests",
                     "call rate limit",
@@ -85,17 +91,17 @@ class EnhancedRpcManager:
                 "max_failures": 2,  # More aggressive failure detection
                 "cooldown_period": 180  # 3 minutes - shorter cooldown
             },
-            "rotation": {
+            "rotation": {}
                 "enabled": True,
                 "requests_per_endpoint": 30,  # More frequent rotation
                 "rotation_strategy": "performance"  # New strategy based on performance
             },
-            "performance_tracking": {
+            "performance_tracking": {}
                 "enabled": True,
                 "window_size": 100,  # Track last 100 requests
                 "latency_threshold_ms": 1000,  # 1 second
                 "success_rate_threshold": 0.8  # 80% success rate
-            }
+            
         }        # Load configuration
         self.config = self._load_config(config_path)
 
@@ -124,7 +130,7 @@ class EnhancedRpcManager:
         # Track endpoint health, usage and performance
         self.endpoint_status = {}
         for url in self.rpc_urls:
-            self.endpoint_status[url] = {
+            self.endpoint_status[url] = {}
                 "active": True,
                 "failures": 0,
                 "rate_limited": False,
@@ -139,7 +145,7 @@ class EnhancedRpcManager:
                 "success_rate": 1.0,    # Success rate (0.0-1.0)
                 "performance_score": 0, # Calculated performance score
                 "last_updated": time.time()
-            }
+            
 
         # Rotation settings
         self.rotation_enabled = self.config["rotation"]["enabled"]
@@ -159,8 +165,8 @@ class EnhancedRpcManager:
         # Initial endpoint selection
         self._select_best_endpoint()
 
-        self.logger.info(f"Enhanced RPC Manager initialized with {len(self.rpc_urls)} endpoints")
-        self.logger.info(f"Currently using endpoint: {self.current_endpoint}")
+        self.logger.info(str(f"Enhanced RPC Manager initialized with {len(self.rpc_urls} endpoints")
+        self.logger.info(str(f"Currently using endpoint: {self.current_endpoint}")
 
     def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
         """
@@ -176,13 +182,13 @@ class EnhancedRpcManager:
 
         if config_path is None:
             # Try to find config in common locations
-            possible_paths = [
+            possible_paths = []
                 "config/network_config.json",
                 "network_config.json",
                 os.path.join(os.getcwd(), "config/network_config.json"),
                 os.path.join(os.getcwd(), "network_config.json"),
                 os.path.join(os.path.dirname(__file__), "../../../config/network_config.json")
-            ]
+            
 
             for path in possible_paths:
                 if os.path.exists(path):
@@ -205,9 +211,9 @@ class EnhancedRpcManager:
                 if "timeout" in file_config:
                     config["timeout"] = file_config["timeout"]
 
-                self.logger.info(f"Loaded configuration from {config_path}")
+                self.logger.info(str(f"Loaded configuration from {config_path}")
             except Exception as e:
-                self.logger.error(f"Error loading config from {config_path}: {e}")
+                self.logger.error(str(f"Error loading config from {config_path}: {e}")
         else:
             self.logger.warning("No configuration file found, using default configuration")
 
@@ -217,11 +223,11 @@ class EnhancedRpcManager:
             config["rpc_urls"] = self.default_config["rpc_urls"]
 
         # Default polygon RPC endpoints
-        default_endpoints = [
+        default_endpoints = []
             os.getenv("POLYGON_RPC_URL", "https://polygon-rpc.com"),
             os.getenv("POLYGON_BACKUP_RPC_URL", "https://rpc-mainnet.matic.network"),
             os.getenv("POLYGON_ARCHIVE_RPC_URL", "https://matic-mainnet.chainstacklabs.com"),
-        ]
+        
         
         # Add endpoints from environment
         env_rpc = os.getenv("POLYGON_RPC_ENDPOINTS")
@@ -234,7 +240,7 @@ class EnhancedRpcManager:
                     if isinstance(endpoint, str) and endpoint.startswith("http"):
                         config["rpc_urls"].append(endpoint)
                     else:
-                        self.logger.warning(f"Invalid RPC endpoint from env: {endpoint}")
+                        self.logger.warning(str(f"Invalid RPC endpoint from env: {endpoint}")
             except json.JSONDecodeError:
                 self.logger.warning("Failed to parse POLYGON_RPC_ENDPOINTS from env, using defaults")
 
@@ -278,13 +284,12 @@ class EnhancedRpcManager:
         return score
 
     def _select_best_endpoint(self):
-        import secrets
         # Build the list of available endpoints
-        available_endpoints = [
+        available_endpoints = []
             (url, status)
             for url, status in self.endpoint_status.items()
             if status["active"] and not status["rate_limited"] and (status["rate_limit_until"] <= time.time())
-        ]
+        
 
         if not available_endpoints:
             self.logger.error("No healthy endpoints available! Attempting to reset all endpoints.")
@@ -314,11 +319,11 @@ class EnhancedRpcManager:
             if len(scored_endpoints) > 1 and secrets.randbelow(100) > 80:  # 20% chance
                 # Use the second-best endpoint occasionally
                 chosen_url = scored_endpoints[1][0]
-                self.logger.debug(f"Using second-best endpoint {chosen_url} for diversity")
+                self.logger.debug(str(f"Using second-best endpoint {chosen_url} for diversity")
             else:
                 # Use the best endpoint
                 chosen_url = scored_endpoints[0][0]
-                self.logger.debug(f"Using best performing endpoint {chosen_url} with score {scored_endpoints[0][2]:.2f}")
+                self.logger.debug(str(f"Using best performing endpoint {chosen_url} with score {scored_endpoints[0][2]:.2f}")
         elif self.rotation_strategy == "random":
             # Use cryptographically secure random choice
             chosen_url, _ = available_endpoints[secrets.randbelow(len(available_endpoints))]
@@ -337,20 +342,20 @@ class EnhancedRpcManager:
 
         # Check if we already have a Web3 instance for this endpoint in the pool
         if chosen_url in self.web3_instances:
-            self.logger.debug(f"Using cached Web3 instance for {chosen_url}")
+            self.logger.debug(str(f"Using cached Web3 instance for {chosen_url}")
             self.current_web3 = self.web3_instances[chosen_url]
         # Create a new Web3 instance if needed
         elif old_endpoint != self.current_endpoint or self.current_web3 is None:
             try:
-                self.logger.info(f"Creating new Web3 instance with endpoint: {chosen_url}")
+                self.logger.info(str(f"Creating new Web3 instance with endpoint: {chosen_url}")
 
                 # Use connection pooling for better performance
-                provider = HTTPProvider(
+                provider = HTTPProvider()
                     chosen_url,
-                    request_kwargs={
+                    request_kwargs={}
                         'timeout': self.timeout
-                    }
-                )
+                    
+                
                 self.current_web3 = Web3(provider)
 
                 # Apply middleware for PoA chains
@@ -359,7 +364,7 @@ class EnhancedRpcManager:
                     apply_poa_middleware(self.current_web3)
                     self.logger.info("Applied PoA middleware to Web3 instance")
                 except Exception as e:
-                    self.logger.warning(f"Error applying PoA middleware: {e}")
+                    self.logger.warning(str(f"Error applying PoA middleware: {e}")
 
                 # Cache the Web3 instance
                 self.web3_instances[chosen_url] = self.current_web3
@@ -367,22 +372,22 @@ class EnhancedRpcManager:
                 # Manage connection pool size
                 if len(self.web3_instances) > self.connection_pool_size:
                     # Remove the least recently used connection
-                    least_used_url = min(
+                    least_used_url = min()
                         self.endpoint_status.items(),
                         key=lambda x: Any: Any: x[1]["last_updated"] if x[0] in self.web3_instances else float('inf')
                     )[0]
                     if least_used_url in self.web3_instances and least_used_url != chosen_url:
-                        self.logger.debug(f"Removing least recently used connection: {least_used_url}")
+                        self.logger.debug(str(f"Removing least recently used connection: {least_used_url}")
                         del self.web3_instances[least_used_url]
 
             except Exception as e:
-                self.logger.error(f"Error creating Web3 instance for {chosen_url}: {e}")
+                self.logger.error(str(f"Error creating Web3 instance for {chosen_url}: {e}")
                 # Mark this endpoint as having a problem
                 self.endpoint_status[chosen_url]["consecutive_errors"] += 1
                 # Try another endpoint
                 return self._select_best_endpoint()
 
-        self.logger.info(f"Selected RPC endpoint: {chosen_url}")
+        self.logger.info(str(f"Selected RPC endpoint: {chosen_url}")
         return True
 
         # Set the current endpoint
@@ -392,27 +397,26 @@ class EnhancedRpcManager:
 
         # Check if we already have a Web3 instance for this endpoint in the pool
         if chosen_url in self.web3_instances:
-            self.logger.debug(f"Using cached Web3 instance for {chosen_url}")
+            self.logger.debug(str(f"Using cached Web3 instance for {chosen_url}")
             self.current_web3 = self.web3_instances[chosen_url]
         # Create a new Web3 instance if needed
         elif old_endpoint != self.current_endpoint or self.current_web3 is None:
             try:
-                self.logger.info(f"Creating new Web3 instance with endpoint: {chosen_url}")
+                self.logger.info(str(f"Creating new Web3 instance with endpoint: {chosen_url}")
 
                 # Use connection pooling for better performance
-                provider = HTTPProvider(
+                provider = HTTPProvider()
                     chosen_url,
-                    request_kwargs={
+                    request_kwargs={}
                         'timeout': self.timeout
-                    }
-                )
+                    
+                
                 self.current_web3 = Web3(provider)
 
                 # Apply middleware for PoA chains
                 try:
                     try:
                         # Try to import the new v7 compatible middleware
-                        from src.utils.web3_v7_middleware import get_compatible_middleware, apply_middleware
                         middleware = get_compatible_middleware()
                         if middleware:
                             apply_middleware(self.current_web3)
@@ -421,13 +425,12 @@ class EnhancedRpcManager:
                         # Fall back to standard geth_poa_middleware
                         try:
                             # Import middleware from centralized modules
-                            from src.utils.middleware_compat import apply_poa_middleware
                             apply_poa_middleware(self.current_web3)
                             self.logger.info("Applied standard PoA middleware to Web3 instance")
                         except ImportError:
                             self.logger.warning("PoA middleware could not be applied.")
                 except Exception as middleware_err:
-                    self.logger.warning(f"Error applying middleware: {middleware_err}")
+                    self.logger.warning(str(f"Error applying middleware: {middleware_err}")
 
                 # Cache the Web3 instance
                 self.web3_instances[chosen_url] = self.current_web3
@@ -435,22 +438,22 @@ class EnhancedRpcManager:
                 # Manage connection pool size
                 if len(self.web3_instances) > self.connection_pool_size:
                     # Remove the least recently used connection
-                    least_used_url = min(
+                    least_used_url = min()
                         self.endpoint_status.items(),
                         key=lambda x: Any: Any: x[1]["last_updated"] if x[0] in self.web3_instances else float('inf')
                     )[0]
                     if least_used_url in self.web3_instances and least_used_url != chosen_url:
-                        self.logger.debug(f"Removing least recently used connection: {least_used_url}")
+                        self.logger.debug(str(f"Removing least recently used connection: {least_used_url}")
                         del self.web3_instances[least_used_url]
 
             except Exception as e:
-                self.logger.error(f"Error creating Web3 instance for {chosen_url}: {e}")
+                self.logger.error(str(f"Error creating Web3 instance for {chosen_url}: {e}")
                 # Mark this endpoint as having a problem
                 self.endpoint_status[chosen_url]["consecutive_errors"] += 1
                 # Try another endpoint
                 return self._select_best_endpoint()
 
-        self.logger.info(f"Selected RPC endpoint: {chosen_url}")
+        self.logger.info(str(f"Selected RPC endpoint: {chosen_url}")
         return True
 
     def _rotate_if_needed(self) -> None:
@@ -463,7 +466,7 @@ class EnhancedRpcManager:
         self.requests_since_rotation += 1
 
         if self.requests_since_rotation >= self.requests_per_endpoint:
-            self.logger.info(f"Rotating endpoint after {self.requests_since_rotation} requests")
+            self.logger.info(str(f"Rotating endpoint after {self.requests_since_rotation} requests")
             self._select_best_endpoint()
 
     def _is_rate_limit_error(self, error_message: str) -> bool:
@@ -502,7 +505,7 @@ class EnhancedRpcManager:
 
         status = self.endpoint_status.get(url)
         if not status:
-            self.logger.warning(f"No status information for URL {url}, cannot update error stats")
+            self.logger.warning(str(f"No status information for URL {url}, cannot update error stats")
             return
 
         # Increment error counters
@@ -513,7 +516,7 @@ class EnhancedRpcManager:
 
         # Check if this is a rate limit error
         if self._is_rate_limit_error(error_str):
-            self.logger.warning(f"Rate limit detected for endpoint {url}: {error_str}")
+            self.logger.warning(str(f"Rate limit detected for endpoint {url}: {error_str}")
             status["rate_limited"] = True
 
             # Extract retry time if available
@@ -536,16 +539,16 @@ class EnhancedRpcManager:
 
                     if total_seconds > 0:
                         retry_seconds = total_seconds
-                        self.logger.info(f"Parsed retry time from error message: {retry_seconds} seconds")
+                        self.logger.info(str(f"Parsed retry time from error message: {retry_seconds} seconds")
             except Exception as e:
-                self.logger.debug(f"Could not parse retry time from error message: {e}")
+                self.logger.debug(str(f"Could not parse retry time from error message: {e}")
 
             # Set cooldown period
             status["rate_limit_until"] = time.time() + retry_seconds
-            self.logger.info(f"Endpoint {url} will be rate-limited for {retry_seconds} seconds")
+            self.logger.info(str(f"Endpoint {url} will be rate-limited for {retry_seconds} seconds")
         elif status["consecutive_errors"] >= self.max_failures:
             # Too many consecutive errors, mark as inactive temporarily
-            self.logger.warning(f"Endpoint {url} has {status['consecutive_errors']} consecutive errors, marking as inactive")
+            self.logger.warning(str(f"Endpoint {url} has {status['consecutive_errors']} consecutive errors, marking as inactive")
             status["active"] = False
             status["rate_limit_until"] = time.time() + self.cooldown_period  # Use standard cooldown
 
@@ -568,7 +571,7 @@ class EnhancedRpcManager:
 
         status = self.endpoint_status.get(url)
         if not status:
-            self.logger.warning(f"No status information for URL {url}, cannot update stats")
+            self.logger.warning(str(f"No status information for URL {url}, cannot update stats")
             return
 
         status["consecutive_errors"] = 0
@@ -578,7 +581,7 @@ class EnhancedRpcManager:
 
         # If previously inactive, mark as active again
         if not status["active"]:
-            self.logger.info(f"Endpoint {url} is working again, marking as active")
+            self.logger.info(str(f"Endpoint {url} is working again, marking as active")
             status["active"] = True
 
     def execute_with_retry(self, func: Callable, *args, **kwargs) -> Any:
@@ -625,7 +628,7 @@ class EnhancedRpcManager:
                 self._record_performance_metrics(current_url, False, response_time_ms)
 
             self._handle_error(current_url, e)
-            self.logger.warning(f"Error with endpoint {current_url}: {e}")
+            self.logger.warning(str(f"Error with endpoint {current_url}: {e}")
 
             # Try other endpoints with retries
             for retry in range(self.max_retries):
@@ -638,7 +641,7 @@ class EnhancedRpcManager:
                 retry_url = self.current_endpoint
 
                 try:
-                    self.logger.info(f"Retry {retry+1}/{self.max_retries} with endpoint {retry_url}")
+                    self.logger.info(str(f"Retry {retry+1}/{self.max_retries} with endpoint {retry_url}")
                     result: str = func(*args, **kwargs)
 
                     # Record performance metrics for successful retry
@@ -655,11 +658,10 @@ class EnhancedRpcManager:
                         self._record_performance_metrics(retry_url, False, retry_response_time_ms)
 
                     self._handle_error(retry_url, retry_error)
-                    self.logger.warning(f"Retry {retry+1} failed with endpoint {retry_url}: {retry_error}")
+                    self.logger.warning(str(f"Retry {retry+1} failed with endpoint {retry_url}: {retry_error}")
 
                     # Use exponential backoff with jitter for more efficient retries
                     backoff_time = self.retry_delay * (2 ** retry)
-                    import secrets
                     # Use cryptographically secure random for jitter (0-10%)
                     jitter = (secrets.randbelow(1000) / 10000.0) * backoff_time  # Add up to 10% jitter
                     time.sleep(backoff_time + jitter)
@@ -706,7 +708,7 @@ class EnhancedRpcManager:
 
         # Log extreme response times
         if response_time_ms > self.latency_threshold_ms:
-            self.logger.warning(f"Slow response from {url}: {response_time_ms:.2f}ms")
+            self.logger.warning(str(f"Slow response from {url}: {response_time_ms:.2f}ms")
 
     def get_web3(self) -> Optional[Any]:
         """
@@ -737,7 +739,7 @@ class EnhancedRpcManager:
         try:
             return web3.is_connected()
         except Exception as e:
-            self.logger.warning(f"Error checking connection: {e}")
+            self.logger.warning(str(f"Error checking connection: {e}")
             return False
 
     def get_transaction_receipt(self, tx_hash: Union[str, bytes]) -> Dict[str, Any]:
@@ -767,7 +769,7 @@ class EnhancedRpcManager:
 
         for url, status in self.endpoint_status.items():
             if status["total_requests"] > 0:
-                metrics[url] = {
+                metrics[url] = {}
                     "avg_response_time_ms": status["avg_response_time"],
                     "success_rate": status["success_rate"],
                     "performance_score": status.get("performance_score", 0),
@@ -776,20 +778,20 @@ class EnhancedRpcManager:
                     "active": status["active"],
                     "rate_limited": status["rate_limited"],
                     "last_updated": status["last_updated"]
-                }
+                
 
         # Add overall metrics
         total_requests = sum(status["total_requests"] for status in self.endpoint_status.values())
         successful_requests = sum(status["successful_requests"] for status in self.endpoint_status.values())
 
-        metrics["overall"] = {
+        metrics["overall"] = {}
             "total_requests": total_requests,
             "successful_requests": successful_requests,
             "success_rate": successful_requests / total_requests if total_requests > 0 else 1.0,
             "active_endpoints": sum(1 for status in self.endpoint_status.values() if status["active"]),
             "total_endpoints": len(self.endpoint_status),
             "current_endpoint": self.current_endpoint
-        }
+        
 
         return metrics
 
@@ -825,7 +827,7 @@ class EnhancedRpcManager:
                     return receipt
                 time.sleep(poll_interval)
             except Exception as e:
-                self.logger.warning(f"Error waiting for receipt: {e}, will retry")
+                self.logger.warning(str(f"Error waiting for receipt: {e}, will retry")
                 # Don't sleep here as execute_with_retry already has backoff
 
         raise TimeoutError(f"Transaction {tx_hash_str} not mined within {timeout} seconds")
@@ -873,11 +875,11 @@ class EnhancedRpcManager:
         Returns:
             dict: Status information
         """
-        return {
+        return {}
             "current_endpoint": self.current_endpoint,
             "is_connected": self.is_connected(),
             "endpoints": self.endpoint_status
-        }
+        
 
     def _setup_middleware(self, w3: Any, endpoint: str):
         """Setup middleware for web3 instance"""
@@ -889,8 +891,8 @@ class EnhancedRpcManager:
             poa_middleware = get_poa_middleware()
             if poa_middleware:
                 inject_middleware(w3, poa_middleware, layer=0)
-                self.logger.debug(f"Added POA middleware for {endpoint}")
+                self.logger.debug(str(f"Added POA middleware for {endpoint}")
         except Exception as e:
-            self.logger.warning(f"Failed to add POA middleware for {endpoint}: {e}")
+            self.logger.warning(str(f"Failed to add POA middleware for {endpoint}: {e}")
 # Create a singleton instance
 enhanced_rpc_manager = EnhancedRpcManager()

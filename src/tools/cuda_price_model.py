@@ -1,20 +1,22 @@
-import torch
-import numpy as np
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from typing import List, Tuple
 
+import numpy as np
+import torch
 class CUDAPriceModel:
     def __init__(self):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = self._build_model().to(self.device)
     
     def _build_model(self):
-        return torch.nn.Sequential(
+        return torch.nn.Sequential()
             torch.nn.Linear(10, 64),
             torch.nn.ReLU(),
             torch.nn.Linear(64, 32),
             torch.nn.ReLU(),
             torch.nn.Linear(32, 1)
-        )
+        
     
     def predict_price_movement(self, market_data: torch.Tensor) -> Tuple[float, float]:
         with torch.no_grad():

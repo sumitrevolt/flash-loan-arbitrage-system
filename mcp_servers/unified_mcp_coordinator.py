@@ -1,4 +1,25 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Union
+import asyncio
+import json
+import logging
+import os
+import signal
+import subprocess
+import sys
+import time
+
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
+from enum import Enum
+from flask import Flask, jsonify
+import aiohttp
+import psutil
+import requests
 """
 Unified MCP Server Coordinator
 ==============================
@@ -14,33 +35,29 @@ Author: GitHub Copilot Assistant
 Date: June 17, 2025
 """
 
-import asyncio
-import json
-import logging
-import os
-import sys
-import subprocess
-import time
-import signal
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Union
-from dataclasses import dataclass, field
-from enum import Enum
-import requests
-import aiohttp
-import psutil
-from concurrent.futures import ThreadPoolExecutor
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.FileHandler('mcp_coordinator.log'),
         logging.StreamHandler()
-    ]
-)
+    
+
 logger = logging.getLogger(__name__)
 
 class ServerStatus(Enum):
@@ -102,7 +119,7 @@ class UnifiedMCPCoordinator:
         """Load MCP server configuration"""
         try:
             if not self.config_path.exists():
-                logger.warning(f"Configuration file not found: {self.config_path}")
+                logger.warning(str(f"Configuration file not found: {self.config_path}")
                 self._create_default_configuration()
                 return
             
@@ -130,7 +147,7 @@ class UnifiedMCPCoordinator:
                             else:
                                 env_vars[key] = str(value)
                     
-                    config = MCPServerConfig(
+                    config = MCPServerConfig()
                         name=server_data['name'],
                         type=server_data.get('type', 'python'),
                         command=server_data.get('command', 'python'),
@@ -144,33 +161,33 @@ class UnifiedMCPCoordinator:
                         restart_delay=server_data.get('restart_delay', 5),
                         timeout=server_data.get('timeout', 30),
                         dependencies=server_data.get('dependencies', [])
-                    )
+                    
                     
                     self.server_configs[server_name] = config
                     self.servers[server_name] = ServerInstance(config=config)
                     
                 except Exception as e:
-                    logger.error(f"Failed to load config for {server_name}: {e}")
+                    logger.error(str(f"Failed to load config for {server_name}: {e}")
             
-            logger.info(f"Loaded configuration for {len(self.server_configs)} MCP servers")
+            logger.info(str(f"Loaded configuration for {len(self.server_configs} MCP servers")
             
         except Exception as e:
-            logger.error(f"Failed to load configuration: {e}")
+            logger.error(str(f"Failed to load configuration: {e}")
             self._create_default_configuration()
     
     def _create_default_configuration(self):
         """Create default configuration file"""
         logger.info("Creating default MCP configuration...")
         
-        default_config = {
-            "global_configuration": {
+        default_config = {}
+            "global_configuration": {}
                 "health_check_interval": 30,
                 "auto_restart": True,
                 "log_level": "INFO",
                 "max_concurrent_servers": 20
             },
-            "servers": {
-                "flash_loan_mcp": {
+            "servers": {}
+                "flash_loan_mcp": {}
                     "name": "flash_loan_mcp",
                     "type": "python",
                     "command": "python",
@@ -180,13 +197,13 @@ class UnifiedMCPCoordinator:
                     "health_endpoint": "http://localhost:3001/health",
                     "enabled": True,
                     "auto_restart": True,
-                    "environment_variables": {
+                    "environment_variables": {}
                         "MCP_SERVER_NAME": "flash_loan_mcp",
                         "PORT": "3001",
                         "LOG_LEVEL": "INFO"
-                    }
+                    
                 },
-                "arbitrage_detector_mcp": {
+                "arbitrage_detector_mcp": {}
                     "name": "arbitrage_detector_mcp",
                     "type": "python",
                     "command": "python",
@@ -196,12 +213,12 @@ class UnifiedMCPCoordinator:
                     "health_endpoint": "http://localhost:3002/health",
                     "enabled": True,
                     "auto_restart": True,
-                    "environment_variables": {
+                    "environment_variables": {}
                         "MCP_SERVER_NAME": "arbitrage_detector_mcp",
                         "PORT": "3002"
-                    }
+                    
                 },
-                "risk_manager_mcp": {
+                "risk_manager_mcp": {}
                     "name": "risk_manager_mcp",
                     "type": "python",
                     "command": "python",
@@ -211,13 +228,13 @@ class UnifiedMCPCoordinator:
                     "health_endpoint": "http://localhost:3003/health",
                     "enabled": True,
                     "auto_restart": True,
-                    "environment_variables": {
+                    "environment_variables": {}
                         "MCP_SERVER_NAME": "risk_manager_mcp",
                         "PORT": "3003"
-                    }
-                }
-            }
-        }
+                    
+                
+            
+        
         
         # Ensure config directory exists
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -225,14 +242,14 @@ class UnifiedMCPCoordinator:
         with open(self.config_path, 'w') as f:
             json.dump(default_config, f, indent=2)
         
-        logger.info(f"Default configuration saved to {self.config_path}")
+        logger.info(str(f"Default configuration saved to {self.config_path}")
         
         # Load the default configuration
         self._load_configuration()
     
     async def start_all_servers(self):
         """Start all configured MCP servers"""
-        logger.info("🚀 Starting all MCP servers...")
+        logger.info("[INIT] Starting all MCP servers...")
         
         self.running = True
         
@@ -247,7 +264,7 @@ class UnifiedMCPCoordinator:
         # Start health monitoring
         asyncio.create_task(self._health_monitor_loop())
         
-        logger.info("✅ All servers started, monitoring active")
+        logger.info("[OK] All servers started, monitoring active")
     
     def _calculate_start_order(self) -> List[str]:
         """Calculate server start order based on dependencies"""
@@ -258,7 +275,7 @@ class UnifiedMCPCoordinator:
         
         def visit(server_name: str):
             if server_name in temp_visited:
-                logger.warning(f"Circular dependency detected involving {server_name}")
+                logger.warning(str(f"Circular dependency detected involving {server_name}")
                 return
             
             if server_name not in visited:
@@ -282,17 +299,17 @@ class UnifiedMCPCoordinator:
     async def _start_server(self, server_name: str):
         """Start a specific MCP server"""
         if server_name not in self.servers:
-            logger.error(f"Server {server_name} not found in configuration")
+            logger.error(str(f"Server {server_name} not found in configuration")
             return
         
         server_instance = self.servers[server_name]
         config = server_instance.config
         
         if server_instance.status == ServerStatus.RUNNING:
-            logger.info(f"Server {server_name} is already running")
+            logger.info(str(f"Server {server_name} is already running")
             return
         
-        logger.info(f"🔄 Starting MCP server: {server_name}")
+        logger.info(str(f"[SYNC] Starting MCP server: {server_name}")
         
         try:
             server_instance.status = ServerStatus.STARTING
@@ -310,14 +327,14 @@ class UnifiedMCPCoordinator:
                 await self._create_server_script(config)
             
             # Start the process
-            process = subprocess.Popen(
+            process = subprocess.Popen()
                 [config.command] + config.args,
                 cwd=config.working_directory,
                 env=env,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True
-            )
+            
             
             server_instance.process = process
             server_instance.pid = process.pid
@@ -329,19 +346,19 @@ class UnifiedMCPCoordinator:
             # Check if process is still running
             if process.poll() is None:
                 server_instance.status = ServerStatus.RUNNING
-                logger.info(f"✅ {server_name} started successfully (PID: {process.pid})")
+                logger.info(str(f"[OK] {server_name} started successfully (PID: {process.pid}")
                 
                 # Perform health check
                 await self._check_server_health(server_name)
             else:
                 server_instance.status = ServerStatus.ERROR
                 server_instance.error_message = "Process terminated during startup"
-                logger.error(f"❌ {server_name} failed to start")
+                logger.error(str(f"[ERROR] {server_name} failed to start")
                 
         except Exception as e:
             server_instance.status = ServerStatus.ERROR
             server_instance.error_message = str(e)
-            logger.error(f"❌ Failed to start {server_name}: {e}")
+            logger.error(str(f"[ERROR] Failed to start {server_name}: {e}")
     
     async def _create_server_script(self, config: MCPServerConfig):
         """Create a basic MCP server script if it doesn't exist"""
@@ -355,13 +372,21 @@ class UnifiedMCPCoordinator:
 Auto-generated by Unified MCP Coordinator
 """
 
-import asyncio
-import logging
-import os
-from flask import Flask, jsonify
-from datetime import datetime
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -371,27 +396,27 @@ app = Flask(__name__)
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
-    return jsonify({{
+    return jsonify({{)}}
         "status": "healthy",
         "server": "{config.name}",
         "timestamp": datetime.now().isoformat(),
         "port": {config.port}
-    }})
+
 
 @app.route('/status', methods=['GET'])
 def status():
     """Status endpoint"""
-    return jsonify({{
+    return jsonify({{)}}
         "name": "{config.name}",
         "type": "mcp_server",
         "status": "running",
         "uptime": "unknown",
         "version": "1.0.0"
-    }})
+
 
 def main():
     """Main server function"""
-    logger.info(f"Starting {{__name__}} MCP server on port {config.port}")
+    logger.info(str(f"Starting {{__name__}} MCP server on port {config.port}")
     app.run(host='localhost', port={config.port}, debug=False)
 
 if __name__ == "__main__":
@@ -405,7 +430,7 @@ if __name__ == "__main__":
         if os.name != 'nt':
             os.chmod(script_path, 0o755)
         
-        logger.info(f"Created server script: {script_path}")
+        logger.info(str(f"Created server script: {script_path}")
     
     async def _health_monitor_loop(self):
         """Continuous health monitoring loop"""
@@ -414,7 +439,7 @@ if __name__ == "__main__":
                 await self._check_all_servers_health()
                 await asyncio.sleep(self.health_check_interval)
             except Exception as e:
-                logger.error(f"Health monitor error: {e}")
+                logger.error(str(f"Health monitor error: {e}")
                 await asyncio.sleep(5)
     
     async def _check_all_servers_health(self):
@@ -436,7 +461,7 @@ if __name__ == "__main__":
         try:
             # Check if process is still running
             if server_instance.process and server_instance.process.poll() is not None:
-                logger.warning(f"Process for {server_name} has terminated")
+                logger.warning(str(f"Process for {server_name} has terminated")
                 server_instance.status = ServerStatus.ERROR
                 if config.auto_restart:
                     await self._restart_server(server_name)
@@ -447,12 +472,12 @@ if __name__ == "__main__":
                 async with session.get(config.health_endpoint) as response:
                     if response.status == 200:
                         server_instance.last_health_check = datetime.now()
-                        logger.debug(f"✅ {server_name} health check passed")
+                        logger.debug(str(f"[OK] {server_name} health check passed")
                     else:
-                        logger.warning(f"⚠️  {server_name} health check failed: HTTP {response.status}")
+                        logger.warning(str(f"[WARN]  {server_name} health check failed: HTTP {response.status}")
                         
         except Exception as e:
-            logger.warning(f"⚠️  {server_name} health check failed: {e}")
+            logger.warning(str(f"[WARN]  {server_name} health check failed: {e}")
             
             # If health checks fail consistently, restart
             if config.auto_restart and server_instance.last_health_check:
@@ -466,11 +491,11 @@ if __name__ == "__main__":
         config = server_instance.config
         
         if server_instance.restart_count >= config.max_restarts:
-            logger.error(f"❌ {server_name} exceeded max restart attempts")
+            logger.error(str(f"[ERROR] {server_name} exceeded max restart attempts")
             server_instance.status = ServerStatus.ERROR
             return
         
-        logger.info(f"🔄 Restarting {server_name} (attempt {server_instance.restart_count + 1})")
+        logger.info(str(f"[SYNC] Restarting {server_name} (attempt {server_instance.restart_count + 1}")
         
         server_instance.status = ServerStatus.RESTARTING
         server_instance.restart_count += 1
@@ -500,10 +525,10 @@ if __name__ == "__main__":
                     server_instance.process.kill()
                     server_instance.process.wait()
                 
-                logger.info(f"🛑 Stopped {server_name}")
+                logger.info(str(f"[STOP] Stopped {server_name}")
                 
             except Exception as e:
-                logger.error(f"Error stopping {server_name}: {e}")
+                logger.error(str(f"Error stopping {server_name}: {e}")
         
         server_instance.process = None
         server_instance.pid = None
@@ -511,7 +536,7 @@ if __name__ == "__main__":
     
     async def stop_all_servers(self):
         """Stop all servers"""
-        logger.info("🛑 Stopping all MCP servers...")
+        logger.info("[STOP] Stopping all MCP servers...")
         
         self.running = False
         
@@ -525,21 +550,21 @@ if __name__ == "__main__":
         # Shutdown executor
         self.executor.shutdown(wait=True)
         
-        logger.info("✅ All servers stopped")
+        logger.info("[OK] All servers stopped")
     
     def get_status(self) -> Dict[str, Any]:
         """Get status of all servers"""
-        status = {
-            "coordinator": {
+        status = {}
+            "coordinator": {}
                 "running": self.running,
                 "total_servers": len(self.servers),
                 "health_check_interval": self.health_check_interval
             },
             "servers": {}
-        }
+        
         
         for server_name, server_instance in self.servers.items():
-            status["servers"][server_name] = {
+            status["servers"][server_name] = {}
                 "name": server_name,
                 "status": server_instance.status.value,
                 "port": server_instance.config.port,
@@ -548,13 +573,13 @@ if __name__ == "__main__":
                 "restart_count": server_instance.restart_count,
                 "last_health_check": server_instance.last_health_check.isoformat() if server_instance.last_health_check else None,
                 "error_message": server_instance.error_message
-            }
+            
         
         return status
     
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals"""
-        logger.info(f"Received signal {signum}, shutting down...")
+        logger.info(str(f"Received signal {signum}, shutting down...")
         self.running = False
 
 
@@ -572,7 +597,7 @@ async def main():
     except KeyboardInterrupt:
         logger.info("Received keyboard interrupt")
     except Exception as e:
-        logger.error(f"Coordinator error: {e}")
+        logger.error(str(f"Coordinator error: {e}")
     finally:
         await coordinator.stop_all_servers()
 

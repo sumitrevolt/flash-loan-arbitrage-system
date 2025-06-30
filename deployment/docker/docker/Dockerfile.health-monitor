@@ -1,0 +1,33 @@
+# Health Monitor Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    redis>=5.0.0 \
+    requests>=2.28.0 \
+    fastapi>=0.104.0 \
+    uvicorn[standard]>=0.24.0
+
+# Copy health monitor script
+COPY health_monitor.py /app/
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# Create logs directory
+RUN mkdir -p /app/logs
+
+# Health check
+HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -c "import redis; r=redis.from_url('redis://redis-master:6379'); r.ping()" || exit 1
+
+# Run health monitor
+CMD ["python", "health_monitor.py"]

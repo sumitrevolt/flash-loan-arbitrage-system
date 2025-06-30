@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from typing import Dict, Any, Optional, List, Tuple
+import json
+import logging
+import os
+import time
 """
 Circuit breaker for flash loan arbitrage.
 
@@ -5,12 +13,6 @@ This module provides a circuit breaker that can pause trading
 during high volatility or when multiple consecutive trades fail.
 """
 
-import logging
-import time
-import json
-import os
-from typing import Dict, Any, Optional, List, Tuple
-from datetime import datetime, timedelta
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -40,8 +42,8 @@ class CircuitBreaker:
 
         # Initialize state if needed
         if not self.state:
-            self.state = {
-                "global": {
+            self.state = {}
+                "global": {}
                     "is_tripped": False,
                     "trip_time": None,
                     "reset_time": None,
@@ -54,7 +56,7 @@ class CircuitBreaker:
                 },
                 "tokens": {},
                 "dexes": {}
-            }
+            
             self._save_state()
 
     def _load_config(self) -> Dict[str, Any]:
@@ -64,42 +66,42 @@ class CircuitBreaker:
                 with open(self.config_path, 'r') as f:
                     return json.load(f)
         except Exception as e:
-            self.logger.error(f"Error loading circuit breaker config: {e}")
+            self.logger.error(str(f"Error loading circuit breaker config: {e}")
 
         # Default configuration
-        return {
+        return {}
             "max_consecutive_failures": 3,
             "cooldown_period_seconds": 300,
             "max_daily_loss_usd": 100.0,
             "max_drawdown_percentage": 5.0,
-            "token_specific_settings": {
-                "WETH": {
+            "token_specific_settings": {}
+                "WETH": {}
                     "max_consecutive_failures": 5,
                     "cooldown_period_seconds": 600
                 },
-                "WBTC": {
+                "WBTC": {}
                     "max_consecutive_failures": 5,
                     "cooldown_period_seconds": 600
-                }
+                
             },
-            "dex_specific_settings": {
-                "QuickSwap": {
+            "dex_specific_settings": {}
+                "QuickSwap": {}
                     "max_consecutive_failures": 4,
                     "cooldown_period_seconds": 450
                 },
-                "SushiSwap": {
+                "SushiSwap": {}
                     "max_consecutive_failures": 4,
                     "cooldown_period_seconds": 450
-                }
+                
             },
-            "volatility_thresholds": {
+            "volatility_thresholds": {}
                 "high": 3.0,  # 3% price change in 5 minutes
                 "extreme": 5.0  # 5% price change in 5 minutes
             },
             "auto_reset": True,
             "enable_token_specific_breakers": True,
             "enable_dex_specific_breakers": True
-        }
+        
 
     def _load_state(self) -> Dict[str, Any]:
         """Load circuit breaker state."""
@@ -108,7 +110,7 @@ class CircuitBreaker:
                 with open(self.state_path, 'r') as f:
                     return json.load(f)
         except Exception as e:
-            self.logger.error(f"Error loading circuit breaker state: {e}")
+            self.logger.error(str(f"Error loading circuit breaker state: {e}")
 
         return {}
 
@@ -121,7 +123,7 @@ class CircuitBreaker:
             with open(self.state_path, 'w') as f:
                 json.dump(self.state, f, indent=2)
         except Exception as e:
-            self.logger.error(f"Error saving circuit breaker state: {e}")
+            self.logger.error(str(f"Error saving circuit breaker state: {e}")
 
     def check_circuit(self, token_symbol: Optional[str] = None, dex_name: Optional[str] = None) -> Tuple[bool, str]:
         """
@@ -156,14 +158,14 @@ class CircuitBreaker:
         if self.config["enable_token_specific_breakers"] and token_symbol:
             # Initialize token state if it doesn't exist
             if token_symbol not in self.state["tokens"]:
-                self.state["tokens"][token_symbol] = {
+                self.state["tokens"][token_symbol] = {}
                     "is_tripped": False,
                     "trip_time": None,
                     "reset_time": None,
                     "consecutive_failures": 0,
                     "total_failures": 0,
                     "total_successes": 0
-                }
+                
                 self._save_state()
 
             if self.state["tokens"][token_symbol].get("is_tripped", False):
@@ -180,14 +182,14 @@ class CircuitBreaker:
         if self.config["enable_dex_specific_breakers"] and dex_name:
             # Initialize DEX state if it doesn't exist
             if dex_name not in self.state["dexes"]:
-                self.state["dexes"][dex_name] = {
+                self.state["dexes"][dex_name] = {}
                     "is_tripped": False,
                     "trip_time": None,
                     "reset_time": None,
                     "consecutive_failures": 0,
                     "total_failures": 0,
                     "total_successes": 0
-                }
+                
                 self._save_state()
 
             if self.state["dexes"][dex_name].get("is_tripped", False):
@@ -204,14 +206,14 @@ class CircuitBreaker:
         if self.config["enable_dex_specific_breakers"] and token_symbol and dex_name:
             dex_pair_key = f"{dex_name}-{token_symbol}"
             if dex_pair_key not in self.state["dexes"]:
-                self.state["dexes"][dex_pair_key] = {
+                self.state["dexes"][dex_pair_key] = {}
                     "is_tripped": False,
                     "trip_time": None,
                     "reset_time": None,
                     "consecutive_failures": 0,
                     "total_failures": 0,
                     "total_successes": 0
-                }
+                
                 self._save_state()
 
             if self.state["dexes"][dex_pair_key].get("is_tripped", False):
@@ -312,7 +314,7 @@ class CircuitBreaker:
             self.state["tokens"][token_symbol]["trip_time"] = now
             self.state["tokens"][token_symbol]["reset_time"] = now + cooldown
 
-            self.logger.warning(f"Circuit breaker tripped for {token_symbol}: {reason}. Cooldown: {cooldown}s")
+            self.logger.warning(str(f"Circuit breaker tripped for {token_symbol}: {reason}. Cooldown: {cooldown}s")
         elif dex_name:
             # Trip DEX-specific circuit breaker
             dex_settings = self.config["dex_specific_settings"].get(dex_name, {})
@@ -322,7 +324,7 @@ class CircuitBreaker:
             self.state["dexes"][dex_name]["trip_time"] = now
             self.state["dexes"][dex_name]["reset_time"] = now + cooldown
 
-            self.logger.warning(f"Circuit breaker tripped for {dex_name}: {reason}. Cooldown: {cooldown}s")
+            self.logger.warning(str(f"Circuit breaker tripped for {dex_name}: {reason}. Cooldown: {cooldown}s")
         else:
             # Trip global circuit breaker
             cooldown = self.config["cooldown_period_seconds"]
@@ -331,7 +333,7 @@ class CircuitBreaker:
             self.state["global"]["trip_time"] = now
             self.state["global"]["reset_time"] = now + cooldown
 
-            self.logger.warning(f"Global circuit breaker tripped: {reason}. Cooldown: {cooldown}s")
+            self.logger.warning(str(f"Global circuit breaker tripped: {reason}. Cooldown: {cooldown}s")
 
         # Save the updated state
         self._save_state()
@@ -345,18 +347,18 @@ class CircuitBreaker:
                 self.state["tokens"][token_symbol]["trip_time"] = None
                 self.state["tokens"][token_symbol]["reset_time"] = None
                 self.state["tokens"][token_symbol]["consecutive_failures"] = 0
-                self.logger.info(f"Circuit breaker reset for token: {token_symbol}")
+                self.logger.info(str(f"Circuit breaker reset for token: {token_symbol}")
             else:
-                self.logger.warning(f"Attempted to reset non-existent token circuit breaker: {token_symbol}")
+                self.logger.warning(str(f"Attempted to reset non-existent token circuit breaker: {token_symbol}")
         elif dex_name:
             if dex_name in self.state["dexes"]:
                 self.state["dexes"][dex_name]["is_tripped"] = False
                 self.state["dexes"][dex_name]["trip_time"] = None
                 self.state["dexes"][dex_name]["reset_time"] = None
                 self.state["dexes"][dex_name]["consecutive_failures"] = 0
-                self.logger.info(f"Circuit breaker reset for DEX: {dex_name}")
+                self.logger.info(str(f"Circuit breaker reset for DEX: {dex_name}")
             else:
-                self.logger.warning(f"Attempted to reset non-existent DEX circuit breaker: {dex_name}")
+                self.logger.warning(str(f"Attempted to reset non-existent DEX circuit breaker: {dex_name}")
         else:  # Global reset
             self.state["global"]["is_tripped"] = False
             self.state["global"]["trip_time"] = None
@@ -370,14 +372,14 @@ class CircuitBreaker:
     def _initialize_entity_state(self, entity_type: str, entity_name: str):
         """Initializes state for a token or DEX if it doesn't exist."""
         if entity_name not in self.state[entity_type]:
-            self.state[entity_type][entity_name] = {
+            self.state[entity_type][entity_name] = {}
                 "is_tripped": False,
                 "trip_time": None,
                 "reset_time": None,
                 "consecutive_failures": 0,
                 "total_failures": 0,
                 "total_successes": 0
-            }
+            
 
     def record_volatility(self, token_symbol: str, price_change_percentage: float, timeframe_minutes: int = 5):
         """
@@ -393,13 +395,13 @@ class CircuitBreaker:
 
         # Check against volatility thresholds
         if normalized_change >= self.config["volatility_thresholds"]["extreme"]:
-            self.trip_circuit(
+            self.trip_circuit()
                 reason=f"Extreme volatility detected for {token_symbol}: {price_change_percentage:.2f}% in {timeframe_minutes} minutes",
                 token_symbol=token_symbol
-            )
-            self.logger.warning(f"Circuit breaker tripped due to extreme volatility for {token_symbol}")
+            
+            self.logger.warning(str(f"Circuit breaker tripped due to extreme volatility for {token_symbol}")
         elif normalized_change >= self.config["volatility_thresholds"]["high"]:
-            self.logger.warning(f"High volatility detected for {token_symbol}: {price_change_percentage:.2f}% in {timeframe_minutes} minutes")
+            self.logger.warning(str(f"High volatility detected for {token_symbol}: {price_change_percentage:.2f}% in {timeframe_minutes} minutes")
 
             # Increment consecutive failures to bring it closer to tripping
             if token_symbol in self.state["tokens"]:
@@ -410,10 +412,10 @@ class CircuitBreaker:
                 max_failures = token_settings.get("max_consecutive_failures", self.config["max_consecutive_failures"])
 
                 if self.state["tokens"][token_symbol]["consecutive_failures"] >= max_failures:
-                    self.trip_circuit(
+                    self.trip_circuit()
                         reason=f"High volatility and consecutive failures for {token_symbol}",
                         token_symbol=token_symbol
-                    )
+                    
 
             # Save the updated state
             self._save_state()

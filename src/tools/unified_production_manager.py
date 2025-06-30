@@ -1,4 +1,26 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+            import asyncio.windows_events
+        import shutil
+from datetime import datetime
+from decimal import Decimal
+from pathlib import Path
+from typing import Dict, List, Any, Optional, cast
+import asyncio
+import json
+import logging
+import os
+import platform
+import subprocess
+import sys
+import time
+
+            import aioredis
+        import psutil
+from cryptography.fernet import Fernet
+from dataclasses import dataclass
+from dotenv import load_dotenv
+import aiohttp
 """
 Unified Production Management System
 ===================================
@@ -17,48 +39,44 @@ Features:
 - Revenue optimization strategies
 """
 
-import asyncio
-import aiohttp
-import os
-import sys
-import platform
-import logging
-import subprocess
-import json
-import time
-from datetime import datetime
-from typing import Dict, List, Any, Optional, cast
-from pathlib import Path
-from dataclasses import dataclass
-from cryptography.fernet import Fernet
-from dotenv import load_dotenv
-from decimal import Decimal
 
 # Windows-specific asyncio event loop fix for aiodns compatibility
 if platform.system() == 'Windows':
     try:
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
-        print("✅ Set Windows ProactorEventLoopPolicy for aiodns compatibility")
+        print("[OK] Set Windows ProactorEventLoopPolicy for aiodns compatibility")
     except AttributeError:
         try:
-            import asyncio.windows_events
             asyncio.set_event_loop_policy(asyncio.windows_events.WindowsProactorEventLoopPolicy())
-            print("✅ Set Windows ProactorEventLoopPolicy (fallback)")
+            print("[OK] Set Windows ProactorEventLoopPolicy (fallback)")
         except ImportError:
-            print("⚠️ Unable to set Windows event loop policy, may encounter aiodns issues")
+            print("[WARN] Unable to set Windows event loop policy, may encounter aiodns issues")
 
 # Load environment variables
 load_dotenv()
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.FileHandler('logs/production_management.log'),
         logging.StreamHandler()
-    ]
-)
+    
+
 logger = logging.getLogger(__name__)
 
 @dataclass
@@ -115,15 +133,14 @@ class ProductionOptimizer:
     async def initialize_redis(self):
         """Initialize Redis connection for caching"""
         try:
-            import aioredis
-            self.redis_client = await aioredis.from_url(
+            self.redis_client = await aioredis.from_url()
                 "redis://localhost",
                 encoding="utf-8",
                 decode_responses=True
-            )
+            , decode_responses=True, encoding="utf-8"
             logger.info("Redis cache initialized")
         except Exception as e:
-            logger.warning(f"Redis not available: {e}")
+            logger.warning(str(f"Redis not available: {e}")
     
     async def optimize_database_connections(self):
         """Optimize database connection settings"""
@@ -156,19 +173,18 @@ class ProductionOptimizer:
                 await asyncio.sleep(self.config.performance_log_interval)
                 
             except Exception as e:
-                logger.error(f"Performance monitoring error: {e}")
+                logger.error(str(f"Performance monitoring error: {e}")
                 await asyncio.sleep(30)
     
     async def collect_metrics(self) -> Dict[str, Any]:
         """Collect system performance metrics"""
-        import psutil
         
-        return {
+        return {}
             'cpu_percent': psutil.cpu_percent(),
             'memory_percent': psutil.virtual_memory().percent,
             'disk_usage': psutil.disk_usage('/').percent,
             'timestamp': datetime.now().isoformat()
-        }
+        
     
     async def check_alerts(self, metrics: Dict[str, Any]):
         """Check metrics against alert thresholds"""
@@ -181,12 +197,12 @@ class ProductionOptimizer:
     
     async def send_alert(self, metric: str, value: float, threshold: float):
         """Send performance alert"""
-        logger.warning(f"ALERT: {metric} ({value}) exceeded threshold ({threshold})")
+        logger.warning(str(f"ALERT: {metric} ({value} exceeded threshold ({threshold})")))
         # Implementation for sending alerts (email, webhook, etc.)
     
     def log_performance_metrics(self, metrics: Dict[str, Any]):
         """Log performance metrics"""
-        logger.info(f"Performance metrics: {json.dumps(metrics, indent=2)}")
+        logger.info(str(f"Performance metrics: {json.dumps(metrics, indent=2, ensure_ascii=True, default=str}")
 
 class ProductionDeploymentManager:
     """Manages production deployment and configuration"""
@@ -206,7 +222,7 @@ class ProductionDeploymentManager:
             else:
                 config_data = self.create_default_config()
                 
-            return DeploymentConfig(
+            return DeploymentConfig()
                 environment=config_data.get('environment', 'production'),
                 debug_mode=config_data.get('debug_mode', False),
                 log_level=config_data.get('log_level', 'INFO'),
@@ -216,34 +232,34 @@ class ProductionDeploymentManager:
                 api_keys=config_data.get('api_keys', {}),
                 monitoring_enabled=config_data.get('monitoring_enabled', True),
                 backup_enabled=config_data.get('backup_enabled', True)
-            )
+            
         except Exception as e:
-            logger.error(f"Failed to load deployment config: {e}")
+            logger.error(str(f"Failed to load deployment config: {e}")
             return self.create_default_deployment_config()
     
     def create_default_config(self) -> Dict[str, Any]:
         """Create default production configuration"""
-        default_config = {
+        default_config = {}
             "environment": "production",
             "debug_mode": False,
             "log_level": "INFO",
             "database_url": "${DATABASE_URL}",
             "redis_url": "${REDIS_URL}",
             "encryption_key": "${ENCRYPTION_KEY}",
-            "api_keys": {
+            "api_keys": {}
                 "polygon_rpc": "${POLYGON_RPC_URL}",
                 "coingecko": "${COINGECKO_API_KEY}",
                 "moralis": "${MORALIS_API_KEY}"
             },
             "monitoring_enabled": True,
             "backup_enabled": True,
-            "optimization": {
+            "optimization": {}
                 "redis_cache_ttl": 300,
                 "connection_pool_size": 100,
                 "request_timeout": 30,
                 "rate_limit_per_second": 100
-            }
-        }
+            
+        
         
         # Save default config
         os.makedirs(self.config_path.parent, exist_ok=True)
@@ -254,7 +270,7 @@ class ProductionDeploymentManager:
     
     def create_default_deployment_config(self) -> DeploymentConfig:
         """Create default deployment configuration"""
-        return DeploymentConfig(
+        return DeploymentConfig()
             environment="production",
             debug_mode=False,
             log_level="INFO",
@@ -264,18 +280,18 @@ class ProductionDeploymentManager:
             api_keys={},
             monitoring_enabled=True,
             backup_enabled=True
-        )
+        
     
     def validate_environment(self) -> bool:
         """Validate production environment configuration"""
         logger.info("Validating production environment...")
         
-        required_vars = [
+        required_vars = []
             'POLYGON_RPC_URL',
             'PRIVATE_KEY',
             'DATABASE_URL',
             'ENCRYPTION_KEY'
-        ]
+        
         
         missing_vars = []
         for var in required_vars:
@@ -283,7 +299,7 @@ class ProductionDeploymentManager:
                 missing_vars.append(var)
         
         if missing_vars:
-            logger.error(f"Missing required environment variables: {missing_vars}")
+            logger.error(str(f"Missing required environment variables: {missing_vars}")
             return False
         
         logger.info("Environment validation passed")
@@ -329,7 +345,7 @@ class ProductionDeploymentManager:
         """Check if all required dependencies are installed"""
         logger.info("Checking dependencies...")
         
-        required_packages = [
+        required_packages = []
             'aiohttp',
             'asyncio',
             'web3',
@@ -337,7 +353,7 @@ class ProductionDeploymentManager:
             'psutil',
             'cryptography',
             'python-dotenv'
-        ]
+        
         
         missing_packages = []
         for package in required_packages:
@@ -347,8 +363,8 @@ class ProductionDeploymentManager:
                 missing_packages.append(package)
         
         if missing_packages:
-            logger.error(f"Missing required packages: {missing_packages}")
-            logger.info("Install with: pip install " + " ".join(missing_packages))
+            logger.error(str(f"Missing required packages: {missing_packages}")
+            logger.info("Install with: pip install " + " ".join(missing_packages)
             return False
         
         logger.info("All dependencies satisfied")
@@ -360,21 +376,34 @@ class ProductionDeploymentManager:
         log_dir.mkdir(exist_ok=True)
         
         # Configure file handlers
-        handlers = [
+        handlers = []
             logging.FileHandler(log_dir / "system.log"),
             logging.FileHandler(log_dir / "error.log"),
             logging.StreamHandler()
-        ]
+        
         
         # Set error handler to only log errors
         handlers[1].setLevel(logging.ERROR)
         
         # Configure root logger
-        logging.basicConfig(
+        
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
             level=getattr(logging, self.deployment_config.log_level),
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             handlers=handlers
-        )
+        
         
         logger.info("Production logging configured")
     
@@ -384,20 +413,19 @@ class ProductionDeploymentManager:
         backup_dir.mkdir(parents=True, exist_ok=True)
         
         # Backup configuration files
-        import shutil
         
-        config_files = [
+        config_files = []
             self.config_path,
             "config/mcp_servers.json",
             "config/arbitrage_config.json",
             ".env.template"
-        ]
+        
         
         for config_file in config_files:
             if Path(config_file).exists():
                 shutil.copy2(config_file, backup_dir)
         
-        logger.info(f"Configuration backed up to {backup_dir}")
+        logger.info(str(f"Configuration backed up to {backup_dir}")
     
     async def deploy_to_production(self):
         """Main deployment process"""
@@ -437,23 +465,23 @@ class ProductionDeploymentManager:
             # Start monitoring
             monitor_task = asyncio.create_task(self.optimizer.monitor_performance())
             
-            logger.info("✅ Production deployment completed successfully")
+            logger.info("[OK] Production deployment completed successfully")
             
             # Keep monitoring running
             await monitor_task
             
         except Exception as e:
-            logger.error(f"Production deployment failed: {e}")
+            logger.error(str(f"Production deployment failed: {e}")
             raise
     
     def get_deployment_status(self) -> Dict[str, Any]:
         """Get current deployment status"""
-        return {
+        return {}
             "environment": self.deployment_config.environment if self.deployment_config else "unknown",
             "config_loaded": self.deployment_config is not None,
             "optimizer_active": self.optimizer is not None,
             "timestamp": datetime.now().isoformat()
-        }
+        
 
 async def main():
     """Main entry point for production management"""
@@ -464,7 +492,7 @@ async def main():
     except KeyboardInterrupt:
         logger.info("Deployment interrupted by user")
     except Exception as e:
-        logger.error(f"Deployment failed: {e}")
+        logger.error(str(f"Deployment failed: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

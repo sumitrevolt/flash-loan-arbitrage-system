@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+import logging
+import os
+import sys
 """
 Unicode-Safe Logger for Windows
 ==============================
@@ -7,60 +12,56 @@ This module provides a Unicode-safe logger that works on Windows systems
 by replacing emoji characters with text equivalents.
 """
 
-import logging
-import sys
-import os
-from pathlib import Path
 
 # Emoji to text mapping
-EMOJI_TO_TEXT = {
-    '🚀': '[LAUNCH]',
-    '🔍': '[SEARCH]',
-    '✅': '[SUCCESS]',
-    '❌': '[ERROR]',
-    '⚠️': '[WARNING]',
-    '🔄': '[PROCESS]',
-    '📊': '[DATA]',
+EMOJI_TO_TEXT = {}
+    '[INIT]': '[LAUNCH]',
+    '[SEARCH]': '[SEARCH]',
+    '[OK]': '[SUCCESS]',
+    '[ERROR]': '[ERROR]',
+    '[WARN]': '[WARNING]',
+    '[SYNC]': '[PROCESS]',
+    '[METRICS]': '[DATA]',
     '🏥': '[HEALTH]',
-    '🎯': '[TARGET]',
-    '💡': '[INFO]',
-    '🔧': '[TOOL]',
+    '[TASK]': '[TARGET]',
+    '[INFO]': '[INFO]',
+    '[SETUP]': '[TOOL]',
     '🔨': '[BUILD]',
-    '🛠️': '[REPAIR]',
-    '🌐': '[NETWORK]',
-    '📈': '[METRICS]',
+    '[TOOL]': '[REPAIR]',
+    '[NETWORK]': '[NETWORK]',
+    '[GROWTH]': '[METRICS]',
     '🛡️': '[SECURITY]',
     '🔐': '[AUTH]',
     '📁': '[FILE]',
-    '🎉': '[CELEBRATION]',
+    '[CELEBRATE]': '[CELEBRATION]',
     '🤖': '[AI]',
-    '⭐': '[STAR]',
-    '🚨': '[ALERT]',
+    '[STAR]': '[STAR]',
+    '[ALERT]': '[ALERT]',
     '🧪': '[TEST]',
-    '🔥': '[HOT]',
+    '[HOT]': '[HOT]',
     '💎': '[PREMIUM]',
-    '⚡': '[FAST]',
-    '🎨': '[DESIGN]',
-    '📝': '[NOTE]',
-    '🎪': '[DEMO]',
+    '[FAST]': '[FAST]',
+    '[ART]': '[DESIGN]',
+    '[LOG]': '[NOTE]',
+    '[CIRCUS]': '[DEMO]',
     '🔮': '[PREDICT]',
-    '🌟': '[HIGHLIGHT]',
-    '🎭': '[MOCK]',
-    '🏆': '[WINNER]',
+    '[START]': '[HIGHLIGHT]',
+    '[THEATER]': '[MOCK]',
+    '[SUCCESS]': '[WINNER]',
     '🌈': '[COLORFUL]',
-    '🎵': '[MUSIC]',
-    '🎬': '[MOVIE]',
-    '🎨': '[ART]',
-    '🎯': '[GOAL]',
-    '🎪': '[EVENT]',
-    '🎭': '[THEATER]',
-    '🎨': '[CREATIVE]',
-    '📊': '[CHART]',
-    '📈': '[GRAPH]',
+    '[MUSIC]': '[MUSIC]',
+    '[MOVIE]': '[MOVIE]',
+    '[ART]': '[ART]',
+    '[TASK]': '[GOAL]',
+    '[CIRCUS]': '[EVENT]',
+    '[THEATER]': '[THEATER]',
+    '[ART]': '[CREATIVE]',
+    '[METRICS]': '[CHART]',
+    '[GROWTH]': '[GRAPH]',
     '📉': '[DOWNTREND]',
-    '🔥': '[FIRE]',
+    '[HOT]': '[FIRE]',
     '💥': '[EXPLOSION]',
-    '⚡': '[LIGHTNING]',
+    '[FAST]': '[LIGHTNING]',
     '🌪️': '[TORNADO]',
     '🌊': '[WAVE]',
     '🏔️': '[MOUNTAIN]',
@@ -68,8 +69,8 @@ EMOJI_TO_TEXT = {
     '🌺': '[FLOWER]',
     '🌙': '[MOON]',
     '☀️': '[SUN]',
-    '⭐': '[STAR]',
-    '🌟': '[SPARKLE]',
+    '[STAR]': '[STAR]',
+    '[START]': '[SPARKLE]',
     '✨': '[SPARKLES]',
     '💫': '[DIZZY]',
     '🔆': '[BRIGHT]',
@@ -78,9 +79,9 @@ EMOJI_TO_TEXT = {
     '🌏': '[ASIA]',
     '🗺️': '[MAP]',
     '🧭': '[COMPASS]',
-    '🎯': '[BULLSEYE]',
+    '[TASK]': '[BULLSEYE]',
     '🔎': '[MAGNIFY]',
-    '🔍': '[SEARCH]',
+    '[SEARCH]': '[SEARCH]',
     '🔭': '[TELESCOPE]',
     '🔬': '[MICROSCOPE]',
     '🧪': '[TEST_TUBE]',
@@ -90,7 +91,7 @@ EMOJI_TO_TEXT = {
     '🧪': '[CHEMISTRY]',
     '🔬': '[BIOLOGY]',
     '🧬': '[GENETICS]',
-}
+
 
 def unicode_safe_text(text: str) -> str:
     """Convert emoji characters to text equivalents"""
@@ -114,9 +115,9 @@ class UnicodeLogger:
         self.logger.handlers.clear()
         
         # Configure formatter
-        formatter = logging.Formatter(
+        formatter = logging.Formatter()
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
+        
         
         # Console handler with UTF-8 encoding
         console_handler = logging.StreamHandler(sys.stdout)
@@ -221,7 +222,7 @@ def get_unicode_safe_logger(name: str, log_file: str = None, level: int = loggin
 # Example usage
 if __name__ == "__main__":
     logger = get_unicode_safe_logger("test", "test.log")
-    logger.info("🚀 Testing Unicode safety")
-    logger.error("❌ This should work on Windows")
-    logger.warning("⚠️ No more encoding errors")
-    logger.info("✅ All emojis converted to text")
+    logger.info("[INIT] Testing Unicode safety")
+    logger.error("[ERROR] This should work on Windows")
+    logger.warning("[WARN] No more encoding errors")
+    logger.info("[OK] All emojis converted to text")

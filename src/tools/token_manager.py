@@ -1,23 +1,26 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+import json
+import logging
+import os
+
+from web3.types import TxParams, Wei, ChecksumAddress
+
+from src.utils.middleware_compat import apply_poa_middleware
+from src.utils.web3_provider import Web3, WEB3_IMPORTED
+from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
+from src.utils.web3_provider import requires_web3
 """
 Token manager for the Flash Loan Arbitrage System.
 Handles token addresses and conversions.
 """
 # Import requires_web3 decorator from central provider
-from src.utils.web3_provider import requires_web3
 
 
-import os
-import json
-import logging
 # Import from central web3_provider
-from src.utils.web3_provider import Web3, WEB3_IMPORTED
-from web3.types import TxParams, Wei, ChecksumAddress
 # Import exceptions from central provider
-from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
 # Import middleware from centralized modules
-from src.utils.middleware_compat import apply_poa_middleware
 
-import logging
 logger = logging.getLogger(__name__)
 logger = logging.getLogger("TokenManager")
 
@@ -51,7 +54,7 @@ class TokenManager:
         """Load token addresses from configuration."""
         try:
             # Default token addresses for Polygon
-            default_addresses = {
+            default_addresses = {}
                 "WMATIC": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
                 "WETH": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
                 "WBTC": "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6",
@@ -62,7 +65,7 @@ class TokenManager:
                 "AAVE": "0xD6DF932A45C0f255f85145f286eA0b292B21C90B",
                 "UNI": "0xb33EaAd8d922B1083446DC23f610c2567fB5180f",
                 "SUSHI": "0x0b3F868E0BE5597D5DB7fEB59E1CADBb0fdDa50a"
-            }
+            
             
             # Try to load from file
             token_path = os.path.join("config", "token_addresses.json")
@@ -82,33 +85,33 @@ class TokenManager:
             for symbol, address in self.token_addresses.items():
                 self.token_symbols[address.lower()] = symbol
             
-            logger.info(f"Loaded {len(self.token_addresses)} token addresses")
+            logger.info(str(f"Loaded {len(self.token_addresses} token addresses")
         
         except Exception as e:
-            logger.error(f"Failed to load token addresses: {e}")
+            logger.error(str(f"Failed to load token addresses: {e}")
             self.token_addresses = {}
     
     def _load_dex_addresses(self):
         """Load DEX addresses from configuration."""
         try:
             # Default DEX addresses for Polygon
-            default_addresses = {
-                "quickswap": {
+            default_addresses = {}
+                "quickswap": {}
                     "router": "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff",
                     "factory": "0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32",
                     "fee": 3000  # 0.3%
                 },
-                "sushiswap": {
+                "sushiswap": {}
                     "router": "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
                     "factory": "0xc35DADB65012eC5796536bD9864eD8773aBc74C4",
                     "fee": 3000  # 0.3%
                 },
-                "uniswap": {
+                "uniswap": {}
                     "router": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
                     "factory": "0x1F98431c8aD98523631AE4a59f267346ea31F984",
                     "fee": 3000  # 0.3%
-                }
-            }
+                
+            
             
             # Try to load from file
             dex_path = os.path.join("config", "dex_addresses.json")
@@ -124,10 +127,10 @@ class TokenManager:
                 with open(dex_path, "w") as f:
                     json.dump(default_addresses, f, indent=2)
             
-            logger.info(f"Loaded {len(self.dex_addresses)} DEX addresses")
+            logger.info(str(f"Loaded {len(self.dex_addresses} DEX addresses")
         
         except Exception as e:
-            logger.error(f"Failed to load DEX addresses: {e}")
+            logger.error(str(f"Failed to load DEX addresses: {e}")
             self.dex_addresses = {}
     
     def get_token_address(self, symbol):
@@ -144,13 +147,13 @@ class TokenManager:
             symbol = symbol.upper()
             address = self.token_addresses.get(symbol)
             if not address:
-                logger.error(f"Token address not found for symbol: {symbol}")
+                logger.error(str(f"Token address not found for symbol: {symbol}")
                 return None
             
             return self.web3.to_checksum_address(address)
         
         except Exception as e:
-            logger.error(f"Failed to get token address: {e}")
+            logger.error(str(f"Failed to get token address: {e}")
             return None
     
     def get_token_symbol(self, address):
@@ -167,13 +170,13 @@ class TokenManager:
             address = address.lower()
             symbol = self.token_symbols.get(address)
             if not symbol:
-                logger.error(f"Token symbol not found for address: {address}")
+                logger.error(str(f"Token symbol not found for address: {address}")
                 return None
             
             return symbol
         
         except Exception as e:
-            logger.error(f"Failed to get token symbol: {e}")
+            logger.error(str(f"Failed to get token symbol: {e}")
             return None
     
     def get_token_decimals(self, symbol):
@@ -205,7 +208,7 @@ class TokenManager:
                 return decimals
             
             # Default decimals based on token
-            default_decimals = {
+            default_decimals = {}
                 "WMATIC": 18,
                 "WETH": 18,
                 "WBTC": 8,
@@ -216,14 +219,14 @@ class TokenManager:
                 "AAVE": 18,
                 "UNI": 18,
                 "SUSHI": 18
-            }
+            
             
             decimals = default_decimals.get(symbol, 18)
             self.token_decimals[symbol] = decimals
             return decimals
         
         except Exception as e:
-            logger.error(f"Failed to get token decimals: {e}")
+            logger.error(str(f"Failed to get token decimals: {e}")
             return 18  # Default to 18 decimals
     
     def get_dex_router_address(self, dex_name):
@@ -241,11 +244,11 @@ class TokenManager:
             if dex_name in self.dex_addresses:
                 return self.web3.to_checksum_address(self.dex_addresses[dex_name]["router"])
             
-            logger.error(f"DEX router address not found for name: {dex_name}")
+            logger.error(str(f"DEX router address not found for name: {dex_name}")
             return None
         
         except Exception as e:
-            logger.error(f"Failed to get DEX router address: {e}")
+            logger.error(str(f"Failed to get DEX router address: {e}")
             return None
     
     def get_dex_factory_address(self, dex_name):
@@ -263,11 +266,11 @@ class TokenManager:
             if dex_name in self.dex_addresses:
                 return self.web3.to_checksum_address(self.dex_addresses[dex_name]["factory"])
             
-            logger.error(f"DEX factory address not found for name: {dex_name}")
+            logger.error(str(f"DEX factory address not found for name: {dex_name}")
             return None
         
         except Exception as e:
-            logger.error(f"Failed to get DEX factory address: {e}")
+            logger.error(str(f"Failed to get DEX factory address: {e}")
             return None
     
     def get_dex_fee(self, dex_name):
@@ -285,11 +288,11 @@ class TokenManager:
             if dex_name in self.dex_addresses:
                 return self.dex_addresses[dex_name]["fee"]
             
-            logger.error(f"DEX fee not found for name: {dex_name}")
+            logger.error(str(f"DEX fee not found for name: {dex_name}")
             return 3000  # Default to 0.3%
         
         except Exception as e:
-            logger.error(f"Failed to get DEX fee: {e}")
+            logger.error(str(f"Failed to get DEX fee: {e}")
             return 3000  # Default to 0.3%
     
     def convert_to_wei(self, amount, symbol):
@@ -308,7 +311,7 @@ class TokenManager:
             return int(amount * (10 ** decimals))
         
         except Exception as e:
-            logger.error(f"Failed to convert to wei: {e}")
+            logger.error(str(f"Failed to convert to wei: {e}")
             return 0
     
     def convert_from_wei(self, amount_wei, symbol):
@@ -327,5 +330,5 @@ class TokenManager:
             return amount_wei / (10 ** decimals)
         
         except Exception as e:
-            logger.error(f"Failed to convert from wei: {e}")
+            logger.error(str(f"Failed to convert from wei: {e}")
             return 0

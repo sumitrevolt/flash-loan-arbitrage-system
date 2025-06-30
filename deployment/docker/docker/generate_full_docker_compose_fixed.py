@@ -1,20 +1,24 @@
+# -*- coding: utf-8 -*-
+from typing import Dict, List, Any
+import json
+import os
+
+
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python3
 """
 Generate complete Docker Compose configuration for MCP agents
 Extends existing MCP architecture with full orchestration system
 """
 
-import json
-import os
-from typing import Dict, List, Any
 
 # Agent role definitions matching your MCP server structure
-AGENT_ROLES: Dict[str, Dict[str, Any]] = {
-    "code_indexers": {
+AGENT_ROLES: Dict[str, Dict[str, Any]] = {}
+    "code_indexers": {}
         "count": 8,
         "port_start": 3101,
         "description": "Full repo understanding and code analysis",
-        "mcp_paths": [
+        "mcp_paths": []
             "/app/mcp_servers/coordination",
             "/app/mcp_servers/task_management",
             "/app/mcp_servers/utilities",
@@ -23,13 +27,13 @@ AGENT_ROLES: Dict[str, Dict[str, Any]] = {
             "/app/mcp_servers/market_analysis",
             "/app/mcp_servers/data_providers",
             "/app/mcp_servers/monitoring"
-        ]
+        
     },
-    "builders": {
+    "builders": {}
         "count": 10,
         "port_start": 3121,
         "description": "Project scaffolding and build agents",
-        "mcp_paths": [
+        "mcp_paths": []
             "/app/mcp_servers/production",
             "/app/mcp_servers/foundry_integration",
             "/app/mcp_servers/blockchain_integration",
@@ -40,13 +44,13 @@ AGENT_ROLES: Dict[str, Dict[str, Any]] = {
             "/app/mcp_servers/scripts",
             "/app/mcp_servers/quality",
             "/app/mcp_servers/ai_integration"
-        ]
+        
     },
-    "test_writers": {
+    "test_writers": {}
         "count": 10,
         "port_start": 3141,
         "description": "Unit and integration test creation",
-        "mcp_paths": [
+        "mcp_paths": []
             "/app/mcp_servers/quality",
             "/app/mcp_servers/monitoring",
             "/app/mcp_servers/execution",
@@ -57,13 +61,13 @@ AGENT_ROLES: Dict[str, Dict[str, Any]] = {
             "/app/mcp_servers/utilities",
             "/app/mcp_servers/risk_management",
             "/app/mcp_servers/recovery"
-        ]
+        
     },
-    "executors": {
+    "executors": {}
         "count": 15,
         "port_start": 3161,
         "description": "Build run verification agents",
-        "mcp_paths": [
+        "mcp_paths": []
             "/app/mcp_servers/execution",
             "/app/mcp_servers/blockchain_integration",
             "/app/mcp_servers/foundry_integration",
@@ -79,13 +83,13 @@ AGENT_ROLES: Dict[str, Dict[str, Any]] = {
             "/app/mcp_servers/utilities",
             "/app/mcp_servers/task_management",
             "/app/mcp_servers/ai_integration"
-        ]
+        
     },
-    "coordinators": {
+    "coordinators": {}
         "count": 10,
         "port_start": 3181,
         "description": "Middle-layer routing and coordination",
-        "mcp_paths": [
+        "mcp_paths": []
             "/app/mcp_servers/coordination",
             "/app/mcp_servers/orchestration",
             "/app/mcp_servers/task_management",
@@ -96,25 +100,25 @@ AGENT_ROLES: Dict[str, Dict[str, Any]] = {
             "/app/mcp_servers/risk_management",
             "/app/mcp_servers/recovery",
             "/app/mcp_servers/quality"
-        ]
+        
     },
-    "planners": {
+    "planners": {}
         "count": 5,
         "port_start": 3201,
         "description": "Long-term project strategy and planning",
-        "mcp_paths": [
+        "mcp_paths": []
             "/app/mcp_servers/orchestration",
             "/app/mcp_servers/coordination",
             "/app/mcp_servers/ai_integration",
             "/app/mcp_servers/production",
             "/app/mcp_servers/task_management"
-        ]
+        
     },
-    "fixers": {
+    "fixers": {}
         "count": 10,
         "port_start": 3211,
         "description": "Self-healing and error fixing",
-        "mcp_paths": [
+        "mcp_paths": []
             "/app/mcp_servers/recovery",
             "/app/mcp_servers/monitoring",
             "/app/mcp_servers/quality",
@@ -125,13 +129,13 @@ AGENT_ROLES: Dict[str, Dict[str, Any]] = {
             "/app/mcp_servers/execution",
             "/app/mcp_servers/foundry_integration",
             "/app/mcp_servers/blockchain_integration"
-        ]
+        
     },
-    "ui_coders": {
+    "ui_coders": {}
         "count": 10,
         "port_start": 3231,
         "description": "Frontend and design implementation",
-        "mcp_paths": [
+        "mcp_paths": []
             "/app/mcp_servers/ui",
             "/app/mcp_servers/monitoring",
             "/app/mcp_servers/production",
@@ -142,13 +146,13 @@ AGENT_ROLES: Dict[str, Dict[str, Any]] = {
             "/app/mcp_servers/quality",
             "/app/mcp_servers/orchestration",
             "/app/mcp_servers/data_providers"
-        ]
+        
     },
-    "reviewers": {
+    "reviewers": {}
         "count": 15,
         "port_start": 3251,
         "description": "Code review and quality assurance",
-        "mcp_paths": [
+        "mcp_paths": []
             "/app/mcp_servers/quality",
             "/app/mcp_servers/monitoring",
             "/app/mcp_servers/ai_integration",
@@ -164,17 +168,17 @@ AGENT_ROLES: Dict[str, Dict[str, Any]] = {
             "/app/mcp_servers/market_analysis",
             "/app/mcp_servers/orchestration",
             "/app/mcp_servers/task_management"
-        ]
+        
     },
-    "admins": {
+    "admins": {}
         "count": 1,
         "port_start": 3301,
         "description": "Top-level control and administration",
-        "mcp_paths": [
+        "mcp_paths": []
             "/app/mcp_servers/orchestration"
-        ]
-    }
-}
+        
+    
+
 
 def generate_docker_compose_yaml():
     """Generate complete docker-compose.yml with all MCP agents"""
@@ -391,12 +395,12 @@ networks:
 
 def generate_agent_manifest():
     """Generate agent manifest for coordination"""
-    manifest = {
+    manifest = {}
         "version": "2.0.0",
         "generated_at": "2025-01-11T21:50:00Z",
         "total_agents": sum(config['count'] for config in AGENT_ROLES.values()),
         "agent_roles": {}
-    }
+    
     
     for role, config in AGENT_ROLES.items():
         agents = []
@@ -404,7 +408,7 @@ def generate_agent_manifest():
             port = config['port_start'] + i - 1
             mcp_path = config['mcp_paths'][(i - 1) % len(config['mcp_paths'])]
             
-            agents.append({
+            agents.append({)}
                 "id": i,
                 "name": f"{role.rstrip('s')}-{i}",
                 "container_name": f"mcp-{role.rstrip('s')}-{i}",
@@ -415,67 +419,67 @@ def generate_agent_manifest():
                 "description": config['description'],
                 "capabilities": get_agent_capabilities(role),
                 "priority": get_agent_priority(role)
-            })
+            
         
-        manifest["agent_roles"][role] = {
+        manifest["agent_roles"][role] = {}
             "count": config['count'],
             "description": config['description'],
             "port_range": f"{config['port_start']}-{config['port_start'] + config['count'] - 1}",
             "agents": agents
-        }
+        
     
     return manifest
 
 def get_agent_capabilities(role: str) -> List[str]:
     """Get capabilities for each agent role"""
-    capabilities_map = {
-        "code_indexers": [
+    capabilities_map = {}
+        "code_indexers": []
             "code_analysis", "repo_understanding", "pattern_recognition",
             "dependency_mapping", "architecture_analysis"
         ],
-        "builders": [
+        "builders": []
             "project_scaffolding", "compilation", "build_automation",
             "dependency_management", "deployment_preparation"
         ],
-        "test_writers": [
+        "test_writers": []
             "unit_testing", "integration_testing", "test_automation",
             "coverage_analysis", "test_reporting"
         ],
-        "executors": [
+        "executors": []
             "build_execution", "verification", "deployment",
             "flash_loan_execution", "contract_interaction"
         ],
-        "coordinators": [
+        "coordinators": []
             "task_routing", "agent_coordination", "workflow_management",
             "resource_allocation", "status_monitoring"
         ],
-        "planners": [
+        "planners": []
             "strategy_planning", "roadmap_creation", "resource_planning",
             "risk_assessment", "timeline_management"
         ],
-        "fixers": [
+        "fixers": []
             "error_detection", "auto_fixing", "system_healing",
             "recovery_procedures", "debugging"
         ],
-        "ui_coders": [
+        "ui_coders": []
             "frontend_development", "ui_design", "user_experience",
             "responsive_design", "dashboard_creation"
         ],
-        "reviewers": [
+        "reviewers": []
             "code_review", "quality_assurance", "security_audit",
             "performance_analysis", "compliance_check"
         ],
-        "admins": [
+        "admins": []
             "system_administration", "global_control", "security_management",
             "policy_enforcement", "system_monitoring"
-        ]
-    }
+        
+    
     
     return capabilities_map.get(role, [])
 
 def get_agent_priority(role: str) -> str:
     """Get priority level for each agent role"""
-    priority_map = {
+    priority_map = {}
         "code_indexers": "high",
         "builders": "high", 
         "test_writers": "medium",
@@ -486,13 +490,13 @@ def get_agent_priority(role: str) -> str:
         "ui_coders": "low",
         "reviewers": "medium",
         "admins": "critical"
-    }
+    
     
     return priority_map.get(role, "medium")
 
 def main():
     """Generate all Docker orchestration files"""
-    print("🚀 Generating Docker orchestration system for MCP agents...")
+    print("[INIT] Generating Docker orchestration system for MCP agents...")
     
     # Ensure directories exist
     os.makedirs("docker", exist_ok=True)
@@ -503,7 +507,7 @@ def main():
     os.makedirs("logs/agents", exist_ok=True)
     
     # Generate docker-compose.yml
-    print("📝 Generating docker-compose.yml...")
+    print("[LOG] Generating docker-compose.yml...")
     compose_content = generate_docker_compose_yaml()
     with open("docker-compose.yml", "w") as f:
         f.write(compose_content)
@@ -516,21 +520,21 @@ def main():
     
     # Generate summary report
     total_agents = sum(config['count'] for config in AGENT_ROLES.values())
-    print(f"\n✅ Generated Docker orchestration system:")
+    print(f"\n[OK] Generated Docker orchestration system:")
     print(f"   • Total MCP Agents: {total_agents}")
     print(f"   • Agent Roles: {len(AGENT_ROLES)}")
     print(f"   • Port Range: 3101-{3301}")
     print(f"   • Infrastructure Services: 7")
     
-    print("\n📊 Agent Distribution:")
+    print("\n[METRICS] Agent Distribution:")
     for role, config in AGENT_ROLES.items():
         print(f"   • {role.replace('_', ' ').title()}: {config['count']} agents")
     
-    print(f"\n🌐 Generated files:")
+    print(f"\n[NETWORK] Generated files:")
     print(f"   • docker-compose.yml")
     print(f"   • config/agent_manifest.json")
     
-    print(f"\n🚀 Next steps:")
+    print(f"\n[INIT] Next steps:")
     print(f"   1. Create Docker images: docker build -f docker/Dockerfile.coordinator -t mcp-coordinator .")
     print(f"   2. Start infrastructure: docker-compose up -d redis postgres rabbitmq etcd")
     print(f"   3. Start coordinator: docker-compose up -d mcp-coordinator")

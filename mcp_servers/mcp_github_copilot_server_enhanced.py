@@ -1,4 +1,28 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+        import os
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Set
+import asyncio
+import hashlib
+import json
+import logging
+import pickle
+import sqlite3
+import threading
+import time
+import uuid
+
+from dataclasses import dataclass, asdict
+from mcp.server import Server
+from mcp.server.models import InitializationOptions
+from mcp.server.stdio import stdio_server
+from mcp.types import ()
+import aiohttp
+import networkx as nx
+import requests
+import {test_framework}
 """
 GitHub Copilot MCP Server with Enhanced Memory and Sequential Thinking
 Integrates with GitHub Copilot API for code suggestions and optimization
@@ -7,36 +31,29 @@ Enhanced with:
 - Sequential Thinking: Dynamic and reflective problem-solving through thought sequences
 """
 
-import asyncio
-import json
-import logging
-import sqlite3
-import networkx as nx
-import pickle
-import hashlib
-import uuid
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Set
-from dataclasses import dataclass, asdict
-from pathlib import Path
-import threading
-import time
 
-import aiohttp
-import requests
-from mcp.server import Server
-from mcp.server.models import InitializationOptions
-from mcp.server.stdio import stdio_server
-from mcp.types import (
     Resource,
     Tool,
     TextContent,
     ImageContent,
     EmbeddedResource,
     LoggingLevel
-)
+
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("github-copilot-mcp")
 
@@ -91,8 +108,8 @@ class KnowledgeGraphMemory:
     def _init_database(self):
         """Initialize SQLite database for persistent storage."""
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS memory_nodes (
+            conn.execute(""")
+                CREATE TABLE IF NOT EXISTS memory_nodes ()
                     id TEXT PRIMARY KEY,
                     type TEXT NOT NULL,
                     content TEXT NOT NULL,
@@ -101,11 +118,11 @@ class KnowledgeGraphMemory:
                     updated_at TEXT,
                     access_count INTEGER DEFAULT 0,
                     importance_score REAL DEFAULT 0.0
-                )
-            """)
+                
+            """
             
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS memory_edges (
+            conn.execute(""")
+                CREATE TABLE IF NOT EXISTS memory_edges ()
                     id TEXT PRIMARY KEY,
                     source_id TEXT,
                     target_id TEXT,
@@ -114,20 +131,20 @@ class KnowledgeGraphMemory:
                     metadata TEXT,
                     FOREIGN KEY(source_id) REFERENCES memory_nodes(id),
                     FOREIGN KEY(target_id) REFERENCES memory_nodes(id)
-                )
-            """)
+                
+            """
             
-            conn.execute("""
+            conn.execute(""")
                 CREATE INDEX IF NOT EXISTS idx_nodes_type ON memory_nodes(type)
-            """)
+            """
             
-            conn.execute("""
+            conn.execute(""")
                 CREATE INDEX IF NOT EXISTS idx_edges_source ON memory_edges(source_id)
-            """)
+            """
             
-            conn.execute("""
+            conn.execute(""")
                 CREATE INDEX IF NOT EXISTS idx_edges_target ON memory_edges(target_id)
-            """)
+            """
     
     def _load_from_database(self):
         """Load memory graph from database."""
@@ -136,7 +153,7 @@ class KnowledgeGraphMemory:
                 # Load nodes
                 cursor = conn.execute("SELECT * FROM memory_nodes")
                 for row in cursor.fetchall():
-                    node = MemoryNode(
+                    node = MemoryNode()
                         id=row[0],
                         type=row[1],
                         content=row[2],
@@ -145,20 +162,20 @@ class KnowledgeGraphMemory:
                         updated_at=datetime.fromisoformat(row[5]),
                         access_count=row[6],
                         importance_score=row[7]
-                    )
+                    
                     self.nodes[node.id] = node
                     self.graph.add_node(node.id, **asdict(node))
                 
                 # Load edges
                 cursor = conn.execute("SELECT * FROM memory_edges")
                 for row in cursor.fetchall():
-                    edge = MemoryEdge(
+                    edge = MemoryEdge()
                         source_id=row[1],
                         target_id=row[2],
                         relationship_type=row[3],
                         strength=row[4],
                         metadata=json.loads(row[5]) if row[5] else {}
-                    )
+                    
                     edge_id = row[0]
                     self.edges[edge_id] = edge
                     self.graph.add_edge(edge.source_id, edge.target_id, **asdict(edge))
@@ -168,14 +185,14 @@ class KnowledgeGraphMemory:
         node_id = str(uuid.uuid4())
         now = datetime.now()
         
-        node = MemoryNode(
+        node = MemoryNode()
             id=node_id,
             type=node_type,
             content=content,
             metadata=metadata or {},
             created_at=now,
             updated_at=now
-        )
+        
         
         with self.lock:
             self.nodes[node_id] = node
@@ -183,30 +200,30 @@ class KnowledgeGraphMemory:
             
             # Save to database
             with sqlite3.connect(self.db_path) as conn:
-                conn.execute("""
+                conn.execute(""")
                     INSERT INTO memory_nodes 
                     (id, type, content, metadata, created_at, updated_at, access_count, importance_score)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    node.id, node.type, node.content, json.dumps(node.metadata),
+                """, ()
+                    node.id, node.type, node.content, json.dumps(node.metadata, ensure_ascii=True, default=str),
                     node.created_at.isoformat(), node.updated_at.isoformat(),
                     node.access_count, node.importance_score
-                ))
+
         
         return node_id
     
-    def add_relationship(self, source_id: str, target_id: str, relationship_type: str, 
+    def add_relationship(self, source_id: str, target_id: str, relationship_type: str, )
                         strength: float = 1.0, metadata: Dict[str, Any] = None) -> str:
         """Add a relationship between two memory nodes."""
         edge_id = str(uuid.uuid4())
         
-        edge = MemoryEdge(
+        edge = MemoryEdge()
             source_id=source_id,
             target_id=target_id,
             relationship_type=relationship_type,
             strength=strength,
             metadata=metadata or {}
-        )
+        
         
         with self.lock:
             self.edges[edge_id] = edge
@@ -214,18 +231,18 @@ class KnowledgeGraphMemory:
             
             # Save to database
             with sqlite3.connect(self.db_path) as conn:
-                conn.execute("""
+                conn.execute(""")
                     INSERT INTO memory_edges 
                     (id, source_id, target_id, relationship_type, strength, metadata)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (
+                """, ()
                     edge_id, edge.source_id, edge.target_id, edge.relationship_type,
-                    edge.strength, json.dumps(edge.metadata)
-                ))
+                    edge.strength, json.dumps(edge.metadata, ensure_ascii=True, default=str)
+
         
         return edge_id
     
-    def find_related_memories(self, node_id: str, max_depth: int = 2, 
+    def find_related_memories(self, node_id: str, max_depth: int = 2, )
                             relationship_types: List[str] = None) -> List[MemoryNode]:
         """Find memories related to a given node."""
         with self.lock:
@@ -244,7 +261,7 @@ class KnowledgeGraphMemory:
                 # Get neighbors
                 for neighbor_id in self.graph.neighbors(current_id):
                     edge_data = self.graph[current_id][neighbor_id]
-                    if (relationship_types is None or 
+                    if (relationship_types is None or )
                         edge_data.get('relationship_type') in relationship_types):
                         
                         if neighbor_id in self.nodes:
@@ -261,7 +278,7 @@ class KnowledgeGraphMemory:
             
             return related_nodes
     
-    def semantic_search(self, query: str, node_types: List[str] = None, 
+    def semantic_search(self, query: str, node_types: List[str] = None, )
                        limit: int = 10) -> List[Tuple[MemoryNode, float]]:
         """Search for memories using semantic similarity."""
         # Simple text-based search (can be enhanced with embeddings)
@@ -277,9 +294,9 @@ class KnowledgeGraphMemory:
                 content_lower = node.content.lower()
                 if query_lower in content_lower:
                     # Simple scoring based on exact match and importance
-                    score = (content_lower.count(query_lower) * 0.5 + 
+                    score = (content_lower.count(query_lower) * 0.5 + )
                             node.importance_score * 0.3 + 
-                            node.access_count * 0.2)
+                            node.access_count * 0.2
                     results.append((node, score))
         
         # Sort by score and return top results
@@ -289,12 +306,12 @@ class KnowledgeGraphMemory:
     def _update_node_in_db(self, node: MemoryNode):
         """Update node in database."""
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute("""
+            conn.execute(""")
                 UPDATE memory_nodes 
                 SET access_count = ?, updated_at = ?, importance_score = ?
                 WHERE id = ?
-            """, (node.access_count, datetime.now().isoformat(), 
-                  node.importance_score, node.id))
+            """, (node.access_count, datetime.now().isoformat(), )
+                  node.importance_score, node.id
 
 class SequentialThinking:
     """Dynamic and reflective problem-solving through thought sequences."""
@@ -309,7 +326,7 @@ class SequentialThinking:
         sequence_id = str(uuid.uuid4())
         
         # Initial analysis step
-        initial_step = ThoughtStep(
+        initial_step = ThoughtStep()
             id=str(uuid.uuid4()),
             step_number=1,
             thought_type="analysis",
@@ -319,21 +336,21 @@ class SequentialThinking:
             confidence=0.8,
             reasoning="Initial problem analysis and context understanding",
             created_at=datetime.now()
-        )
+        
         
         with self.lock:
             self.active_sequences[sequence_id] = [initial_step]
         
         # Store in memory
-        self.memory_system.add_memory(
+        self.memory_system.add_memory()
             "thinking_sequence",
             f"Problem: {problem}",
             {"sequence_id": sequence_id, "context": context or {}}
-        )
+        
         
         return sequence_id
     
-    def add_thought_step(self, sequence_id: str, thought_type: str, content: str,
+    def add_thought_step(self, sequence_id: str, thought_type: str, content: str,)
                         inputs: List[str], reasoning: str, confidence: float = 0.5) -> str:
         """Add a new thought step to an existing sequence."""
         if sequence_id not in self.active_sequences:
@@ -342,7 +359,7 @@ class SequentialThinking:
         step_id = str(uuid.uuid4())
         step_number = len(self.active_sequences[sequence_id]) + 1
         
-        thought_step = ThoughtStep(
+        thought_step = ThoughtStep()
             id=step_id,
             step_number=step_number,
             thought_type=thought_type,
@@ -352,23 +369,23 @@ class SequentialThinking:
             confidence=confidence,
             reasoning=reasoning,
             created_at=datetime.now()
-        )
+        
         
         with self.lock:
             self.active_sequences[sequence_id].append(thought_step)
         
         # Store step in memory
-        self.memory_system.add_memory(
+        self.memory_system.add_memory()
             "thought_step",
             content,
-            {
+            {}
                 "sequence_id": sequence_id,
                 "step_number": step_number,
                 "thought_type": thought_type,
                 "reasoning": reasoning,
                 "confidence": confidence
-            }
-        )
+            
+        
         
         return step_id
     
@@ -380,27 +397,27 @@ class SequentialThinking:
         sequence = self.active_sequences[sequence_id]
         
         # Analyze the sequence
-        analysis = {
+        analysis = {}
             "total_steps": len(sequence),
             "thought_types": [step.thought_type for step in sequence],
             "average_confidence": sum(step.confidence for step in sequence) / len(sequence),
             "reasoning_quality": self._assess_reasoning_quality(sequence),
             "convergence_score": self._assess_convergence(sequence),
             "insights": self._extract_insights(sequence)
-        }
+        
         
         # Add reflection step
-        reflection_step = ThoughtStep(
+        reflection_step = ThoughtStep()
             id=str(uuid.uuid4()),
             step_number=len(sequence) + 1,
             thought_type="reflection",
-            content=f"Reflection on thinking sequence: {json.dumps(analysis, indent=2)}",
+            content=f"Reflection on thinking sequence: {json.dumps(analysis, indent=2, ensure_ascii=True, default=str)}",
             inputs=[step.content for step in sequence],
             outputs=[],
             confidence=0.9,
             reasoning="Meta-cognitive reflection on the thinking process",
             created_at=datetime.now()
-        )
+        
         
         with self.lock:
             self.active_sequences[sequence_id].append(reflection_step)
@@ -449,17 +466,17 @@ class SequentialThinking:
         
         sequence = self.active_sequences[sequence_id]
         
-        return {
+        return {}
             "sequence_id": sequence_id,
             "total_steps": len(sequence),
             "duration": (sequence[-1].created_at - sequence[0].created_at).total_seconds(),
             "thought_types": list(set(step.thought_type for step in sequence)),
             "final_confidence": sequence[-1].confidence,
-            "key_insights": [step.content for step in sequence 
+            "key_insights": [step.content for step in sequence ]
                            if step.thought_type in ["synthesis", "validation", "reflection"]],
-            "timeline": [{"step": step.step_number, "type": step.thought_type, 
-                         "time": step.created_at.isoformat()} for step in sequence]
-        }
+            "timeline": [{"step": step.step_number, "type": step.thought_type, ]}
+                         "time": step.created_at.isoformat()} for step in sequence
+        
 
 class GitHubCopilotMCPServer:
     def __init__(self):
@@ -479,38 +496,38 @@ class GitHubCopilotMCPServer:
         @self.server.list_resources()
         async def handle_list_resources() -> List[Resource]:
             """List available GitHub Copilot resources."""
-            return [
-                Resource(
+            return []
+                Resource()
                     uri="github://copilot/suggestions",
                     name="Copilot Code Suggestions",
                     description="Get AI-powered code suggestions from GitHub Copilot",
                     mimeType="application/json"
                 ),
-                Resource(
+                Resource()
                     uri="github://copilot/chat",
                     name="Copilot Chat Interface",
                     description="Interactive chat with GitHub Copilot",
                     mimeType="application/json"
                 ),
-                Resource(
+                Resource()
                     uri="github://copilot/completions",
                     name="Code Completions",
                     description="Get code completions and auto-suggestions",
                     mimeType="application/json"
                 ),
-                Resource(
+                Resource()
                     uri="github://copilot/memory",
                     name="Knowledge Graph Memory",
                     description="Access to persistent knowledge graph memory system",
                     mimeType="application/json"
                 ),
-                Resource(
+                Resource()
                     uri="github://copilot/thinking",
                     name="Sequential Thinking",
                     description="Dynamic problem-solving through thought sequences",
                     mimeType="application/json"
-                )
-            ]
+                
+            
         
         @self.server.read_resource()
         async def handle_read_resource(uri: str) -> str:
@@ -531,145 +548,145 @@ class GitHubCopilotMCPServer:
         @self.server.list_tools()
         async def handle_list_tools() -> List[Tool]:
             """List available GitHub Copilot tools."""
-            return [
-                Tool(
+            return []
+                Tool()
                     name="get_code_suggestions",
                     description="Get AI-powered code suggestions for given context",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "code": {"type": "string", "description": "Code context"},
                             "language": {"type": "string", "description": "Programming language"},
                             "intent": {"type": "string", "description": "What you want to achieve"}
                         },
                         "required": ["code", "language"]
-                    }
+                    
                 ),
-                Tool(
+                Tool()
                     name="optimize_code",
                     description="Optimize existing code with Copilot suggestions",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "code": {"type": "string", "description": "Code to optimize"},
                             "language": {"type": "string", "description": "Programming language"},
                             "optimization_type": {"type": "string", "description": "Type of optimization (performance, readability, etc.)"}
                         },
                         "required": ["code", "language"]
-                    }
+                    
                 ),
-                Tool(
+                Tool()
                     name="fix_code_issues",
                     description="Fix code issues and bugs with Copilot",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "code": {"type": "string", "description": "Code with issues"},
                             "language": {"type": "string", "description": "Programming language"},
                             "error_message": {"type": "string", "description": "Error message or description of issues"}
                         },
                         "required": ["code", "language"]
-                    }
+                    
                 ),
-                Tool(
+                Tool()
                     name="generate_tests",
                     description="Generate unit tests with Copilot",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "code": {"type": "string", "description": "Code to test"},
                             "language": {"type": "string", "description": "Programming language"},
                             "test_framework": {"type": "string", "description": "Testing framework to use"}
                         },
                         "required": ["code", "language"]
-                    }
+                    
                 ),
-                Tool(
+                Tool()
                     name="explain_code",
                     description="Get code explanations from Copilot",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "code": {"type": "string", "description": "Code to explain"},
                             "language": {"type": "string", "description": "Programming language"},
                             "detail_level": {"type": "string", "description": "Level of detail (basic, detailed, comprehensive)"}
                         },
                         "required": ["code", "language"]
-                    }
+                    
                 ),
                 # New Memory Tools
-                Tool(
+                Tool()
                     name="store_memory",
                     description="Store information in the knowledge graph memory",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "node_type": {"type": "string", "description": "Type of memory node (code, concept, pattern, solution, problem)"},
                             "content": {"type": "string", "description": "Content to store"},
                             "metadata": {"type": "object", "description": "Additional metadata"}
                         },
                         "required": ["node_type", "content"]
-                    }
+                    
                 ),
-                Tool(
+                Tool()
                     name="search_memory",
                     description="Search the knowledge graph memory",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "query": {"type": "string", "description": "Search query"},
                             "node_types": {"type": "array", "items": {"type": "string"}, "description": "Filter by node types"},
                             "limit": {"type": "integer", "description": "Maximum number of results", "default": 10}
                         },
                         "required": ["query"]
-                    }
+                    
                 ),
-                Tool(
+                Tool()
                     name="find_related_memories",
                     description="Find memories related to a specific node",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "node_id": {"type": "string", "description": "ID of the node to find relations for"},
                             "max_depth": {"type": "integer", "description": "Maximum depth to search", "default": 2},
                             "relationship_types": {"type": "array", "items": {"type": "string"}, "description": "Filter by relationship types"}
                         },
                         "required": ["node_id"]
-                    }
+                    
                 ),
-                Tool(
+                Tool()
                     name="create_memory_relationship",
                     description="Create a relationship between two memory nodes",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "source_id": {"type": "string", "description": "Source node ID"},
                             "target_id": {"type": "string", "description": "Target node ID"},
                             "relationship_type": {"type": "string", "description": "Type of relationship (implements, uses, similar_to, solves, depends_on)"},
                             "strength": {"type": "number", "description": "Relationship strength (0.0-1.0)", "default": 1.0}
                         },
                         "required": ["source_id", "target_id", "relationship_type"]
-                    }
+                    
                 ),
                 # New Sequential Thinking Tools
-                Tool(
+                Tool()
                     name="start_thinking_sequence",
                     description="Start a new sequential thinking process",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "problem": {"type": "string", "description": "Problem to solve"},
                             "context": {"type": "object", "description": "Additional context"}
                         },
                         "required": ["problem"]
-                    }
+                    
                 ),
-                Tool(
+                Tool()
                     name="add_thought_step",
                     description="Add a new thought step to a thinking sequence",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "sequence_id": {"type": "string", "description": "Thinking sequence ID"},
                             "thought_type": {"type": "string", "description": "Type of thought (analysis, hypothesis, validation, synthesis, reflection)"},
                             "content": {"type": "string", "description": "Thought content"},
@@ -678,36 +695,36 @@ class GitHubCopilotMCPServer:
                             "confidence": {"type": "number", "description": "Confidence level (0.0-1.0)", "default": 0.5}
                         },
                         "required": ["sequence_id", "thought_type", "content", "inputs", "reasoning"]
-                    }
+                    
                 ),
-                Tool(
+                Tool()
                     name="reflect_on_thinking",
                     description="Perform reflection on a thinking sequence",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "sequence_id": {"type": "string", "description": "Thinking sequence ID"}
                         },
                         "required": ["sequence_id"]
-                    }
+                    
                 ),
-                Tool(
+                Tool()
                     name="get_thinking_summary",
                     description="Get a summary of a thinking sequence",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "sequence_id": {"type": "string", "description": "Thinking sequence ID"}
                         },
                         "required": ["sequence_id"]
-                    }
+                    
                 ),
-                Tool(
+                Tool()
                     name="enhanced_code_analysis",
                     description="Perform enhanced code analysis using memory and sequential thinking",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "code": {"type": "string", "description": "Code to analyze"},
                             "language": {"type": "string", "description": "Programming language"},
                             "analysis_type": {"type": "string", "description": "Type of analysis (comprehensive, performance, security, maintainability)"},
@@ -715,9 +732,9 @@ class GitHubCopilotMCPServer:
                             "use_thinking": {"type": "boolean", "description": "Use sequential thinking", "default": True}
                         },
                         "required": ["code", "language", "analysis_type"]
-                    }
-                )
-            ]
+                    
+                
+            
         
         @self.server.call_tool()
         async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
@@ -756,152 +773,152 @@ class GitHubCopilotMCPServer:
                 else:
                     raise ValueError(f"Unknown tool: {name}")
                 
-                return [TextContent(type="text", text=json.dumps(result, indent=2))]
+                return [TextContent(type="text", text=json.dumps(result, indent=2, ensure_ascii=True, default=str))]
             except Exception as e:
-                logger.error(f"Error in tool {name}: {str(e)}")
+                logger.error(str(f"Error in tool {name}: {str(e}")
                 return [TextContent(type="text", text=f"Error: {str(e)}")]
     
     async def get_copilot_suggestions(self) -> str:
         """Get current Copilot suggestions enhanced with memory."""
         try:
             # Get suggestions from memory first
-            memory_suggestions = self.memory_system.semantic_search(
+            memory_suggestions = self.memory_system.semantic_search()
                 "code suggestions patterns", 
                 node_types=["pattern", "solution"], 
                 limit=5
-            )
             
-            suggestions = {
+            
+            suggestions = {}
                 "timestamp": datetime.now().isoformat(),
                 "memory_enhanced": True,
-                "memory_suggestions": [
-                    {
+                "memory_suggestions": []
+                    {}
                         "from_memory": True,
                         "type": node.type,
                         "content": node.content,
                         "relevance_score": score,
                         "access_count": node.access_count
-                    }
+                    
                     for node, score in memory_suggestions
                 ],
-                "live_suggestions": [
-                    {
+                "live_suggestions": []
+                    {}
                         "type": "function",
                         "context": "flash_loan_arbitrage",
                         "suggestion": "Consider adding input validation for token addresses",
                         "confidence": 0.95
                     },
-                    {
+                    {}
                         "type": "optimization",
                         "context": "gas_efficiency",
                         "suggestion": "Use cached contract instances to reduce gas costs",
                         "confidence": 0.87
-                    }
-                ]
-            }
-            return json.dumps(suggestions, indent=2)
+                    
+                
+            
+            return json.dumps(suggestions, indent=2, ensure_ascii=True, default=str)
         except Exception as e:
-            logger.error(f"Error getting Copilot suggestions: {str(e)}")
-            return json.dumps({"error": str(e)})
+            logger.error(str(f"Error getting Copilot suggestions: {str(e}")
+            return json.dumps({"error": str(e, ensure_ascii=True, default=str)})
     
     async def get_copilot_chat_history(self) -> str:
         """Get Copilot chat conversation history."""
         try:
-            chat_history = {
+            chat_history = {}
                 "timestamp": datetime.now().isoformat(),
-                "conversations": [
-                    {
+                "conversations": []
+                    {}
                         "id": "conv_001",
-                        "messages": [
+                        "messages": []
                             {"role": "user", "content": "How can I optimize this flash loan function?"},
                             {"role": "assistant", "content": "Here are several optimizations..."}
-                        ]
-                    }
-                ]
-            }
-            return json.dumps(chat_history, indent=2)
+                        
+                    
+                
+            
+            return json.dumps(chat_history, indent=2, ensure_ascii=True, default=str)
         except Exception as e:
-            logger.error(f"Error getting chat history: {str(e)}")
-            return json.dumps({"error": str(e)})
+            logger.error(str(f"Error getting chat history: {str(e}")
+            return json.dumps({"error": str(e, ensure_ascii=True, default=str)})
     
     async def get_code_completions(self) -> str:
         """Get code completion suggestions."""
         try:
-            completions = {
+            completions = {}
                 "timestamp": datetime.now().isoformat(),
-                "completions": [
-                    {
+                "completions": []
+                    {}
                         "trigger": "async def execute_",
                         "completion": "async def execute_flash_loan(self, token_address: str, amount: int) -> Dict[str, Any]:",
                         "confidence": 0.92
-                    }
-                ]
-            }
-            return json.dumps(completions, indent=2)
+                    
+                
+            
+            return json.dumps(completions, indent=2, ensure_ascii=True, default=str)
         except Exception as e:
-            logger.error(f"Error getting completions: {str(e)}")
-            return json.dumps({"error": str(e)})
+            logger.error(str(f"Error getting completions: {str(e}")
+            return json.dumps({"error": str(e, ensure_ascii=True, default=str)})
     
     async def get_memory_status(self) -> str:
         """Get knowledge graph memory system status."""
         try:
-            status = {
+            status = {}
                 "timestamp": datetime.now().isoformat(),
                 "total_nodes": len(self.memory_system.nodes),
                 "total_edges": len(self.memory_system.edges),
                 "node_types": {},
                 "recent_memories": []
-            }
+            
             
             # Count nodes by type
             for node in self.memory_system.nodes.values():
                 status["node_types"][node.type] = status["node_types"].get(node.type, 0) + 1
             
             # Get recent memories
-            recent_nodes = sorted(
+            recent_nodes = sorted()
                 self.memory_system.nodes.values(),
                 key=lambda x: x.updated_at,
                 reverse=True
             )[:10]
             
-            status["recent_memories"] = [
-                {
+            status["recent_memories"] = []
+                {}
                     "id": node.id,
                     "type": node.type,
                     "content": node.content[:100] + "..." if len(node.content) > 100 else node.content,
                     "created_at": node.created_at.isoformat(),
                     "access_count": node.access_count
-                }
+                
                 for node in recent_nodes
-            ]
             
-            return json.dumps(status, indent=2)
+            
+            return json.dumps(status, indent=2, ensure_ascii=True, default=str)
         except Exception as e:
-            logger.error(f"Error getting memory status: {str(e)}")
-            return json.dumps({"error": str(e)})
+            logger.error(str(f"Error getting memory status: {str(e}")
+            return json.dumps({"error": str(e, ensure_ascii=True, default=str)})
     
     async def get_thinking_status(self) -> str:
         """Get sequential thinking system status."""
         try:
-            status = {
+            status = {}
                 "timestamp": datetime.now().isoformat(),
                 "active_sequences": len(self.sequential_thinking.active_sequences),
                 "sequences": []
-            }
+            
             
             for seq_id, sequence in self.sequential_thinking.active_sequences.items():
-                status["sequences"].append({
+                status["sequences"].append({)}
                     "sequence_id": seq_id,
                     "total_steps": len(sequence),
                     "last_step_type": sequence[-1].thought_type if sequence else None,
                     "average_confidence": sum(step.confidence for step in sequence) / len(sequence) if sequence else 0,
                     "created_at": sequence[0].created_at.isoformat() if sequence else None
-                })
+                
             
-            return json.dumps(status, indent=2)
+            return json.dumps(status, indent=2, ensure_ascii=True, default=str)
         except Exception as e:
-            logger.error(f"Error getting thinking status: {str(e)}")
-            return json.dumps({"error": str(e)})
+            logger.error(str(f"Error getting thinking status: {str(e}")
+            return json.dumps({"error": str(e, ensure_ascii=True, default=str)})
     
     # Enhanced tool implementations
     async def get_code_suggestions_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
@@ -911,43 +928,43 @@ class GitHubCopilotMCPServer:
         intent = arguments.get("intent", "improve code quality")
         
         # Search memory for related patterns
-        memory_results = self.memory_system.semantic_search(
+        memory_results = self.memory_system.semantic_search()
             f"{language} {intent} {code[:100]}", 
             node_types=["code", "pattern", "solution"],
             limit=5
-        )
+        
         
         # Store this request in memory
-        request_id = self.memory_system.add_memory(
+        request_id = self.memory_system.add_memory()
             "code_request",
             f"Code suggestions for {language} code with intent: {intent}",
             {"code_snippet": code[:200], "language": language, "intent": intent}
-        )
         
-        result = {
-            "suggestions": [
-                {
+        
+        result = {}
+            "suggestions": []
+                {}
                     "type": "improvement",
                     "original_code": code[:100] + "..." if len(code) > 100 else code,
                     "suggested_code": f"# {intent}\n{code}",
                     "explanation": f"Added intent comment for {language} code",
                     "confidence": 0.88
-                }
+                
             ],
             "memory_enhanced": True,
-            "related_memories": [
-                {
+            "related_memories": []
+                {}
                     "content": node.content[:100] + "..." if len(node.content) > 100 else node.content,
                     "type": node.type,
                     "relevance_score": score
-                }
+                
                 for node, score in memory_results
             ],
             "language": language,
             "intent": intent,
             "request_id": request_id,
             "timestamp": datetime.now().isoformat()
-        }
+        
         
         return result
     
@@ -957,15 +974,15 @@ class GitHubCopilotMCPServer:
         language = arguments.get("language", "python")
         optimization_type = arguments.get("optimization_type", "performance")
         
-        return {
+        return {}
             "original_code": code,
             "optimized_code": f"# Optimized for {optimization_type}\n{code}",
-            "optimizations_applied": [
+            "optimizations_applied": []
                 {"type": optimization_type, "description": f"Applied {optimization_type} optimizations"}
             ],
             "estimated_improvement": "15-20% performance gain",
             "timestamp": datetime.now().isoformat()
-        }
+        
     
     async def fix_code_issues_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Tool implementation for fixing code issues."""
@@ -973,15 +990,15 @@ class GitHubCopilotMCPServer:
         language = arguments.get("language", "python")
         error_message = arguments.get("error_message", "")
         
-        return {
+        return {}
             "original_code": code,
             "fixed_code": f"# Fixed: {error_message}\n{code}",
-            "issues_fixed": [
+            "issues_fixed": []
                 {"issue": error_message, "fix": "Added error handling and validation"}
             ],
             "confidence": 0.91,
             "timestamp": datetime.now().isoformat()
-        }
+        
     
     async def generate_tests_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Tool implementation for generating tests."""
@@ -989,10 +1006,9 @@ class GitHubCopilotMCPServer:
         language = arguments.get("language", "python")
         test_framework = arguments.get("test_framework", "pytest")
         
-        return {
+        return {}
             "original_code": code,
             "generated_tests": f"""
-import {test_framework}
 
 def test_generated_function():
     # Generated test for the provided code
@@ -1001,7 +1017,7 @@ def test_generated_function():
             "test_framework": test_framework,
             "coverage_estimate": "85%",
             "timestamp": datetime.now().isoformat()
-        }
+        
     
     async def explain_code_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Tool implementation for code explanation."""
@@ -1009,7 +1025,7 @@ def test_generated_function():
         language = arguments.get("language", "python")
         detail_level = arguments.get("detail_level", "detailed")
         
-        return {
+        return {}
             "code": code,
             "language": language,
             "explanation": f"""
@@ -1025,7 +1041,7 @@ Key components:
             "complexity_score": 6.5,
             "maintainability_score": 8.2,
             "timestamp": datetime.now().isoformat()
-        }
+        
     
     # New Memory Tool Implementations
     async def store_memory_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
@@ -1036,13 +1052,13 @@ Key components:
         
         node_id = self.memory_system.add_memory(node_type, content, metadata)
         
-        return {
+        return {}
             "success": True,
             "node_id": node_id,
             "node_type": node_type,
             "content_length": len(content),
             "timestamp": datetime.now().isoformat()
-        }
+        
     
     async def search_memory_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Tool implementation for searching memory."""
@@ -1052,22 +1068,22 @@ Key components:
         
         results = self.memory_system.semantic_search(query, node_types, limit)
         
-        return {
+        return {}
             "query": query,
-            "results": [
-                {
+            "results": []
+                {}
                     "node_id": node.id,
                     "type": node.type,
                     "content": node.content,
                     "relevance_score": score,
                     "created_at": node.created_at.isoformat(),
                     "access_count": node.access_count
-                }
+                
                 for node, score in results
             ],
             "total_results": len(results),
             "timestamp": datetime.now().isoformat()
-        }
+        
     
     async def find_related_memories_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Tool implementation for finding related memories."""
@@ -1075,25 +1091,25 @@ Key components:
         max_depth = arguments.get("max_depth", 2)
         relationship_types = arguments.get("relationship_types")
         
-        related_memories = self.memory_system.find_related_memories(
+        related_memories = self.memory_system.find_related_memories()
             node_id, max_depth, relationship_types
-        )
         
-        return {
+        
+        return {}
             "source_node_id": node_id,
-            "related_memories": [
-                {
+            "related_memories": []
+                {}
                     "node_id": node.id,
                     "type": node.type,
                     "content": node.content,
                     "created_at": node.created_at.isoformat(),
                     "access_count": node.access_count
-                }
+                
                 for node in related_memories
             ],
             "total_related": len(related_memories),
             "timestamp": datetime.now().isoformat()
-        }
+        
     
     async def create_memory_relationship_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Tool implementation for creating memory relationships."""
@@ -1102,11 +1118,11 @@ Key components:
         relationship_type = arguments.get("relationship_type", "")
         strength = arguments.get("strength", 1.0)
         
-        edge_id = self.memory_system.add_relationship(
+        edge_id = self.memory_system.add_relationship()
             source_id, target_id, relationship_type, strength
-        )
         
-        return {
+        
+        return {}
             "success": True,
             "edge_id": edge_id,
             "source_id": source_id,
@@ -1114,7 +1130,7 @@ Key components:
             "relationship_type": relationship_type,
             "strength": strength,
             "timestamp": datetime.now().isoformat()
-        }
+        
     
     # New Sequential Thinking Tool Implementations
     async def start_thinking_sequence_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
@@ -1124,13 +1140,13 @@ Key components:
         
         sequence_id = self.sequential_thinking.start_thinking_sequence(problem, context)
         
-        return {
+        return {}
             "success": True,
             "sequence_id": sequence_id,
             "problem": problem,
             "context": context,
             "timestamp": datetime.now().isoformat()
-        }
+        
     
     async def add_thought_step_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Tool implementation for adding thought step."""
@@ -1141,18 +1157,18 @@ Key components:
         reasoning = arguments.get("reasoning", "")
         confidence = arguments.get("confidence", 0.5)
         
-        step_id = self.sequential_thinking.add_thought_step(
+        step_id = self.sequential_thinking.add_thought_step()
             sequence_id, thought_type, content, inputs, reasoning, confidence
-        )
         
-        return {
+        
+        return {}
             "success": True,
             "step_id": step_id,
             "sequence_id": sequence_id,
             "thought_type": thought_type,
             "confidence": confidence,
             "timestamp": datetime.now().isoformat()
-        }
+        
     
     async def reflect_on_thinking_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Tool implementation for reflecting on thinking."""
@@ -1160,12 +1176,12 @@ Key components:
         
         reflection_result = self.sequential_thinking.reflect_on_sequence(sequence_id)
         
-        return {
+        return {}
             "success": True,
             "sequence_id": sequence_id,
             "reflection": reflection_result,
             "timestamp": datetime.now().isoformat()
-        }
+        
     
     async def get_thinking_summary_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Tool implementation for getting thinking summary."""
@@ -1173,11 +1189,11 @@ Key components:
         
         summary = self.sequential_thinking.get_sequence_summary(sequence_id)
         
-        return {
+        return {}
             "success": True,
             "summary": summary,
             "timestamp": datetime.now().isoformat()
-        }
+        
     
     async def enhanced_code_analysis_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Enhanced code analysis using memory and sequential thinking."""
@@ -1187,80 +1203,80 @@ Key components:
         use_memory = arguments.get("use_memory", True)
         use_thinking = arguments.get("use_thinking", True)
         
-        result = {
+        result = {}
             "code": code,
             "language": language,
             "analysis_type": analysis_type,
-            "basic_analysis": {
+            "basic_analysis": {}
                 "lines_of_code": len(code.split('\n')),
                 "estimated_complexity": "Medium",
                 "language_features": ["functions", "variables", "control_flow"]
-            }
-        }
+            
+        
         
         # Memory-enhanced analysis
         if use_memory:
-            memory_patterns = self.memory_system.semantic_search(
+            memory_patterns = self.memory_system.semantic_search()
                 f"{language} {analysis_type} code analysis",
                 node_types=["pattern", "solution", "code"],
                 limit=5
-            )
             
-            result["memory_insights"] = [
-                {
+            
+            result["memory_insights"] = []
+                {}
                     "pattern": node.content[:100] + "..." if len(node.content) > 100 else node.content,
                     "relevance": score,
                     "type": node.type
-                }
+                
                 for node, score in memory_patterns
-            ]
+            
             
             # Store this analysis in memory
-            analysis_id = self.memory_system.add_memory(
+            analysis_id = self.memory_system.add_memory()
                 "code_analysis",
                 f"{analysis_type} analysis of {language} code",
-                {
+                {}
                     "code_hash": hashlib.md5(code.encode()).hexdigest(),
                     "language": language,
                     "analysis_type": analysis_type
-                }
-            )
+                
+            
             result["stored_in_memory"] = analysis_id
         
         # Sequential thinking analysis
         if use_thinking:
-            thinking_id = self.sequential_thinking.start_thinking_sequence(
+            thinking_id = self.sequential_thinking.start_thinking_sequence()
                 f"Analyze {language} code for {analysis_type}",
                 {"code": code, "language": language}
-            )
+            
             
             # Add analysis steps
-            self.sequential_thinking.add_thought_step(
+            self.sequential_thinking.add_thought_step()
                 thinking_id,
                 "analysis",
                 f"Initial code structure analysis: {len(code.split('def '))} functions detected",
                 [code],
                 "Counting function definitions and analyzing structure",
                 0.9
-            )
             
-            self.sequential_thinking.add_thought_step(
+            
+            self.sequential_thinking.add_thought_step()
                 thinking_id,
                 "hypothesis",
                 f"Code appears to be {analysis_type}-focused with moderate complexity",
                 [f"Code length: {len(code)}", f"Function count: {len(code.split('def '))}"],
                 "Based on structural analysis and code patterns",
                 0.7
-            )
+            
             
             # Perform reflection
             reflection = self.sequential_thinking.reflect_on_sequence(thinking_id)
             
-            result["thinking_process"] = {
+            result["thinking_process"] = {}
                 "sequence_id": thinking_id,
                 "reflection": reflection,
                 "insights": reflection.get("insights", [])
-            }
+            
         
         result["timestamp"] = datetime.now().isoformat()
         
@@ -1270,7 +1286,6 @@ Key components:
         """Initialize HTTP session and authentication."""
         self.session = aiohttp.ClientSession()
         # Set up GitHub token and Copilot API key from environment
-        import os
         self.github_token = os.getenv("GITHUB_TOKEN")
         self.copilot_api_key = os.getenv("COPILOT_API_KEY")
     
@@ -1287,18 +1302,18 @@ async def main():
         await server_instance.initialize_session()
         
         async with stdio_server() as (read_stream, write_stream):
-            await server_instance.server.run(
+            await server_instance.server.run()
                 read_stream,
                 write_stream,
-                InitializationOptions(
+                InitializationOptions()
                     server_name="github-copilot-mcp",
                     server_version="2.0.0",
-                    capabilities=server_instance.server.get_capabilities(
+                    capabilities=server_instance.server.get_capabilities()
                         notification_options=None,
                         experimental_capabilities=None,
                     ),
                 ),
-            )
+            
     finally:
         await server_instance.cleanup()
 

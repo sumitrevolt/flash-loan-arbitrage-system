@@ -1,20 +1,23 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from decimal import Decimal, getcontext
+from typing import Dict, List, Optional
+import asyncio
+import json
+import logging
+import os
+import platform
+import time
+
+    from dex_price_fetcher import MultiDexPriceFetcher
+from dotenv import load_dotenv
+from web3 import Web3
 """
 Real-time DEX Price Monitor and Arbitrage Calculator
 Shows live prices, calculations, and potential opportunities
 """
 
-import asyncio
-import json
-import logging
-import time
-import os
-import platform
-from datetime import datetime
-from decimal import Decimal, getcontext
-from typing import Dict, List, Optional
-from web3 import Web3
-from dotenv import load_dotenv
 
 # Windows compatibility
 if platform.system() == 'Windows':
@@ -28,10 +31,9 @@ getcontext().prec = 50
 
 # Import modules
 try:
-    from dex_price_fetcher import MultiDexPriceFetcher
     DEX_FETCHER_AVAILABLE = True
 except ImportError:
-    print("❌ DEX price fetcher not available")
+    print("[ERROR] DEX price fetcher not available")
     DEX_FETCHER_AVAILABLE = False
 
 class ArbitrageCalculator:
@@ -71,25 +73,25 @@ class ArbitrageCalculator:
                 continue
                 
             try:
-                price_data = await self.price_fetcher.get_dex_price(
+                price_data = await self.price_fetcher.get_dex_price()
                     dex_name=dex_name.lower(),
                     token_a=token_a,
                     token_b=token_b,
                     amount=self.trade_size
-                )
+                
                 
                 if price_data and hasattr(price_data, 'price') and price_data.price > 0:
-                    prices[dex_name] = {
+                    prices[dex_name] = {}
                         'price': price_data.price,
                         'fee': Decimal(str(dex_info.get('fee_tier', 0.003))),
                         'liquidity': getattr(price_data, 'liquidity', Decimal('0')),
                         'source': getattr(price_data, 'source', 'unknown')
-                    }
+                    
                     
             except Exception as e:
-                prices[dex_name] = {
+                prices[dex_name] = {}
                     'error': str(e)[:50] + "..." if len(str(e)) > 50 else str(e)
-                }
+                
         
         return prices
     
@@ -126,20 +128,20 @@ class ArbitrageCalculator:
         # Calculate spread
         price_spread_pct = ((sell_price - buy_price) / buy_price) * 100
         
-        return {
+        return {}
             'status': 'calculated',
             'token_pair': f"{token_a}/{token_b}",
-            'best_buy': {
+            'best_buy': {}
                 'dex': best_buy_dex,
                 'price': buy_price,
                 'fee_pct': float(valid_prices[best_buy_dex]['fee'] * 100)
             },
-            'best_sell': {
+            'best_sell': {}
                 'dex': best_sell_dex,
                 'price': sell_price,
                 'fee_pct': float(valid_prices[best_sell_dex]['fee'] * 100)
             },
-            'calculations': {
+            'calculations': {}
                 'trade_size': self.trade_size,
                 'gross_profit': gross_profit,
                 'aave_fee': aave_fee,
@@ -152,22 +154,22 @@ class ArbitrageCalculator:
             },
             'profitable': net_profit > self.min_profit,
             'all_prices': valid_prices
-        }
+        
 
     async def display_live_prices(self):
         """Display live prices and calculations"""
         
         # Popular pairs to monitor
-        monitor_pairs = [
+        monitor_pairs = []
             ('WMATIC', 'USDC'),
             ('WETH', 'USDC'),
             ('WBTC', 'USDT'),
             ('USDC', 'USDT'),
             ('WMATIC', 'WETH')
-        ]
+        
         
         print("\n" + "="*80)
-        print("🚀 REAL-TIME DEX ARBITRAGE MONITOR")
+        print("[INIT] REAL-TIME DEX ARBITRAGE MONITOR")
         print("="*80)
         print(f"Trade Size: ${self.trade_size} | Min Profit: ${self.min_profit} | Flash Loan Fee: {self.flash_loan_fee*100:.2f}%")
         print("="*80)
@@ -181,7 +183,7 @@ class ArbitrageCalculator:
                 opportunities_found = 0
                 
                 for token_a, token_b in monitor_pairs:
-                    print(f"\n📊 {token_a}/{token_b}:")
+                    print(f"\n[METRICS] {token_a}/{token_b}:")
                     
                     # Get prices from all DEXes
                     dex_prices = await self.get_all_dex_prices(token_a, token_b)
@@ -196,7 +198,7 @@ class ArbitrageCalculator:
                                 print(f"      {dex_name:12} ${price:8.4f} (fee: {fee:.2f}%)")
                             else:
                                 error = dex_prices[dex_name].get('error', 'No data')
-                                print(f"      {dex_name:12} ❌ {error}")
+                                print(f"      {dex_name:12} [ERROR] {error}")
                         else:
                             print(f"      {dex_name:12} ⏸️  Disabled")
                     
@@ -208,7 +210,7 @@ class ArbitrageCalculator:
                         sell_info = calc['best_sell']
                         calcs = calc['calculations']
                         
-                        print(f"   🔄 Best Route: {buy_info['dex']} → {sell_info['dex']}")
+                        print(f"   [SYNC] Best Route: {buy_info['dex']} → {sell_info['dex']}")
                         print(f"      Buy:  ${buy_info['price']:.4f} on {buy_info['dex']}")
                         print(f"      Sell: ${sell_info['price']:.4f} on {sell_info['dex']}")
                         print(f"      Spread: {calcs['price_spread_pct']:.3f}%")
@@ -223,21 +225,21 @@ class ArbitrageCalculator:
                         print(f"      NET PROFIT:      ${calcs['net_profit']:7.2f}")
                         
                         if calc['profitable']:
-                            print(f"      🎉 PROFITABLE! (≥${self.min_profit})")
+                            print(f"      [CELEBRATE] PROFITABLE! (≥${self.min_profit})")
                             opportunities_found += 1
                         else:
-                            print(f"      ❌ Not profitable (need ≥${self.min_profit})")
+                            print(f"      [ERROR] Not profitable (need ≥${self.min_profit})")
                     
                     elif calc['status'] == 'insufficient_prices':
-                        print(f"   ⚠️  Only {calc['valid_dexes']} DEX(es) have prices")
+                        print(f"   [WARN]  Only {calc['valid_dexes']} DEX(es) have prices")
                     
                     elif calc['status'] == 'same_dex':
-                        print(f"   ⚠️  Best buy/sell on same DEX: {calc['dex']}")
+                        print(f"   [WARN]  Best buy/sell on same DEX: {calc['dex']}")
                 
                 print("\n" + "="*80)
-                print(f"📈 SUMMARY: {opportunities_found} profitable opportunities found at {current_time}")
+                print(f"[GROWTH] SUMMARY: {opportunities_found} profitable opportunities found at {current_time}")
                 if opportunities_found > 0:
-                    print("🚨 ARBITRAGE OPPORTUNITIES AVAILABLE!")
+                    print("[ALERT] ARBITRAGE OPPORTUNITIES AVAILABLE!")
                 else:
                     print("⏳ Waiting for profitable opportunities...")
                 print("="*80)
@@ -249,7 +251,7 @@ class ArbitrageCalculator:
                 print("\n👋 Monitor stopped by user")
                 break
             except Exception as e:
-                print(f"❌ Error: {e}")
+                print(f"[ERROR] Error: {e}")
                 await asyncio.sleep(2)
     
     async def cleanup(self):
@@ -261,14 +263,14 @@ async def main():
     """Main function"""
     calculator = ArbitrageCalculator('production_config.json')
     
-    print("🔄 Initializing DEX price monitor...")
+    print("[SYNC] Initializing DEX price monitor...")
     
     if not await calculator.initialize():
-        print("❌ Failed to initialize price fetcher")
+        print("[ERROR] Failed to initialize price fetcher")
         return
     
-    print("✅ Price fetcher initialized")
-    print("🎯 Starting live price monitoring...")
+    print("[OK] Price fetcher initialized")
+    print("[TASK] Starting live price monitoring...")
     print("   Press Ctrl+C to stop")
     
     try:

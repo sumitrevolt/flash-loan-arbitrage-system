@@ -1,3 +1,18 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Optional
+import asyncio
+import logging
+import os
+import signal
+import sys
+
+from enhanced_bridge_api import app, orchestrator as global_orchestrator
+from mcp_agent_connection_bridge import MCPAgentBridge
+from real_task_executor import RealTaskExecutor
+from task_orchestrator import TaskOrchestrator
+import uvicorn
 """
 Complete MCP-Agent Task Orchestration System Launcher
 ===================================================
@@ -16,32 +31,33 @@ Author: GitHub Copilot Assistant
 Date: June 18, 2025
 """
 
-import asyncio
-import logging
-import sys
-import os
-import signal
-from datetime import datetime
-from typing import Optional
 
 # Add current directory to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from mcp_agent_connection_bridge import MCPAgentBridge
-from task_orchestrator import TaskOrchestrator
-from real_task_executor import RealTaskExecutor
-from enhanced_bridge_api import app, orchestrator as global_orchestrator
-import uvicorn
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.FileHandler('integrated_system.log'),
         logging.StreamHandler()
-    ]
-)
+    
+
 logger = logging.getLogger(__name__)
 
 class IntegratedSystemLauncher:
@@ -56,7 +72,7 @@ class IntegratedSystemLauncher:
         
     async def start_system(self):
         """Start the complete integrated system"""
-        logger.info("🚀 Starting Flash Loan MCP-Agent Task Orchestration System")
+        logger.info("[INIT] Starting Flash Loan MCP-Agent Task Orchestration System")
         logger.info("=" * 70)
         
         try:
@@ -66,11 +82,11 @@ class IntegratedSystemLauncher:
             await self.bridge.start()
             
             # 2. Initialize task orchestrator with bridge
-            logger.info("🎯 Initializing Task Orchestrator...")
+            logger.info("[TASK] Initializing Task Orchestrator...")
             self.orchestrator = TaskOrchestrator(bridge_client=self.bridge)
             
             # 3. Initialize real task executor
-            logger.info("⚡ Initializing Real Task Executor...")
+            logger.info("[FAST] Initializing Real Task Executor...")
             self.executor = RealTaskExecutor()
             
             # 4. Connect orchestrator to executor
@@ -84,32 +100,32 @@ class IntegratedSystemLauncher:
             global_orchestrator = self.orchestrator
             
             # 7. Start the API server
-            logger.info("🌐 Starting Web API and Dashboard...")
+            logger.info("[NETWORK] Starting Web API and Dashboard...")
             await self.start_api_server()
             
             # 8. Start predefined workflows
-            logger.info("🔄 Starting predefined workflows...")
+            logger.info("[SYNC] Starting predefined workflows...")
             await self.start_predefined_workflows()
             
             self.running = True
-            logger.info("✅ System startup complete!")
-            logger.info("📊 Dashboard available at: http://localhost:8500/dashboard")
+            logger.info("[OK] System startup complete!")
+            logger.info("[METRICS] Dashboard available at: http://localhost:8500/dashboard")
             logger.info("🔗 API documentation at: http://localhost:8500/docs")
             
         except Exception as e:
-            logger.error(f"❌ System startup failed: {str(e)}")
+            logger.error(str(f"[ERROR] System startup failed: {str(e}")
             await self.shutdown()
             raise
     
     async def start_api_server(self):
         """Start the FastAPI server"""
-        config = uvicorn.Config(
+        config = uvicorn.Config()
             app,
             host="0.0.0.0",
             port=8500,
             log_level="info",
             access_log=True
-        )
+        
         
         # Start server in background
         server = uvicorn.Server(config)
@@ -126,47 +142,47 @@ class IntegratedSystemLauncher:
         try:
             # 1. Start health check workflow
             logger.info("🏥 Starting system health check workflow...")
-            health_workflow_id = await self.orchestrator.create_workflow(
+            health_workflow_id = await self.orchestrator.create_workflow()
                 "system_health_check",
                 {"interval_minutes": 5}
-            )
+            
             
             # 2. Start arbitrage monitoring workflow
             logger.info("💰 Starting arbitrage monitoring workflow...")
-            arbitrage_workflow_id = await self.orchestrator.create_workflow(
+            arbitrage_workflow_id = await self.orchestrator.create_workflow()
                 "arbitrage_monitoring",
                 {"interval_minutes": 1, "min_profit_threshold": 0.01}
-            )
+            
             
             # 3. Start market analysis workflow
-            logger.info("📈 Starting market analysis workflow...")
-            market_workflow_id = await self.orchestrator.create_workflow(
+            logger.info("[GROWTH] Starting market analysis workflow...")
+            market_workflow_id = await self.orchestrator.create_workflow()
                 "market_analysis",
                 {"interval_minutes": 15, "depth": "full"}
-            )
+            
             
             # 4. Create some sample tasks
-            logger.info("📝 Creating sample tasks...")
+            logger.info("[LOG] Creating sample tasks...")
             
             # Sample risk assessment task
-            risk_task_id = await self.orchestrator.create_task(
+            risk_task_id = await self.orchestrator.create_task()
                 "risk_assessment",
                 "Assess current portfolio risk",
                 {"portfolio_id": "main", "risk_tolerance": "medium"}
-            )
+            
             
             # Sample data collection task
-            data_task_id = await self.orchestrator.create_task(
+            data_task_id = await self.orchestrator.create_task()
                 "collect_data",
                 "Collect current market data",
                 {"markets": ["ETH/USDC", "BTC/USDT", "DAI/USDC"]}
-            )
             
-            logger.info(f"✅ Started workflows: {health_workflow_id}, {arbitrage_workflow_id}, {market_workflow_id}")
-            logger.info(f"✅ Created sample tasks: {risk_task_id}, {data_task_id}")
+            
+            logger.info(str(f"[OK] Started workflows: {health_workflow_id}, {arbitrage_workflow_id}, {market_workflow_id}")
+            logger.info(str(f"[OK] Created sample tasks: {risk_task_id}, {data_task_id}")
             
         except Exception as e:
-            logger.error(f"❌ Failed to start predefined workflows: {str(e)}")
+            logger.error(str(f"[ERROR] Failed to start predefined workflows: {str(e}")
     
     async def monitor_system(self):
         """Monitor system health and performance"""
@@ -174,16 +190,16 @@ class IntegratedSystemLauncher:
             try:
                 if self.bridge and self.orchestrator:
                     # Log system stats
-                    stats = {
+                    stats = {}
                         "timestamp": datetime.now().isoformat(),
                         "mcp_servers": len(self.bridge.mcp_servers),
                         "ai_agents": len(self.bridge.ai_agents),
                         "active_tasks": len(self.orchestrator.active_tasks),
                         "completed_tasks": len(self.orchestrator.completed_tasks),
                         "failed_tasks": len(self.orchestrator.failed_tasks)
-                    }
                     
-                    logger.info(f"📊 System Stats: {stats}")
+                    
+                    logger.info(str(f"[METRICS] System Stats: {stats}")
                     
                     # Perform health checks
                     await self.perform_health_checks()
@@ -191,7 +207,7 @@ class IntegratedSystemLauncher:
                 await asyncio.sleep(60)  # Monitor every minute
                 
             except Exception as e:
-                logger.error(f"❌ System monitoring error: {str(e)}")
+                logger.error(str(f"[ERROR] System monitoring error: {str(e}")
                 await asyncio.sleep(30)  # Wait before retry
     
     async def perform_health_checks(self):
@@ -214,42 +230,42 @@ class IntegratedSystemLauncher:
                     async with self.executor as executor:
                         result = await executor.test_agent_connectivity(f"{sample_agent.host}:{sample_agent.port}")
                         if not result.success:
-                            logger.warning(f"⚠️ Agent connectivity issue: {result.error}")
+                            logger.warning(str(f"[WARN] Agent connectivity issue: {result.error}")
             
         except Exception as e:
-            logger.error(f"❌ Health check failed: {str(e)}")
+            logger.error(str(f"[ERROR] Health check failed: {str(e}")
     
     async def shutdown(self):
         """Gracefully shutdown the system"""
-        logger.info("🛑 Shutting down system...")
+        logger.info("[STOP] Shutting down system...")
         self.running = False
         
         try:
             # Stop orchestrator
             if self.orchestrator:
                 await self.orchestrator.stop()
-                logger.info("✅ Orchestrator stopped")
+                logger.info("[OK] Orchestrator stopped")
             
             # Stop bridge
             if self.bridge:
                 await self.bridge.stop()
-                logger.info("✅ Bridge stopped")
+                logger.info("[OK] Bridge stopped")
             
             # Close executor
             if self.executor:
-                logger.info("✅ Executor closed")
+                logger.info("[OK] Executor closed")
             
-            logger.info("✅ System shutdown complete")
+            logger.info("[OK] System shutdown complete")
             
         except Exception as e:
-            logger.error(f"❌ Error during shutdown: {str(e)}")
+            logger.error(str(f"[ERROR] Error during shutdown: {str(e}")
     
     async def run(self):
         """Main run loop"""
         try:
             # Setup signal handlers
             def signal_handler(signum, frame):
-                logger.info(f"Received signal {signum}, shutting down...")
+                logger.info(str(f"Received signal {signum}, shutting down...")
                 asyncio.create_task(self.shutdown())
             
             signal.signal(signal.SIGINT, signal_handler)
@@ -264,7 +280,7 @@ class IntegratedSystemLauncher:
         except KeyboardInterrupt:
             logger.info("Received keyboard interrupt")
         except Exception as e:
-            logger.error(f"❌ System error: {str(e)}")
+            logger.error(str(f"[ERROR] System error: {str(e}")
         finally:
             await self.shutdown()
 
@@ -279,5 +295,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\n👋 Goodbye!")
     except Exception as e:
-        print(f"❌ Fatal error: {str(e)}")
+        print(f"[ERROR] Fatal error: {str(e)}")
         sys.exit(1)

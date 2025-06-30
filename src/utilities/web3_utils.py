@@ -1,20 +1,24 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Optional, Any
+import json
+import logging
+import re
+import time
+
+                from src.flash_loan.core.custom_middleware import CustomMiddleware
+from src.utils.middleware_compat import apply_poa_middleware
+from src.utils.web3_provider import ()
 """
 Web3 utility functions for the Flash Loan Arbitrage System.
 Provides robust RPC connection management and address handling.
 """
 
-import logging
-import time
-import json
-from typing import Optional, Any
 
 # Import from central web3_provider to avoid duplication
-from src.utils.web3_provider import (
     Web3, Web3Exception, ContractLogicError, TransactionNotFound,
     WEB3_IMPORTED, requires_web3, TxParams, Wei, ChecksumAddress
-)
-from src.utils.middleware_compat import apply_poa_middleware
+
 
 logger = logging.getLogger("web3_utils")
 
@@ -60,7 +64,7 @@ def is_connected(provider) -> bool:
 
         return False
     except Exception as e:
-        logger.error(f"Error checking connection: {e}")
+        logger.error(str(f"Error checking connection: {e}")
         return False
 
 def create_web3_instance(rpc_url: str) -> Optional[Web3]:
@@ -88,14 +92,14 @@ def create_web3_instance(rpc_url: str) -> Optional[Web3]:
 
         # Check connection
         if not is_connected(w3.provider):
-            logger.error(f"Failed to connect to RPC URL: {rpc_url}")
+            logger.error(str(f"Failed to connect to RPC URL: {rpc_url}")
             return None
 
-        logger.info(f"Connected to RPC URL: {rpc_url}")
+        logger.info(str(f"Connected to RPC URL: {rpc_url}")
         return w3
 
     except Exception as e:
-        logger.error(f"Error creating Web3 instance: {e}")
+        logger.error(str(f"Error creating Web3 instance: {e}")
         return None
 
 def add_middleware(w3: Web3) -> None:
@@ -110,7 +114,7 @@ def add_middleware(w3: Web3) -> None:
         apply_poa_middleware(w3)
         logger.info("Applied PoA middleware successfully")
     except Exception as e:
-        logger.warning(f"Failed to apply PoA middleware: {e}")
+        logger.warning(str(f"Failed to apply PoA middleware: {e}")
 
 def create_contract(w3: Web3, address: str, abi_path: str) -> Optional[Any]:
     """
@@ -127,7 +131,7 @@ def create_contract(w3: Web3, address: str, abi_path: str) -> Optional[Any]:
     try:
         # Check if address is valid
         if not Web3.is_address(address):
-            logger.error(f"Invalid contract address: {address}")
+            logger.error(str(f"Invalid contract address: {address}")
             return None
 
         # Convert to checksum address
@@ -148,7 +152,7 @@ def create_contract(w3: Web3, address: str, abi_path: str) -> Optional[Any]:
         return contract
 
     except Exception as e:
-        logger.error(f"Error creating contract: {e}")
+        logger.error(str(f"Error creating contract: {e}")
         return None
 
 class RpcConnectionManager:
@@ -176,7 +180,7 @@ class RpcConnectionManager:
     def _initialize(self) -> None:
         """Initialize the Web3 instance with the primary URL."""
         try:
-            logger.info(f"Initializing Web3 with RPC URL: {self.primary_url}")
+            logger.info(str(f"Initializing Web3 with RPC URL: {self.primary_url}")
             self.w3 = Web3(Web3.HTTPProvider(self.primary_url, request_kwargs={'timeout': 30}))
 
             # Add POA middleware for Polygon
@@ -184,10 +188,10 @@ class RpcConnectionManager:
 
             # Check connection
             if not self.ensure_connected():
-                logger.error(f"Failed to connect to primary RPC URL: {self.primary_url}")
+                logger.error(str(f"Failed to connect to primary RPC URL: {self.primary_url}")
 
         except Exception as e:
-            logger.error(f"Error initializing Web3: {e}")
+            logger.error(str(f"Error initializing Web3: {e}")
 
     def ensure_connected(self) -> bool:
         """
@@ -202,7 +206,7 @@ class RpcConnectionManager:
 
         # Check connection
         if not is_connected(self.w3.provider):
-            logger.error(f"Lost connection to primary RPC URL: {self.primary_url}")
+            logger.error(str(f"Lost connection to primary RPC URL: {self.primary_url}")
             return False
 
         return True
@@ -246,17 +250,17 @@ class RpcConnectionManager:
                 return func(*args, **kwargs)
 
             except Exception as e:
-                logger.error(f"Error executing function: {e}")
+                logger.error(str(f"Error executing function: {e}")
                 retry_count += 1
 
                 if retry_count < self.max_retries:
-                    logger.info(f"Retrying... ({retry_count}/{self.max_retries})")
+                    logger.info(str(f"Retrying... ({retry_count}/{self.max_retries}")
                     time.sleep(self.retry_delay)
 
-        logger.error(f"Failed to execute function after {self.max_retries} retries")
+        logger.error(str(f"Failed to execute function after {self.max_retries} retries")
         return None
 
-def setup_web3_with_middleware(
+def setup_web3_with_middleware()
     rpc_url: str,
     private_key: Optional[str] = None,
     poa_network: bool = True
@@ -282,7 +286,7 @@ def setup_web3_with_middleware(
         w3 = Web3(Web3.HTTPProvider(rpc_url))
         
         if not w3.is_connected():
-            logger.error(f"Failed to connect to {rpc_url}")
+            logger.error(str(f"Failed to connect to {rpc_url}")
             return None
         
         # Apply POA middleware if needed
@@ -292,16 +296,15 @@ def setup_web3_with_middleware(
         # Apply signing middleware if private key provided
         if private_key:
             try:
-                from src.flash_loan.core.custom_middleware import CustomMiddleware
                 signing_middleware = CustomMiddleware.create_signing_middleware(private_key)
                 if signing_middleware and hasattr(w3.middleware_onion, 'inject'):
                     # Cast to proper type for inject method
                     w3.middleware_onion.inject(signing_middleware, layer=0)  # type: ignore
             except Exception as e:
-                logger.warning(f"Could not apply signing middleware: {e}")
+                logger.warning(str(f"Could not apply signing middleware: {e}")
         
         return w3
         
     except Exception as e:
-        logger.error(f"Error setting up Web3: {e}")
+        logger.error(str(f"Error setting up Web3: {e}")
         return None

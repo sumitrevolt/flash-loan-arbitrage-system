@@ -1,4 +1,12 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Set, Tuple
+import hashlib
+import json
+import os
+import shutil
 """
 Enhanced Duplicate Script Cleanup Tool
 =====================================
@@ -7,13 +15,6 @@ This script identifies and consolidates duplicate scripts in the flash loan proj
 removing unnecessary files and merging similar functionality.
 """
 
-import os
-import shutil
-import json
-import hashlib
-from pathlib import Path
-from typing import Dict, List, Set, Tuple
-from datetime import datetime
 
 class EnhancedDuplicateCleanup:
     def __init__(self, base_path: str = "."):
@@ -26,30 +27,30 @@ class EnhancedDuplicateCleanup:
         
     def analyze_duplicates(self) -> Dict:
         """Analyze the project for duplicate scripts"""
-        print("🔍 Analyzing project for duplicate scripts...")
+        print("[SEARCH] Analyzing project for duplicate scripts...")
         
         # Build comprehensive consolidation plan
-        self.consolidation_plan = {
-            "Additional Foundry MCP Servers": {
+        self.consolidation_plan = {}
+            "Additional Foundry MCP Servers": {}
                 "keep": "foundry-mcp-server/working_enhanced_foundry_mcp_server.py",
-                "remove": [
+                "remove": []
                     "foundry-mcp-server/enhanced_arbitrage_server.py",
                     "foundry-mcp-server/enhanced_production_mcp_server.py"
                 ],
                 "reason": "Consolidate to single working enhanced foundry server"
             },
             
-            "Dashboard Scripts": {
+            "Dashboard Scripts": {}
                 "keep": "enhanced_mcp_dashboard_with_chat.py",
-                "remove": [
+                "remove": []
                     "mcp_dashboard.py"
                 ],
                 "reason": "Keep the enhanced dashboard with chat functionality"
             },
             
-            "Test Scripts - Additional": {
+            "Test Scripts - Additional": {}
                 "keep": "test_enhanced_mcp_integration.py", 
-                "remove": [
+                "remove": []
                     "test_event_loop_fix.py",
                     "test_production_live.py",
                     "simple_mcp_test.py",
@@ -58,9 +59,9 @@ class EnhancedDuplicateCleanup:
                 "reason": "Keep only the comprehensive integration test"
             },
             
-            "Old Log Files": {
+            "Old Log Files": {}
                 "keep": None,
-                "remove": [
+                "remove": []
                     "revenue_bot.log",
                     "web3_revenue_bot.log",
                     "launcher.log"
@@ -68,9 +69,9 @@ class EnhancedDuplicateCleanup:
                 "reason": "Remove old log files from yesterday"
             },
             
-            "Backup Directories": {
+            "Backup Directories": {}
                 "keep": "backup_before_cleanup_20250605_161424",
-                "remove": [
+                "remove": []
                     "archive",
                     "archive_cleanup_20250604",
                     "deprecated"
@@ -78,44 +79,44 @@ class EnhancedDuplicateCleanup:
                 "reason": "Keep only the most recent backup, remove old archives"
             },
             
-            "Config Directories": {
+            "Config Directories": {}
                 "keep": "config",
-                "remove": [
+                "remove": []
                     "configuration"
                 ],
                 "reason": "Consolidate configuration in single config directory"
             },
             
-            "Launcher Scripts": {
+            "Launcher Scripts": {}
                 "keep": "FINAL_LAUNCHER.py",
-                "remove": [
+                "remove": []
                     "quick_start.py"
                 ],
                 "reason": "FINAL_LAUNCHER is the main entry point"
             },
             
-            "Monitoring Scripts": {
+            "Monitoring Scripts": {}
                 "keep": "monitoring",
                 "remove": [],
                 "reason": "Keep monitoring directory organized"
             },
             
-            "Production/Scripts Directories": {
+            "Production/Scripts Directories": {}
                 "keep": None,
-                "remove": [
+                "remove": []
                     "production",
                     "scripts",
                     "scripts_active"
                 ],
                 "reason": "These appear to be empty or deprecated directories"
-            }
-        }
+            
+        
         
         return self.consolidation_plan
     
     def identify_cache_and_temp_files(self) -> List[str]:
         """Identify cache and temporary files"""
-        patterns_to_remove = [
+        patterns_to_remove = []
             "**/__pycache__",
             "**/.pytest_cache",
             "**/node_modules",
@@ -127,7 +128,7 @@ class EnhancedDuplicateCleanup:
             "**/*.bak",
             "**/.DS_Store",
             "**/Thumbs.db"
-        ]
+        
         
         files_to_remove = []
         for pattern in patterns_to_remove:
@@ -142,7 +143,7 @@ class EnhancedDuplicateCleanup:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_dir = self.base_path / f"backup_before_cleanup_{timestamp}"
         
-        print(f"📦 Creating backup at: {backup_dir}")
+        print(f"[PACKAGE] Creating backup at: {backup_dir}")
         
         files_to_backup = []
         for category, plan in self.consolidation_plan.items():
@@ -168,7 +169,7 @@ class EnhancedDuplicateCleanup:
                         backed_up += 1
                     print(f"  ✓ Backed up: {file_path}")
                 except Exception as e:
-                    print(f"  ❌ Failed to backup {file_path}: {e}")
+                    print(f"  [ERROR] Failed to backup {file_path}: {e}")
         
         print(f"  ✓ Total items backed up: {backed_up}")
         return str(backup_dir)
@@ -177,15 +178,15 @@ class EnhancedDuplicateCleanup:
         """Execute the cleanup plan"""
         if create_backup:
             backup_path = self.create_backup()
-            print(f"✅ Backup created at: {backup_path}")
+            print(f"[OK] Backup created at: {backup_path}")
         
-        cleanup_results = {
+        cleanup_results = {}
             "files_removed": 0,
             "dirs_removed": 0,
             "files_kept": 0,
             "categories_processed": 0,
             "errors": []
-        }
+        
         
         print("\n🧹 Executing cleanup plan...")
         
@@ -202,7 +203,7 @@ class EnhancedDuplicateCleanup:
                 if keep_path.exists():
                     cleanup_results["files_kept"] += 1
                 else:
-                    print(f"   ⚠️  File/directory to keep doesn't exist: {plan['keep']}")
+                    print(f"   [WARN]  File/directory to keep doesn't exist: {plan['keep']}")
             
             # Remove duplicate files
             for item_to_remove in plan.get('remove', []):
@@ -219,10 +220,10 @@ class EnhancedDuplicateCleanup:
                             cleanup_results["dirs_removed"] += 1
                     except Exception as e:
                         error_msg = f"Error removing {item_to_remove}: {str(e)}"
-                        print(f"   ❌ {error_msg}")
+                        print(f"   [ERROR] {error_msg}")
                         cleanup_results["errors"].append(error_msg)
                 else:
-                    print(f"   ⚠️  Already removed: {item_to_remove}")
+                    print(f"   [WARN]  Already removed: {item_to_remove}")
             
             cleanup_results["categories_processed"] += 1
         
@@ -243,7 +244,7 @@ class EnhancedDuplicateCleanup:
                         cleanup_results["dirs_removed"] += 1
                 except Exception as e:
                     error_msg = f"Error removing {file_path}: {str(e)}"
-                    print(f"   ❌ {error_msg}")
+                    print(f"   [ERROR] {error_msg}")
                     cleanup_results["errors"].append(error_msg)
         
         return cleanup_results
@@ -319,14 +320,14 @@ Generated: {timestamp}
 
 def main():
     """Main execution function"""
-    print("🚀 Starting Enhanced Duplicate Script Cleanup")
+    print("[INIT] Starting Enhanced Duplicate Script Cleanup")
     print("=" * 50)
     
     cleanup = EnhancedDuplicateCleanup()
     
     # Analyze duplicates
     plan = cleanup.analyze_duplicates()
-    print(f"📊 Found {len(plan)} categories to process")
+    print(f"[METRICS] Found {len(plan)} categories to process")
     
     # Show plan summary
     print("\n📋 Cleanup Plan Summary:")
@@ -336,12 +337,12 @@ def main():
         total_to_remove += count
         print(f"  {category}: Remove {count} items")
     
-    print(f"\n📊 Total items to remove: {total_to_remove}")
+    print(f"\n[METRICS] Total items to remove: {total_to_remove}")
     
     # Ask for confirmation
     response = input("\n❓ Proceed with cleanup? (y/N): ").strip().lower()
     if response != 'y':
-        print("❌ Cleanup cancelled")
+        print("[ERROR] Cleanup cancelled")
         return
     
     # Execute cleanup
@@ -355,12 +356,12 @@ def main():
     with open(report_file, 'w', encoding='utf-8') as f:
         f.write(report)
     
-    print(f"\n✅ Cleanup completed!")
+    print(f"\n[OK] Cleanup completed!")
     print(f"📄 Report saved to: {report_file}")
-    print(f"📊 Summary: {results['files_removed']} files and {results['dirs_removed']} directories removed")
+    print(f"[METRICS] Summary: {results['files_removed']} files and {results['dirs_removed']} directories removed")
     
     if results['errors']:
-        print(f"⚠️  {len(results['errors'])} errors occurred - check the report for details")
+        print(f"[WARN]  {len(results['errors'])} errors occurred - check the report for details")
 
 if __name__ == "__main__":
     main()

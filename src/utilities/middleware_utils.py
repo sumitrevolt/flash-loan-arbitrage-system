@@ -1,21 +1,20 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from functools import lru_cache
+import logging
+
+from src.utils.middleware_compat import apply_poa_middleware
 """
 Middleware utilities for Web3.py compatibility across different versions.
 This module provides a unified way to import and use middleware components
 that may have different import paths in different versions of Web3.py.
 """
 # Import requires_web3 decorator from central provider
-from src.utils.web3_provider import requires_web3
 
 
-import logging
-from functools import lru_cache
 # Import from central web3_provider
-from src.utils.web3_provider import Web3
-from web3.types import TxParams, Wei, ChecksumAddress
 # Import exceptions from central provider
-from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
 # Import middleware from centralized modules
-from src.utils.middleware_compat import apply_poa_middleware
 WEB3_IMPORTED = True
 
 
@@ -43,7 +42,7 @@ def custom_poa_middleware(make_request, web3):
                 return None
         return middleware
     except ImportError as e:
-        logger.warning(f"Failed to create custom PoA middleware: {e}")
+        logger.warning(str(f"Failed to create custom PoA middleware: {e}")
         # Return a pass-through middleware if we can't create the proper one
         return lambda request_method, params: make_request(request_method, params)
 
@@ -60,7 +59,7 @@ def _resolve_poa_middleware():
     try:
         return ExtraDataToPOAMiddleware, True
     except Exception as e:
-        logger.warning(f"Could not resolve PoA middleware: {e}")
+        logger.warning(str(f"Could not resolve PoA middleware: {e}")
         return custom_poa_middleware, False
 
 def get_poa_middleware():
@@ -88,8 +87,8 @@ def apply_poa_middleware(web3_instance):
     try:
         middleware, is_native = _resolve_poa_middleware()
         web3_instance.middleware_onion.inject(middleware, layer=0)
-        logger.info(f"Applied {'native' if is_native else 'custom'} PoA middleware to Web3 instance")
+        logger.info(str(f"Applied {'native' if is_native else 'custom'} PoA middleware to Web3 instance")
         return True
     except Exception as e:
-        logger.warning(f"Failed to apply PoA middleware: {e}")
+        logger.warning(str(f"Failed to apply PoA middleware: {e}")
         return False

@@ -1,4 +1,14 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+    import sys
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+import asyncio
+import json
+import os
+import time
+
+import aiohttp
 """
 Flash Loan Arbitrage System Dashboard
 ===================================
@@ -6,13 +16,6 @@ Flash Loan Arbitrage System Dashboard
 Real-time monitoring and control dashboard for the 24/7 arbitrage system.
 """
 
-import asyncio
-import aiohttp
-import json
-import os
-import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
 class ArbitrageDashboard:
     """Real-time dashboard for monitoring arbitrage operations"""
@@ -22,16 +25,16 @@ class ArbitrageDashboard:
         self.is_running = True
         
         # Service endpoints
-        self.services = {
+        self.services = {}
             'MCP Flash Loan': 'http://localhost:8103',
             'MCP Arbitrage': 'http://localhost:8104', 
             'MCP Price Feed': 'http://localhost:8106',
             'Agent Arbitrage Bot': 'http://localhost:8206',
             'Agent Executor': 'http://localhost:8202',
             'Agent Risk Manager': 'http://localhost:8203'
-        }
         
-        self.stats = {
+        
+        self.stats = {}
             'system_status': 'UNKNOWN',
             'uptime': '0:00:00',
             'opportunities_found': 0,
@@ -41,7 +44,7 @@ class ArbitrageDashboard:
             'current_gas_price_gwei': 0.0,
             'active_services': 0,
             'last_update': datetime.now()
-        }
+        
     
     def clear_screen(self):
         """Clear console screen"""
@@ -55,17 +58,17 @@ class ArbitrageDashboard:
                 async with session.get(f"{url}/health", timeout=3) as response:
                     response_time = (time.time() - start_time) * 1000
                     
-                    return {
+                    return {}
                         'name': name,
                         'status': 'HEALTHY' if response.status == 200 else 'UNHEALTHY',
                         'response_time_ms': round(response_time, 1)
-                    }
+                    
         except Exception:
-            return {
+            return {}
                 'name': name,
                 'status': 'OFFLINE',
                 'response_time_ms': 0
-            }
+            
     
     async def get_system_stats(self) -> Dict:
         """Get system statistics"""
@@ -96,10 +99,10 @@ class ArbitrageDashboard:
         """Refresh dashboard data"""
         try:
             # Check service health
-            health_tasks = [
+            health_tasks = []
                 self.check_service_health(name, url) 
                 for name, url in self.services.items()
-            ]
+            
             health_results = await asyncio.gather(*health_tasks)
             
             # Count healthy services
@@ -229,7 +232,7 @@ class ArbitrageDashboard:
         print("=" * 60)
         
         # Check all services
-        all_services = {
+        all_services = {}
             **self.services,
             'MCP Blockchain': 'http://localhost:8101',
             'MCP DeFi Analyzer': 'http://localhost:8102',
@@ -239,12 +242,12 @@ class ArbitrageDashboard:
             'Agent Data Collector': 'http://localhost:8205',
             'Agent Liquidity Manager': 'http://localhost:8207',
             'Agent Reporter': 'http://localhost:8208'
-        }
         
-        health_tasks = [
+        
+        health_tasks = []
             self.check_service_health(name, url) 
             for name, url in all_services.items()
-        ]
+        
         health_results = await asyncio.gather(*health_tasks)
         
         # Group by type
@@ -267,12 +270,12 @@ class ArbitrageDashboard:
         print("\nSYSTEM FILES:")
         print("-" * 40)
         
-        files_to_check = [
+        files_to_check = []
             '.env.production',
             'abi/aave_pool.json',
             'docker_arbitrage_24_7.log',
             'docker_arbitrage_orchestrator.py'
-        ]
+        
         
         for file_path in files_to_check:
             exists = os.path.exists(file_path)
@@ -291,7 +294,6 @@ class ArbitrageDashboard:
 
 async def main():
     """Main entry point"""
-    import sys
     
     dashboard = ArbitrageDashboard()
     

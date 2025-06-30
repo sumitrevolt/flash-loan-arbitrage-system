@@ -1,3 +1,15 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from collections import deque
+from typing import Dict, Any, Optional
+import datetime
+import json
+import logging
+import os
+import threading
+import time
+
+import atexit
 """
 Transaction monitor for flash loan arbitrage.
 
@@ -5,15 +17,6 @@ This module provides functions to monitor transactions and collect
 statistics on success rates, gas usage, and profitability.
 """
 
-import logging
-import time
-import json
-import os
-import datetime
-import atexit
-from typing import Dict, Any, Optional
-from collections import deque
-import threading
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +34,7 @@ class ThreadLifecycle:
     def start(self, target, name=None):
         """Start a new thread with proper lifecycle management."""
         if self.is_running:
-            logger.warning(f"Thread {name or 'unknown'} is already running")
+            logger.warning(str(f"Thread {name or 'unknown'} is already running")
             return False
             
         self._stop_event.clear()
@@ -65,7 +68,7 @@ class ThreadLifecycle:
 class TransactionMonitor:
     """Monitors transactions and collects statistics."""
 
-    def __init__(self, config_path: str = "config/transaction_monitor_config.json", 
+    def __init__(self, config_path: str = "config/transaction_monitor_config.json", )
                  state_path: str = "data/transaction_monitor_state.json"):
         """Initialize the transaction monitor."""
         self.logger = logger
@@ -90,9 +93,9 @@ class TransactionMonitor:
 
     def _create_initial_state(self) -> Dict[str, Any]:
         """Create initial monitor state."""
-        return {
+        return {}
             "transactions": [],
-            "stats": {
+            "stats": {}
                 "total_transactions": 0,
                 "successful_transactions": 0,
                 "failed_transactions": 0,
@@ -107,7 +110,7 @@ class TransactionMonitor:
             "dex_stats": {},
             "hourly_stats": {},
             "daily_stats": {}
-        }
+        
 
     def _load_config(self) -> Dict[str, Any]:
         """Load monitor configuration."""
@@ -116,20 +119,20 @@ class TransactionMonitor:
                 with open(self.config_path, 'r') as f:
                     return json.load(f)
         except Exception as e:
-            self.logger.error(f"Error loading monitor config: {e}")
+            self.logger.error(str(f"Error loading monitor config: {e}")
 
-        return {
+        return {}
             "max_transactions_to_keep": 1000,
             "auto_save_enabled": True,
             "auto_save_interval_seconds": 300,
             "max_queue_size": 100,
-            "alert_thresholds": {
+            "alert_thresholds": {}
                 "low_success_rate": 0.7,
                 "critical_success_rate": 0.5,
                 "high_gas_cost": 10.0,
                 "low_profit_margin": 0.2
-            }
-        }
+            
+        
 
     def _load_state(self) -> Optional[Dict[str, Any]]:
         """Load monitor state."""
@@ -138,12 +141,12 @@ class TransactionMonitor:
                 with open(self.state_path, 'r') as f:
                     return json.load(f)
         except Exception as e:
-            self.logger.error(f"Error loading monitor state: {e}")
+            self.logger.error(str(f"Error loading monitor state: {e}")
         return None
 
     def _start_auto_save(self) -> None:
         """Start the auto-save thread with proper thread management."""
-        if self._auto_save.start(
+        if self._auto_save.start()
             target=self._auto_save_loop,
             name="TransactionMonitorAutoSave"
         ):
@@ -164,7 +167,7 @@ class TransactionMonitor:
                 # Use event wait for interruptible sleep
                 self._auto_save._stop_event.wait(timeout=interval)
             except Exception as e:
-                self.logger.error(f"Error in auto-save loop: {e}")
+                self.logger.error(str(f"Error in auto-save loop: {e}")
                 if self._auto_save.should_stop():
                     break
                 time.sleep(10)  # Shorter retry interval on error
@@ -184,9 +187,9 @@ class TransactionMonitor:
                 with open(self.state_path, 'w') as f:
                     json.dump(self.state, f, indent=2)
 
-            self.logger.debug(f"Saved monitor state to {self.state_path}")
+            self.logger.debug(str(f"Saved monitor state to {self.state_path}")
         except Exception as e:
-            self.logger.error(f"Error saving monitor state: {e}")
+            self.logger.error(str(f"Error saving monitor state: {e}")
 
     def cleanup(self) -> None:
         """Clean up resources with proper thread shutdown."""
@@ -247,7 +250,7 @@ class TransactionMonitor:
             return
 
         if token not in self.state["token_stats"]:
-            self.state["token_stats"][token] = {
+            self.state["token_stats"][token] = {}
                 "total_transactions": 0,
                 "successful_transactions": 0,
                 "failed_transactions": 0,
@@ -257,7 +260,7 @@ class TransactionMonitor:
                 "average_gas_cost_usd": 0.0,
                 "average_profit_usd": 0.0,
                 "success_rate": 0.0
-            }
+            
 
         stats = self.state["token_stats"][token]
         stats["total_transactions"] += 1
@@ -289,7 +292,7 @@ class TransactionMonitor:
 
         dex_pair = f"{buy_dex}-{sell_dex}"
         if dex_pair not in self.state["dex_stats"]:
-            self.state["dex_stats"][dex_pair] = {
+            self.state["dex_stats"][dex_pair] = {}
                 "total_transactions": 0,
                 "successful_transactions": 0,
                 "failed_transactions": 0,
@@ -299,7 +302,7 @@ class TransactionMonitor:
                 "average_gas_cost_usd": 0.0,
                 "average_profit_usd": 0.0,
                 "success_rate": 0.0
-            }
+            
 
         stats = self.state["dex_stats"][dex_pair]
         stats["total_transactions"] += 1
@@ -333,28 +336,28 @@ class TransactionMonitor:
 
         # Update hourly stats
         if hour_key not in self.state["hourly_stats"]:
-            self.state["hourly_stats"][hour_key] = {
+            self.state["hourly_stats"][hour_key] = {}
                 "total_transactions": 0,
                 "successful_transactions": 0,
                 "failed_transactions": 0,
                 "total_profit_usd": 0.0,
                 "total_gas_cost_usd": 0.0,
                 "net_profit_usd": 0.0
-            }
+            
 
         # Update daily stats
         if day_key not in self.state["daily_stats"]:
-            self.state["daily_stats"][day_key] = {
+            self.state["daily_stats"][day_key] = {}
                 "total_transactions": 0,
                 "successful_transactions": 0,
                 "failed_transactions": 0,
                 "total_profit_usd": 0.0,
                 "total_gas_cost_usd": 0.0,
                 "net_profit_usd": 0.0
-            }
+            
 
         # Update metrics
-        for stats in [self.state["hourly_stats"][hour_key], 
+        for stats in [self.state["hourly_stats"][hour_key], ]
                      self.state["daily_stats"][day_key]]:
             stats["total_transactions"] += 1
             

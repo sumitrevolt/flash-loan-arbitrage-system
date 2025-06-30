@@ -1,14 +1,17 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Dict, List, Any, Optional
+import json
+import logging
+import os
+
+from src.data import DEX_ROUTER_DATA_PATH, load_json_data, save_json_data
 """
 DEX data module for the Flash Loan Arbitrage System.
 Provides access to DEX data and utilities.
 """
 
-import os
-import json
-import logging
-from typing import Dict, List, Any, Optional
 
-from src.data import DEX_ROUTER_DATA_PATH, load_json_data, save_json_data
 
 logger = logging.getLogger(__name__)
 
@@ -57,12 +60,12 @@ class DexData:
     def add_dex(self, name: str, router_address: str, factory_address: str, version: str) -> bool:
         """Add a DEX to the DEX data."""
         name = name.lower()
-        self.dexes[name] = {
+        self.dexes[name] = {}
             "name": name.capitalize(),
             "router_address": router_address,
             "factory_address": factory_address,
             "version": version
-        }
+        
         return self.save_dex_data()
     
     def remove_dex(self, name: str) -> bool:

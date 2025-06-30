@@ -1,3 +1,21 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+            import ast
+            import json
+            import re
+from datetime import datetime
+from typing import Dict, List, Optional, Any
+import asyncio
+import logging
+import os
+import subprocess
+import sys
+import tempfile
+
+from langchain.schema import BaseMessage, HumanMessage, AIMessage
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
+from utils.logger import setup_logger
 """
 Code Interpreter Agent
 =====================
@@ -6,21 +24,8 @@ Agent specialized in code analysis, execution, and interpretation
 for the flash loan arbitrage system.
 """
 
-import asyncio
-import logging
-import subprocess
-import tempfile
-import os
-import sys
-from datetime import datetime
-from typing import Dict, List, Optional, Any
-import json
 
-from langchain.schema import BaseMessage, HumanMessage, AIMessage
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
 
-from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -42,38 +47,38 @@ class CodeInterpreterAgent:
         self.tool_registry = tool_registry
         
         # LLM for code analysis and generation
-        self.llm = ChatOpenAI(
+        self.llm = ChatOpenAI()
             model="gpt-4-turbo-preview",
             temperature=0.1,
             max_tokens=3000
-        )
+        
         
         # Execution environment
         self.execution_timeout = 30
-        self.allowed_imports = [
+        self.allowed_imports = []
             'math', 'numpy', 'pandas', 'matplotlib', 'seaborn',
             'requests', 'json', 'datetime', 'time', 'os',
             'web3', 'eth_account', 'eth_utils'
-        ]
+        
         
         # Agent capabilities
-        self.capabilities = [
+        self.capabilities = []
             "code_execution",
             "code_analysis", 
             "mathematical_calculations",
             "data_analysis",
             "contract_analysis",
             "code_optimization"
-        ]
+        
         
         self.setup_prompts()
-        logger.info(f"💻 Code Interpreter Agent '{name}' initialized")
+        logger.info(str(f"[COMPUTER] Code Interpreter Agent '{name}' initialized")
 
     def setup_prompts(self):
         """Set up code interpreter prompt templates"""
         
-        self.code_analysis_prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are a specialized code interpreter agent for flash loan arbitrage analysis.
+        self.code_analysis_prompt = ChatPromptTemplate.from_messages([)]
+            ("system", """You are a specialized code interpreter agent for flash loan arbitrage analysis.)
 
             Your responsibilities:
             1. Analyze and execute Python code safely
@@ -98,10 +103,10 @@ class CodeInterpreterAgent:
             - recommendations: Optimization suggestions
             """),
             ("human", "Code to analyze:\n{code}\n\nTask: {task}")
-        ])
         
-        self.calculation_prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are performing mathematical calculations for flash loan arbitrage.
+        
+        self.calculation_prompt = ChatPromptTemplate.from_messages([)]
+            ("system", """You are performing mathematical calculations for flash loan arbitrage.)
             
             Your task:
             1. Parse the calculation requirements
@@ -118,12 +123,12 @@ class CodeInterpreterAgent:
             - ROI and efficiency metrics
             """),
             ("human", "Calculation request: {request}\nData: {data}")
-        ])
+        
 
     async def initialize(self):
         """Initialize the code interpreter agent"""
         try:
-            logger.info(f"💻 Initializing Code Interpreter Agent '{self.name}'...")
+            logger.info(str(f"[COMPUTER] Initializing Code Interpreter Agent '{self.name}'...")
             
             # Set up execution environment
             await self.setup_execution_environment()
@@ -131,10 +136,10 @@ class CodeInterpreterAgent:
             # Validate Python environment
             await self.validate_environment()
             
-            logger.info(f"✅ Code Interpreter Agent '{self.name}' initialization completed")
+            logger.info(str(f"[OK] Code Interpreter Agent '{self.name}' initialization completed")
             
         except Exception as e:
-            logger.error(f"❌ Code Interpreter Agent initialization failed: {e}")
+            logger.error(str(f"[ERROR] Code Interpreter Agent initialization failed: {e}")
             raise
 
     async def setup_execution_environment(self):
@@ -142,16 +147,16 @@ class CodeInterpreterAgent:
         try:
             # Create temp directory for code execution
             self.temp_dir = tempfile.mkdtemp(prefix="flash_loan_code_")
-            logger.info(f"📁 Created temp directory: {self.temp_dir}")
+            logger.info(str(f"📁 Created temp directory: {self.temp_dir}")
             
             # Set up Python path
             if self.temp_dir not in sys.path:
                 sys.path.append(self.temp_dir)
             
-            logger.info("✅ Execution environment setup completed")
+            logger.info("[OK] Execution environment setup completed")
             
         except Exception as e:
-            logger.error(f"❌ Execution environment setup failed: {e}")
+            logger.error(str(f"[ERROR] Execution environment setup failed: {e}")
             raise
 
     async def validate_environment(self):
@@ -162,12 +167,12 @@ class CodeInterpreterAgent:
             result = await self.execute_code(test_code, safe_mode=True)
             
             if result.get('success', False):
-                logger.info("✅ Python execution environment validated")
+                logger.info("[OK] Python execution environment validated")
             else:
-                logger.warning(f"⚠️ Environment validation warning: {result.get('error', 'Unknown')}")
+                logger.warning(str(f"[WARN] Environment validation warning: {result.get('error', 'Unknown'}")
             
         except Exception as e:
-            logger.error(f"❌ Environment validation failed: {e}")
+            logger.error(str(f"[ERROR] Environment validation failed: {e}")
 
     async def process(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Process code interpreter requests within the agent workflow"""
@@ -182,15 +187,15 @@ class CodeInterpreterAgent:
             latest_message = messages[-1]
             request = latest_message.content if hasattr(latest_message, 'content') else str(latest_message)
             
-            logger.info(f"💻 Processing code interpreter request: {request[:100]}...")
+            logger.info(str(f"[COMPUTER] Processing code interpreter request: {request[:100]}...")
             
             # Determine request type and process
             result = await self.process_code_request(request, context)
             
             # Create response message
-            response_msg = AIMessage(
+            response_msg = AIMessage()
                 content=f"Code Analysis: {result.get('response', 'No response generated')}"
-            )
+            
             state["messages"].append(response_msg)
             
             # Update result
@@ -199,7 +204,7 @@ class CodeInterpreterAgent:
             return state
             
         except Exception as e:
-            logger.error(f"❌ Code interpreter processing failed: {e}")
+            logger.error(str(f"[ERROR] Code interpreter processing failed: {e}")
             error_msg = AIMessage(content=f"Code interpreter error: {str(e)}")
             state["messages"].append(error_msg)
             return state
@@ -210,12 +215,12 @@ class CodeInterpreterAgent:
             return await self.process_code_request(request, context)
             
         except Exception as e:
-            logger.error(f"❌ Direct code interpreter processing failed: {e}")
-            return {
+            logger.error(str(f"[ERROR] Direct code interpreter processing failed: {e}")
+            return {}
                 "response": f"Code interpreter error: {str(e)}",
                 "confidence": 0.0,
                 "metadata": {"error": str(e)}
-            }
+            
 
     async def process_code_request(self, request: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """Process a code-related request"""
@@ -235,12 +240,12 @@ class CodeInterpreterAgent:
                 return await self.general_code_assistance(request, context)
                 
         except Exception as e:
-            logger.error(f"❌ Code request processing failed: {e}")
-            return {
+            logger.error(str(f"[ERROR] Code request processing failed: {e}")
+            return {}
                 "response": f"Processing error: {str(e)}",
                 "confidence": 0.0,
                 "metadata": {"error": str(e)}
-            }
+            
 
     def classify_request(self, request: str) -> str:
         """Classify the type of code request"""
@@ -264,22 +269,22 @@ class CodeInterpreterAgent:
             code = self.extract_code_from_request(request)
             
             if not code:
-                return {
+                return {}
                     "response": "No code found in the request",
                     "confidence": 0.0,
                     "metadata": {"error": "No code to analyze"}
-                }
+                
             
             # Analyze code using LLM
-            analysis_input = {
+            analysis_input = {}
                 "code": code,
                 "task": request,
                 "allowed_imports": ", ".join(self.allowed_imports)
-            }
             
-            response = await self.llm.ainvoke(
+            
+            response = await self.llm.ainvoke()
                 self.code_analysis_prompt.format_messages(**analysis_input)
-            )
+            
             
             # Parse analysis
             analysis = self.parse_analysis_response(response.content)
@@ -291,12 +296,12 @@ class CodeInterpreterAgent:
             return analysis
             
         except Exception as e:
-            logger.error(f"❌ Code analysis failed: {e}")
-            return {
+            logger.error(str(f"[ERROR] Code analysis failed: {e}")
+            return {}
                 "response": f"Code analysis error: {str(e)}",
                 "confidence": 0.0,
                 "metadata": {"error": str(e)}
-            }
+            
 
     async def execute_request(self, request: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """Execute code from the request"""
@@ -305,83 +310,83 @@ class CodeInterpreterAgent:
             code = self.extract_code_from_request(request)
             
             if not code:
-                return {
+                return {}
                     "response": "No executable code found in the request",
                     "confidence": 0.0,
                     "metadata": {"error": "No code to execute"}
-                }
+                
             
             # Safety check
             safety_check = await self.safety_check(code)
             if not safety_check.get("safe", False):
-                return {
+                return {}
                     "response": f"Code execution blocked: {safety_check.get('reason', 'Safety check failed')}",
                     "confidence": 0.0,
                     "metadata": {"safety_check": safety_check}
-                }
+                
             
             # Execute code
             execution_result = await self.execute_code(code)
             
-            return {
+            return {}
                 "response": f"Code executed. Output: {execution_result.get('output', 'No output')}",
                 "confidence": 1.0 if execution_result.get('success', False) else 0.3,
-                "metadata": {
+                "metadata": {}
                     "execution_result": execution_result,
                     "safety_check": safety_check
-                }
-            }
+                
+            
             
         except Exception as e:
-            logger.error(f"❌ Code execution failed: {e}")
-            return {
+            logger.error(str(f"[ERROR] Code execution failed: {e}")
+            return {}
                 "response": f"Code execution error: {str(e)}",
                 "confidence": 0.0,
                 "metadata": {"error": str(e)}
-            }
+            
 
     async def perform_calculation(self, request: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """Perform mathematical calculations"""
         try:
             # Generate calculation code using LLM
-            calc_input = {
+            calc_input = {}
                 "request": request,
-                "data": json.dumps(context, default=str)
-            }
+                "data": json.dumps(context, default=str, ensure_ascii=True, default=str)
             
-            response = await self.llm.ainvoke(
+            
+            response = await self.llm.ainvoke()
                 self.calculation_prompt.format_messages(**calc_input)
-            )
+            
             
             # Extract code from LLM response
             generated_code = self.extract_code_from_response(response.content)
             
             if not generated_code:
-                return {
+                return {}
                     "response": "Could not generate calculation code",
                     "confidence": 0.0,
                     "metadata": {"error": "Code generation failed"}
-                }
+                
             
             # Execute calculation
             execution_result = await self.execute_code(generated_code)
             
-            return {
+            return {}
                 "response": f"Calculation completed. Result: {execution_result.get('output', 'No result')}",
                 "confidence": 1.0 if execution_result.get('success', False) else 0.3,
-                "metadata": {
+                "metadata": {}
                     "generated_code": generated_code,
                     "execution_result": execution_result
-                }
-            }
+                
+            
             
         except Exception as e:
-            logger.error(f"❌ Calculation failed: {e}")
-            return {
+            logger.error(str(f"[ERROR] Calculation failed: {e}")
+            return {}
                 "response": f"Calculation error: {str(e)}",
                 "confidence": 0.0,
                 "metadata": {"error": str(e)}
-            }
+            
 
     async def analyze_contract(self, request: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze smart contracts"""
@@ -390,50 +395,50 @@ class CodeInterpreterAgent:
             contract_data = self.extract_contract_from_request(request)
             
             if not contract_data:
-                return {
+                return {}
                     "response": "No contract data found in the request",
                     "confidence": 0.0,
                     "metadata": {"error": "No contract to analyze"}
-                }
+                
             
             # Analyze contract structure, functions, and security
             analysis = await self.perform_contract_analysis(contract_data)
             
-            return {
+            return {}
                 "response": f"Contract analysis completed: {analysis.get('summary', 'Analysis performed')}",
                 "confidence": analysis.get('confidence', 0.5),
                 "metadata": analysis
-            }
+            
             
         except Exception as e:
-            logger.error(f"❌ Contract analysis failed: {e}")
-            return {
+            logger.error(str(f"[ERROR] Contract analysis failed: {e}")
+            return {}
                 "response": f"Contract analysis error: {str(e)}",  
                 "confidence": 0.0,
                 "metadata": {"error": str(e)}
-            }
+            
 
     async def general_code_assistance(self, request: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """Provide general code assistance"""
         try:
             # Use LLM to provide code assistance
-            response = await self.llm.ainvoke([
+            response = await self.llm.ainvoke([)]
                 HumanMessage(content=f"Provide code assistance for: {request}\nContext: {context}")
-            ])
             
-            return {
+            
+            return {}
                 "response": response.content,
                 "confidence": 0.7,
                 "metadata": {"type": "general_assistance"}
-            }
+            
             
         except Exception as e:
-            logger.error(f"❌ General code assistance failed: {e}")
-            return {
+            logger.error(str(f"[ERROR] General code assistance failed: {e}")
+            return {}
                 "response": f"Code assistance error: {str(e)}",
                 "confidence": 0.0,
                 "metadata": {"error": str(e)}
-            }
+            
 
     async def execute_code(self, code: str, safe_mode: bool = True) -> Dict[str, Any]:
         """Execute Python code safely"""
@@ -442,11 +447,11 @@ class CodeInterpreterAgent:
                 # Perform safety checks
                 safety_result = await self.safety_check(code)
                 if not safety_result.get("safe", False):
-                    return {
+                    return {}
                         "success": False,
                         "error": f"Safety check failed: {safety_result.get('reason', 'Unknown')}",
                         "output": ""
-                    }
+                    
             
             # Create a temporary file for the code
             with tempfile.NamedTemporaryFile(mode='w', suffix='.py', dir=self.temp_dir, delete=False) as f:
@@ -455,20 +460,20 @@ class CodeInterpreterAgent:
             
             try:
                 # Execute the code
-                result = subprocess.run(
+                result = subprocess.run()
                     [sys.executable, temp_file],
                     capture_output=True,
                     text=True,
                     timeout=self.execution_timeout,
                     cwd=self.temp_dir
-                )
                 
-                return {
+                
+                return {}
                     "success": result.returncode == 0,
                     "output": result.stdout,
                     "error": result.stderr,
                     "return_code": result.returncode
-                }
+                
                 
             finally:
                 # Clean up temporary file
@@ -478,32 +483,31 @@ class CodeInterpreterAgent:
                     pass
                     
         except subprocess.TimeoutExpired:
-            return {
+            return {}
                 "success": False,
                 "error": f"Code execution timed out after {self.execution_timeout} seconds",
                 "output": ""
-            }
+            
         except Exception as e:
-            logger.error(f"❌ Code execution failed: {e}")
-            return {
+            logger.error(str(f"[ERROR] Code execution failed: {e}")
+            return {}
                 "success": False,
                 "error": str(e),
                 "output": ""
-            }
+            
 
     async def safety_check(self, code: str) -> Dict[str, Any]:
         """Perform safety checks on code"""
         try:
-            import ast
             
             # Parse the code to check for dangerous operations
             try:
                 tree = ast.parse(code)
             except SyntaxError as e:
-                return {
+                return {}
                     "safe": False,
                     "reason": f"Syntax error: {str(e)}"
-                }
+                
             
             # Check for dangerous operations
             dangerous_operations = []
@@ -525,26 +529,25 @@ class CodeInterpreterAgent:
                         dangerous_operations.append(f"Unauthorized import from: {node.module}")
             
             if dangerous_operations:
-                return {
+                return {}
                     "safe": False,
                     "reason": "; ".join(dangerous_operations)
-                }
+                
             
-            return {
+            return {}
                 "safe": True,
                 "reason": "Code passed safety checks"
-            }
+            
             
         except Exception as e:
-            logger.error(f"❌ Safety check failed: {e}")
-            return {
+            logger.error(str(f"[ERROR] Safety check failed: {e}")
+            return {}
                 "safe": False,
                 "reason": f"Safety check error: {str(e)}"
-            }
+            
 
     def extract_code_from_request(self, request: str) -> str:
         """Extract code blocks from a request"""
-        import re
         
         # Look for code blocks marked with ```python or ```
         code_blocks = re.findall(r'```(?:python)?\n(.*?)\n```', request, re.DOTALL)
@@ -560,7 +563,6 @@ class CodeInterpreterAgent:
 
     def extract_code_from_response(self, response: str) -> str:
         """Extract code from LLM response"""
-        import re
         
         # Look for code blocks
         code_blocks = re.findall(r'```(?:python)?\n(.*?)\n```', response, re.DOTALL)
@@ -577,7 +579,7 @@ class CodeInterpreterAgent:
             return None
             
         except Exception as e:
-            logger.error(f"❌ Contract extraction failed: {e}")
+            logger.error(str(f"[ERROR] Contract extraction failed: {e}")
             return None
 
     async def perform_contract_analysis(self, contract_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -585,50 +587,48 @@ class CodeInterpreterAgent:
         try:
             # This would implement actual contract analysis
             # For now, return a placeholder
-            return {
+            return {}
                 "summary": "Contract analysis not yet implemented",
                 "confidence": 0.5
-            }
+            
             
         except Exception as e:
-            logger.error(f"❌ Contract analysis failed: {e}")
-            return {
+            logger.error(str(f"[ERROR] Contract analysis failed: {e}")
+            return {}
                 "summary": f"Contract analysis error: {str(e)}",
                 "confidence": 0.0
-            }
+            
 
     def parse_analysis_response(self, response: str) -> Dict[str, Any]:
         """Parse code analysis response"""
         try:
-            import json
-            import re
             
             # Try to extract JSON from response
             json_match = re.search(r'\{.*\}', response, re.DOTALL)
             if json_match:
                 parsed = json.loads(json_match.group())
-                return {
+                return {}
                     "response": parsed.get("analysis", response),
                     "confidence": 0.8,
-                    "metadata": {
+                    "metadata": {}
                         "execution_plan": parsed.get("execution_plan", []),
                         "safety_assessment": parsed.get("safety_assessment", {}),
                         "expected_output": parsed.get("expected_output", ""),
                         "recommendations": parsed.get("recommendations", [])
-                    }
-                }
+                    
+                
             
             # Fallback
-            return {
+            return {}
                 "response": response,
                 "confidence": 0.5,
                 "metadata": {"parsing_method": "fallback"}
-            }
+            
             
         except Exception as e:
-            logger.error(f"❌ Failed to parse analysis response: {e}")
-            return {
+            logger.error(str(f"[ERROR] Failed to parse analysis response: {e}")
+            return {}
                 "response": response,
                 "confidence": 0.3,
                 "metadata": {"error": str(e)}
-            }
+            

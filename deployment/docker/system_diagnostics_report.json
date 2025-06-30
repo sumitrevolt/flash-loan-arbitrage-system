@@ -1,0 +1,542 @@
+{
+  "timestamp": "2025-06-20T15:37:16.228280",
+  "container_conflicts": [
+    {
+      "name": "flashloan-mcp-flash-loan",
+      "status": "running",
+      "image": "flashloan-mcp-flash-loan:latest"
+    },
+    {
+      "name": "flashloan-mcp-monitoring",
+      "status": "running",
+      "image": "flashloan-mcp-monitoring:latest"
+    },
+    {
+      "name": "flashloan-mcp-web-scraper",
+      "status": "running",
+      "image": "flashloan-mcp-web-scraper:latest"
+    },
+    {
+      "name": "flashloan-agent-coordinator",
+      "status": "running",
+      "image": "flashloan-agent-coordinator:latest"
+    },
+    {
+      "name": "flashloan-mcp-data-analyzer",
+      "status": "running",
+      "image": "flashloan-mcp-data-analyzer:latest"
+    },
+    {
+      "name": "flashloan-agent-arbitrage-bot",
+      "status": "running",
+      "image": "flashloan-agent-arbitrage-bot:latest"
+    },
+    {
+      "name": "flashloan-mcp-security",
+      "status": "running",
+      "image": "flashloan-mcp-security:latest"
+    },
+    {
+      "name": "flashloan-agent-data-collector",
+      "status": "running",
+      "image": "flashloan-agent-data-collector:latest"
+    },
+    {
+      "name": "flashloan-mcp-api-client",
+      "status": "running",
+      "image": "flashloan-mcp-api-client:latest"
+    },
+    {
+      "name": "flashloan-agent-risk-manager",
+      "status": "running",
+      "image": "flashloan-agent-risk-manager:latest"
+    },
+    {
+      "name": "flashloan-agent-healer",
+      "status": "running",
+      "image": "flashloan-agent-healer:latest"
+    },
+    {
+      "name": "flashloan-mcp-arbitrage",
+      "status": "running",
+      "image": "flashloan-mcp-arbitrage:latest"
+    },
+    {
+      "name": "flashloan-mcp-database",
+      "status": "running",
+      "image": "flashloan-mcp-database:latest"
+    },
+    {
+      "name": "flashloan-mcp-portfolio",
+      "status": "running",
+      "image": "flashloan-mcp-portfolio:latest"
+    },
+    {
+      "name": "flashloan-mcp-auth-manager",
+      "status": "running",
+      "image": "flashloan-mcp-auth-manager:latest"
+    },
+    {
+      "name": "flashloan-mcp-coordinator",
+      "status": "running",
+      "image": "flashloan-mcp-coordinator:latest"
+    },
+    {
+      "name": "flashloan-mcp-notification",
+      "status": "running",
+      "image": "flashloan-mcp-notification:latest"
+    },
+    {
+      "name": "flashloan-mcp-risk-manager",
+      "status": "running",
+      "image": "flashloan-mcp-risk-manager:latest"
+    },
+    {
+      "name": "flashloan-agent-liquidity-manager",
+      "status": "running",
+      "image": "flashloan-agent-liquidity-manager:latest"
+    },
+    {
+      "name": "flashloan-mcp-file-processor",
+      "status": "running",
+      "image": "flashloan-mcp-file-processor:latest"
+    },
+    {
+      "name": "flashloan-mcp-filesystem",
+      "status": "running",
+      "image": "flashloan-mcp-filesystem:latest"
+    },
+    {
+      "name": "flashloan-mcp-cache-manager",
+      "status": "running",
+      "image": "flashloan-mcp-cache-manager:latest"
+    },
+    {
+      "name": "flashloan-agent-executor",
+      "status": "running",
+      "image": "flashloan-agent-executor:latest"
+    },
+    {
+      "name": "flashloan-agent-reporter",
+      "status": "running",
+      "image": "flashloan-agent-reporter:latest"
+    },
+    {
+      "name": "flashloan-mcp-defi-analyzer",
+      "status": "running",
+      "image": "flashloan-mcp-defi-analyzer:latest"
+    },
+    {
+      "name": "flashloan-mcp-price-feed",
+      "status": "running",
+      "image": "flashloan-mcp-price-feed:latest"
+    },
+    {
+      "name": "flashloan-mcp-blockchain",
+      "status": "running",
+      "image": "flashloan-mcp-blockchain:latest"
+    },
+    {
+      "name": "flashloan-agent-monitor",
+      "status": "running",
+      "image": "flashloan-agent-monitor:latest"
+    },
+    {
+      "name": "flashloan-agent-analyzer",
+      "status": "running",
+      "image": "flashloan-agent-analyzer:latest"
+    },
+    {
+      "name": "flashloan-mcp-task-queue",
+      "status": "running",
+      "image": "flashloan-mcp-task-queue:latest"
+    },
+    {
+      "name": "flashloan-mcp-liquidity",
+      "status": "running",
+      "image": "flashloan-mcp-liquidity:latest"
+    }
+  ],
+  "resource_usage": {
+    "system": {
+      "cpu_percent": 15.6,
+      "memory_percent": 93.0,
+      "memory_available_gb": 1.1,
+      "disk_percent": 88.34,
+      "disk_free_gb": 36.87
+    },
+    "containers": {
+      "maxkb": {
+        "cpu_percent": 0.02,
+        "memory_usage_mb": 3435.03,
+        "memory_percent": 43.75,
+        "status": "running"
+      },
+      "flashloan-mcp-flash-loan": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 35.63,
+        "memory_percent": 0.45,
+        "status": "running"
+      },
+      "flashloan-mcp-monitoring": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 37.43,
+        "memory_percent": 0.48,
+        "status": "running"
+      },
+      "flashloan-mcp-web-scraper": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 35.32,
+        "memory_percent": 0.45,
+        "status": "running"
+      },
+      "flashloan-agent-coordinator": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 40.64,
+        "memory_percent": 0.52,
+        "status": "running"
+      },
+      "flashloan-mcp-data-analyzer": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 35.25,
+        "memory_percent": 0.45,
+        "status": "running"
+      },
+      "flashloan-agent-arbitrage-bot": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 40.65,
+        "memory_percent": 0.52,
+        "status": "running"
+      },
+      "flashloan-mcp-security": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 35.63,
+        "memory_percent": 0.45,
+        "status": "running"
+      },
+      "flashloan-agent-data-collector": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 40.59,
+        "memory_percent": 0.52,
+        "status": "running"
+      },
+      "flashloan-mcp-api-client": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 36.84,
+        "memory_percent": 0.47,
+        "status": "running"
+      },
+      "flashloan-agent-risk-manager": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 40.76,
+        "memory_percent": 0.52,
+        "status": "running"
+      },
+      "flashloan-agent-healer": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 40.26,
+        "memory_percent": 0.51,
+        "status": "running"
+      },
+      "flashloan-mcp-arbitrage": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 58.14,
+        "memory_percent": 0.74,
+        "status": "running"
+      },
+      "flashloan-mcp-database": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 34.92,
+        "memory_percent": 0.44,
+        "status": "running"
+      },
+      "flashloan-mcp-portfolio": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 35.39,
+        "memory_percent": 0.45,
+        "status": "running"
+      },
+      "flashloan-mcp-auth-manager": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 35.03,
+        "memory_percent": 0.45,
+        "status": "running"
+      },
+      "flashloan-mcp-coordinator": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 35.66,
+        "memory_percent": 0.45,
+        "status": "running"
+      },
+      "flashloan-mcp-notification": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 35.51,
+        "memory_percent": 0.45,
+        "status": "running"
+      },
+      "flashloan-mcp-risk-manager": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 35.11,
+        "memory_percent": 0.45,
+        "status": "running"
+      },
+      "flashloan-agent-liquidity-manager": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 40.26,
+        "memory_percent": 0.51,
+        "status": "running"
+      },
+      "flashloan-mcp-file-processor": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 34.83,
+        "memory_percent": 0.44,
+        "status": "running"
+      },
+      "flashloan-mcp-filesystem": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 35.43,
+        "memory_percent": 0.45,
+        "status": "running"
+      },
+      "flashloan-mcp-cache-manager": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 35.43,
+        "memory_percent": 0.45,
+        "status": "running"
+      },
+      "flashloan-agent-executor": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 40.63,
+        "memory_percent": 0.52,
+        "status": "running"
+      },
+      "flashloan-agent-reporter": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 75.49,
+        "memory_percent": 0.96,
+        "status": "running"
+      },
+      "flashloan-mcp-defi-analyzer": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 36.13,
+        "memory_percent": 0.46,
+        "status": "running"
+      },
+      "flashloan-mcp-price-feed": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 35.59,
+        "memory_percent": 0.45,
+        "status": "running"
+      },
+      "flashloan-mcp-blockchain": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 35.27,
+        "memory_percent": 0.45,
+        "status": "running"
+      },
+      "flashloan-agent-monitor": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 40.66,
+        "memory_percent": 0.52,
+        "status": "running"
+      },
+      "flashloan-agent-analyzer": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 40.65,
+        "memory_percent": 0.52,
+        "status": "running"
+      },
+      "flashloan-mcp-task-queue": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 35.49,
+        "memory_percent": 0.45,
+        "status": "running"
+      },
+      "flashloan-mcp-liquidity": {
+        "cpu_percent": 0.01,
+        "memory_usage_mb": 36.0,
+        "memory_percent": 0.46,
+        "status": "running"
+      }
+    }
+  },
+  "network_issues": [
+    {
+      "name": "flashloan_flashloan-network",
+      "driver": "bridge",
+      "subnet": "172.18.0.0/16",
+      "containers": 0
+    }
+  ],
+  "service_discovery": {
+    "redis": "healthy",
+    "coordination_orchestrator": "unreachable: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000150C9F51890>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))",
+    "langchain_coordinator": "unreachable: HTTPConnectionPool(host='localhost', port=8001): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000150C9F50890>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))",
+    "autogen_system": "unreachable: HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000150C9F5CB10>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))",
+    "langchain-coordinator": "unreachable: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x00000150C9F5CD10>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+  },
+  "health_checks": {
+    "flashloan-mcp-flash-loan": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-monitoring": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-web-scraper": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-agent-coordinator": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-data-analyzer": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-agent-arbitrage-bot": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-security": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-agent-data-collector": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-api-client": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-agent-risk-manager": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-agent-healer": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-arbitrage": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-database": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-portfolio": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-auth-manager": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-coordinator": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-notification": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-risk-manager": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-agent-liquidity-manager": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-file-processor": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-filesystem": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-cache-manager": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-agent-executor": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-agent-reporter": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-defi-analyzer": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-price-feed": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-blockchain": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-agent-monitor": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-agent-analyzer": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-task-queue": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    },
+    "flashloan-mcp-liquidity": {
+      "container_status": "running",
+      "health_check": "healthy",
+      "endpoint_test": "status_200"
+    }
+  },
+  "configuration_issues": [
+    {
+      "type": "environment_files",
+      "count": 0,
+      "files": []
+    }
+  ]
+}

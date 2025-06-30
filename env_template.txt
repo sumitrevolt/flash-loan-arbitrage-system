@@ -1,0 +1,17 @@
+# Flash Loan Arbitrage - Live Trading Configuration
+# Copy this file to .env and fill in your wallet private key
+
+# REQUIRED: Your wallet private key (keep this secret!)
+PRIVATE_KEY=your_wallet_private_key_here
+
+# Contract address on Amoy testnet (already deployed)
+CONTRACT_ADDRESS=0x35791D283Ec6eeF6C7687026CaF026C5F84C7c15
+
+# Trading configuration (optional - defaults work fine)
+MIN_PROFIT_USD=5.0
+MAX_PROFIT_USD=50.0
+TARGET_DAILY_REVENUE=500.0
+SCAN_INTERVAL_SECONDS=15
+TRADE_SIZE_USD=1000
+MAX_GAS_PRICE_GWEI=50
+SIMULATION_MODE=false 

@@ -1,17 +1,19 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Dict, List, Any, Optional
+import asyncio
+import base64
+import json
+import logging
+import os
+
+import aiohttp
 """
 GitHub Integration for Automatic Error Handling
 Provides capabilities to create issues, PRs, and automated fixes
 """
 
-import asyncio
-import logging
-import os
-from datetime import datetime
-from typing import Dict, List, Any, Optional
-import aiohttp
-import json
-import base64
 
 logger = logging.getLogger("GitHubIntegration")
 
@@ -23,39 +25,39 @@ class GitHubIntegration:
         self.repo_owner = repo_owner or "your-username"  # Configure this
         self.repo_name = repo_name or "flash-loan-system"  # Configure this
         self.base_url = "https://api.github.com"
-        self.headers = {
+        self.headers = {}
             "Authorization": f"token {github_token}",
             "Accept": "application/vnd.github.v3+json",
             "User-Agent": "FlashLoan-Orchestrator/1.0"
-        }
+        
     
     async def create_error_issue(self, error: Exception, context: str, stack_trace: str = None) -> Optional[str]:
         """Create a GitHub issue for an error"""
         try:
-            issue_title = f"🚨 Automatic Error Report: {type(error).__name__} in {context}"
+            issue_title = f"[ALERT] Automatic Error Report: {type(error).__name__} in {context}"
             issue_body = self._generate_error_issue_body(error, context, stack_trace)
             
             async with aiohttp.ClientSession() as session:
                 url = f"{self.base_url}/repos/{self.repo_owner}/{self.repo_name}/issues"
                 
-                payload = {
+                payload = {}
                     "title": issue_title,
                     "body": issue_body,
                     "labels": ["bug", "automatic", "orchestrator", context.replace("_", "-")]
-                }
+                
                 
                 async with session.post(url, headers=self.headers, json=payload) as response:
                     if response.status == 201:
                         result = await response.json()
                         issue_url = result.get("html_url")
-                        logger.info(f"✅ Created GitHub issue: {issue_url}")
+                        logger.info(str(f"[OK] Created GitHub issue: {issue_url}")
                         return issue_url
                     else:
-                        logger.error(f"❌ Failed to create GitHub issue: {response.status}")
+                        logger.error(str(f"[ERROR] Failed to create GitHub issue: {response.status}")
                         return None
                         
         except Exception as e:
-            logger.error(f"Failed to create GitHub issue: {e}")
+            logger.error(str(f"Failed to create GitHub issue: {e}")
             return None
     
     async def create_fix_pull_request(self, error_context: str, fix_description: str, file_changes: Dict[str, str]) -> Optional[str]:
@@ -70,22 +72,22 @@ class GitHubIntegration:
             # Apply file changes
             for file_path, new_content in file_changes.items():
                 if not await self._update_file(file_path, new_content, branch_name, f"Auto-fix: {fix_description}"):
-                    logger.error(f"Failed to update file: {file_path}")
+                    logger.error(str(f"Failed to update file: {file_path}")
             
             # Create pull request
-            pr_url = await self._create_pull_request(
+            pr_url = await self._create_pull_request()
                 branch_name,
-                f"🔧 Auto-fix: {fix_description}",
+                f"[SETUP] Auto-fix: {fix_description}",
                 self._generate_fix_pr_body(error_context, fix_description, file_changes)
-            )
+            
             
             if pr_url:
-                logger.info(f"✅ Created fix PR: {pr_url}")
+                logger.info(str(f"[OK] Created fix PR: {pr_url}")
             
             return pr_url
             
         except Exception as e:
-            logger.error(f"Failed to create fix PR: {e}")
+            logger.error(str(f"Failed to create fix PR: {e}")
             return None
     
     async def get_repository_files(self, path: str = "") -> List[Dict[str, Any]]:
@@ -98,11 +100,11 @@ class GitHubIntegration:
                     if response.status == 200:
                         return await response.json()
                     else:
-                        logger.error(f"Failed to get repository files: {response.status}")
+                        logger.error(str(f"Failed to get repository files: {response.status}")
                         return []
                         
         except Exception as e:
-            logger.error(f"Failed to get repository files: {e}")
+            logger.error(str(f"Failed to get repository files: {e}")
             return []
     
     async def get_file_content(self, file_path: str) -> Optional[str]:
@@ -117,11 +119,11 @@ class GitHubIntegration:
                         content = base64.b64decode(result["content"]).decode('utf-8')
                         return content
                     else:
-                        logger.error(f"Failed to get file content: {response.status}")
+                        logger.error(str(f"Failed to get file content: {response.status}")
                         return None
                         
         except Exception as e:
-            logger.error(f"Failed to get file content: {e}")
+            logger.error(str(f"Failed to get file content: {e}")
             return None
     
     async def _create_branch(self, branch_name: str) -> bool:
@@ -132,7 +134,7 @@ class GitHubIntegration:
                 main_url = f"{self.base_url}/repos/{self.repo_owner}/{self.repo_name}/git/refs/heads/main"
                 async with session.get(main_url, headers=self.headers) as response:
                     if response.status != 200:
-                        logger.error(f"Failed to get main branch SHA: {response.status}")
+                        logger.error(str(f"Failed to get main branch SHA: {response.status}")
                         return False
                     
                     main_data = await response.json()
@@ -140,21 +142,21 @@ class GitHubIntegration:
                 
                 # Create new branch
                 branch_url = f"{self.base_url}/repos/{self.repo_owner}/{self.repo_name}/git/refs"
-                payload = {
+                payload = {}
                     "ref": f"refs/heads/{branch_name}",
                     "sha": main_sha
-                }
+                
                 
                 async with session.post(branch_url, headers=self.headers, json=payload) as response:
                     if response.status == 201:
-                        logger.info(f"✅ Created branch: {branch_name}")
+                        logger.info(str(f"[OK] Created branch: {branch_name}")
                         return True
                     else:
-                        logger.error(f"❌ Failed to create branch: {response.status}")
+                        logger.error(str(f"[ERROR] Failed to create branch: {response.status}")
                         return False
                         
         except Exception as e:
-            logger.error(f"Failed to create branch: {e}")
+            logger.error(str(f"Failed to create branch: {e}")
             return False
     
     async def _update_file(self, file_path: str, content: str, branch_name: str, commit_message: str) -> bool:
@@ -170,25 +172,25 @@ class GitHubIntegration:
                         file_sha = file_data["sha"]
                 
                 # Update file
-                payload = {
+                payload = {}
                     "message": commit_message,
                     "content": base64.b64encode(content.encode('utf-8')).decode('utf-8'),
                     "branch": branch_name
-                }
+                
                 
                 if file_sha:
                     payload["sha"] = file_sha
                 
                 async with session.put(file_url, headers=self.headers, json=payload) as response:
                     if response.status in [200, 201]:
-                        logger.info(f"✅ Updated file: {file_path}")
+                        logger.info(str(f"[OK] Updated file: {file_path}")
                         return True
                     else:
-                        logger.error(f"❌ Failed to update file: {response.status}")
+                        logger.error(str(f"[ERROR] Failed to update file: {response.status}")
                         return False
                         
         except Exception as e:
-            logger.error(f"Failed to update file: {e}")
+            logger.error(str(f"Failed to update file: {e}")
             return False
     
     async def _create_pull_request(self, branch_name: str, title: str, body: str) -> Optional[str]:
@@ -197,28 +199,28 @@ class GitHubIntegration:
             async with aiohttp.ClientSession() as session:
                 url = f"{self.base_url}/repos/{self.repo_owner}/{self.repo_name}/pulls"
                 
-                payload = {
+                payload = {}
                     "title": title,
                     "body": body,
                     "head": branch_name,
                     "base": "main"
-                }
+                
                 
                 async with session.post(url, headers=self.headers, json=payload) as response:
                     if response.status == 201:
                         result = await response.json()
                         return result.get("html_url")
                     else:
-                        logger.error(f"Failed to create PR: {response.status}")
+                        logger.error(str(f"Failed to create PR: {response.status}")
                         return None
                         
         except Exception as e:
-            logger.error(f"Failed to create PR: {e}")
+            logger.error(str(f"Failed to create PR: {e}")
             return None
     
     def _generate_error_issue_body(self, error: Exception, context: str, stack_trace: str = None) -> str:
         """Generate issue body for error reports"""
-        body = f"""## 🚨 Automatic Error Report
+        body = f"""## [ALERT] Automatic Error Report
 
 **Error Type:** `{type(error).__name__}`
 **Context:** `{context}`
@@ -257,7 +259,7 @@ This error was automatically detected and reported by the Enhanced LangChain Orc
         """Generate PR body for automated fixes"""
         files_list = "\n".join([f"- `{file_path}`" for file_path in file_changes.keys()])
         
-        body = f"""## 🔧 Automated Fix
+        body = f"""## [SETUP] Automated Fix
 
 **Context:** `{error_context}`
 **Fix Description:** {fix_description}
@@ -296,9 +298,9 @@ This pull request contains automated fixes generated by the Enhanced LangChain O
                         result = await response.json()
                         return result.get("items", [])
                     else:
-                        logger.error(f"Failed to search issues: {response.status}")
+                        logger.error(str(f"Failed to search issues: {response.status}")
                         return []
                         
         except Exception as e:
-            logger.error(f"Failed to search similar issues: {e}")
+            logger.error(str(f"Failed to search similar issues: {e}")
             return []

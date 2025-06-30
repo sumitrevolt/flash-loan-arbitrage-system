@@ -1,0 +1,157 @@
+version: "3.8"
+
+services:
+  # Redis service (already running)
+  redis:
+    image: "redis:7.0"
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - langchain_network
+    restart: unless-stopped
+
+  # NVIDIA Triton Inference Server
+  triton:
+    image: "nvcr.io/nvidia/tritonserver:23.10-py3"
+    container_name: triton-server
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./models:/models
+    command: ["tritonserver", "--model-repository=/models"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - langchain_network
+    restart: unless-stopped
+
+  # LangChain service with NVIDIA support
+  langchain:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: langchain
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    networks:
+      - langchain_network
+    depends_on:
+      - triton
+    restart: unless-stopped
+
+  # MCP Server: Context7 with NVIDIA
+  context7-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: context7-mcp
+    environment:
+      - MCP_SERVER_NAME=context7-mcp
+      - PORT=8004
+      - NVIDIA_INFERENCE_ENABLED=true
+      - TRITON_SERVER_URL=triton-server:8000
+      - PRIMARY_MODEL=llama2-7b
+      - EMBEDDING_MODEL=bge-large
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./mcp_servers:/app/mcp_servers
+      - ./nvidia_inference_adapter.py:/app/nvidia_inference_adapter.py
+    ports:
+      - "8004:8004"
+    networks:
+      - langchain_network
+    depends_on:
+      - redis
+      - triton
+      - langchain
+    restart: unless-stopped
+
+  # MCP Server: Enhanced Copilot with NVIDIA
+  enhanced-copilot-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: enhanced-copilot-mcp
+    environment:
+      - MCP_SERVER_NAME=enhanced-copilot-mcp
+      - PORT=8006
+      - NVIDIA_INFERENCE_ENABLED=true
+      - TRITON_SERVER_URL=triton-server:8000
+      - PRIMARY_MODEL=mistral-7b
+      - EMBEDDING_MODEL=bge-large
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./mcp_servers:/app/mcp_servers
+      - ./nvidia_inference_adapter.py:/app/nvidia_inference_adapter.py
+    ports:
+      - "8006:8006"
+    networks:
+      - langchain_network
+    depends_on:
+      - redis
+      - triton
+      - langchain
+    restart: unless-stopped
+
+  # MCP Server: AI Integration with NVIDIA
+  ai-integration-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-integration-mcp
+    environment:
+      - MCP_SERVER_NAME=ai-integration-mcp
+      - PORT=8103
+      - NVIDIA_INFERENCE_ENABLED=true
+      - TRITON_SERVER_URL=triton-server:8000
+      - PRIMARY_MODEL=llama2-7b
+      - EMBEDDING_MODEL=bge-large
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./mcp_servers:/app/mcp_servers
+      - ./nvidia_inference_adapter.py:/app/nvidia_inference_adapter.py
+    ports:
+      - "8103:8103"
+    networks:
+      - langchain_network
+    depends_on:
+      - redis
+      - triton
+      - langchain
+    restart: unless-stopped
+
+  # Monitoring for GPU usage
+  nvidia-dcgm-exporter:
+    image: nvcr.io/nvidia/k8s/dcgm-exporter:3.1.7-3.1.4-ubuntu20.04
+    container_name: nvidia-dcgm-exporter
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ports:
+      - "9400:9400"
+    networks:
+      - langchain_network
+    restart: unless-stopped
+
+networks:
+  langchain_network:
+    driver: bridge
+
+volumes:
+  redis_data: 

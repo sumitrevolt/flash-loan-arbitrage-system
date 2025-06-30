@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from decimal import Decimal
+from typing import Dict, Any, Optional, Tuple, List
+import logging
+import math
 """
 Price impact calculator for flash loan arbitrage.
 
@@ -6,10 +12,6 @@ of a trade before executing it, helping to avoid failed transactions
 due to excessive slippage.
 """
 
-import logging
-import math
-from typing import Dict, Any, Optional, Tuple, List
-from decimal import Decimal
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -33,11 +35,11 @@ class PriceImpactCalculator:
         self.last_update = {}
 
         # Default configuration with increased thresholds for better trade execution
-        self.config = {
+        self.config = {}
             "max_acceptable_impact": 5.0,  # 5% maximum acceptable price impact (increased from 2%)
             "warning_impact": 3.0,         # 3% warning threshold (increased from 1%)
             "critical_impact": 8.0,        # 8% critical threshold (increased from 3%)
-            "liquidity_threshold": {
+            "liquidity_threshold": {}
                 "WETH": 50000,             # $50k minimum liquidity for WETH (reduced from $100k)
                 "WBTC": 50000,             # $50k minimum liquidity for WBTC (reduced from $100k)
                 "USDC": 25000,             # $25k minimum liquidity for USDC (reduced from $50k)
@@ -50,14 +52,14 @@ class PriceImpactCalculator:
                 "SUSHI": 5000,             # $5k minimum liquidity for SUSHI (reduced from $10k)
                 "QUICK": 5000              # $5k minimum liquidity for QUICK (added)
             },
-            "dex_impact_factors": {
+            "dex_impact_factors": {}
                 "QuickSwap": 0.8,          # 20% lower impact factor (reduced from 1.0)
                 "SushiSwap": 0.9,          # 10% lower impact factor (reduced from 1.1)
                 "UniswapV3": 0.7           # 30% lower impact factor (reduced from 0.9)
-            }
-        }
+            
+        
 
-    def calculate_price_impact(
+    def calculate_price_impact()
         self,
         token_symbol: str,
         amount_usd: float,
@@ -87,7 +89,7 @@ class PriceImpactCalculator:
 
         # If we still don't have liquidity data, use a conservative estimate
         if not pool_liquidity_usd or pool_liquidity_usd <= 0:
-            self.logger.warning(f"No liquidity data for {token_symbol} on {dex_name}, using conservative estimate")
+            self.logger.warning(str(f"No liquidity data for {token_symbol} on {dex_name}, using conservative estimate")
             # Use a conservative estimate based on token type
             if token_symbol in ["USDC", "USDT", "DAI"]:
                 pool_liquidity_usd = 500000  # Stablecoins typically have high liquidity
@@ -119,11 +121,11 @@ class PriceImpactCalculator:
 
         # Log the result
         if impact_percentage > self.config["critical_impact"]:
-            self.logger.warning(f"CRITICAL price impact for {token_symbol} on {dex_name}: {impact_percentage:.2f}%")
+            self.logger.warning(str(f"CRITICAL price impact for {token_symbol} on {dex_name}: {impact_percentage:.2f}%")
         elif impact_percentage > self.config["warning_impact"]:
-            self.logger.warning(f"HIGH price impact for {token_symbol} on {dex_name}: {impact_percentage:.2f}%")
+            self.logger.warning(str(f"HIGH price impact for {token_symbol} on {dex_name}: {impact_percentage:.2f}%")
         else:
-            self.logger.info(f"Price impact for {token_symbol} on {dex_name}: {impact_percentage:.2f}%")
+            self.logger.info(str(f"Price impact for {token_symbol} on {dex_name}: {impact_percentage:.2f}%")
 
         return impact_percentage, is_acceptable
 
@@ -192,7 +194,7 @@ class PriceImpactCalculator:
         is_sufficient = liquidity >= threshold
 
         if not is_sufficient:
-            self.logger.warning(f"Insufficient liquidity for {token_symbol} on {dex_name}: ${liquidity:.2f} < ${threshold:.2f}")
+            self.logger.warning(str(f"Insufficient liquidity for {token_symbol} on {dex_name}: ${liquidity:.2f} < ${threshold:.2f}")
 
         return is_sufficient
 
@@ -239,6 +241,6 @@ class PriceImpactCalculator:
         if optimal_size > max_trade_size:
             optimal_size = max_trade_size
 
-        self.logger.info(f"Estimated optimal trade size for {token_symbol} on {dex_name}: ${optimal_size:.2f}")
+        self.logger.info(str(f"Estimated optimal trade size for {token_symbol} on {dex_name}: ${optimal_size:.2f}")
 
         return optimal_size

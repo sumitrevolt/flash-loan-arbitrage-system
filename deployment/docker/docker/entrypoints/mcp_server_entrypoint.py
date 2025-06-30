@@ -1,30 +1,45 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+from typing import Any, Optional
+import asyncio
+import logging
+import os
+import signal
+import sys
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
+import redis.asyncio as redis
+import uvicorn
 """
 MCP Server Entrypoint for Docker
 Generic MCP server that can be configured for different services
 """
 
-import asyncio
-import os
-import sys
-import logging
-import signal
-from pathlib import Path
-from typing import Any, Optional
-import uvicorn
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
-import redis.asyncio as redis
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(sys.stdout),
         logging.FileHandler('/app/logs/mcp_server.log', mode='a')
-    ]
-)
+    
+
 
 logger = logging.getLogger(__name__)
 
@@ -41,11 +56,11 @@ class MCPServer:
         
         @self.app.get("/health")
         async def health_check():
-            return {
+            return {}
                 "status": "healthy", 
                 "service": f"mcp_{self.server_type}",
                 "port": self.port
-            }
+            
         
         @self.app.post("/query")
         async def process_query(request: dict):
@@ -53,15 +68,15 @@ class MCPServer:
                 result = await self.handle_query(request)
                 return {"status": "success", "result": result}
             except Exception as e:
-                logger.error(f"Error processing query: {e}")
+                logger.error(str(f"Error processing query: {e}")
                 raise HTTPException(status_code=500, detail=str(e))
         
         @self.app.get("/capabilities")
         async def get_capabilities():
-            return {
+            return {}
                 "server_type": self.server_type,
                 "capabilities": self.get_server_capabilities()
-            }
+            
     
     async def handle_query(self, request: dict) -> dict:
         """Handle incoming queries based on server type"""
@@ -79,28 +94,28 @@ class MCPServer:
     async def handle_price_query(self, request: dict) -> dict:
         """Handle price feed queries"""
         symbol = request.get('symbol', 'ETH')
-        return {
+        return {}
             "type": "price_data",
             "symbol": symbol,
             "price": 2000.0,  # Mock price
             "timestamp": asyncio.get_event_loop().time()
-        }
+        
     
     async def handle_arbitrage_query(self, request: dict) -> dict:
         """Handle arbitrage queries"""
-        return {
+        return {}
             "type": "arbitrage_opportunity",
             "opportunity": "Mock arbitrage opportunity",
             "profit_potential": 0.05
-        }
+        
     
     async def handle_flash_loan_query(self, request: dict) -> dict:
         """Handle flash loan queries"""
-        return {
+        return {}
             "type": "flash_loan_status",
             "available_liquidity": 1000000,
             "fee_rate": 0.0009
-        }
+        
     
     def get_server_capabilities(self) -> list:
         """Get server capabilities based on type"""
@@ -119,23 +134,23 @@ class MCPServer:
         """Initialize Redis connection"""
         try:
             redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
-            self.redis_client = redis.from_url(redis_url)
+            self.redis_client = redis.from_url(redis_url, decode_responses=True, encoding="utf-8")
             await self.redis_client.ping()
             logger.info("Connected to Redis successfully")
         except Exception as e:
-            logger.warning(f"Failed to connect to Redis: {e}")
+            logger.warning(str(f"Failed to connect to Redis: {e}")
     
     async def startup(self):
         """Startup tasks"""
         os.makedirs('/app/logs', exist_ok=True)
         await self.initialize_redis()
-        logger.info(f"MCP Server ({self.server_type}) starting on port {self.port}")
+        logger.info(str(f"MCP Server ({self.server_type} starting on port {self.port}")
     
     async def shutdown(self):
         """Cleanup tasks"""
         if self.redis_client:
             await self.redis_client.close()
-        logger.info(f"MCP Server ({self.server_type}) shutdown complete")
+        logger.info(str(f"MCP Server ({self.server_type} shutdown complete")
 
 mcp_server = MCPServer()
 
@@ -150,14 +165,14 @@ async def shutdown_event():
 def run_server():
     """Run the MCP server"""
     try:
-        uvicorn.run(
+        uvicorn.run()
             mcp_server.app,
             host="0.0.0.0",
             port=mcp_server.port,
             log_level="info"
-        )
+        
     except Exception as e:
-        logger.error(f"Failed to start MCP server: {e}")
+        logger.error(str(f"Failed to start MCP server: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

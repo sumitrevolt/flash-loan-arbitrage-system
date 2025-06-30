@@ -1,0 +1,41 @@
+{
+  "wallet_address": "0xaCd9a5B2438EF62bc7b725c574cDb23bf8D0314D",
+  "analysis_time": "2025-06-21T17:09:47.234489",
+  "token_balances": {
+    "WMATIC": 0.0,
+    "USDC": 0.0,
+    "USDT": 0.0,
+    "DAI": 0.0,
+    "WETH": 0.0,
+    "WBTC": 0.0
+  },
+  "large_matic_movements": [],
+  "contract_balances": {
+    "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270": 276919414.3592373,
+    "0xabcde69d995a1ae7d976f5bcde00050de809ca08": 305.3353942530489,
+    "0x01dc4656603ac33d3eee77f16209552b46f5b7a9": 876.7044130196876
+  },
+  "recovery_opportunities": [
+    {
+      "type": "contract_withdrawal",
+      "amount": 276919414.3592373,
+      "description": "Contract 0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270 holds 276919414.359237295854104648 MATIC",
+      "contract": "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270",
+      "action": "Check for withdrawal functions"
+    },
+    {
+      "type": "contract_withdrawal",
+      "amount": 305.3353942530489,
+      "description": "Contract 0xabcde69d995a1ae7d976f5bcde00050de809ca08 holds 305.335394253048899948 MATIC",
+      "contract": "0xabcde69d995a1ae7d976f5bcde00050de809ca08",
+      "action": "Check for withdrawal functions"
+    },
+    {
+      "type": "contract_withdrawal",
+      "amount": 876.7044130196876,
+      "description": "Contract 0x01dc4656603ac33d3eee77f16209552b46f5b7a9 holds 876.704413019687664729 MATIC",
+      "contract": "0x01dc4656603ac33d3eee77f16209552b46f5b7a9",
+      "action": "Check for withdrawal functions"
+    }
+  ]
+}

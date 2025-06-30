@@ -1,19 +1,23 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+                import os
+from datetime import datetime
+from decimal import Decimal, getcontext
+from typing import Dict, List, Any, Optional
+import asyncio
+import json
+import re
+import sys
+import time
+
+from colorama import Fore, Back, Style
+import aiohttp
+import colorama
 """
 Real-Time DEX Price Calculator with MCP Integration
 Shows real-time prices, calculations, and arbitrage opportunities
 """
 
-import asyncio
-import aiohttp
-import json
-import time
-import sys
-from datetime import datetime
-from typing import Dict, List, Any, Optional
-from decimal import Decimal, getcontext
-import colorama
-from colorama import Fore, Back, Style
 
 # Initialize colorama
 colorama.init(autoreset=True)
@@ -23,28 +27,28 @@ class RealTimeDEXCalculator:
     """Real-time DEX price calculator with MCP integration"""
     
     def __init__(self):
-        self.mcp_servers = {
+        self.mcp_servers = {}
             'foundry': 'http://localhost:8001',
             'evm': 'http://localhost:8002', 
             'matic': 'http://localhost:8003'
-        }
+        
         
         # Major tokens on Polygon
-        self.tokens = {
+        self.tokens = {}
             'WMATIC': {'address': '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270', 'decimals': 18},
             'USDC': {'address': '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', 'decimals': 6},
             'USDT': {'address': '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', 'decimals': 6},
             'DAI': {'address': '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063', 'decimals': 18},
             'WETH': {'address': '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619', 'decimals': 18}
-        }
+        
         
         # DEX routers
-        self.dexes = {
+        self.dexes = {}
             'QuickSwap': '0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff',
             'SushiSwap': '0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506',
             'UniswapV3': '0xE592427A0AEce92De3Edee1F18E0157C05861564',
             'Curve': '0x094d12e5b541784701FD8d65F11fc0598FBC6332'
-        }
+        
         
         self.price_cache = {}
         self.last_update = None
@@ -77,9 +81,9 @@ class RealTimeDEXCalculator:
         prices = {}
         
         # Base prices in USD
-        base_prices = {
+        base_prices = {}
             'WMATIC': 0.45, 'USDC': 1.00, 'USDT': 1.00, 'DAI': 1.00, 'WETH': 1800.0
-        }
+        
         
         for token in self.tokens.keys():
             prices[token] = {}
@@ -93,19 +97,19 @@ class RealTimeDEXCalculator:
                 
         return prices
     
-    def calculate_arbitrage_profit(self, buy_price: Decimal, sell_price: Decimal, 
+    def calculate_arbitrage_profit(self, buy_price: Decimal, sell_price: Decimal, )
                                  amount: Decimal, gas_cost: Decimal = Decimal('0.5')) -> Dict[str, Decimal]:
         """Calculate arbitrage profit including gas costs"""
         gross_profit = (sell_price - buy_price) * amount
         net_profit = gross_profit - gas_cost
         roi = (net_profit / (buy_price * amount)) * 100 if buy_price > 0 else Decimal('0')
         
-        return {
+        return {}
             'gross_profit': gross_profit,
             'net_profit': net_profit,
             'roi_percent': roi,
             'price_difference': ((sell_price - buy_price) / buy_price) * 100 if buy_price > 0 else Decimal('0')
-        }
+        
     
     def find_best_opportunities(self, prices: Dict[str, Dict[str, Decimal]]) -> List[Dict[str, Any]]:
         """Find best arbitrage opportunities"""
@@ -127,7 +131,7 @@ class RealTimeDEXCalculator:
             calc = self.calculate_arbitrage_profit(buy_price, sell_price, trade_amount)
             
             if calc['net_profit'] > 1:  # Only profitable opportunities
-                opportunities.append({
+                opportunities.append({)}
                     'token': token,
                     'buy_dex': min_dex,
                     'sell_dex': max_dex,
@@ -135,7 +139,7 @@ class RealTimeDEXCalculator:
                     'sell_price': sell_price,
                     'calculation': calc,
                     'trade_amount': trade_amount
-                })
+                
         
         return sorted(opportunities, key=lambda x: Any: Any: x['calculation']['net_profit'], reverse=True)
     
@@ -215,9 +219,9 @@ class RealTimeDEXCalculator:
             else:
                 color = Fore.YELLOW
             
-            print(f"{token:<8} {route:<20} {calc['price_difference']:>6.2f}%     "
+            print(f"{token:<8} {route:<20} {calc['price_difference']:>6.2f}%     ")
                   f"{color}${calc['net_profit']:>7.2f}{Style.RESET_ALL}   "
-                  f"{color}{calc['roi_percent']:>5.2f}%{Style.RESET_ALL}")
+                  f"{color}{calc['roi_percent']:>5.2f}%{Style.RESET_ALL}"
     
     def display_detailed_calculation(self, opp: Dict[str, Any]):
         """Display detailed calculation for top opportunity"""
@@ -247,7 +251,6 @@ class RealTimeDEXCalculator:
                 iteration += 1
                 
                 # Clear screen
-                import os
                 os.system('cls' if os.name == 'nt' else 'clear')
         # WARNING: This is a security risk
         # WARNING: This is a security risk
@@ -281,10 +284,10 @@ class RealTimeDEXCalculator:
                 
                 # Status footer
                 active_servers = sum(health.values())
-                print(f"\n{Fore.GREEN}● CALCULATOR ACTIVE{Style.RESET_ALL} - "
+                print(f"\n{Fore.GREEN}● CALCULATOR ACTIVE{Style.RESET_ALL} - ")
                       f"Iteration {iteration} - "
                       f"{Fore.CYAN}{active_servers}/3 MCP Servers{Style.RESET_ALL} - "
-                      f"{Fore.YELLOW}Next update in 2s...{Style.RESET_ALL}")
+                      f"{Fore.YELLOW}Next update in 2s...{Style.RESET_ALL}"
                 
                 await asyncio.sleep(2)
                 

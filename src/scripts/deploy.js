@@ -1,5 +1,4 @@
-const { ethers } = require("hardhat");
-require("dotenv").config();
+const { ethers, network } = require("hardhat");
 
 async function main() {
     console.log("=".repeat(50));
@@ -18,8 +17,21 @@ async function main() {
         console.log("⚠️  WARNING: Low balance detected! Make sure you have enough MATIC for deployment.");
     }
     
-    // Aave V3 Pool Address Provider on Polygon
-    const AAVE_POOL_ADDRESS_PROVIDER = "0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb";
+    const networkName = network.name;
+    console.log("🌍 Deploying to network:", networkName);
+
+    // Aave V3 Pool Address Provider
+    const addressProvider = {
+        polygon: "0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb",
+        amoy: "0x012bAC54348C0E635dCAc9D5FB99f06F24136C9A"
+    };
+
+    const AAVE_POOL_ADDRESS_PROVIDER = addressProvider[networkName];
+
+    if (!AAVE_POOL_ADDRESS_PROVIDER || AAVE_POOL_ADDRESS_PROVIDER === "0x0000000000000000000000000000000000000000") {
+        throw new Error(`Aave Pool Address Provider not configured for network: ${networkName}`);
+    }
+    
     console.log("🏦 Using Aave Pool Address Provider:", AAVE_POOL_ADDRESS_PROVIDER);
     
     try {
@@ -127,7 +139,7 @@ async function main() {
             contractAddress: flashLoanContract.address,
             deploymentTransaction: flashLoanContract.deployTransaction.hash,
             deployer: deployer.address,
-            network: "Polygon",
+            network: networkName,
             timestamp: new Date().toISOString(),
             aavePoolAddressProvider: AAVE_POOL_ADDRESS_PROVIDER,
             gasUsed: flashLoanContract.deployTransaction.gasLimit?.toString(),
@@ -142,8 +154,8 @@ async function main() {
         console.log("\n" + "=".repeat(50));
         console.log("📋 NEXT STEPS:");
         console.log("=".repeat(50));
-        console.log("1. Verify the contract on PolygonScan using:");
-        console.log(`   npx hardhat verify --network polygon ${flashLoanContract.address} "${AAVE_POOL_ADDRESS_PROVIDER}"`);
+        console.log(`1. Verify the contract on ${networkName}scan using:`);
+        console.log(`   npx hardhat verify --network ${networkName} ${flashLoanContract.address} "${AAVE_POOL_ADDRESS_PROVIDER}"`);
         console.log("\n2. Fund the contract with some MATIC for gas fees");
         console.log("\n3. Test the contract with small amounts first");
         console.log("\n4. Monitor the contract health regularly");

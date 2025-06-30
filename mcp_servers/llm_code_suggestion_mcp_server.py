@@ -1,14 +1,18 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+# This structure assumes an existing mcp.server framework similar to other servers in the project.
+from typing import Dict, List, Any, Optional
 import asyncio
 import json
 import logging
 import os
-from typing import Dict, List, Any, Optional
+import re
 
-# Attempt to import MCP server components.
-# This structure assumes an existing mcp.server framework similar to other servers in the project.
-try:
+        from mcp.server.stdio import stdio_server
     from mcp.server import Server, InitializationOptions, NotificationOptions
     from mcp.types import Tool, TextContent
+    from openai import OpenAI as OpenAIClient # OpenAI for v1.x
+try:
     MCP_FRAMEWORK_AVAILABLE = True
 except ImportError:
     MCP_FRAMEWORK_AVAILABLE = False
@@ -35,7 +39,6 @@ except ImportError:
 
 # Attempt to import OpenAI library
 try:
-    from openai import OpenAI as OpenAIClient # OpenAI for v1.x
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
@@ -43,6 +46,19 @@ except ImportError:
 
 # Configure logging
 logger = logging.getLogger("LLMCodeSuggestionMCPServer")
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # Configuration from environment variables
@@ -56,15 +72,15 @@ class LLMCodeSuggestionMCPServer:
             # This warning is now potentially from the dummy class section if logger was not configured yet.
             # Re-iterate or ensure logger is configured before dummy classes if needed.
             # For now, this is okay as top-level logger config runs before this __init__.
-            logger.warning("MCP framework not available. Server will have limited functionality (using dummies).")
+            logger.warning("MCP framework not available. Server will have limited functionality (using dummies.")
 
         self.openai_client = None
         if OPENAI_AVAILABLE and OPENAI_API_KEY and OpenAIClient:
             try:
                 self.openai_client = OpenAIClient(api_key=OPENAI_API_KEY)
-                logger.info(f"OpenAI client initialized with model {OPENAI_MODEL}.")
+                logger.info(str(f"OpenAI client initialized with model {OPENAI_MODEL}.")
             except Exception as e:
-                logger.error(f"Failed to initialize OpenAI client: {e}")
+                logger.error(str(f"Failed to initialize OpenAI client: {e}")
                 self.openai_client = None # Ensure it's None if init fails        elif not OPENAI_API_KEY:
             logger.warning("OPENAI_API_KEY not set. OpenAI functionality will be disabled.")
         elif not OPENAI_AVAILABLE: # OPENAI_AVAILABLE is False
@@ -77,33 +93,33 @@ class LLMCodeSuggestionMCPServer:
     def _setup_handlers(self):
         @self.server.list_tools()
         async def handle_list_tools() -> List[Tool]:
-            return [
-                Tool(
+            return []
+                Tool()
                     name="get_llm_code_suggestion",
                     description="Provides code suggestions from an LLM for a given code snippet and error.",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "code_snippet": {"type": "string", "description": "The problematic code snippet."},
                             "error_message": {"type": "string", "description": "The error message associated with the code."},
                             "language": {"type": "string", "description": "The programming language (e.g., python).", "default": "python"},
                             "context": {"type": "string", "description": "Optional additional context for the LLM."}
                         },
                         "required": ["code_snippet", "error_message"]
-                    }
-                )
-            ]
+                    
+                
+            
 
         @self.server.call_tool()
         async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
             if name == "get_llm_code_suggestion":
                 if not self.openai_client:
-                    result = {
+                    result = {}
                         "status": "error",
                         "suggestion": None,
                         "error_message": "OpenAI client not initialized, API key missing, or library not installed."
-                    }
-                    return [TextContent(type="application/json", text=json.dumps(result))]
+                    
+                    return [TextContent(type="application/json", text=json.dumps(result, ensure_ascii=True, default=str))]
 
                 code_snippet = arguments.get("code_snippet")
                 error_message = arguments.get("error_message")
@@ -113,15 +129,15 @@ class LLMCodeSuggestionMCPServer:
                 try:
                     prompt = self._construct_prompt(code_snippet, error_message, language, context)
 
-                    logger.info(f"Sending request to OpenAI with model {OPENAI_MODEL}.")
-                    chat_completion = self.openai_client.chat.completions.create(
-                        messages=[
+                    logger.info(str(f"Sending request to OpenAI with model {OPENAI_MODEL}.")
+                    chat_completion = self.openai_client.chat.completions.create()
+                        messages=[]
                             {"role": "system", "content": "You are a helpful AI assistant that provides code suggestions to fix errors. Provide only the corrected code block or a concise explanation if a direct code fix is not possible. Your response should be directly usable. If providing code, use appropriate markdown code blocks for the language specified."},
                             {"role": "user", "content": prompt}
                         ],
                         model=OPENAI_MODEL,
                         temperature=0.3,
-                    )
+                    
 
                     suggestion_raw = chat_completion.choices[0].message.content
                     suggestion = suggestion_raw.strip() if suggestion_raw else ""
@@ -136,22 +152,22 @@ class LLMCodeSuggestionMCPServer:
 
 
                     logger.info("Received suggestion from OpenAI.")
-                    result = {
+                    result = {}
                         "status": "success",
                         "suggestion": suggestion,
                         "raw_suggestion": suggestion_raw, # Keep raw for debugging if needed
                         "error_message": None
-                    }
+                    
                 except Exception as e:
-                    logger.error(f"Error calling OpenAI API: {e}", exc_info=True)
-                    result = {
+                    logger.error(str(f"Error calling OpenAI API: {e}"), exc_info=True)
+                    result = {}
                         "status": "error",
                         "suggestion": None,
                         "error_message": f"OpenAI API error: {str(e)}"
-                    }
-                return [TextContent(type="application/json", text=json.dumps(result))]
+                    
+                return [TextContent(type="application/json", text=json.dumps(result, ensure_ascii=True, default=str))]
             else:
-                logger.error(f"Call to unknown tool: {name}")
+                logger.error(str(f"Call to unknown tool: {name}")
                 raise ValueError(f"Unknown tool: {name}")
 
     def _construct_prompt(self, code_snippet: str, error_message: str, language: str, context: str) -> str:
@@ -170,32 +186,31 @@ async def main():
         try:
             _ = LLMCodeSuggestionMCPServer()
         except Exception as e:
-            logger.error(f"Failed to instantiate LLMCodeSuggestionMCPServer even with dummies: {e}")
+            logger.error(str(f"Failed to instantiate LLMCodeSuggestionMCPServer even with dummies: {e}")
         return
 
     server_instance = LLMCodeSuggestionMCPServer()
 
     try:
-        from mcp.server.stdio import stdio_server
         logger.info("Attempting to start server in stdio mode.")
         async with stdio_server() as (read_stream, write_stream):
-            await server_instance.server.run(
+            await server_instance.server.run()
                 read_stream,
                 write_stream,
-                InitializationOptions(
+                InitializationOptions()
                     server_name=server_instance.server.name,
                     server_version="1.0.0",
-                    capabilities=server_instance.server.get_capabilities(
+                    capabilities=server_instance.server.get_capabilities()
                         notification_options=NotificationOptions(),
                         experimental_capabilities={},
                     ),
                 ) if MCP_FRAMEWORK_AVAILABLE else None,
-            )
+            
     except ImportError:
         logger.warning("mcp.server.stdio not found. Server cannot run in stdio mode.")
-        logger.info("To run this server, ensure the MCP framework (including stdio_server or equivalent runner) is available.")
+        logger.info("To run this server, ensure the MCP framework (including stdio_server or equivalent runner is available.")
     except Exception as e:
-        logger.error(f"Error during server startup or execution: {e}", exc_info=True)
+        logger.error(str(f"Error during server startup or execution: {e}"), exc_info=True)
 
 
 if __name__ == "__main__":

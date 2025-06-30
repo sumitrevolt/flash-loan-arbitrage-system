@@ -1,21 +1,23 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+    import os
+from pathlib import Path
+from typing import Dict, Any, Optional
+import asyncio
+import json
+import socket
+import subprocess
+import sys
+import time
+
+import aiohttp
+import psutil
 """
 Health check script for MCP servers
 Verifies that the MCP server is running and responding correctly
 """
 
-import sys
-import os
-import asyncio
-import json
-import socket
-import subprocess
-import time
-from pathlib import Path
-from typing import Dict, Any, Optional
 
-import aiohttp
-import psutil
 
 class MCPHealthChecker:
     def __init__(self):
@@ -39,11 +41,11 @@ class MCPHealthChecker:
         """Check HTTP endpoint health"""
         try:
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=5)) as session:
-                urls_to_check = [
+                urls_to_check = []
                     f'http://localhost:{port}/health',
                     f'http://localhost:{port}/status',
                     f'http://localhost:{port}/',
-                ]
+                
                 
                 for url in urls_to_check:
                     try:
@@ -77,18 +79,18 @@ class MCPHealthChecker:
     
     def check_log_errors(self) -> Dict[str, Any]:
         """Check recent log files for errors"""
-        log_info = {
+        log_info = {}
             'has_errors': False,
             'error_count': 0,
             'recent_errors': []
-        }
+        
         
         try:
-            log_files = [
+            log_files = []
                 '/app/logs/mcp_server.log',
                 '/app/logs/error.log',
                 f'/app/logs/{self.server_name}.log'
-            ]
+            
             
             for log_file in log_files:
                 if Path(log_file).exists():
@@ -112,12 +114,12 @@ class MCPHealthChecker:
     def get_system_stats(self) -> Dict[str, Any]:
         """Get basic system statistics"""
         try:
-            return {
+            return {}
                 'cpu_percent': psutil.cpu_percent(interval=1),
                 'memory_percent': psutil.virtual_memory().percent,
                 'disk_percent': psutil.disk_usage('/').percent,
                 'load_average': psutil.getloadavg() if hasattr(psutil, 'getloadavg') else None
-            }
+            
         except:
             return {}
     
@@ -125,14 +127,14 @@ class MCPHealthChecker:
         """Run comprehensive health check"""
         start_time = time.time()
         
-        health_status = {
+        health_status = {}
             'server_name': self.server_name,
             'timestamp': time.time(),
             'healthy': False,
             'checks': {},
             'system_stats': {},
             'duration_ms': 0
-        }
+        
         
         # Process check
         process_running = self.check_process_running()
@@ -161,11 +163,11 @@ class MCPHealthChecker:
         if self.server_port:
             critical_checks.append(port_available)
             
-        health_status['healthy'] = (
+        health_status['healthy'] = ()
             all(critical_checks) and 
             not log_info['has_errors'] and
             health_status['system_stats'].get('memory_percent', 0) < 95
-        )
+        
         
         health_status['duration_ms'] = int((time.time() - start_time) * 1000)
         
@@ -173,25 +175,24 @@ class MCPHealthChecker:
 
 def main():
     """Main health check function"""
-    import os
     
     try:
         checker = MCPHealthChecker()
         health_result: str = asyncio.run(checker.run_health_check())
         
         # Print health status for logging
-        print(json.dumps(health_result, indent=2))
+        print(json.dumps(health_result, indent=2, ensure_ascii=True, default=str))
         
         # Exit with appropriate code
         if health_result['healthy']:
-            print(f"✅ {checker.server_name} is healthy")
+            print(f"[OK] {checker.server_name} is healthy")
             sys.exit(0)
         else:
-            print(f"❌ {checker.server_name} is unhealthy")
+            print(f"[ERROR] {checker.server_name} is unhealthy")
             sys.exit(1)
             
     except Exception as e:
-        print(f"❌ Health check failed: {e}")
+        print(f"[ERROR] Health check failed: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

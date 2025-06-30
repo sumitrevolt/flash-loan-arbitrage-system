@@ -1,4 +1,27 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+                import re
+from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Set, Union, Tuple, Callable, Union, Tuple
+import asyncio
+import hashlib
+import json
+import logging
+import os
+import shutil
+import sys
+
+    from langchain.agents import initialize_agent, AgentType
+    from langchain.callbacks.manager import CallbackManagerForToolRun
+    from langchain.chains import LLMChain
+    from langchain.memory import ConversationBufferMemory
+    from langchain.prompts import PromptTemplate
+    from langchain.schema import BaseMessage
+    from langchain.tools import BaseTool, StructuredTool
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+    from langchain_openai import ChatOpenAI
 """
 Comprehensive Project Organizer using LangChain and MCP Servers
 ==============================================================
@@ -15,66 +38,59 @@ Author: GitHub Copilot Assistant
 Date: June 2025
 """
 
-import asyncio
-import logging
-import json
-import os
-import sys
-import shutil
-import hashlib
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Set, Union, Tuple, Callable, Union, Tuple
-from collections import defaultdict
 
 # Enhanced LangChain imports with proper type annotations
 try:
-    from langchain_openai import ChatOpenAI
-    from langchain.memory import ConversationBufferMemory
-    from langchain.agents import initialize_agent, AgentType
-    from langchain.tools import BaseTool, StructuredTool
-    from langchain.callbacks.manager import CallbackManagerForToolRun
-    from langchain.schema import BaseMessage
-    from langchain_community.embeddings import HuggingFaceEmbeddings
-    from langchain.prompts import PromptTemplate
-    from langchain.chains import LLMChain
 except ImportError as e:
     logging.error(f"Missing LangChain dependencies: {e}")
     sys.exit(1)
 
 # Configure enhanced logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(),
         logging.FileHandler('project_organizer.log', encoding='utf-8')
-    ]
-)
+    
+
 
 logger = logging.getLogger(__name__)
 
 class ProjectStructure:
     """Defines the target project structure"""
     
-    STRUCTURE = {
-        'src/': {
+    STRUCTURE = {}
+        'src/': {}
             'langchain_coordinators/': ['*.py'],
             'mcp_integrators/': ['*.py'],
             'tools/': ['*.py'],
             'utilities/': ['*.py']
         },
-        'mcp_servers/': {
+        'mcp_servers/': {}
             'task_management/': ['mcp-taskmanager/'],
             'github_integration/': ['github-mcp/'],
             'playwright_automation/': ['playwright-mcp/'],
             'context_retrieval/': ['context7-mcp/']
         },
-        'docker/': {
+        'docker/': {}
             'compose_files/': ['docker-compose*.yml'],
             'configurations/': ['*.env', '*.conf']
         },
-        'scripts/': {
+        'scripts/': {}
             'deployment/': ['deploy*.py', 'setup*.py'],
             'automation/': ['auto*.py'],
             'utilities/': ['*util*.py', '*helper*.py']
@@ -83,7 +99,7 @@ class ProjectStructure:
         'logs/': {},
         'docs/': ['*.md', '*.txt'],
         'config/': ['*.yaml', '*.json', '*.toml']
-    }
+    
 
 class DuplicateDetectorTool(BaseTool):
     """Tool for detecting duplicate files using content hashing"""
@@ -108,19 +124,19 @@ class DuplicateDetectorTool(BaseTool):
                         content_hash = self._calculate_file_hash(file_path)
                         file_hashes[content_hash].append(file_path)
                     except Exception as e:
-                        logger.warning(f"Could not hash {file_path}: {e}")
+                        logger.warning(str(f"Could not hash {file_path}: {e}")
             
             # Identify duplicates
             for content_hash, file_list in file_hashes.items():
                 if len(file_list) > 1:
                     duplicate_groups.append([str(f) for f in file_list])
             
-            return json.dumps({
-                'total_files_scanned': sum(len(files) for files in file_hashes.values()),
+            return json.dumps({)}
+                'total_files_scanned': sum(len(files, ensure_ascii=True, default=str) for files in file_hashes.values()),
                 'duplicate_groups': duplicate_groups,
                 'total_duplicates': len(duplicate_groups),
                 'files_to_remove': sum(len(group) - 1 for group in duplicate_groups)
-            })
+            
             
         except Exception as e:
             return f"Error detecting duplicates: {str(e)}"
@@ -130,11 +146,11 @@ class DuplicateDetectorTool(BaseTool):
         skip_extensions = {'.log', '.tmp', '.cache', '.pyc', '.pyo', '.pyd'}
         skip_names = {'__pycache__', '.git', '.vscode', 'node_modules'}
         
-        return (
+        return ()
             file_path.suffix.lower() in skip_extensions or
             any(part in skip_names for part in file_path.parts) or
             file_path.name.startswith('.')
-        )
+        
     
     def _calculate_file_hash(self, file_path: Path) -> str:
         """Calculate SHA-256 hash of file content"""
@@ -194,16 +210,16 @@ class ProjectOrganizerTool(BaseTool):
                             
                             shutil.move(str(file_path), str(target_path))
                             organized_files += 1
-                            logger.info(f"Moved {file_path.name} to {target_dir}")
+                            logger.info(str(f"Moved {file_path.name} to {target_dir}")
                         except Exception as e:
-                            logger.warning(f"Could not move {file_path}: {e}")
+                            logger.warning(str(f"Could not move {file_path}: {e}")
             
-            return json.dumps({
+            return json.dumps({)}
                 'organized_files': organized_files,
-                'created_directories': len(created_directories),
+                'created_directories': len(created_directories, ensure_ascii=True, default=str),
                 'directories_created': created_directories,
                 'status': 'success'
-            })
+            
             
         except Exception as e:
             return f"Error organizing project: {str(e)}"
@@ -274,15 +290,15 @@ class TypeAnnotationFixerTool(BaseTool):
             fixes_applied = 0
             
             # Fix import issues
-            import_fixes = [
+            import_fixes = []
                 # Fix LangChain imports
                 ('from langchain_openai import ChatOpenAI', 'from langchain_openai import ChatOpenAI'),
                 ('from langchain.agents import initialize_agent, AgentType', 'from langchain.agents import initialize_agent, AgentType'),
                 
                 # Add missing type imports
-                ('from typing import Dict, List, Any, Optional, Set, Union, Tuple, Callable', 
+                ('from typing import Dict, List, Any, Optional, Set, Union, Tuple, Callable', )
                  'from typing import Dict, List, Any, Optional, Set, Union, Tuple, Callable, Union, Tuple, Callable'),
-            ]
+            
             
             for old_import, new_import in import_fixes:
                 if old_import in content:
@@ -290,24 +306,23 @@ class TypeAnnotationFixerTool(BaseTool):
                     fixes_applied += 1
             
             # Fix lambda type annotations
-            lambda_patterns = [
+            lambda_patterns = []
                 (r'lambda x: Any: Any:', 'lambda x: Any: Any: Any:'),
                 (r'lambda (\w+):', r'lambda \1: Any:'),
-            ]
+            
             
             for pattern, replacement in lambda_patterns:
-                import re
                 if re.search(pattern, content):
                     content = re.sub(pattern, replacement, content)
                     fixes_applied += 1
             
             # Fix method calls with proper type annotations
-            method_fixes = [
+            method_fixes = []
                 # Fix _run method calls
-                ('tool.run(', 'tool.run('),
-                ('analysis_tool.run(', 'analysis_tool.run('),
-                ('fixer_tool.run(', 'fixer_tool.run('),
-            ]
+                ('tool.run(', 'tool.run('),))
+                ('analysis_tool.run(', 'analysis_tool.run('),))
+                ('fixer_tool.run(', 'fixer_tool.run('),))
+            
             
             for old_call, new_call in method_fixes:
                 if old_call in content:
@@ -315,12 +330,12 @@ class TypeAnnotationFixerTool(BaseTool):
                     fixes_applied += 1
             
             # Add proper type annotations for variables
-            type_annotation_fixes = [
+            type_annotation_fixes = []
                 ('line = ', 'line: str = '),
                 ('result = ', 'result: str = '),
                 ('issues = []', 'issues: List[Dict[str, Any]] = []'),
                 ('all_issues = {}', 'all_issues: Dict[str, Any] = {}'),
-            ]
+            
             
             for old_annotation, new_annotation in type_annotation_fixes:
                 if old_annotation in content and new_annotation not in content:
@@ -336,12 +351,12 @@ class TypeAnnotationFixerTool(BaseTool):
                 with open(path, 'w', encoding='utf-8') as f:
                     f.write(content)
             
-            return json.dumps({
+            return json.dumps({)}
                 'file': file_path,
                 'fixes_applied': fixes_applied,
-                'backup_created': str(backup_path) if fixes_applied > 0 else None,
+                'backup_created': str(backup_path, ensure_ascii=True, default=str) if fixes_applied > 0 else None,
                 'status': 'success' if fixes_applied > 0 else 'no_changes_needed'
-            })
+            
             
         except Exception as e:
             return f"Error fixing type annotations: {str(e)}"
@@ -352,61 +367,61 @@ class LangChainProjectOrganizer:
     def __init__(self, project_root: str):
         self.project_root = Path(project_root)
         self.setup_langchain()
-        self.organize_report = {
+        self.organize_report = {}
             'start_time': datetime.now().isoformat(),
             'files_processed': 0,
             'duplicates_removed': 0,
             'files_organized': 0,
             'type_fixes_applied': 0,
             'mcp_servers_integrated': 0
-        }
+        
     
     def setup_langchain(self) -> None:
         """Setup LangChain components"""
         try:
             # Initialize LLM (using a mock for now - replace with actual API key)
-            self.llm = ChatOpenAI(
+            self.llm = ChatOpenAI()
                 temperature=0.1,
                 model_name="gpt-3.5-turbo",
                 openai_api_key="your-api-key-here"  # Replace with actual key
-            )
+            
             
             # Initialize memory
-            self.memory = ConversationBufferMemory(
+            self.memory = ConversationBufferMemory()
                 memory_key="chat_history",
                 return_messages=True
-            )
+            
             
             # Create tools
-            self.tools = [
+            self.tools = []
                 DuplicateDetectorTool(),
                 ProjectOrganizerTool(), 
                 TypeAnnotationFixerTool()
-            ]
+            
             
             # Initialize agent
-            self.agent = initialize_agent(
+            self.agent = initialize_agent()
                 tools=self.tools,
                 llm=self.llm,
                 agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
                 memory=self.memory,
                 verbose=True
-            )
             
-            logger.info("✅ LangChain components initialized successfully")
+            
+            logger.info("[OK] LangChain components initialized successfully")
             
         except Exception as e:
-            logger.error(f"❌ Error setting up LangChain: {e}")
+            logger.error(str(f"[ERROR] Error setting up LangChain: {e}")
             # Continue without LLM for basic functionality
-            self.tools = [
+            self.tools = []
                 DuplicateDetectorTool(),
                 ProjectOrganizerTool(),
                 TypeAnnotationFixerTool()
-            ]
+            
     
     async def organize_project(self) -> Dict[str, Any]:
         """Main method to organize the entire project"""
-        logger.info("🚀 Starting comprehensive project organization...")
+        logger.info("[INIT] Starting comprehensive project organization...")
         
         try:
             # Step 1: Detect and remove duplicates
@@ -424,26 +439,26 @@ class LangChainProjectOrganizer:
             # Step 5: Generate final report
             self.generate_organization_report()
             
-            logger.info("✅ Project organization completed successfully!")
+            logger.info("[OK] Project organization completed successfully!")
             return self.organize_report
             
         except Exception as e:
-            logger.error(f"❌ Error during project organization: {e}")
+            logger.error(str(f"[ERROR] Error during project organization: {e}")
             return {'error': str(e)}
     
     async def remove_duplicates(self) -> None:
         """Remove duplicate files from project"""
-        logger.info("🔍 Detecting duplicate files...")
+        logger.info("[SEARCH] Detecting duplicate files...")
         
         duplicate_tool = DuplicateDetectorTool()
         result = duplicate_tool.run(str(self.project_root))
         
         if result.startswith('Error'):
-            logger.error(f"❌ {result}")
+            logger.error(str(f"[ERROR] {result}")
             return
         
         duplicate_data = json.loads(result)
-        logger.info(f"📊 Found {duplicate_data['total_duplicates']} duplicate groups")
+        logger.info(str(f"[METRICS] Found {duplicate_data['total_duplicates']} duplicate groups")
         
         # Remove duplicates (keep first file in each group)
         for group in duplicate_data['duplicate_groups']:
@@ -451,33 +466,33 @@ class LangChainProjectOrganizer:
                 try:
                     Path(duplicate_file).unlink()
                     self.organize_report['duplicates_removed'] += 1
-                    logger.info(f"🗑️  Removed duplicate: {Path(duplicate_file).name}")
+                    logger.info(str(f"🗑️  Removed duplicate: {Path(duplicate_file.name}")
                 except Exception as e:
-                    logger.warning(f"Could not remove {duplicate_file}: {e}")
+                    logger.warning(str(f"Could not remove {duplicate_file}: {e}")
     
     async def organize_file_structure(self) -> None:
         """Organize files into proper directory structure"""
         logger.info("📁 Organizing file structure...")
         
         organizer_tool = ProjectOrganizerTool()
-        request = json.dumps({
-            'source_directory': str(self.project_root),
+        request = json.dumps({)}
+            'source_directory': str(self.project_root, ensure_ascii=True, default=str),
             'target_structure': ProjectStructure.STRUCTURE
-        })
+        
         
         result = organizer_tool.run(request)
         
         if result.startswith('Error'):
-            logger.error(f"❌ {result}")
+            logger.error(str(f"[ERROR] {result}")
             return
         
         organize_data = json.loads(result)
         self.organize_report['files_organized'] = organize_data['organized_files']
-        logger.info(f"📦 Organized {organize_data['organized_files']} files")
+        logger.info(str(f"[PACKAGE] Organized {organize_data['organized_files']} files")
     
     async def fix_type_annotations(self) -> None:
         """Fix type annotation issues in Python files"""
-        logger.info("🔧 Fixing type annotations...")
+        logger.info("[SETUP] Fixing type annotations...")
         
         type_fixer = TypeAnnotationFixerTool()
         
@@ -486,13 +501,13 @@ class LangChainProjectOrganizer:
                 result = type_fixer.run(str(py_file))
                 
                 if result.startswith('Error'):
-                    logger.warning(f"⚠️  Could not fix {py_file}: {result}")
+                    logger.warning(str(f"[WARN]  Could not fix {py_file}: {result}")
                     continue
                 
                 fix_data = json.loads(result)
                 if fix_data['fixes_applied'] > 0:
                     self.organize_report['type_fixes_applied'] += fix_data['fixes_applied']
-                    logger.info(f"🔧 Fixed {fix_data['fixes_applied']} issues in {py_file.name}")
+                    logger.info(str(f"[SETUP] Fixed {fix_data['fixes_applied']} issues in {py_file.name}")
     
     def _should_process_python_file(self, file_path: Path) -> bool:
         """Determine if Python file should be processed"""
@@ -503,12 +518,12 @@ class LangChainProjectOrganizer:
         """Integrate all MCP servers with LangChain"""
         logger.info("🔗 Integrating MCP servers...")
         
-        mcp_servers = [
+        mcp_servers = []
             'task_management/mcp-taskmanager',
             'github_integration', 
             'playwright_automation',
             'context_retrieval'
-        ]
+        
         
         mcp_dir = self.project_root / 'mcp_servers'
         if not mcp_dir.exists():
@@ -523,19 +538,19 @@ class LangChainProjectOrganizer:
                 integrated_servers += 1
         
         self.organize_report['mcp_servers_integrated'] = integrated_servers
-        logger.info(f"🔗 Integrated {integrated_servers} MCP servers")
+        logger.info(str(f"🔗 Integrated {integrated_servers} MCP servers")
     
     async def _create_mcp_integration_config(self, server_name: str, server_path: Path) -> None:
         """Create integration configuration for MCP server"""
-        config = {
+        config = {}
             'name': server_name,
             'path': str(server_path),
             'enabled': True,
-            'langchain_integration': {
+            'langchain_integration': {}
                 'tool_prefix': server_name.replace('_', '-'),
                 'description': f"Integration with {server_name} MCP server"
-            }
-        }
+            
+        
         
         config_file = server_path / 'langchain_integration.json'
         with open(config_file, 'w') as f:
@@ -544,10 +559,10 @@ class LangChainProjectOrganizer:
     def generate_organization_report(self) -> None:
         """Generate comprehensive organization report"""
         self.organize_report['end_time'] = datetime.now().isoformat()
-        self.organize_report['duration'] = str(
+        self.organize_report['duration'] = str()
             datetime.fromisoformat(self.organize_report['end_time']) - 
             datetime.fromisoformat(self.organize_report['start_time'])
-        )
+        
         
         report_file = self.project_root / 'PROJECT_ORGANIZATION_REPORT.md'
         
@@ -583,7 +598,7 @@ Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         with open(report_file, 'w', encoding='utf-8') as f:
             f.write(report_content)
         
-        logger.info(f"📋 Generated organization report: {report_file}")
+        logger.info(str(f"📋 Generated organization report: {report_file}")
     
     def _generate_structure_tree(self) -> str:
         """Generate a tree view of the project structure"""
@@ -594,9 +609,9 @@ Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             items = []
             if directory.exists():
                 try:
-                    children = sorted([item for item in directory.iterdir() 
-                                     if not item.name.startswith('.')], 
-                                    key=lambda x: Any: Any: (x.is_file(), x.name.lower()))
+                    children = sorted([item for item in directory.iterdir() )]
+                                     if not item.name.startswith('.')],
+                                    key=lambda x: Any: Any: (x.is_file(), x.name.lower())
                     
                     for i, item in enumerate(children[:10]):  # Limit to 10 items per directory
                         is_last = i == len(children) - 1
@@ -621,16 +636,16 @@ async def main():
     """Main entry point"""
     project_root = Path.cwd()
     
-    logger.info("🎯 Starting LangChain Project Organization")
-    logger.info(f"📁 Project root: {project_root}")
+    logger.info("[TASK] Starting LangChain Project Organization")
+    logger.info(str(f"📁 Project root: {project_root}")
     
     organizer = LangChainProjectOrganizer(str(project_root))
     
     try:
         result = await organizer.organize_project()
-        logger.info(f"✅ Organization completed: {result}")
+        logger.info(str(f"[OK] Organization completed: {result}")
     except Exception as e:
-        logger.error(f"❌ Organization failed: {e}")
+        logger.error(str(f"[ERROR] Organization failed: {e}")
 
 if __name__ == "__main__":
     asyncio.run(main())

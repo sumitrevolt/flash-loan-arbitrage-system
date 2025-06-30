@@ -1,0 +1,19 @@
+{
+  "extends": [],
+  "hints": {},
+  "parsers": [],
+  "formatters": [],
+  "ignoredUrls": [
+    {
+      "domain": "*",
+      "hints": ["*"]
+    }
+  ],
+  "browserslist": [],
+  "connector": {
+    "name": "local",
+    "options": {
+      "pattern": ["**/*.{html,htm}"]
+    }
+  }
+} 

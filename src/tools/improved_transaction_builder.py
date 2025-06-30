@@ -1,22 +1,23 @@
-from typing import Optional
-# Import from central web3_provider
-from src.utils.web3_provider import Web3, WEB3_IMPORTED
-from web3.types import TxParams, Wei, ChecksumAddress
-# Import exceptions from central provider
-from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # Import middleware from centralized modules
-from src.utils.middleware_compat import apply_poa_middleware
-
+from typing import Optional
 import logging
+
+from web3.types import TxParams, Wei, ChecksumAddress
+
+from src.utils.middleware_compat import apply_poa_middleware
+from src.utils.web3_provider import Web3, WEB3_IMPORTED
+from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
+from src.utils.web3_provider import requires_web3
 logger = logging.getLogger(__name__)
 # Import requires_web3 decorator from central provider
-from src.utils.web3_provider import requires_web3
 
 
 
 
 
-def build_transaction(
+def build_transaction()
     web3: Web3,
     from_address: str,
     to_address: str,
@@ -40,12 +41,12 @@ def build_transaction(
     Returns:
         TxParams: Typed transaction dictionary
     """
-    tx: TxParams = {
+    tx: TxParams = {}
         "from": web3.to_checksum_address(from_address),
         "to": web3.to_checksum_address(to_address),
         "value": Wei(value),
         "gas": gas,
-    }
+    
     if gas_price is not None:
         tx["gasPrice"] = Wei(gas_price)
     if nonce is not None:

@@ -1,35 +1,38 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+import os
+
+from flask import Flask, jsonify
+import yaml
 """
 Enhanced Docker Compose Generator with Optimized Health Checks
 Generates docker-compose.yml with proper health check timing for all services
 """
 
-import os
-import yaml
-from datetime import datetime
 
 def generate_enhanced_docker_compose():
     """Generate enhanced Docker Compose with optimized health checks"""
     
-    compose_config = {
+    compose_config = {}
         'version': '3.8',
-        'networks': {
-            'flashloan-network': {
+        'networks': {}
+            'flashloan-network': {}
                 'driver': 'bridge'
-            }
+            
         },
-        'volumes': {
+        'volumes': {}
             'postgres_data': None,
             'redis_data': None
         },
         'services': {}
-    }
+    
     
     # Infrastructure Services
-    compose_config['services']['postgres'] = {
+    compose_config['services']['postgres'] = {}
         'image': 'postgres:15-alpine',
         'container_name': 'flashloan-postgres',
-        'environment': {
+        'environment': {}
             'POSTGRES_DB': 'flashloan_mcp',
             'POSTGRES_USER': 'postgres',
             'POSTGRES_PASSWORD': 'password'
@@ -38,52 +41,52 @@ def generate_enhanced_docker_compose():
         'ports': ['5432:5432'],
         'networks': ['flashloan-network'],
         'restart': 'unless-stopped',
-        'healthcheck': {
+        'healthcheck': {}
             'test': ['CMD-SHELL', 'pg_isready -U postgres'],
             'interval': '15s',
             'timeout': '10s',
             'retries': 5,
             'start_period': '30s'
-        }
-    }
+        
     
-    compose_config['services']['redis'] = {
+    
+    compose_config['services']['redis'] = {}
         'image': 'redis:7-alpine',
         'container_name': 'flashloan-redis',
         'volumes': ['redis_data:/data'],
         'ports': ['6379:6379'],
         'networks': ['flashloan-network'],
         'restart': 'unless-stopped',
-        'healthcheck': {
+        'healthcheck': {}
             'test': ['CMD', 'redis-cli', 'ping'],
             'interval': '15s',
             'timeout': '5s',
             'retries': 5,
             'start_period': '20s'
-        }
-    }
+        
     
-    compose_config['services']['rabbitmq'] = {
+    
+    compose_config['services']['rabbitmq'] = {}
         'image': 'rabbitmq:3.12-management-alpine',
         'container_name': 'flashloan-rabbitmq',
-        'environment': {
+        'environment': {}
             'RABBITMQ_DEFAULT_USER': 'admin',
             'RABBITMQ_DEFAULT_PASS': 'password'
         },
         'ports': ['5672:5672', '15672:15672'],
         'networks': ['flashloan-network'],
         'restart': 'unless-stopped',
-        'healthcheck': {
+        'healthcheck': {}
             'test': ['CMD', 'rabbitmq-diagnostics', '-q', 'ping'],
             'interval': '30s',
             'timeout': '15s',
             'retries': 5,
             'start_period': '60s'
-        }
-    }
+        
+    
     
     # MCP Servers with optimized health checks
-    mcp_servers = [
+    mcp_servers = []
         {'name': 'flash-loan-mcp', 'port': 4001, 'image': 'python:3.11-slim', 'deps': 'flask web3 requests'},
         {'name': 'web3-provider-mcp', 'port': 4002, 'image': 'python:3.11-slim', 'deps': 'flask web3 requests'},
         {'name': 'dex-price-server', 'port': 4003, 'image': 'python:3.11-slim', 'deps': 'flask requests'},
@@ -105,7 +108,7 @@ def generate_enhanced_docker_compose():
         {'name': 'analytics-engine', 'port': 4019, 'image': 'python:3.11-slim', 'deps': 'flask requests'},
         {'name': 'code-indexer', 'port': 4020, 'image': 'python:3.11-slim', 'deps': 'flask requests'},
         {'name': 'health-checker', 'port': 4021, 'image': 'python:3.11-slim', 'deps': 'flask requests'},
-    ]
+    
     
     # Generate MCP server configurations
     for server in mcp_servers:
@@ -114,11 +117,11 @@ def generate_enhanced_docker_compose():
         
         if 'node' in server['image']:
             # Node.js based service
-            compose_config['services'][service_name] = {
+            compose_config['services'][service_name] = {}
                 'image': server['image'],
                 'container_name': container_name,
                 'ports': [f"{server['port']}:4000"],
-                'environment': {
+                'environment': {}
                     'MCP_SERVER_ID': server['name'],
                     'NODE_ENV': 'production'
                 },
@@ -138,21 +141,21 @@ EOF
                     \"""",
                 'networks': ['flashloan-network'],
                 'restart': 'unless-stopped',
-                'healthcheck': {
+                'healthcheck': {}
                     'test': ['CMD-SHELL', 'wget --no-verbose --tries=1 --spider http://localhost:4000/health || exit 1'],
                     'interval': '30s',
                     'timeout': '10s',
                     'retries': 5,
                     'start_period': '90s'
-                }
-            }
+                
+            
         else:
             # Python based service
-            compose_config['services'][service_name] = {
+            compose_config['services'][service_name] = {}
                 'image': server['image'],
                 'container_name': container_name,
                 'ports': [f"{server['port']}:4000"],
-                'environment': {
+                'environment': {}
                     'MCP_SERVER_ID': server['name'],
                     'PYTHONUNBUFFERED': '1'
                 },
@@ -160,16 +163,15 @@ EOF
                     apt-get update && apt-get install -y wget && 
                     pip install {server['deps']} &&
                     cat > server.py << 'EOF'
-from flask import Flask, jsonify
 app = Flask(__name__)
 
 @app.route('/health')
 def health():
-    return jsonify({{'status': 'healthy', 'service': '{server['name']}', 'port': {server['port']}}}))
+    return jsonify({{'status': 'healthy', 'service': '{server['name']}', 'port': {server['port']}}})
 
 @app.route('/status')
 def status():
-    return jsonify({{'service': '{server['name']}', 'ready': True}}))
+    return jsonify({{'service': '{server['name']}', 'ready': True}})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=4000, debug=False)
@@ -178,35 +180,35 @@ EOF
                     \"""",
                 'networks': ['flashloan-network'],
                 'restart': 'unless-stopped',
-                'healthcheck': {
+                'healthcheck': {}
                     'test': ['CMD-SHELL', 'wget --no-verbose --tries=1 --spider http://localhost:4000/health || exit 1'],
                     'interval': '30s',
                     'timeout': '10s',
                     'retries': 5,
                     'start_period': '120s'
-                }
-            }
+                
+            
     
     # AI Agents
-    ai_agents = [
+    ai_agents = []
         {'name': 'coordinator-agent', 'port': 5001},
         {'name': 'arbitrage-agent', 'port': 5002},
         {'name': 'monitoring-agent', 'port': 5003},
         {'name': 'builder-agent', 'port': 5004},
         {'name': 'aave-executor', 'port': 5005},
         {'name': 'contract-executor', 'port': 5006},
-    ]
+    
     
     # Generate AI agent configurations
     for agent in ai_agents:
         service_name = agent['name'].replace('-', '_')
         container_name = f"flashloan-{agent['name']}"
         
-        compose_config['services'][service_name] = {
+        compose_config['services'][service_name] = {}
             'image': 'python:3.11-slim',
             'container_name': container_name,
             'ports': [f"{agent['port']}:4000"],
-            'environment': {
+            'environment': {}
                 'AGENT_ID': agent['name'],
                 'PYTHONUNBUFFERED': '1'
             },
@@ -214,16 +216,15 @@ EOF
                 apt-get update && apt-get install -y wget && 
                 pip install flask requests &&
                 cat > agent.py << 'EOF'
-from flask import Flask, jsonify
 app = Flask(__name__)
 
 @app.route('/health')
 def health():
-    return jsonify({{'status': 'healthy', 'agent': '{agent['name']}', 'port': {agent['port']}}}))
+    return jsonify({{'status': 'healthy', 'agent': '{agent['name']}', 'port': {agent['port']}}})
 
 @app.route('/status')
 def status():
-    return jsonify({{'agent': '{agent['name']}', 'ready': True, 'capabilities': ['analysis', 'execution']}}))
+    return jsonify({{'agent': '{agent['name']}', 'ready': True, 'capabilities': ['analysis', 'execution']}})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=4000, debug=False)
@@ -233,14 +234,14 @@ EOF
             'networks': ['flashloan-network'],
             'restart': 'unless-stopped',
             'depends_on': ['postgres', 'redis', 'rabbitmq'],
-            'healthcheck': {
+            'healthcheck': {}
                 'test': ['CMD-SHELL', 'wget --no-verbose --tries=1 --spider http://localhost:4000/health || exit 1'],
                 'interval': '30s',
                 'timeout': '10s',
                 'retries': 5,
                 'start_period': '120s'
-            }
-        }
+            
+        
     
     return compose_config
 
@@ -257,8 +258,8 @@ def main():
     with open(output_file, 'w') as f:
         yaml.dump(config, f, default_flow_style=False, sort_keys=False, indent=2)
     
-    print(f"✅ Enhanced Docker Compose saved to: {output_file}")
-    print(f"📊 Configuration includes:")
+    print(f"[OK] Enhanced Docker Compose saved to: {output_file}")
+    print(f"[METRICS] Configuration includes:")
     print(f"   • 3 Infrastructure services")
     print(f"   • 21 MCP servers with optimized health checks")
     print(f"   • 6 AI agents with dependency management")
@@ -270,7 +271,7 @@ def main():
     print(f"   • 10s health check timeouts")
     print(f"   • 5 retries before marking unhealthy")
     
-    print(f"\n🚀 To deploy with enhanced health checks:")
+    print(f"\n[INIT] To deploy with enhanced health checks:")
     print(f"   docker-compose -f {output_file} up -d")
     
     print(f"\n📋 Recommended next steps:")

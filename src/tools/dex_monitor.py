@@ -1,4 +1,25 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+    import argparse
+from datetime import datetime, timedelta
+from decimal import Decimal, getcontext
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Union, TypedDict, Tuple
+import asyncio
+import json
+import logging
+import math
+import os
+import threading
+import time
+
+from dataclasses import dataclass
+from flask import Flask, render_template, jsonify, request
+from flask_cors import CORS
+from flask_socketio import SocketIO, emit
+from web3 import Web3
+import aiohttp
+import requests
 """
 Consolidated DEX Monitoring and Arbitrage Analysis System
 ========================================================
@@ -14,30 +35,25 @@ This consolidated tool provides comprehensive DEX monitoring capabilities includ
 - Multi-chain support with gas optimization
 """
 
-import asyncio
-import aiohttp
-import time
-import json
-import threading
-import math
-import logging
-import requests
-import os
-from datetime import datetime, timedelta
-from decimal import Decimal, getcontext
-from typing import Dict, List, Any, Optional, Union, TypedDict, Tuple
-from dataclasses import dataclass
-from pathlib import Path
-from web3 import Web3
 
-from flask import Flask, render_template, jsonify, request
-from flask_socketio import SocketIO, emit
-from flask_cors import CORS
 
 # Set precision for calculations
 getcontext().prec = 28
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -104,29 +120,29 @@ class ConsolidatedDEXMonitor:
         self.flash_loan_fee_percent = 0.09  # 0.09% flash loan fee
         
         # Network configurations
-        self.network_configs: Dict[str, NetworkConfigDetail] = {
-            "polygon": {
+        self.network_configs: Dict[str, NetworkConfigDetail] = {}
+            "polygon": {}
                 "rpc_url": "https://polygon-rpc.com",
                 "gas_price_gwei": 30,
                 "native_token": "MATIC",
                 "native_price_usd": 0.95
             },
-            "ethereum": {
+            "ethereum": {}
                 "rpc_url": "https://eth.llamarpc.com",
                 "gas_price_gwei": 20,
                 "native_token": "ETH",
                 "native_price_usd": 2500.0
             },
-            "bsc": {
+            "bsc": {}
                 "rpc_url": "https://bsc-dataseed.binance.org",
                 "gas_price_gwei": 5,
                 "native_token": "BNB",
                 "native_price_usd": 300.0
-            }
-        }
+            
+        
         
         # Token configurations for 11 approved tokens
-        self.approved_tokens = {
+        self.approved_tokens = {}
             "WETH": {"address": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", "decimals": 18},
             "WBTC": {"address": "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6", "decimals": 8},
             "USDC": {"address": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", "decimals": 6},
@@ -138,10 +154,10 @@ class ConsolidatedDEXMonitor:
             "AAVE": {"address": "0xD6DF932A45C0f255f85145f286eA0b292B21C90B", "decimals": 18},
             "SUSHI": {"address": "0x0b3F868E0BE5597D5DB7fEB59E1CADBb0fdDa50a", "decimals": 18},
             "COMP": {"address": "0x8505b9d2254A7Ae468c0E9dd10Ccea3A837aef5c", "decimals": 18}
-        }
+        
         
         # Popular trading pairs
-        self.token_pairs = [
+        self.token_pairs = []
             "WETH/USDC", "WETH/USDT", "WETH/DAI",
             "WBTC/WETH", "WBTC/USDC",
             "MATIC/WETH", "MATIC/USDC", 
@@ -150,17 +166,17 @@ class ConsolidatedDEXMonitor:
             "AAVE/WETH", "AAVE/USDC",
             "SUSHI/WETH", "SUSHI/USDC",
             "COMP/WETH", "COMP/USDC"
-        ]
+        
         
         # DEX configurations
-        self.dex_configs = {
+        self.dex_configs = {}
             "Uniswap V3": {"fee_tier": 0.3, "base_url": "https://api.uniswap.org/v1"},
             "SushiSwap": {"fee_tier": 0.25, "base_url": "https://api.sushi.com/v1"},
             "Balancer V2": {"fee_tier": 0.2, "base_url": "https://api.balancer.fi/v1"},
             "1inch": {"fee_tier": 0.1, "base_url": "https://api.1inch.io/v4.0"},
             "Curve": {"fee_tier": 0.04, "base_url": "https://api.curve.fi/v1"},
             "QuickSwap": {"fee_tier": 0.3, "base_url": "https://api.quickswap.exchange/v1"}
-        }
+        
         
         # Data storage
         self.current_prices: Dict[str, Dict[str, DexPriceDetail]] = {}
@@ -168,7 +184,7 @@ class ConsolidatedDEXMonitor:
         self.price_history: Dict[str, List[Dict[str, Any]]] = {}
         self.monitoring_active = False
         
-        logger.info(f"Consolidated DEX Monitor initialized on port {self.port}")
+        logger.info(str(f"Consolidated DEX Monitor initialized on port {self.port}")
     
     def calculate_price_impact(self, trade_size: float, liquidity: float) -> float:
         """Calculate price impact based on trade size and liquidity"""
@@ -179,7 +195,7 @@ class ConsolidatedDEXMonitor:
         impact_factor = min(trade_size / liquidity, 0.20)  # Cap at 20%
         return round(impact_factor, 4)
     
-    def calculate_confidence_score(self, price_spread: float, liquidity_ratio: float, 
+    def calculate_confidence_score(self, price_spread: float, liquidity_ratio: float, )
                                  volatility: float, data_age: float) -> float:
         """Calculate confidence score (0-1) for arbitrage opportunity"""
         # Base confidence from spread size
@@ -195,12 +211,12 @@ class ConsolidatedDEXMonitor:
         volatility_confidence = max(0, 1.0 - (volatility / 10))  # Normalize by 10%
         
         # Weighted average
-        confidence = (
+        confidence = ()
             spread_confidence * 0.4 +
             liquidity_confidence * 0.3 +
             age_penalty * 0.2 +
             volatility_confidence * 0.1
-        )
+        
         
         return round(min(confidence, 1.0), 3)
     
@@ -259,7 +275,7 @@ class ConsolidatedDEXMonitor:
     
     async def fetch_real_token_prices(self) -> Dict[str, float]:
         """Fetch real-time token prices from CoinGecko API"""
-        token_ids = {
+        token_ids = {}
             "WETH": "ethereum",
             "WBTC": "wrapped-bitcoin",
             "USDC": "usd-coin",
@@ -271,7 +287,7 @@ class ConsolidatedDEXMonitor:
             "AAVE": "aave",
             "SUSHI": "sushi",
             "COMP": "compound-governance-token"
-        }
+        
         
         try:
             async with aiohttp.ClientSession() as session:
@@ -285,17 +301,17 @@ class ConsolidatedDEXMonitor:
                         prices = {}
                         for token, coin_id in token_ids.items():
                             if coin_id in data:
-                                prices[token] = {
+                                prices[token] = {}
                                     "price": data[coin_id]["usd"],
                                     "change_24h": data[coin_id].get("usd_24h_change", 0)
-                                }
+                                
                         
                         return prices
                     else:
-                        logger.warning(f"Failed to fetch prices: {response.status}")
+                        logger.warning(str(f"Failed to fetch prices: {response.status}")
                         return {}
         except Exception as e:
-            logger.error(f"Error fetching real prices: {e}")
+            logger.error(str(f"Error fetching real prices: {e}")
             return {}
     
     def simulate_dex_prices(self, base_prices: Dict[str, float]) -> Dict[str, Dict[str, DexPriceDetail]]:
@@ -318,7 +334,7 @@ class ConsolidatedDEXMonitor:
                 elif "1inch" in dex_name:
                     base_liquidity *= 1.5  # 1inch aggregates liquidity
                 
-                dex_prices[token][dex_name] = {
+                dex_prices[token][dex_name] = {}
                     "price": round(dex_price, 6),
                     "liquidity": round(base_liquidity, 2),
                     "volume_24h": round(random.uniform(50000, 1000000), 2),
@@ -326,7 +342,7 @@ class ConsolidatedDEXMonitor:
                     "chain": "polygon",
                     "timestamp": time.time(),
                     "change_24h": base_data.get("change_24h", 0)
-                }
+                
         
         return dex_prices
     
@@ -352,11 +368,11 @@ class ConsolidatedDEXMonitor:
                         spread_percent = ((sell_price - buy_price) / buy_price) * 100
                         
                         # Calculate trade amounts and fees
-                        max_trade_amount = min(
+                        max_trade_amount = min()
                             token_dex_prices[buy_dex]["liquidity"] * 0.1,  # 10% of liquidity
                             token_dex_prices[sell_dex]["liquidity"] * 0.1,
                             self.trade_amount
-                        )
+                        
                         
                         # Calculate costs
                         price_impact_buy = self.calculate_price_impact(max_trade_amount, token_dex_prices[buy_dex]["liquidity"])
@@ -379,7 +395,7 @@ class ConsolidatedDEXMonitor:
                             volatility = abs(token_dex_prices[buy_dex].get("change_24h", 0))
                             data_age = time.time() - token_dex_prices[buy_dex]["timestamp"]
                             
-                            opportunity = ArbitrageOpportunity(
+                            opportunity = ArbitrageOpportunity()
                                 token_pair=f"{token}/USDC",
                                 buy_dex=buy_dex,
                                 sell_dex=sell_dex,
@@ -395,12 +411,12 @@ class ConsolidatedDEXMonitor:
                                 gas_cost_usd=round(gas_cost, 2),
                                 flash_loan_fee=round(flash_loan_fee, 2),
                                 execution_time_estimate=random.uniform(15, 45)  # 15-45 seconds
-                            )
+                            
                             
                             # Calculate confidence and risk scores
-                            opportunity.confidence_score = self.calculate_confidence_score(
+                            opportunity.confidence_score = self.calculate_confidence_score()
                                 spread_percent, liquidity_ratio, volatility, data_age
-                            )
+                            
                             opportunity.risk_score = self.calculate_risk_score(opportunity)
                             
                             opportunities.append(opportunity)
@@ -433,18 +449,18 @@ class ConsolidatedDEXMonitor:
                             self.price_history[token] = []
                         
                         # Keep last 100 price points
-                        self.price_history[token].append({
+                        self.price_history[token].append({)}
                             "timestamp": timestamp,
                             "prices": {dex: data["price"] for dex, data in dex_data.items()}
-                        })
+                        
                         self.price_history[token] = self.price_history[token][-100:]
                     
                     # Emit updates via WebSocket
                     try:
-                        socketio.emit('price_update', {
+                        socketio.emit('price_update', {)}
                             'prices': self.current_prices,
-                            'opportunities': [
-                                {
+                            'opportunities': []
+                                {}
                                     'token_pair': opp.token_pair,
                                     'buy_dex': opp.buy_dex,
                                     'sell_dex': opp.sell_dex,
@@ -455,11 +471,11 @@ class ConsolidatedDEXMonitor:
                                 } for opp in self.arbitrage_opportunities[:10]  # Top 10
                             ],
                             'timestamp': timestamp
-                        })
+                        
                     except Exception as e:
-                        logger.warning(f"WebSocket emit failed: {e}")
+                        logger.warning(str(f"WebSocket emit failed: {e}")
                     
-                    logger.info(f"Found {len(self.arbitrage_opportunities)} arbitrage opportunities")
+                    logger.info(str(f"Found {len(self.arbitrage_opportunities} arbitrage opportunities")
                 else:
                     logger.warning("No price data received")
                 
@@ -467,7 +483,7 @@ class ConsolidatedDEXMonitor:
                 await asyncio.sleep(10)  # Update every 10 seconds
                 
             except Exception as e:
-                logger.error(f"Error in monitoring loop: {e}")
+                logger.error(str(f"Error in monitoring loop: {e}")
                 await asyncio.sleep(30)  # Wait longer on error
     
     def stop_monitoring(self):
@@ -480,28 +496,28 @@ class ConsolidatedDEXMonitor:
 @app.route('/')
 def dashboard():
     """Main dashboard"""
-    return jsonify({
+    return jsonify({)}
         "status": "Consolidated DEX Monitor Active",
         "monitoring": monitor.monitoring_active,
         "supported_tokens": list(monitor.approved_tokens.keys()),
         "supported_dexes": list(monitor.dex_configs.keys()),
         "current_opportunities": len(monitor.arbitrage_opportunities)
-    })
+    
 
 @app.route('/api/prices')
 def get_current_prices():
     """Get current prices from all DEXes"""
-    return jsonify({
+    return jsonify({)}
         "prices": monitor.current_prices,
         "timestamp": datetime.now().isoformat()
-    })
+    
 
 @app.route('/api/opportunities')
 def get_arbitrage_opportunities():
     """Get current arbitrage opportunities"""
     opportunities_data = []
     for opp in monitor.arbitrage_opportunities:
-        opportunities_data.append({
+        opportunities_data.append({)}
             "token_pair": opp.token_pair,
             "buy_dex": opp.buy_dex,
             "sell_dex": opp.sell_dex,
@@ -515,23 +531,23 @@ def get_arbitrage_opportunities():
             "risk_score": opp.risk_score,
             "gas_cost_usd": opp.gas_cost_usd,
             "execution_time_estimate": opp.execution_time_estimate
-        })
+        
     
-    return jsonify({
+    return jsonify({)}
         "opportunities": opportunities_data,
         "count": len(opportunities_data),
         "timestamp": datetime.now().isoformat()
-    })
+    
 
 @app.route('/api/history/<token>')
 def get_price_history(token):
     """Get price history for a specific token"""
     if token in monitor.price_history:
-        return jsonify({
+        return jsonify({)}
             "token": token,
             "history": monitor.price_history[token],
             "points": len(monitor.price_history[token])
-        })
+        
     else:
         return jsonify({"error": "Token not found"}), 404
 
@@ -548,7 +564,7 @@ def get_statistics():
     total_potential_profit = sum(opp.potential_profit for opp in monitor.arbitrage_opportunities)
     total_net_profit = sum(opp.net_profit for opp in monitor.arbitrage_opportunities if opp.net_profit > 0)
     
-    return jsonify({
+    return jsonify({)}
         "total_tokens": len(monitor.approved_tokens),
         "total_dexes": len(monitor.dex_configs),
         "total_opportunities": total_opportunities,
@@ -558,7 +574,7 @@ def get_statistics():
         "total_net_profit": round(total_net_profit, 2),
         "monitoring_active": monitor.monitoring_active,
         "last_update": datetime.now().isoformat()
-    })
+    
 
 # WebSocket Events
 
@@ -591,7 +607,6 @@ monitor = ConsolidatedDEXMonitor()
 
 async def main():
     """Main function for standalone execution"""
-    import argparse
     
     parser = argparse.ArgumentParser(description='Consolidated DEX Monitor')
     parser.add_argument('--port', type=int, default=8080, help='Port to run the web server')
@@ -616,7 +631,7 @@ async def main():
         monitoring_task = asyncio.create_task(monitor.monitor_prices())
         
         # Run web server
-        logger.info(f"Starting web server on port {args.port}...")
+        logger.info(str(f"Starting web server on port {args.port}...")
         socketio.run(app, host='0.0.0.0', port=args.port, debug=False)
 
 if __name__ == "__main__":
@@ -626,4 +641,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         logger.info("Shutting down...")
     except Exception as e:
-        logger.error(f"Error running DEX monitor: {e}")
+        logger.error(str(f"Error running DEX monitor: {e}")

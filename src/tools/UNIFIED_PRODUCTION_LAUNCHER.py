@@ -1,36 +1,48 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 #                     user_config = json.load(f)
-#                     config.update(user_config)
-#                     logger.info(f"Loaded configuration from {config_path}")
-#             except Exception as e:
-#                 logger.error(f"Failed to load configuration: {e}")
-# 
 #         return cast(ServerConfig, config)
+from pathlib import Path
+from typing import List, Tuple, Optional, Any, cast
+import asyncio
+import json
+import logging
+import os
+import signal
+import subprocess
+import sys
+import time
+
+import aiohttp
 """
 Production Flash Loan Arbitrage System Launcher
 Unified launcher for all MCP servers and the enhanced arbitrage bot
 """
 
-import asyncio
-import subprocess
-import sys
-import time
-import logging
-import os
-import signal
-from pathlib import Path
-from typing import List, Tuple, Optional, Any
-import aiohttp
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record: logging.LogRecord) -> str:
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler('logs/production_launcher.log'),
         logging.StreamHandler()
-    ]
-)
+
+
+
 logger = logging.getLogger('ProductionLauncher')
 
 class ProductionLauncher:
@@ -46,7 +58,8 @@ class ProductionLauncher:
             ("Foundry MCP Server", "foundry-mcp-server/working_enhanced_foundry_mcp_server.py", 8001),
             ("EVM MCP Server", "mcp/evm-mcp-server/evm_mcp_server.py", 8002),
             ("Matic MCP Server", "mcp/matic-mcp-server/matic_mcp_server.py", 8003)
-        ]
+
+        
         
         # Setup signal handlers
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -54,16 +67,17 @@ class ProductionLauncher:
     
     def _signal_handler(self, signum: int, frame: Any) -> None:
         """Handle shutdown signals"""
-        logger.info(f"Received signal {signum}, initiating shutdown...")
+        logger.info(str(f"Received signal {signum}, initiating shutdown...")
         self.shutdown_event.set()
-      async def check_port_available(self, port: int) -> bool:
+        
+    async def check_port_available(self, port: int) -> bool:
         """Check if a port is available"""
         try:
             # Try to connect to the port
             _, writer = await asyncio.wait_for(
                 asyncio.open_connection('localhost', port),
                 timeout=1.0
-            )
+
             writer.close()
             await writer.wait_closed()
             return False  # Port is occupied
@@ -91,16 +105,17 @@ class ProductionLauncher:
     
     async def start_mcp_server(self, name: str, script: str, port: int) -> bool:
         """Start a single MCP server"""
+        logger.info(str(f"Attempting to start {name} from script {script} on port {port}")
         try:
             # Check if port is available
             if not await self.check_port_available(port):
-                logger.warning(f"Port {port} is already in use for {name}")
+                logger.warning(str(f"Port {port} is already in use for {name}")
                 return False
             
             # Start the server
             script_path = self.base_path / script
             if not script_path.exists():
-                logger.error(f"Script not found: {script_path}")
+                logger.error(str(f"Script not found: {script_path}")
                 return False
             
             process = subprocess.Popen(
@@ -109,21 +124,23 @@ class ProductionLauncher:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 creationflags=subprocess.CREATE_NEW_CONSOLE if sys.platform == 'win32' else 0
-            )
+
+            
             
             self.processes.append((name, process))
-            logger.info(f"Started {name} (PID: {process.pid}) on port {port}")
+            logger.info(str(f"Started {name} (PID: {process.pid}) on port {port}"))
             
             # Wait for server to be ready
+            logger.info(str(f"Waiting for {name} to be ready on port {port}...")
             if await self.wait_for_server_ready(port, timeout=30):
-                logger.info(f"{name} is ready and healthy")
+                logger.info(str(f"{name} is ready and healthy")
                 return True
             else:
-                logger.error(f"{name} failed to become healthy within timeout")
+                logger.error(str(f"{name} failed to become healthy within timeout")
                 return False
                 
         except Exception as e:
-            logger.error(f"Failed to start {name}: {e}")
+            logger.error(str(f"Failed to start {name}: {e}")
             return False
     
     async def start_all_mcp_servers(self) -> bool:
@@ -136,10 +153,10 @@ class ProductionLauncher:
                 success_count += 1
                 await asyncio.sleep(2)  # Allow startup time between servers
             else:
-                logger.error(f"Failed to start {name}")
+                logger.error(str(f"Failed to start {name}")
         
         if success_count > 0:
-            logger.info(f"Successfully started {success_count}/{len(self.mcp_servers)} MCP servers")
+            logger.info(str(f"Successfully started {success_count}/{len(self.mcp_servers)} MCP servers"))
             return True
         else:
             logger.error("Failed to start any MCP servers")
@@ -147,6 +164,7 @@ class ProductionLauncher:
     
     async def start_arbitrage_bot(self) -> bool:
         """Start the unified arbitrage bot"""
+        logger.info("Attempting to start unified arbitrage bot...")
         try:
             logger.info("Starting unified arbitrage bot...")
             
@@ -155,7 +173,7 @@ class ProductionLauncher:
             
             bot_script = self.base_path / "src" / "core" / "unified_production_arbitrage_bot.py"
             if not bot_script.exists():
-                logger.error(f"Arbitrage bot script not found: {bot_script}")
+                logger.error(str(f"Arbitrage bot script not found: {bot_script}")
                 return False
             
             process = subprocess.Popen(
@@ -163,14 +181,15 @@ class ProductionLauncher:
                 cwd=self.base_path,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
-            )
+
+            
             
             self.processes.append(("Unified Arbitrage Bot", process))
-            logger.info(f"Started Unified Arbitrage Bot (PID: {process.pid})")
+            logger.info(str(f"Started Unified Arbitrage Bot (PID: {process.pid}")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to start arbitrage bot: {e}")
+            logger.error(str(f"Failed to start arbitrage bot: {e}")
             return False
     
     async def monitor_processes(self):
@@ -178,15 +197,16 @@ class ProductionLauncher:
         while not self.shutdown_event.is_set():
             try:
                 for i, (name, process) in enumerate(self.processes):
-                    poll_result: str = process.poll()
+                    poll_result: Optional[int] = process.poll()
                     if poll_result is not None:
-                        logger.warning(f"{name} has stopped with exit code {poll_result}")
+                        logger.warning(str(f"{name} has stopped with exit code {poll_result}")
+                        logger.info(str(f"Process {name} (PID: {process.pid}) stopped. Exit code: {poll_result}"))
                         
                         # Try to restart MCP servers
                         if "MCP Server" in name:
                             for server_name, script, port in self.mcp_servers:
                                 if server_name == name:
-                                    logger.info(f"Attempting to restart {name}")
+                                    logger.info(str(f"Attempting to restart {name}")
                                     if await self.start_mcp_server(server_name, script, port):
                                         # Update process in list
                                         self.processes[i] = (name, self.processes[-1][1])
@@ -195,7 +215,7 @@ class ProductionLauncher:
                 await asyncio.sleep(10)  # Check every 10 seconds
                 
             except Exception as e:
-                logger.error(f"Error in process monitoring: {e}")
+                logger.error(str(f"Error in process monitoring: {e}")
                 await asyncio.sleep(5)
     
     async def shutdown_all_processes(self):
@@ -204,20 +224,20 @@ class ProductionLauncher:
         
         for name, process in self.processes:
             try:
-                logger.info(f"Terminating {name} (PID: {process.pid})")
+                logger.info(str(f"Terminating {name} (PID: {process.pid}")
                 process.terminate()
                 
                 # Wait for graceful shutdown
                 try:
                     process.wait(timeout=10)
-                    logger.info(f"{name} terminated gracefully")
+                    logger.info(str(f"{name} terminated gracefully")
                 except subprocess.TimeoutExpired:
-                    logger.warning(f"Force killing {name}")
+                    logger.warning(str(f"Force killing {name}")
                     process.kill()
                     process.wait()
                     
             except Exception as e:
-                logger.error(f"Error terminating {name}: {e}")
+                logger.error(str(f"Error terminating {name}: {e}")
         
         self.processes.clear()
         logger.info("All processes stopped")
@@ -261,7 +281,7 @@ class ProductionLauncher:
             return 0
             
         except Exception as e:
-            logger.error(f"Unexpected error in production launcher: {e}")
+            logger.error(str(f"Unexpected error in production launcher: {e}")
             await self.shutdown_all_processes()
             return 1
 

@@ -1,4 +1,23 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Set, Union, Tuple, Callable
+import ast
+import asyncio
+import json
+import logging
+import os
+import re
+import shutil
+import sys
+
+from langchain.agents import initialize_agent, AgentType
+from langchain.callbacks.manager import CallbackManagerForToolRun
+from langchain.memory import ConversationBufferMemory
+from langchain.tools import BaseTool
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_openai import ChatOpenAI
 """
 Automated LangChain Project-Wide Fixer
 =====================================
@@ -22,34 +41,31 @@ Author: GitHub Copilot Assistant
 Date: December 2024
 """
 
-import asyncio
-import logging
-import json
-import ast
-import re
-import sys
-import shutil
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Set, Union, Tuple, Callable
 
 # LangChain imports
-from langchain_openai import ChatOpenAI
-from langchain.memory import ConversationBufferMemory
-from langchain.agents import initialize_agent, AgentType
-from langchain.tools import BaseTool
-from langchain.callbacks.manager import CallbackManagerForToolRun
-from langchain_community.embeddings import HuggingFaceEmbeddings
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(),
         logging.FileHandler('automated_project_fixer.log', encoding='utf-8')
-    ]
-)
+    
+
 
 logger = logging.getLogger(__name__)
 
@@ -84,11 +100,11 @@ class CodeAnalysisTool(BaseTool):
             # General analysis for all files
             issues.extend(self._analyze_general_issues(content, str(path)))
             
-            return json.dumps({
+            return json.dumps({)}
                 'file': file_path,
                 'issues': issues,
-                'total_issues': len(issues)
-            })
+                'total_issues': len(issues, ensure_ascii=True, default=str)
+            
             
         except Exception as e:
             return f"Error analyzing {file_path}: {str(e)}"
@@ -102,69 +118,69 @@ class CodeAnalysisTool(BaseTool):
         try:
             ast.parse(content)
         except SyntaxError as e:
-            issues.append({
+            issues.append({)}
                 'type': 'syntax_error',
                 'severity': 'high',
                 'line': e.lineno,
                 'message': f"Syntax error: {e.msg}",
                 'fix_suggestion': 'Fix syntax error'
-            })
+            
         
         # Check for deprecated imports
-        deprecated_imports = [
+        deprecated_imports = []
             (r'from langchain import .*OpenAI', 'Use from langchain_openai import OpenAI'),
             (r'from langchain import .*ChatOpenAI', 'Use from langchain_openai import ChatOpenAI'),
             (r'from langchain\.llms import OpenAI', 'Use from langchain_openai import OpenAI'),
             (r'from langchain\.chat_models import ChatOpenAI', 'Use from langchain_openai import ChatOpenAI'),
             (r'from langchain\.vectorstores import', 'Use from langchain_community.vectorstores import'),
             (r'from langchain\.embeddings import', 'Use from langchain_community.embeddings import'),
-        ]
+        
         
         for i, line in enumerate(lines, 1):
             for pattern, suggestion in deprecated_imports:
                 if re.search(pattern, line):
-                    issues.append({
+                    issues.append({)}
                         'type': 'deprecated_import',
                         'severity': 'medium',
                         'line': i,
                         'message': f"Deprecated import: {line.strip()}",
                         'fix_suggestion': suggestion
-                    })
+                    
         
         # Check for security issues
-        security_patterns = [
-        # TODO: Replace # TODO: Replace (r'eval\s*\(', 'Avoid using eval() - security risk'), with safer alternative with safer alternative
+        security_patterns = []
+        # TODO: Replace # TODO: Replace (r'eval\s*\(', 'Avoid using eval() - security risk'), with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace (r'eval\s*\(', 'Avoid using eval() - security risk'), with safer alternative
+        # TODO: Replace (r'eval\s*\(', 'Avoid using eval() - security risk'), with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace (r'eval\s*\(', 'Avoid using eval() - security risk'), with safer alternative
+        # TODO: Replace (r'eval\s*\(', 'Avoid using eval() - security risk'), with safer alternative)
         # WARNING: This is a security risk
-            (r'eval\s*\(', 'Avoid using eval() - security risk'),
-        # TODO: Replace # TODO: Replace (r'exec\s*\(', 'Avoid using exec() - security risk'), with safer alternative with safer alternative
+            (r'eval\s*\(', 'Avoid using eval() - security risk'),)
+        # TODO: Replace # TODO: Replace (r'exec\s*\(', 'Avoid using exec() - security risk'), with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace (r'exec\s*\(', 'Avoid using exec() - security risk'), with safer alternative
+        # TODO: Replace (r'exec\s*\(', 'Avoid using exec() - security risk'), with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace (r'exec\s*\(', 'Avoid using exec() - security risk'), with safer alternative
+        # TODO: Replace (r'exec\s*\(', 'Avoid using exec() - security risk'), with safer alternative)
         # WARNING: This is a security risk
-            (r'exec\s*\(', 'Avoid using exec() - security risk'),
-            (r'os\.system\s*\(', 'Avoid os.system() - use subprocess instead'),
+            (r'exec\s*\(', 'Avoid using exec() - security risk'),)
+            (r'os\.system\s*\(', 'Avoid os.system() - use subprocess instead'),)
         # WARNING: This is a security risk
         # WARNING: This is a security risk
             (r'shell=True', 'Avoid shell=True in subprocess calls'),
         # WARNING: This is a security risk
         # WARNING: This is a security risk
-        ]
+        
         
         for i, line in enumerate(lines, 1):
             for pattern, message in security_patterns:
                 if re.search(pattern, line):
-                    issues.append({
+                    issues.append({)}
                         'type': 'security_issue',
                         'severity': 'high',
                         'line': i,
                         'message': message,
                         'fix_suggestion': 'Replace with safer alternative'
-                    })
+                    
         
         return issues
     
@@ -174,22 +190,22 @@ class CodeAnalysisTool(BaseTool):
         lines = content.split('\n')
         
         # JavaScript-specific patterns
-        js_patterns = [
+        js_patterns = []
             (r'==\s*(?!=)', 'Consider using === instead of =='),
             (r'!=\s*(?!==)', 'Consider using !== instead of !='),
-            (r'console\.log\s*\(', 'Remove console.log statements in production'),
-        ]
+            (r'console\.log\s*\(', 'Remove console.log statements in production'),)
+        
         
         for i, line in enumerate(lines, 1):
             for pattern, message in js_patterns:
                 if re.search(pattern, line):
-                    issues.append({
+                    issues.append({)}
                         'type': 'javascript_issue',
                         'severity': 'low',
                         'line': i,
                         'message': message,
                         'fix_suggestion': 'Update JavaScript syntax'
-                    })
+                    
         
         return issues
     
@@ -202,13 +218,13 @@ class CodeAnalysisTool(BaseTool):
             try:
                 json.loads(content)
             except json.JSONDecodeError as e:
-                issues.append({
+                issues.append({)}
                     'type': 'json_error',
                     'severity': 'high',
                     'line': e.lineno,
                     'message': f"JSON syntax error: {e.msg}",
                     'fix_suggestion': 'Fix JSON syntax'
-                })
+                
         
         return issues
     
@@ -220,24 +236,24 @@ class CodeAnalysisTool(BaseTool):
         # Check for long lines
         for i, line in enumerate(lines, 1):
             if len(line) > 120:
-                issues.append({
+                issues.append({)}
                     'type': 'long_line',
                     'severity': 'low',
                     'line': i,
                     'message': f"Line too long ({len(line)} characters)",
                     'fix_suggestion': 'Break long lines'
-                })
+                
         
         # Check for TODO/FIXME comments
         for i, line in enumerate(lines, 1):
             if re.search(r'TODO|FIXME|XXX', line, re.IGNORECASE):
-                issues.append({
+                issues.append({)}
                     'type': 'todo_comment',
                     'severity': 'info',
                     'line': i,
                     'message': f"TODO/FIXME comment found: {line.strip()}",
                     'fix_suggestion': 'Address TODO/FIXME comment'
-                })
+                
         
         return issues
 
@@ -284,11 +300,11 @@ class CodeFixerTool(BaseTool):
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(lines))
             
-            return json.dumps({
+            return json.dumps({)}
                 'file': file_path,
                 'fixes_applied': fixes_applied,
                 'backup_created': backup_path
-            })
+            }, ensure_ascii=True, default=str
             
         except Exception as e:
             return f"Error applying fixes: {str(e)}"
@@ -300,13 +316,13 @@ class CodeFixerTool(BaseTool):
             line: str = lines[line_idx]
             
             # Common replacements
-            replacements = [
+            replacements = []
                 (r'from langchain_openai import ChatOpenAI', 'from langchain_openai import ChatOpenAI'),
                 (r'from langchain_openai import OpenAI', 'from langchain_openai import OpenAI'),
                 (r'from langchain\.vectorstores import FAISS', 'from langchain_community.vectorstores import FAISS'),
                 (r'from langchain\.llms import OpenAI', 'from langchain_openai import OpenAI'),
                 (r'from langchain\.chat_models import ChatOpenAI', 'from langchain_openai import ChatOpenAI'),
-            ]
+            
             
             for pattern, replacement in replacements:
                 if re.search(pattern, line):
@@ -321,23 +337,23 @@ class CodeFixerTool(BaseTool):
             line: str = lines[line_idx]
             
             # Add a warning comment above the problematic line
-        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace if 'eval(' in line or 'exec(' in line: with safer alternative with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace if 'eval(' in line or 'exec(' in line: with safer alternative with safer alternative with safer alternative with safer alternative))
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace if 'eval(' in line or 'exec(' in line: with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace # TODO: Replace if 'eval(' in line or 'exec(' in line: with safer alternative with safer alternative with safer alternative))
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace if 'eval(' in line or 'exec(' in line: with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace if 'eval(' in line or 'exec(' in line: with safer alternative with safer alternative))
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace if 'eval(' in line or 'exec(' in line: with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace # TODO: Replace if 'eval(' in line or 'exec(' in line: with safer alternative with safer alternative with safer alternative))
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace if 'eval(' in line or 'exec(' in line: with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace if 'eval(' in line or 'exec(' in line: with safer alternative with safer alternative))
         # WARNING: This is a security risk
-        # TODO: Replace if 'eval(' in line or 'exec(' in line: with safer alternative
+        # TODO: Replace if 'eval(' in line or 'exec(' in line: with safer alternative))
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace if 'eval(' in line or 'exec(' in line: with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace if 'eval(' in line or 'exec(' in line: with safer alternative with safer alternative))
         # WARNING: This is a security risk
-        # TODO: Replace if 'eval(' in line or 'exec(' in line: with safer alternative
+        # TODO: Replace if 'eval(' in line or 'exec(' in line: with safer alternative))
         # WARNING: This is a security risk
-            if 'eval(' in line or 'exec(' in line:
+            if 'eval(' in line or 'exec(' in line:))
                 lines.insert(line_idx, f"        # TODO: Replace {line.strip()} with safer alternative")
                 lines.insert(line_idx + 1, "        # WARNING: This is a security risk")
                 return 1
@@ -379,10 +395,10 @@ class DependencyCheckerTool(BaseTool):
                 except Exception:
                     continue
             
-            return json.dumps({
+            return json.dumps({)}
                 'missing_dependencies': missing_deps,
-                'total_missing': len(missing_deps)
-            })
+                'total_missing': len(missing_deps, ensure_ascii=True, default=str)
+            
             
         except Exception as e:
             return f"Error checking dependencies: {str(e)}"
@@ -416,14 +432,14 @@ class AutomatedProjectFixer:
     
     def __init__(self, project_root: str):
         self.project_root = Path(project_root)
-        self.fix_report: Dict[str, Any] = {
+        self.fix_report: Dict[str, Any] = {}
             'start_time': datetime.now().isoformat(),
             'files_processed': 0,
             'issues_found': 0,
             'fixes_applied': 0,
             'files_with_issues': [],
             'summary': {}
-        }
+        
         
         # Initialize LangChain components
         self.llm = None
@@ -431,11 +447,11 @@ class AutomatedProjectFixer:
         self.agent = None
         
         # Initialize tools
-        self.tools: List[BaseTool] = [
+        self.tools: List[BaseTool] = []
             CodeAnalysisTool(),
             CodeFixerTool(),
             DependencyCheckerTool()
-        ]
+        
     
     async def initialize_langchain(self):
         """Initialize LangChain components"""
@@ -444,31 +460,31 @@ class AutomatedProjectFixer:
         try:
             # Initialize LLM (using a mock since we don't have API key)
             # In production, you would use: ChatOpenAI(api_key="your-key")
-            self.llm = ChatOpenAI(
+            self.llm = ChatOpenAI()
                 model="gpt-3.5-turbo",
                 temperature=0.1,
                 # api_key would be set from environment
-            )
+            
             
             # Initialize embeddings
-            self.embeddings = HuggingFaceEmbeddings(
+            self.embeddings = HuggingFaceEmbeddings()
                 model_name="sentence-transformers/all-MiniLM-L6-v2"
-            )
+            
             
             # Initialize agent
-            self.agent = initialize_agent(
+            self.agent = initialize_agent()
                 tools=self.tools,
                 llm=self.llm,
                 agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
                 verbose=True,
                 memory=ConversationBufferMemory(memory_key="chat_history", return_messages=True)
-            )
             
-            logger.info("✅ LangChain components initialized successfully")
+            
+            logger.info("[OK] LangChain components initialized successfully")
             
         except Exception as e:
-            logger.warning(f"⚠️ LangChain initialization failed: {e}")
-            logger.info("📝 Continuing with direct tool usage...")
+            logger.warning(str(f"[WARN] LangChain initialization failed: {e}")
+            logger.info("[LOG] Continuing with direct tool usage...")
     
     def get_project_files(self) -> List[Path]:
         """Get all relevant project files"""
@@ -487,7 +503,7 @@ class AutomatedProjectFixer:
     
     async def scan_project(self) -> Dict[str, Any]:
         """Scan the entire project for issues"""
-        logger.info("🔍 Scanning project files for issues...")
+        logger.info("[SEARCH] Scanning project files for issues...")
         
         files = self.get_project_files()
         all_issues: Dict[str, Any] = {}
@@ -496,12 +512,12 @@ class AutomatedProjectFixer:
         
         for file_path in files:
             try:
-                logger.info(f"📄 Analyzing: {file_path.relative_to(self.project_root)}")
+                logger.info(str(f"📄 Analyzing: {file_path.relative_to(self.project_root}")
                 
                 result: str = analysis_tool.run(str(file_path))
                 
                 if result.startswith('Error'):
-                    logger.error(f"❌ {result}")
+                    logger.error(str(f"[ERROR] {result}")
                     continue
                 
                 file_analysis = json.loads(result)
@@ -512,16 +528,16 @@ class AutomatedProjectFixer:
                     self.fix_report['issues_found'] += file_analysis['total_issues']
                     
             except Exception as e:
-                logger.error(f"❌ Error analyzing {file_path}: {e}")
+                logger.error(str(f"[ERROR] Error analyzing {file_path}: {e}")
                 
             self.fix_report['files_processed'] += 1
         
-        logger.info(f"✅ Scan complete: {self.fix_report['files_processed']} files, {self.fix_report['issues_found']} issues")
+        logger.info(str(f"[OK] Scan complete: {self.fix_report['files_processed']} files, {self.fix_report['issues_found']} issues")
         return all_issues
     
     async def fix_all_issues(self, issues: Dict[str, Any]) -> Dict[str, Any]:
         """Apply fixes to all identified issues"""
-        logger.info("🔧 Applying automated fixes...")
+        logger.info("[SETUP] Applying automated fixes...")
         
         fixer_tool = CodeFixerTool()
         fix_results = {}
@@ -531,7 +547,7 @@ class AutomatedProjectFixer:
                 continue
                 
             try:
-                logger.info(f"🔧 Fixing: {Path(file_path).name}")
+                logger.info(str(f"[SETUP] Fixing: {Path(file_path.name}")
                 
                 fixes_to_apply: List[Dict[str, Any]] = []
                 for issue in file_issues['issues']:
@@ -539,27 +555,27 @@ class AutomatedProjectFixer:
                         fixes_to_apply.append(issue)
                 
                 if fixes_to_apply:
-                    fix_request = json.dumps({
+                    fix_request = json.dumps({)}
                         'file': file_path,
                         'fixes': fixes_to_apply
-                    })
+                    }, ensure_ascii=True, default=str
                     
                     result: str = fixer_tool.run(fix_request)
-                    fix_results[file_path] = {
+                    fix_results[file_path] = {}
                         'result': result,
                         'fixes_applied': len(fixes_to_apply),
-                    }
+                    
                     
                     self.fix_report['fixes_applied'] += len(fixes_to_apply)
                     
             except Exception as e:
-                logger.error(f"❌ Error fixing {file_path}: {e}")
+                logger.error(str(f"[ERROR] Error fixing {file_path}: {e}")
         
         return fix_results
     
     async def update_dependencies(self) -> Dict[str, Any]:
         """Update project dependencies"""
-        logger.info("📦 Checking and updating dependencies...")
+        logger.info("[PACKAGE] Checking and updating dependencies...")
         
         dependency_tool = DependencyCheckerTool()
         
@@ -570,7 +586,7 @@ class AutomatedProjectFixer:
             # Update requirements.txt with common dependencies
             requirements_path = self.project_root / 'requirements.txt'
             
-            common_deps = [
+            common_deps = []
                 'langchain>=0.1.0',
                 'langchain-community>=0.0.20',
                 'langchain-openai>=0.0.6',
@@ -583,7 +599,7 @@ class AutomatedProjectFixer:
                 'aiohttp>=3.8.0',
                 'asyncio-mqtt>=0.11.0',
                 'typing-extensions>=4.0.0',
-            ]
+            
             
             if requirements_path.exists():
                 existing_content = requirements_path.read_text()
@@ -595,27 +611,27 @@ class AutomatedProjectFixer:
                         updated_content += f"\n{dep}"
                 
                 requirements_path.write_text(updated_content)
-                logger.info(f"✅ Updated {requirements_path}")
+                logger.info(str(f"[OK] Updated {requirements_path}")
             else:
                 requirements_path.write_text('\n'.join(common_deps))
-                logger.info(f"✅ Created {requirements_path}")
+                logger.info(str(f"[OK] Created {requirements_path}")
             
             return dependency_info
             
         except Exception as e:
-            logger.error(f"❌ Error updating dependencies: {e}")
+            logger.error(str(f"[ERROR] Error updating dependencies: {e}")
             return {'error': str(e)}
     
     async def generate_report(self) -> str:
         """Generate a comprehensive fix report"""
-        logger.info("📊 Generating fix report...")
+        logger.info("[METRICS] Generating fix report...")
         
         # Update report with completion time
         self.fix_report['end_time'] = datetime.now().isoformat()
-        self.fix_report['duration'] = str(
+        self.fix_report['duration'] = str()
             datetime.fromisoformat(self.fix_report['end_time']) - 
             datetime.fromisoformat(self.fix_report['start_time'])
-        )
+        
         
         # Generate report
         report_path = self.project_root / f"automated_fix_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -623,12 +639,12 @@ class AutomatedProjectFixer:
         with open(report_path, 'w', encoding='utf-8') as f:
             json.dump(self.fix_report, f, indent=2, ensure_ascii=False)
         
-        logger.info(f"✅ Report saved to: {report_path}")
+        logger.info(str(f"[OK] Report saved to: {report_path}")
         return str(report_path)
     
     async def run_complete_fix(self) -> str:
         """Run the complete automated fix process"""
-        logger.info("🚀 Starting automated project-wide fix...")
+        logger.info("[INIT] Starting automated project-wide fix...")
         
         try:
             # Initialize LangChain (optional)
@@ -639,22 +655,22 @@ class AutomatedProjectFixer:
             issues = await self.scan_project()
             
             # Step 2: Fix identified issues
-            logger.info("🔧 Step 2: Applying automated fixes...")
+            logger.info("[SETUP] Step 2: Applying automated fixes...")
             fix_results = await self.fix_all_issues(issues)
             
             # Step 3: Update dependencies
-            logger.info("📦 Step 3: Updating dependencies...")
+            logger.info("[PACKAGE] Step 3: Updating dependencies...")
             dependency_updates = await self.update_dependencies()
             
             # Step 4: Generate report
-            logger.info("📊 Step 4: Generating fix report...")
+            logger.info("[METRICS] Step 4: Generating fix report...")
             report_path = await self.generate_report()
             
-            logger.info("🎉 Automated project fix completed successfully!")
+            logger.info("[CELEBRATE] Automated project fix completed successfully!")
             return report_path
             
         except Exception as e:
-            logger.error(f"❌ Automated fix failed: {e}")
+            logger.error(str(f"[ERROR] Automated fix failed: {e}")
             raise
 
 async def main():
@@ -667,17 +683,17 @@ async def main():
         fixer = AutomatedProjectFixer(str(project_root))
         report_path = await fixer.run_complete_fix()
         
-        print(f"\n🎉 Automated project fix completed!")
-        print(f"📊 Report available at: {report_path}")
-        print(f"📝 Check the log file: automated_project_fixer.log")
-        print(f"\n🚀 Next steps:")
+        print(f"\n[CELEBRATE] Automated project fix completed!")
+        print(f"[METRICS] Report available at: {report_path}")
+        print(f"[LOG] Check the log file: automated_project_fixer.log")
+        print(f"\n[INIT] Next steps:")
         print(f"   1. Review the fix report")
         print(f"   2. Run: pip install -r requirements.txt")
         print(f"   3. Test: python test_enhanced_system.py")
         print(f"   4. Launch: python launch_enhanced_system.py")
         
     except Exception as e:
-        logger.error(f"❌ Failed to run automated fix: {e}")
+        logger.error(str(f"[ERROR] Failed to run automated fix: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

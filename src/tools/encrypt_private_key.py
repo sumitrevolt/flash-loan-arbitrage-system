@@ -1,11 +1,12 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+import json
+
+from cryptography.fernet import Fernet
 """
 Encrypt the private key in wallet_config.json
 """
 
-import os
-import json
-from cryptography.fernet import Fernet
 
 def encrypt_private_key():
     """Encrypt the private key in wallet_config.json"""

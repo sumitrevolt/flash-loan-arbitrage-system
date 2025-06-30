@@ -1,0 +1,8 @@
+{
+  "cleanup_timestamp": "2025-06-26T20:55:44.358936",
+  "files_removed": 12,
+  "backup_location": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_cleanup_backup_20250626_205544",
+  "remaining_config": "config/unified_mcp_config.json",
+  "mcp_servers_directory": "mcp_servers/",
+  "status": "complete"
+}

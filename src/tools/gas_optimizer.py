@@ -1,32 +1,36 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+    import logging
+from typing import Dict, Any, Optional, Tuple
+import asyncio
+import json
+import os
+import time
+
+    from web3.types import TxParams, Wei, ChecksumAddress
+import aiohttp
+
+    from src.utils.middleware_compat import apply_poa_middleware
+    from src.utils.web3_provider import Web3
+    from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
+from src.blockchain.rpc_manager import get_rpc_manager
+from src.utils.web3_provider import requires_web3
 """
 Gas Optimizer for Flash Loan Arbitrage System.
 Optimizes gas usage for transactions on Polygon Mainnet.
 """
 # Import requires_web3 decorator from central provider
-from src.utils.web3_provider import requires_web3
 
 
-import logging
-import json
-import os
-import time
-import asyncio
-from typing import Dict, Any, Optional, Tuple
-import aiohttp
 # Enhanced Web3 import with error handling
 try:
     # Import from central web3_provider
-    from src.utils.web3_provider import Web3
-    from web3.types import TxParams, Wei, ChecksumAddress
     # Import exceptions from central provider
-    from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
     # Import middleware from centralized modules
-    from src.utils.middleware_compat import apply_poa_middleware
     WEB3_IMPORTED = True
 except ImportError as e:
-    import logging
     logger = logging.getLogger(__name__)
-    logger.error(f"Failed to import Web3: {e}")
+    logger.error(str(f"Failed to import Web3: {e}")
     logger.error("Gas optimizer requires Web3 to function properly")
     WEB3_IMPORTED = False
     Web3 = None
@@ -37,7 +41,6 @@ except ImportError as e:
     ContractLogicError = Exception
     TransactionNotFound = Exception
 
-from src.blockchain.rpc_manager import get_rpc_manager
 
 logger = logging.getLogger("GasOptimizer")
 
@@ -61,10 +64,10 @@ class GasOptimizer:
         self.rpc_manager = get_rpc_manager()
         
         # Cache for gas prices
-        self.gas_price_cache = {
+        self.gas_price_cache = {}
             'timestamp': 0,
             'prices': None
-        }
+        
         self.cache_ttl = self.config.get('cache_ttl_seconds', 30)
         
         # Gas price sources
@@ -80,12 +83,12 @@ class GasOptimizer:
         self.default_max_priority_fee = self.config.get('default_max_priority_fee_gwei', 30)
         
         # Gas price multipliers for different speed settings
-        self.speed_multipliers = {
+        self.speed_multipliers = {}
             'fastest': self.config.get('fastest_multiplier', 1.5),
             'fast': self.config.get('fast_multiplier', 1.2),
             'standard': self.config.get('standard_multiplier', 1.0),
             'slow': self.config.get('slow_multiplier', 0.8)
-        }
+        
         
         self.logger.info("Gas Optimizer initialized")
     
@@ -96,8 +99,8 @@ class GasOptimizer:
                 with open(self.config_path, 'r') as f:
                     return json.load(f)
             else:
-                self.logger.warning(f"Gas optimizer config file not found at {self.config_path}. Using defaults.")
-                return {
+                self.logger.warning(str(f"Gas optimizer config file not found at {self.config_path}. Using defaults.")
+                return {}
                     'cache_ttl_seconds': 30,
                     'gas_station_url': 'https://gasstation-mainnet.matic.network/v2',
                     'default_gas_price_gwei': 50,
@@ -107,10 +110,10 @@ class GasOptimizer:
                     'fast_multiplier': 1.2,
                     'standard_multiplier': 1.0,
                     'slow_multiplier': 0.8
-                }
+                
         except Exception as e:
-            self.logger.error(f"Failed to load gas optimizer config: {e}")
-            return {
+            self.logger.error(str(f"Failed to load gas optimizer config: {e}")
+            return {}
                 'cache_ttl_seconds': 30,
                 'gas_station_url': 'https://gasstation-mainnet.matic.network/v2',
                 'default_gas_price_gwei': 50,
@@ -120,7 +123,7 @@ class GasOptimizer:
                 'fast_multiplier': 1.2,
                 'standard_multiplier': 1.0,
                 'slow_multiplier': 0.8
-            }
+            
     
     async def get_gas_price_from_rpc(self) -> Optional[int]:
         """
@@ -136,10 +139,10 @@ class GasOptimizer:
                 return None
             
             gas_price = web3.eth.gas_price
-            self.logger.debug(f"Gas price from RPC: {gas_price} wei ({gas_price / 1e9:.2f} Gwei)")
+            self.logger.debug(str(f"Gas price from RPC: {gas_price} wei ({gas_price / 1e9:.2f} Gwei")
             return gas_price
         except Exception as e:
-            self.logger.error(f"Failed to get gas price from RPC: {e}")
+            self.logger.error(str(f"Failed to get gas price from RPC: {e}")
             return None
     
     async def get_gas_price_from_gas_station(self) -> Optional[Dict[str, Any]]:
@@ -154,13 +157,13 @@ class GasOptimizer:
                 async with session.get(self.gas_station_url, timeout=5) as response:
                     if response.status == 200:
                         data = await response.json()
-                        self.logger.debug(f"Gas price from Gas Station: {data}")
+                        self.logger.debug(str(f"Gas price from Gas Station: {data}")
                         return data
                     else:
-                        self.logger.warning(f"Gas Station API returned status {response.status}")
+                        self.logger.warning(str(f"Gas Station API returned status {response.status}")
                         return None
         except Exception as e:
-            self.logger.error(f"Failed to get gas price from Gas Station: {e}")
+            self.logger.error(str(f"Failed to get gas price from Gas Station: {e}")
             return None
     
     async def get_gas_price_from_polygonscan(self) -> Optional[Dict[str, Any]]:
@@ -171,7 +174,7 @@ class GasOptimizer:
             Optional[Dict[str, Any]]: Gas price data, or None if the request fails.
         """
         if not self.polygonscan_api_key:
-            self.logger.debug("Skipping Polygonscan gas price check (no API key)")
+            self.logger.debug("Skipping Polygonscan gas price check (no API key")
             return None
         
         try:
@@ -180,16 +183,16 @@ class GasOptimizer:
                     if response.status == 200:
                         data = await response.json()
                         if data.get('status') == '1':
-                            self.logger.debug(f"Gas price from Polygonscan: {data}")
+                            self.logger.debug(str(f"Gas price from Polygonscan: {data}")
                             return data.get('result', {})
                         else:
-                            self.logger.warning(f"Polygonscan API error: {data.get('message')}")
+                            self.logger.warning(str(f"Polygonscan API error: {data.get('message'}")
                             return None
                     else:
-                        self.logger.warning(f"Polygonscan API returned status {response.status}")
+                        self.logger.warning(str(f"Polygonscan API returned status {response.status}")
                         return None
         except Exception as e:
-            self.logger.error(f"Failed to get gas price from Polygonscan: {e}")
+            self.logger.error(str(f"Failed to get gas price from Polygonscan: {e}")
             return None
     
     async def get_optimal_gas_settings(self, speed='fast') -> Dict[str, int]:
@@ -210,10 +213,10 @@ class GasOptimizer:
         else:
             # Fetch fresh gas prices
             gas_data = await self._fetch_gas_prices()
-            self.gas_price_cache = {
+            self.gas_price_cache = {}
                 'timestamp': current_time,
                 'prices': gas_data
-            }
+            
         
         # Get multiplier for the requested speed
         multiplier = self.speed_multipliers.get(speed, 1.0)
@@ -233,12 +236,12 @@ class GasOptimizer:
         max_fee = max_fee_gwei * 10**9
         max_priority_fee = max_priority_fee_gwei * 10**9
         
-        return {
+        return {}
             'gas_price': gas_price,
             'max_fee_per_gas': max_fee,
             'max_priority_fee_per_gas': max_priority_fee,
             'gas_limit': self.default_gas_limit
-        }
+        
     
     async def _fetch_gas_prices(self) -> Dict[str, float]:
         """
@@ -262,7 +265,7 @@ class GasOptimizer:
                 results['gas_station_fast_gwei'] = gas_station_data.get('fast', {}).get('maxFee', 0)
                 results['gas_station_priority_fee_gwei'] = gas_station_data.get('standard', {}).get('maxPriorityFee', 0)
             except (KeyError, TypeError) as e:
-                self.logger.warning(f"Error parsing Gas Station data: {e}")
+                self.logger.warning(str(f"Error parsing Gas Station data: {e}")
         
         # Get gas price from Polygonscan
         polygonscan_data = await self.get_gas_price_from_polygonscan()
@@ -272,7 +275,7 @@ class GasOptimizer:
                 results['polygonscan_fast_gwei'] = float(polygonscan_data.get('FastGasPrice', 0))
                 results['polygonscan_priority_fee_gwei'] = float(polygonscan_data.get('suggestBaseFee', 0))
             except (KeyError, TypeError, ValueError) as e:
-                self.logger.warning(f"Error parsing Polygonscan data: {e}")
+                self.logger.warning(str(f"Error parsing Polygonscan data: {e}")
         
         # Combine results
         gas_price_gwei = self.default_gas_price
@@ -296,11 +299,11 @@ class GasOptimizer:
         elif 'polygonscan_priority_fee_gwei' in results:
             max_priority_fee_gwei = results['polygonscan_priority_fee_gwei']
         
-        return {
+        return {}
             'gas_price_gwei': gas_price_gwei,
             'max_fee_gwei': max_fee_gwei,
             'max_priority_fee_gwei': max_priority_fee_gwei
-        }
+        
     
     async def estimate_gas_for_transaction(self, tx_params: Dict[str, Any]) -> int:
         """
@@ -321,10 +324,10 @@ class GasOptimizer:
             gas_estimate = web3.eth.estimate_gas(tx_params)
             # Add 20% buffer
             gas_limit = int(gas_estimate * 1.2)
-            self.logger.debug(f"Estimated gas: {gas_estimate}, with buffer: {gas_limit}")
+            self.logger.debug(str(f"Estimated gas: {gas_estimate}, with buffer: {gas_limit}")
             return gas_limit
         except Exception as e:
-            self.logger.error(f"Failed to estimate gas: {e}")
+            self.logger.error(str(f"Failed to estimate gas: {e}")
             return self.default_gas_limit
     
     async def optimize_transaction(self, tx_params: Dict[str, Any], speed='fast') -> Dict[str, Any]:
@@ -347,7 +350,7 @@ class GasOptimizer:
                 gas_limit = await self.estimate_gas_for_transaction(tx_params)
                 gas_settings['gas_limit'] = gas_limit
             except Exception as e:
-                self.logger.error(f"Failed to estimate gas: {e}")
+                self.logger.error(str(f"Failed to estimate gas: {e}")
         
         # Update transaction parameters
         optimized_tx = tx_params.copy()
@@ -368,7 +371,7 @@ class GasOptimizer:
         # Set gas limit
         optimized_tx['gas'] = gas_settings['gas_limit']
         
-        self.logger.info(f"Optimized transaction with {speed} gas settings: {gas_settings}")
+        self.logger.info(str(f"Optimized transaction with {speed} gas settings: {gas_settings}")
         return optimized_tx
     
     async def initialize(self):
@@ -391,21 +394,21 @@ class GasOptimizer:
             
             rpc_gas_price = await self.get_gas_price_from_rpc()
             if rpc_gas_price:
-                self.logger.info(f"Successfully got gas price from RPC: {rpc_gas_price / 1e9:.2f} Gwei")
+                self.logger.info(str(f"Successfully got gas price from RPC: {rpc_gas_price / 1e9:.2f} Gwei")
             else:
                 self.logger.warning("Failed to get gas price from RPC")
             
             # Fetch initial gas prices
             gas_data = await self._fetch_gas_prices()
-            self.gas_price_cache = {
+            self.gas_price_cache = {}
                 'timestamp': time.time(),
                 'prices': gas_data
-            }
             
-            self.logger.info(f"Initial gas prices: {gas_data}")
+            
+            self.logger.info(str(f"Initial gas prices: {gas_data}")
             return True
         except Exception as e:
-            self.logger.error(f"Error initializing gas optimizer: {e}")
+            self.logger.error(str(f"Error initializing gas optimizer: {e}")
             return False
 
 

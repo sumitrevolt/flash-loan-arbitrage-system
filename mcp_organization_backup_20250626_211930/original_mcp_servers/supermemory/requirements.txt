@@ -1,0 +1,9 @@
+# MCP Server dependencies - using the correct package name
+mcp>=1.0.0
+
+# HTTP client for API calls
+httpx>=0.25.0
+
+# Additional dependencies that might be needed
+typing-extensions>=4.0.0
+pydantic>=2.0.0

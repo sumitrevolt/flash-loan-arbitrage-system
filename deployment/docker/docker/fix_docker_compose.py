@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+import re
+import sys
+
+
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python3
 """
 Script to fix Docker Compose file issues:
@@ -7,8 +13,6 @@ Script to fix Docker Compose file issues:
 4. Fix environment variable inconsistencies
 """
 
-import re
-import sys
 
 def fix_docker_compose():
     """Fix the Docker Compose file by removing duplicates and standardizing configuration"""
@@ -42,7 +46,7 @@ def fix_docker_compose():
                 skip_until_next_service = False
         
         # Check for next service or section to stop skipping
-        elif skip_until_next_service and (
+        elif skip_until_next_service and ()
             re.match(r'^  [a-zA-Z0-9-]+:', line) or 
             re.match(r'^[a-zA-Z]', line) or 
             line.strip() == ''

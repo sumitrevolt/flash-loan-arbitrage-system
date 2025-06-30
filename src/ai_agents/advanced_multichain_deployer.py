@@ -1,4 +1,14 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List
+import asyncio
+import json
+
+from dataclasses import dataclass, asdict
+from mcp_servers.mcp_shared_utilities import MCPServerMixin
+from pydantic import BaseModel, Field
 """
 Advanced Multi-Chain Deployment Pipeline
 =======================================
@@ -12,16 +22,7 @@ Sophisticated deployment pipeline that provides:
 - Deployment rollback capabilities
 """
 
-import asyncio
-import json
-import subprocess
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-from dataclasses import dataclass, asdict
-from datetime import datetime
-import aiohttp
 
-from ..server.tool_registry import BaseTool, ToolSchema
 
 
 @dataclass
@@ -65,13 +66,13 @@ class DeploymentPipeline:
     rollback_available: bool
 
 
-class AdvancedMultiChainDeployer(BaseTool):
+class AdvancedMultiChainDeployer(MCPServerMixin):
     """Advanced multi-chain deployment pipeline with sophisticated features"""
     
-    def __init__(self, config: Dict[str, Any], logger):
-        super().__init__(config, logger)
-        self.foundry_path = config["foundry"]["forge_path"]
-        self.workspace_path = Path(config["foundry"]["workspace_root"])
+    def __init__(self, server_name: str, server_port: int, config: Dict[str, Any]):
+        super().__init__(server_name, server_port)
+        self.foundry_path = config.get("foundry", {}).get("forge_path")
+        self.workspace_path = Path(config.get("foundry", {}).get("workspace_root", "."))
         self.deployment_config = config.get("deployment", {})
         
         # Initialize chain configurations
@@ -97,10 +98,10 @@ class AdvancedMultiChainDeployer(BaseTool):
             return True
             
         except Exception as e:
-            self.logger.error(f"Failed to initialize multi-chain deployer: {e}")
+            self.logger.error(str(f"Failed to initialize multi-chain deployer: {e}")
             return False
     
-    async def execute(self, 
+    async def execute(self,
                      contract_path: str,
                      target_chains: List[str],
                      deployment_strategy: str = "parallel",
@@ -118,7 +119,7 @@ class AdvancedMultiChainDeployer(BaseTool):
         """
         try:
             pipeline_id = f"deployment_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            self.logger.info(f"Starting multi-chain deployment pipeline: {pipeline_id}")
+            self.logger.info(str(f"Starting multi-chain deployment pipeline: {pipeline_id}")
             
             # Validate inputs
             await self._validate_deployment_inputs(contract_path, target_chains)
@@ -132,15 +133,15 @@ class AdvancedMultiChainDeployer(BaseTool):
             if deployment_strategy == "parallel":
                 deployment_results = await self._parallel_deployment(
                     contract_path, target_chains
-                )
+
             elif deployment_strategy == "sequential":
                 deployment_results = await self._sequential_deployment(
                     contract_path, target_chains
-                )
+
             else:  # optimized
                 deployment_results = await self._optimized_deployment(
                     contract_path, target_chains
-                )
+
             
             # Post-deployment verification
             verification_results = {}
@@ -157,7 +158,7 @@ class AdvancedMultiChainDeployer(BaseTool):
             total_cost = sum(r.deployment_cost for r in deployment_results)
             
             # Create pipeline result
-            pipeline: str = DeploymentPipeline(
+            pipeline: DeploymentPipeline = DeploymentPipeline(
                 pipeline_id=pipeline_id,
                 contract_name=Path(contract_path).stem,
                 total_chains=len(target_chains),
@@ -168,7 +169,7 @@ class AdvancedMultiChainDeployer(BaseTool):
                 verification_results=verification_results,
                 post_deployment_tests=test_results,
                 rollback_available=True
-            )
+
             
             # Save deployment record
             await self._save_deployment_record(pipeline)
@@ -185,16 +186,16 @@ class AdvancedMultiChainDeployer(BaseTool):
                     "successful_deployments": successful_deployments,
                     "total_cost": total_cost,
                     "average_gas_price": sum(r.gas_price for r in deployment_results) / len(deployment_results) if deployment_results else 0
-                }
-            }
+
+
             
         except Exception as e:
-            self.logger.error(f"Multi-chain deployment failed: {e}")
+            self.logger.error(str(f"Multi-chain deployment failed: {e}")
             return {"success": False, "error": str(e)}
     
     async def _parallel_deployment(self, contract_path: str, target_chains: List[str]) -> List[DeploymentResult]:
         """Deploy to multiple chains in parallel"""
-        self.logger.info("🚀 Starting parallel deployment strategy")
+        self.logger.info("[INIT] Starting parallel deployment strategy")
         
         # Create deployment tasks
         deployment_tasks = []
@@ -209,7 +210,7 @@ class AdvancedMultiChainDeployer(BaseTool):
         deployment_results = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                self.logger.error(f"Deployment to {target_chains[i]} failed: {result}")
+                self.logger.error(str(f"Deployment to {target_chains[i]} failed: {result}")
                 # Create failed deployment result
                 deployment_results.append(self._create_failed_deployment_result(target_chains[i], str(result)))
             else:
@@ -235,14 +236,14 @@ class AdvancedMultiChainDeployer(BaseTool):
                 await asyncio.sleep(2)
                 
             except Exception as e:
-                self.logger.error(f"Sequential deployment to {chain} failed: {e}")
+                self.logger.error(str(f"Sequential deployment to {chain} failed: {e}")
                 deployment_results.append(self._create_failed_deployment_result(chain, str(e)))
         
         return deployment_results
     
     async def _optimized_deployment(self, contract_path: str, target_chains: List[str]) -> List[DeploymentResult]:
         """Deploy with gas optimization and intelligent timing"""
-        self.logger.info("🎯 Starting optimized deployment strategy")
+        self.logger.info("[TASK] Starting optimized deployment strategy")
         
         # Analyze gas prices across chains
         gas_analysis = await self._analyze_gas_prices(target_chains)
@@ -280,7 +281,7 @@ class AdvancedMultiChainDeployer(BaseTool):
     async def _deploy_to_chain(self, contract_path: str, chain: str) -> DeploymentResult:
         """Deploy contract to a specific chain"""
         try:
-            self.logger.info(f"Deploying to {chain}...")
+            self.logger.info(str(f"Deploying to {chain}...")
             
             chain_config = self.chain_configs[chain]
             
@@ -296,44 +297,19 @@ class AdvancedMultiChainDeployer(BaseTool):
                 "--private-key", self._get_private_key(chain),
                 "--gas-price", str(gas_price),
                 "--json"
-            ]
+
             
-            # Execute deployment
-        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # WARNING: This is a security risk
+            self.logger.debug(f"Executing deployment command: {' '.join(deploy_cmd)}")
             process = await asyncio.create_subprocess_exec(
                 *deploy_cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=self.workspace_path
-            )
+
             
             stdout, stderr = await process.communicate()
+            self.logger.debug(f"Deployment command stdout: {stdout.decode()}")
+            self.logger.debug(f"Deployment command stderr: {stderr.decode()}")
             
             if process.returncode != 0:
                 raise Exception(f"Deployment failed: {stderr.decode()}")
@@ -355,10 +331,10 @@ class AdvancedMultiChainDeployer(BaseTool):
                 verification_status="pending",
                 timestamp=datetime.now().isoformat(),
                 block_number=int(deployment_output.get("blockNumber", 0))
-            )
+
             
         except Exception as e:
-            self.logger.error(f"Deployment to {chain} failed: {e}")
+            self.logger.error(str(f"Deployment to {chain} failed: {e}")
             raise
     
     async def _verify_deployments(self, deployment_results: List[DeploymentResult]) -> Dict[str, bool]:
@@ -379,7 +355,7 @@ class AdvancedMultiChainDeployer(BaseTool):
                 deployment.verification_status = "verified" if success else "failed"
                 
             except Exception as e:
-                self.logger.error(f"Verification failed for {deployment.chain}: {e}")
+                self.logger.error(str(f"Verification failed for {deployment.chain}: {e}")
                 verification_results[deployment.chain] = False
                 deployment.verification_status = "failed"
         
@@ -397,53 +373,29 @@ class AdvancedMultiChainDeployer(BaseTool):
                 deployment.contract_address,
                 "--chain-id", str(chain_config.chain_id),
                 "--etherscan-api-key", self._get_api_key(deployment.chain)
-            ]
+
             
-        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # WARNING: This is a security risk
+            self.logger.debug(f"Executing verification command: {' '.join(verify_cmd)}")
             process = await asyncio.create_subprocess_exec(
                 *verify_cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=self.workspace_path
-            )
+
             
             stdout, stderr = await process.communicate()
+            self.logger.debug(f"Verification command stdout: {stdout.decode()}")
+            self.logger.debug(f"Verification command stderr: {stderr.decode()}")
             
             if process.returncode == 0:
-                self.logger.info(f"✅ Contract verified on {deployment.chain}")
+                self.logger.info(str(f"[OK] Contract verified on {deployment.chain}")
                 return True
             else:
-                self.logger.warning(f"⚠️ Verification failed on {deployment.chain}: {stderr.decode()}")
+                self.logger.warning(str(f"[WARN] Verification failed on {deployment.chain}: {stderr.decode()}"))
                 return False
             
         except Exception as e:
-            self.logger.error(f"Verification error for {deployment.chain}: {e}")
+            self.logger.error(str(f"Verification error for {deployment.chain}: {e}")
             return False
     
     async def _run_post_deployment_tests(self, deployment_results: List[DeploymentResult]) -> Dict[str, bool]:
@@ -461,7 +413,7 @@ class AdvancedMultiChainDeployer(BaseTool):
                 test_results[deployment.chain] = success
                 
             except Exception as e:
-                self.logger.error(f"Post-deployment test failed for {deployment.chain}: {e}")
+                self.logger.error(str(f"Post-deployment test failed for {deployment.chain}: {e}")
                 test_results[deployment.chain] = False
         
         return test_results
@@ -477,52 +429,28 @@ class AdvancedMultiChainDeployer(BaseTool):
                 deployment.contract_address,
                 "owner()",
                 "--rpc-url", chain_config.rpc_url
-            ]
+
             
-        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # WARNING: This is a security risk
+            self.logger.debug(f"Executing post-deployment test command: {' '.join(test_cmd)}")
             process = await asyncio.create_subprocess_exec(
                 *test_cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
-            )
+
             
             stdout, stderr = await process.communicate()
+            self.logger.debug(f"Post-deployment test stdout: {stdout.decode()}")
+            self.logger.debug(f"Post-deployment test stderr: {stderr.decode()}")
             
             if process.returncode == 0:
-                self.logger.info(f"✅ Post-deployment test passed for {deployment.chain}")
+                self.logger.info(str(f"[OK] Post-deployment test passed for {deployment.chain}")
                 return True
             else:
-                self.logger.warning(f"⚠️ Post-deployment test failed for {deployment.chain}")
+                self.logger.warning(str(f"[WARN] Post-deployment test failed for {deployment.chain}")
                 return False
             
         except Exception as e:
-            self.logger.error(f"Test error for {deployment.chain}: {e}")
+            self.logger.error(str(f"Test error for {deployment.chain}: {e}")
             return False
     
     async def _compile_with_optimizations(self, contract_path: str) -> Dict[str, Any]:
@@ -534,43 +462,19 @@ class AdvancedMultiChainDeployer(BaseTool):
                 "--optimize",
                 "--optimizer-runs", "200",
                 contract_path
-            ]
+
             
-        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # WARNING: This is a security risk
+            self.logger.debug(f"Executing compilation command: {' '.join(compile_cmd)}")
             process = await asyncio.create_subprocess_exec(
                 *compile_cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=self.workspace_path
-            )
+
             
             stdout, stderr = await process.communicate()
+            self.logger.debug(f"Compilation command stdout: {stdout.decode()}")
+            self.logger.debug(f"Compilation command stderr: {stderr.decode()}")
             
             if process.returncode == 0:
                 return {"success": True, "output": stdout.decode()}
@@ -602,12 +506,12 @@ class AdvancedMultiChainDeployer(BaseTool):
                 "optimism": 0.001 * 1e9,
                 "bsc": 5 * 1e9,
                 "avalanche": 25 * 1e9
-            }
+
             
             return int(default_gas_prices.get(chain, 20 * 1e9))
             
         except Exception as e:
-            self.logger.warning(f"Failed to get gas price for {chain}: {e}")
+            self.logger.warning(str(f"Failed to get gas price for {chain}: {e}")
             return int(20 * 1e9)  # Fallback
     
     async def _analyze_gas_prices(self, chains: List[str]) -> Dict[str, List[str]]:
@@ -618,17 +522,17 @@ class AdvancedMultiChainDeployer(BaseTool):
             gas_prices[chain] = await self._get_optimal_gas_price(chain)
         
         # Sort by gas price
-        sorted_chains = sorted(gas_prices.items(), key=lambda x: Any: Any: x[1])
+        sorted_chains = sorted(gas_prices.items(), key=lambda x: x[1])
         
         # Categorize into low, medium, high gas
         low_threshold = sorted_chains[len(sorted_chains) // 3][1]
         high_threshold = sorted_chains[2 * len(sorted_chains) // 3][1]
-        
         categorized = {
             "low_gas": [],
             "medium_gas": [],
             "high_gas": []
-        }
+
+        
         
         for chain, gas_price in gas_prices.items():
             if gas_price <= low_threshold:
@@ -649,7 +553,7 @@ class AdvancedMultiChainDeployer(BaseTool):
             estimated_gas = 2000000  # Typical contract deployment gas
             gas_costs[chain] = gas_price * estimated_gas
         
-        return sorted(chains, key=lambda x: Any: Any: gas_costs[x])
+        return sorted(chains, key=lambda x: gas_costs[x])
     
     async def _get_native_token_price(self, chain: str) -> float:
         """Get native token price in USD"""
@@ -661,7 +565,7 @@ class AdvancedMultiChainDeployer(BaseTool):
             "optimism": 2000.0,
             "bsc": 300.0,
             "avalanche": 30.0
-        }
+
         return prices.get(chain, 1.0)
     
     def _create_failed_deployment_result(self, chain: str, error: str) -> DeploymentResult:
@@ -676,7 +580,7 @@ class AdvancedMultiChainDeployer(BaseTool):
             verification_status="failed",
             timestamp=datetime.now().isoformat(),
             block_number=0
-        )
+
     
     async def _save_deployment_record(self, pipeline: DeploymentPipeline) -> None:
         """Save deployment record for future reference"""
@@ -689,10 +593,10 @@ class AdvancedMultiChainDeployer(BaseTool):
             with open(record_file, 'w') as f:
                 json.dump(asdict(pipeline), f, indent=2, default=str)
             
-            self.logger.info(f"Deployment record saved: {record_file}")
+            self.logger.info(str(f"Deployment record saved: {record_file}")
             
         except Exception as e:
-            self.logger.error(f"Failed to save deployment record: {e}")
+            self.logger.error(str(f"Failed to save deployment record: {e}")
     
     async def _generate_deployment_report(self, pipeline: DeploymentPipeline) -> Dict[str, str]:
         """Generate comprehensive deployment report"""
@@ -722,12 +626,12 @@ class AdvancedMultiChainDeployer(BaseTool):
 """
             
             for result in pipeline.deployment_results:
-                status = "✅ Success" if result.contract_address else "❌ Failed"
+                status = "[OK] Success" if result.contract_address else "[ERROR] Failed"
                 address = result.contract_address[:10] + "..." if result.contract_address else "N/A"
                 
                 report_content += f"| {result.chain} | {status} | {address} | {result.gas_used:,} | ${result.deployment_cost:.4f} |\n"
             
-            report_content += f"""
+            report_content += """
 ## Verification Status
 
 | Chain | Verified |
@@ -735,7 +639,7 @@ class AdvancedMultiChainDeployer(BaseTool):
 """
             
             for chain, verified in pipeline.verification_results.items():
-                status = "✅" if verified else "❌"
+                status = "[OK]" if verified else "[ERROR]"
                 report_content += f"| {chain} | {status} |\n"
             
             # Write report
@@ -745,7 +649,7 @@ class AdvancedMultiChainDeployer(BaseTool):
             return {"report_path": str(report_file)}
             
         except Exception as e:
-            self.logger.error(f"Failed to generate deployment report: {e}")
+            self.logger.error(str(f"Failed to generate deployment report: {e}")
             return {"report_path": ""}
     
     # Configuration and helper methods
@@ -787,8 +691,8 @@ class AdvancedMultiChainDeployer(BaseTool):
                 block_explorer="https://optimistic.etherscan.io",
                 native_token="ETH",
                 supported_standards=["ERC20", "ERC721", "ERC1155"]
-            )
-        }
+
+
     
     async def _verify_foundry_tools(self) -> None:
         """Verify foundry tools are available"""
@@ -796,47 +700,47 @@ class AdvancedMultiChainDeployer(BaseTool):
         
         for tool in tools:
             try:
-        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
+        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
+        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative)
+        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
+        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative)
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
+        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
+        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative)
         # WARNING: This is a security risk
                 process = await asyncio.create_subprocess_exec(
                     tool, "--version",
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE
-                )
+
                 await process.communicate()
                 
                 if process.returncode == 0:
-                    self.logger.info(f"✅ {tool} is available")
+                    self.logger.info(str(f"[OK] {tool} is available")
                 else:
-                    self.logger.warning(f"⚠️ {tool} not available")
+                    self.logger.warning(str(f"[WARN] {tool} not available")
                     
             except FileNotFoundError:
-                self.logger.error(f"❌ {tool} not found - install Foundry")
+                self.logger.error(str(f"[ERROR] {tool} not found - install Foundry")
                 raise Exception(f"Foundry tool {tool} not available")
     
     async def _load_deployment_configs(self) -> None:
@@ -860,16 +764,16 @@ class AdvancedMultiChainDeployer(BaseTool):
                         "method": "eth_blockNumber",
                         "params": [],
                         "id": 1
-                    }
+
                     
                     async with session.post(config.rpc_url, json=payload) as response:
                         if response.status == 200:
-                            self.logger.info(f"✅ {chain_name} connection verified")
+                            self.logger.info(str(f"[OK] {chain_name} connection verified")
                         else:
-                            self.logger.warning(f"⚠️ {chain_name} connection failed")
+                            self.logger.warning(str(f"[WARN] {chain_name} connection failed")
                             
             except Exception as e:
-                self.logger.warning(f"⚠️ {chain_name} connection error: {e}")
+                self.logger.warning(str(f"[WARN] {chain_name} connection error: {e}")
     
     async def _validate_deployment_inputs(self, contract_path: str, target_chains: List[str]) -> None:
         """Validate deployment inputs"""
@@ -894,7 +798,17 @@ class AdvancedMultiChainDeployer(BaseTool):
         # In production, use secure key management
         return self.deployment_config.get("api_keys", {}).get(chain, "")
     
-    def get_schema(self) -> ToolSchema:
+class ToolSchema(BaseModel):
+    name: str
+    description: str
+    input_schema: Dict[str, Any]
+    category: str
+    tags: List[str] = Field(default_factory=list)
+    timeout: int = 60
+    requires_foundry: bool = False
+    requires_network: bool = False
+
+    def get_schema(self) -> "ToolSchema":
         """Get tool schema for MCP registration"""
         return ToolSchema(
             name="advanced_multichain_deployer",
@@ -923,7 +837,7 @@ class AdvancedMultiChainDeployer(BaseTool):
                     "post_deployment_tests": {
                         "type": "boolean",
                         "description": "Whether to run post-deployment tests"
-                    }
+
                 },
                 "required": ["contract_path", "target_chains"]
             },
@@ -932,4 +846,3 @@ class AdvancedMultiChainDeployer(BaseTool):
             timeout=300,
             requires_foundry=True,
             requires_network=True
-        )

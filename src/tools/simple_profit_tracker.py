@@ -1,15 +1,17 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from decimal import Decimal
+from typing import Dict, Any, List, Optional, Tuple
 import asyncio\n"""
+import json
+import logging
+import os
+import time
 Simple Profit Tracker for Flash Loan Arbitrage System.
 Tracks profits from arbitrage trades.
 """
 
-import logging
-import json
-import os
-import time
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Tuple
-from decimal import Decimal
 
 class SimpleProfitTracker:
     """
@@ -66,7 +68,7 @@ class SimpleProfitTracker:
                     return json.load(f)
             return []
         except Exception as e:
-            self.logger.error(f"Error loading profit data: {e}")
+            self.logger.error(str(f"Error loading profit data: {e}")
             return []
     
     def _save_profit_data(self):
@@ -75,7 +77,7 @@ class SimpleProfitTracker:
             with open(self.profit_log_file, 'w') as f:
                 json.dump(self.profit_data, f, indent=2)
         except Exception as e:
-            self.logger.error(f"Error saving profit data: {e}")
+            self.logger.error(str(f"Error saving profit data: {e}")
     
     def _update_daily_summary(self):
         """Update the daily summary file."""
@@ -99,13 +101,13 @@ class SimpleProfitTracker:
                     
                     # Update daily profits
                     if date_str not in daily_profits:
-                        daily_profits[date_str] = {
+                        daily_profits[date_str] = {}
                             'total_profit_usd': 0,
                             'total_gas_cost_usd': 0,
                             'net_profit_usd': 0,
                             'trade_count': 0,
                             'successful_trades': 0
-                        }
+                        
                     
                     daily_profits[date_str]['total_profit_usd'] += float(profit_usd)
                     daily_profits[date_str]['total_gas_cost_usd'] += float(gas_cost_usd)
@@ -115,13 +117,13 @@ class SimpleProfitTracker:
                     if entry.get('success', False):
                         daily_profits[date_str]['successful_trades'] += 1
                 except Exception as e:
-                    self.logger.error(f"Error processing profit entry for daily summary: {e}")
+                    self.logger.error(str(f"Error processing profit entry for daily summary: {e}")
             
             # Save daily summary
             with open(self.daily_summary_file, 'w') as f:
                 json.dump(daily_profits, f, indent=2)
         except Exception as e:
-            self.logger.error(f"Error updating daily summary: {e}")
+            self.logger.error(str(f"Error updating daily summary: {e}")
     
     def _update_token_summary(self):
         """Update the token summary file."""
@@ -141,7 +143,7 @@ class SimpleProfitTracker:
                     
                     # Update token profits
                     if token not in token_profits:
-                        token_profits[token] = {
+                        token_profits[token] = {}
                             'total_profit_usd': 0,
                             'total_gas_cost_usd': 0,
                             'net_profit_usd': 0,
@@ -150,7 +152,7 @@ class SimpleProfitTracker:
                             'average_profit_usd': 0,
                             'highest_profit_usd': 0,
                             'lowest_profit_usd': float('inf')
-                        }
+                        
                     
                     token_profits[token]['total_profit_usd'] += float(profit_usd)
                     token_profits[token]['total_gas_cost_usd'] += float(gas_cost_usd)
@@ -167,7 +169,7 @@ class SimpleProfitTracker:
                     if float(profit_usd) < token_profits[token]['lowest_profit_usd'] and float(profit_usd) > 0:
                         token_profits[token]['lowest_profit_usd'] = float(profit_usd)
                 except Exception as e:
-                    self.logger.error(f"Error processing profit entry for token summary: {e}")
+                    self.logger.error(str(f"Error processing profit entry for token summary: {e}")
             
             # Calculate averages
             for token, data in token_profits.items():
@@ -182,7 +184,7 @@ class SimpleProfitTracker:
             with open(self.token_summary_file, 'w') as f:
                 json.dump(token_profits, f, indent=2)
         except Exception as e:
-            self.logger.error(f"Error updating token summary: {e}")
+            self.logger.error(str(f"Error updating token summary: {e}")
     
     def record_profit(self, profit_data: Dict[str, Any]):
         """
@@ -206,9 +208,9 @@ class SimpleProfitTracker:
             self._update_daily_summary()
             self._update_token_summary()
             
-            self.logger.info(f"Recorded profit: ${profit_data.get('profit_usd', 0):.2f} for {profit_data.get('token', 'unknown')}")
+            self.logger.info(str(f"Recorded profit: ${profit_data.get('profit_usd', 0:.2f} for {profit_data.get('token', 'unknown')}")))
         except Exception as e:
-            self.logger.error(f"Error recording profit: {e}")
+            self.logger.error(str(f"Error recording profit: {e}")
     
     def get_total_profit(self) -> Decimal:
         """
@@ -226,7 +228,7 @@ class SimpleProfitTracker:
                 total_profit += net_profit_usd
             return total_profit
         except Exception as e:
-            self.logger.error(f"Error calculating total profit: {e}")
+            self.logger.error(str(f"Error calculating total profit: {e}")
             return Decimal('0')
     
     def get_profit_by_token(self, token: str) -> Decimal:
@@ -249,7 +251,7 @@ class SimpleProfitTracker:
                     token_profit += net_profit_usd
             return token_profit
         except Exception as e:
-            self.logger.error(f"Error calculating profit for token {token}: {e}")
+            self.logger.error(str(f"Error calculating profit for token {token}: {e}")
             return Decimal('0')
     
     def get_profit_by_date_range(self, start_date: datetime, end_date: datetime) -> Decimal:
@@ -281,7 +283,7 @@ class SimpleProfitTracker:
                     range_profit += net_profit_usd
             return range_profit
         except Exception as e:
-            self.logger.error(f"Error calculating profit for date range: {e}")
+            self.logger.error(str(f"Error calculating profit for date range: {e}")
             return Decimal('0')
     
     def get_daily_summary(self) -> Dict[str, Dict[str, Any]]:
@@ -297,7 +299,7 @@ class SimpleProfitTracker:
                     return json.load(f)
             return {}
         except Exception as e:
-            self.logger.error(f"Error getting daily summary: {e}")
+            self.logger.error(str(f"Error getting daily summary: {e}")
             return {}
     
     def get_token_summary(self) -> Dict[str, Dict[str, Any]]:
@@ -313,7 +315,7 @@ class SimpleProfitTracker:
                     return json.load(f)
             return {}
         except Exception as e:
-            self.logger.error(f"Error getting token summary: {e}")
+            self.logger.error(str(f"Error getting token summary: {e}")
             return {}
     
     def get_most_profitable_token(self) -> Tuple[str, Decimal]:
@@ -328,15 +330,15 @@ class SimpleProfitTracker:
             if not token_summary:
                 return ('none', Decimal('0'))
             
-            most_profitable_token = max(
+            most_profitable_token = max()
                 token_summary.items(),
                 key=lambda x: Any: Any: x[1]['net_profit_usd'],
                 default=('none', {'net_profit_usd': 0})
-            )
+            
             
             return (most_profitable_token[0], Decimal(str(most_profitable_token[1]['net_profit_usd'])))
         except Exception as e:
-            self.logger.error(f"Error getting most profitable token: {e}")
+            self.logger.error(str(f"Error getting most profitable token: {e}")
             return ('error', Decimal('0'))
     
     def get_profit_stats(self) -> Dict[str, Any]:
@@ -354,11 +356,11 @@ class SimpleProfitTracker:
             # Calculate average profit
             average_profit = Decimal('0')
             if successful_trades > 0:
-                total_successful_profit = sum(
+                total_successful_profit = sum()
                     Decimal(str(entry.get('profit_usd', 0))) - Decimal(str(entry.get('gas_cost_usd', 0)))
                     for entry in self.profit_data
                     if entry.get('success', False)
-                )
+                
                 average_profit = total_successful_profit / successful_trades
             
             # Get most profitable token
@@ -373,7 +375,7 @@ class SimpleProfitTracker:
             last_week = now - timedelta(days=7)
             last_7d_profit = self.get_profit_by_date_range(last_week, now)
             
-            return {
+            return {}
                 'total_profit_usd': float(total_profit),
                 'total_trades': total_trades,
                 'successful_trades': successful_trades,
@@ -383,10 +385,10 @@ class SimpleProfitTracker:
                 'most_profitable_token_profit_usd': float(token_profit),
                 'last_24h_profit_usd': float(last_24h_profit),
                 'last_7d_profit_usd': float(last_7d_profit)
-            }
+            
         except Exception as e:
-            self.logger.error(f"Error getting profit stats: {e}")
-            return {
+            self.logger.error(str(f"Error getting profit stats: {e}")
+            return {}
                 'total_profit_usd': 0,
                 'total_trades': 0,
                 'successful_trades': 0,
@@ -396,7 +398,7 @@ class SimpleProfitTracker:
                 'most_profitable_token_profit_usd': 0,
                 'last_24h_profit_usd': 0,
                 'last_7d_profit_usd': 0
-            }
+            
     
     def clear_profit_data(self):
         """Clear all profit data."""
@@ -407,7 +409,7 @@ class SimpleProfitTracker:
             self._update_token_summary()
             self.logger.info("Cleared all profit data")
         except Exception as e:
-            self.logger.error(f"Error clearing profit data: {e}")
+            self.logger.error(str(f"Error clearing profit data: {e}")
     
     async def initialize(self, track_profits: bool = True):
         """
@@ -416,7 +418,7 @@ class SimpleProfitTracker:
         Args:
             track_profits (bool): Whether to track profits.
         """
-        self.logger.info(f"Initializing profit tracker (track_profits={track_profits})")
+        self.logger.info(str(f"Initializing profit tracker (track_profits={track_profits}")
         
         # Create data directory if it doesn't exist
         os.makedirs(self.data_dir, exist_ok=True)
@@ -433,7 +435,7 @@ class SimpleProfitTracker:
         
         # Log stats
         stats = self.get_profit_stats()
-        self.logger.info(f"Profit tracker initialized with {stats['total_trades']} trades and ${stats['total_profit_usd']:.2f} total profit")
+        self.logger.info(str(f"Profit tracker initialized with {stats['total_trades']} trades and ${stats['total_profit_usd']:.2f} total profit")
         
         return True
 

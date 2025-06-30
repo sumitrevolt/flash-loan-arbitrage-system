@@ -1,3 +1,23 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+            from pathlib import Path
+            import json
+            import os
+            import re
+from datetime import datetime
+from typing import Dict, List, Optional, Any
+import asyncio
+import logging
+
+            from langchain.schema import Document
+from langchain.chains import RetrievalQA
+from langchain.document_loaders import TextLoader, PDFLoader, JSONLoader
+from langchain.schema import BaseMessage, HumanMessage, AIMessage
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.vectorstores import Chroma
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from utils.logger import setup_logger
 """
 RAG Agent
 =========
@@ -6,20 +26,8 @@ Retrieval-Augmented Generation agent for information retrieval,
 context provision, and knowledge-based responses.
 """
 
-import asyncio
-import logging
-from datetime import datetime
-from typing import Dict, List, Optional, Any
 
-from langchain.schema import BaseMessage, HumanMessage, AIMessage
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain.chains import RetrievalQA
-from langchain.vectorstores import Chroma
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.document_loaders import TextLoader, PDFLoader, JSONLoader
 
-from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -41,43 +49,43 @@ class RAGAgent:
         self.tool_registry = tool_registry
         
         # LLM for RAG responses
-        self.llm = ChatOpenAI(
+        self.llm = ChatOpenAI()
             model="gpt-4-turbo-preview",
             temperature=0.2,
             max_tokens=2000
-        )
+        
         
         # Embeddings for vector search
         self.embeddings = OpenAIEmbeddings()
         
         # Document processing
-        self.text_splitter = RecursiveCharacterTextSplitter(
+        self.text_splitter = RecursiveCharacterTextSplitter()
             chunk_size=1000,
             chunk_overlap=100,
             separators=["\n\n", "\n", " ", ""]
-        )
+        
         
         # Knowledge base
         self.knowledge_base = None
         self.retrieval_chain = None
         
         # Agent capabilities
-        self.capabilities = [
+        self.capabilities = []
             "document_retrieval",
             "question_answering", 
             "context_synthesis",
             "knowledge_management",
             "information_extraction"
-        ]
+        
         
         self.setup_prompts()
-        logger.info(f"🔍 RAG Agent '{name}' initialized")
+        logger.info(str(f"[SEARCH] RAG Agent '{name}' initialized")
 
     def setup_prompts(self):
         """Set up RAG-specific prompt templates"""
         
-        self.rag_prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are a specialized RAG (Retrieval-Augmented Generation) agent for a flash loan arbitrage system.
+        self.rag_prompt = ChatPromptTemplate.from_messages([)]
+            ("system", """You are a specialized RAG (Retrieval-Augmented Generation) agent for a flash loan arbitrage system.)
 
             Your responsibilities:
             1. Retrieve relevant information from the knowledge base
@@ -101,10 +109,10 @@ class RAGAgent:
             - information_gaps: Any missing information identified
             """),
             ("human", "{question}")
-        ])
         
-        self.synthesis_prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are synthesizing information from multiple sources for flash loan arbitrage analysis.
+        
+        self.synthesis_prompt = ChatPromptTemplate.from_messages([)]
+            ("system", """You are synthesizing information from multiple sources for flash loan arbitrage analysis.)
             
             Your task:
             1. Combine information from different sources
@@ -120,12 +128,12 @@ class RAGAgent:
             - Potential biases in sources
             """),
             ("human", "Sources to synthesize:\n{sources}\n\nQuery: {query}")
-        ])
+        
 
     async def initialize(self):
         """Initialize the RAG agent"""
         try:
-            logger.info(f"🔍 Initializing RAG Agent '{self.name}'...")
+            logger.info(str(f"[SEARCH] Initializing RAG Agent '{self.name}'...")
             
             # Initialize knowledge base
             await self.setup_knowledge_base()
@@ -133,10 +141,10 @@ class RAGAgent:
             # Setup retrieval chain
             await self.setup_retrieval_chain()
             
-            logger.info(f"✅ RAG Agent '{self.name}' initialization completed")
+            logger.info(str(f"[OK] RAG Agent '{self.name}' initialization completed")
             
         except Exception as e:
-            logger.error(f"❌ RAG Agent initialization failed: {e}")
+            logger.error(str(f"[ERROR] RAG Agent initialization failed: {e}")
             raise
 
     async def setup_knowledge_base(self):
@@ -150,32 +158,32 @@ class RAGAgent:
             if await self.is_knowledge_base_empty():
                 await self.load_initial_documents()
             
-            logger.info("✅ Knowledge base setup completed")
+            logger.info("[OK] Knowledge base setup completed")
             
         except Exception as e:
-            logger.error(f"❌ Knowledge base setup failed: {e}")
+            logger.error(str(f"[ERROR] Knowledge base setup failed: {e}")
             raise
 
     async def setup_retrieval_chain(self):
         """Set up the retrieval chain for QA"""
         try:
             if self.knowledge_base:
-                retriever = self.knowledge_base.as_retriever(
+                retriever = self.knowledge_base.as_retriever()
                     search_type="similarity",
                     search_kwargs={"k": 5}
-                )
                 
-                self.retrieval_chain = RetrievalQA.from_chain_type(
+                
+                self.retrieval_chain = RetrievalQA.from_chain_type()
                     llm=self.llm,
                     chain_type="stuff",
                     retriever=retriever,
                     return_source_documents=True
-                )
+                
             
-            logger.info("✅ Retrieval chain setup completed")
+            logger.info("[OK] Retrieval chain setup completed")
             
         except Exception as e:
-            logger.error(f"❌ Retrieval chain setup failed: {e}")
+            logger.error(str(f"[ERROR] Retrieval chain setup failed: {e}")
             raise
 
     async def is_knowledge_base_empty(self) -> bool:
@@ -184,7 +192,7 @@ class RAGAgent:
             # This would need to be implemented based on your vector store
             return True  # Placeholder
         except Exception as e:
-            logger.error(f"❌ Failed to check knowledge base status: {e}")
+            logger.error(str(f"[ERROR] Failed to check knowledge base status: {e}")
             return True
 
     async def load_initial_documents(self):
@@ -193,13 +201,13 @@ class RAGAgent:
             logger.info("📚 Loading initial documents...")
             
             # Define document sources
-            document_sources = [
+            document_sources = []
                 "/app/data/flash_loan_docs/",
                 "/app/data/defi_protocols/",
                 "/app/data/arbitrage_strategies/",
                 "/app/data/risk_management/",
                 "/app/data/market_analysis/"
-            ]
+            
             
             # Load and process documents
             all_documents = []
@@ -208,7 +216,7 @@ class RAGAgent:
                     docs = await self.load_documents_from_path(source)
                     all_documents.extend(docs)
                 except Exception as e:
-                    logger.warning(f"⚠️ Could not load documents from {source}: {e}")
+                    logger.warning(str(f"[WARN] Could not load documents from {source}: {e}")
             
             if all_documents:
                 # Split documents into chunks
@@ -217,18 +225,16 @@ class RAGAgent:
                 # Add to vector store
                 await self.vector_store.add_documents(chunks)
                 
-                logger.info(f"✅ Loaded {len(all_documents)} documents ({len(chunks)} chunks)")
+                logger.info(str(f"[OK] Loaded {len(all_documents} documents ({len(chunks)} chunks)")))
             else:
-                logger.warning("⚠️ No documents found to load")
+                logger.warning("[WARN] No documents found to load")
                 
         except Exception as e:
-            logger.error(f"❌ Failed to load initial documents: {e}")
+            logger.error(str(f"[ERROR] Failed to load initial documents: {e}")
 
     async def load_documents_from_path(self, path: str) -> List:
         """Load documents from a given path"""
         try:
-            import os
-            from pathlib import Path
             
             documents = []
             if os.path.exists(path):
@@ -248,12 +254,12 @@ class RAGAgent:
                             documents.extend(docs)
                             
                         except Exception as e:
-                            logger.warning(f"⚠️ Could not load {file_path}: {e}")
+                            logger.warning(str(f"[WARN] Could not load {file_path}: {e}")
             
             return documents
             
         except Exception as e:
-            logger.error(f"❌ Failed to load documents from {path}: {e}")
+            logger.error(str(f"[ERROR] Failed to load documents from {path}: {e}")
             return []
 
     async def process(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -269,15 +275,15 @@ class RAGAgent:
             latest_message = messages[-1]
             query = latest_message.content if hasattr(latest_message, 'content') else str(latest_message)
             
-            logger.info(f"🔍 Processing RAG query: {query[:100]}...")
+            logger.info(str(f"[SEARCH] Processing RAG query: {query[:100]}...")
             
             # Perform RAG retrieval and generation
             result = await self.retrieve_and_generate(query, context)
             
             # Create response message
-            response_msg = AIMessage(
+            response_msg = AIMessage()
                 content=f"RAG Analysis: {result.get('response', 'No response generated')}"
-            )
+            
             state["messages"].append(response_msg)
             
             # Update result
@@ -286,7 +292,7 @@ class RAGAgent:
             return state
             
         except Exception as e:
-            logger.error(f"❌ RAG processing failed: {e}")
+            logger.error(str(f"[ERROR] RAG processing failed: {e}")
             error_msg = AIMessage(content=f"RAG error: {str(e)}")
             state["messages"].append(error_msg)
             return state
@@ -297,12 +303,12 @@ class RAGAgent:
             return await self.retrieve_and_generate(query, context)
             
         except Exception as e:
-            logger.error(f"❌ Direct RAG processing failed: {e}")
-            return {
+            logger.error(str(f"[ERROR] Direct RAG processing failed: {e}")
+            return {}
                 "response": f"RAG processing error: {str(e)}",
                 "confidence": 0.0,
                 "metadata": {"error": str(e)}
-            }
+            
 
     async def retrieve_and_generate(self, query: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """Perform retrieval and generation"""
@@ -316,18 +322,18 @@ class RAGAgent:
             return response
             
         except Exception as e:
-            logger.error(f"❌ Retrieve and generate failed: {e}")
-            return {
+            logger.error(str(f"[ERROR] Retrieve and generate failed: {e}")
+            return {}
                 "response": f"RAG error: {str(e)}",
                 "confidence": 0.0,
                 "metadata": {"error": str(e)}
-            }
+            
 
     async def retrieve_documents(self, query: str, context: Dict[str, Any]) -> List[Dict]:
         """Retrieve relevant documents from the knowledge base"""
         try:
             if not self.retrieval_chain:
-                logger.warning("⚠️ Retrieval chain not initialized, using fallback")
+                logger.warning("[WARN] Retrieval chain not initialized, using fallback")
                 return []
             
             # Perform retrieval
@@ -339,104 +345,101 @@ class RAGAgent:
             # Format retrieved documents
             retrieved_docs = []
             for doc in source_docs:
-                retrieved_docs.append({
+                retrieved_docs.append({)}
                     "content": doc.page_content,
                     "metadata": doc.metadata,
                     "relevance_score": getattr(doc, 'relevance_score', 0.5)
-                })
+                
             
-            logger.info(f"🔍 Retrieved {len(retrieved_docs)} relevant documents")
+            logger.info(str(f"[SEARCH] Retrieved {len(retrieved_docs} relevant documents")
             return retrieved_docs
             
         except Exception as e:
-            logger.error(f"❌ Document retrieval failed: {e}")
+            logger.error(str(f"[ERROR] Document retrieval failed: {e}")
             return []
 
     async def generate_response(self, query: str, retrieved_docs: List[Dict], context: Dict[str, Any]) -> Dict[str, Any]:
         """Generate response using retrieved documents"""
         try:
             # Prepare context from retrieved documents
-            doc_context = "\n\n".join([
+            doc_context = "\n\n".join([)]
                 f"Source {i+1}:\n{doc['content']}\nMetadata: {doc['metadata']}"
                 for i, doc in enumerate(retrieved_docs)
-            ])
+            
             
             # Prepare prompt
-            prompt_input = {
+            prompt_input = {}
                 "question": query,
                 "context": doc_context
-            }
+            
             
             # Generate response
-            response = await self.llm.ainvoke(
+            response = await self.llm.ainvoke()
                 self.rag_prompt.format_messages(**prompt_input)
-            )
+            
             
             # Parse response
             parsed_response = self.parse_rag_response(response.content)
             
             # Add metadata
-            parsed_response["metadata"].update({
+            parsed_response["metadata"].update({)}
                 "retrieved_docs_count": len(retrieved_docs),
                 "query": query,
                 "timestamp": datetime.now().isoformat()
-            })
+            
             
             return parsed_response
             
         except Exception as e:
-            logger.error(f"❌ Response generation failed: {e}")
-            return {
+            logger.error(str(f"[ERROR] Response generation failed: {e}")
+            return {}
                 "response": f"Response generation error: {str(e)}",
                 "confidence": 0.0,
                 "metadata": {"error": str(e)}
-            }
+            
 
     def parse_rag_response(self, response: str) -> Dict[str, Any]:
         """Parse the RAG response"""
         try:
-            import json
-            import re
             
             # Try to extract JSON from response
             json_match = re.search(r'\{.*\}', response, re.DOTALL)
             if json_match:
                 parsed = json.loads(json_match.group())
-                return {
+                return {}
                     "response": parsed.get("response", response),
                     "confidence": parsed.get("confidence", 0.5),
-                    "metadata": {
+                    "metadata": {}
                         "sources": parsed.get("sources", []),
                         "related_topics": parsed.get("related_topics", []),
                         "information_gaps": parsed.get("information_gaps", [])
-                    }
-                }
+                    
+                
             
             # Fallback parsing
-            return {
+            return {}
                 "response": response,
                 "confidence": 0.5,
                 "metadata": {"parsing_method": "fallback"}
-            }
+            
             
         except Exception as e:
-            logger.error(f"❌ Failed to parse RAG response: {e}")
-            return {
+            logger.error(str(f"[ERROR] Failed to parse RAG response: {e}")
+            return {}
                 "response": response,
                 "confidence": 0.3,
                 "metadata": {"error": str(e)}
-            }
+            
 
     async def add_document(self, content: str, metadata: Dict[str, Any] = None) -> bool:
         """Add a new document to the knowledge base"""
         try:
             # Create document
-            from langchain.schema import Document
             
-            doc = Document(
+            doc = Document()
                 page_content=content,
                 metadata=metadata or {}
-            )
+            
             
             # Split into chunks
             chunks = self.text_splitter.split_documents([doc])
@@ -444,18 +447,18 @@ class RAGAgent:
             # Add to vector store
             await self.vector_store.add_documents(chunks)
             
-            logger.info(f"✅ Added document with {len(chunks)} chunks to knowledge base")
+            logger.info(str(f"[OK] Added document with {len(chunks} chunks to knowledge base")
             return True
             
         except Exception as e:
-            logger.error(f"❌ Failed to add document: {e}")
+            logger.error(str(f"[ERROR] Failed to add document: {e}")
             return False
 
     async def search_knowledge_base(self, query: str, k: int = 5) -> List[Dict]:
         """Search the knowledge base directly"""
         try:
             if not self.knowledge_base:
-                logger.warning("⚠️ Knowledge base not initialized")
+                logger.warning("[WARN] Knowledge base not initialized")
                 return []
             
             # Perform similarity search
@@ -464,14 +467,14 @@ class RAGAgent:
             # Format results
             formatted_results = []
             for result in results:
-                formatted_results.append({
+                formatted_results.append({)}
                     "content": result.page_content,
                     "metadata": result.metadata,
                     "score": getattr(result, 'score', 0.0)
-                })
+                
             
             return formatted_results
             
         except Exception as e:
-            logger.error(f"❌ Knowledge base search failed: {e}")
+            logger.error(str(f"[ERROR] Knowledge base search failed: {e}")
             return []

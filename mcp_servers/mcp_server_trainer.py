@@ -1,4 +1,23 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Union, Callable
+import asyncio
+import json
+import logging
+import os
+import subprocess
+import threading
+import time
+import uuid
+
+from dataclasses import dataclass, field
+from enum import Enum
+import aiofiles
+import aiohttp
+import psutil
+import queue
 """
 MCP Server Training and Management System
 =========================================
@@ -7,23 +26,6 @@ Advanced system for training and managing Multiple MCP servers
 with AI agent coordination and performance optimization.
 """
 
-import asyncio
-import logging
-import json
-import os
-import subprocess
-import time
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Union, Callable
-from dataclasses import dataclass, field
-from enum import Enum
-import uuid
-import threading
-import queue
-import psutil
-import aiohttp
-import aiofiles
 
 logger = logging.getLogger(__name__)
 
@@ -102,11 +104,11 @@ class MCPServerManager:
     
     def _initialize_server_configs(self):
         """Initialize MCP server configurations"""
-        logger.info("🔧 Initializing MCP server configurations...")
+        logger.info("[SETUP] Initializing MCP server configurations...")
         
         # Define your MCP servers
-        server_configs = [
-            MCPServerConfig(
+        server_configs = []
+            MCPServerConfig()
                 name="copilot_mcp",
                 port=8001,
                 script_path="working_enhanced_copilot_mcp_server.py",
@@ -114,7 +116,7 @@ class MCPServerManager:
                 capabilities=["code_assistance", "code_generation", "code_review"],
                 dependencies=["requests", "openai", "langchain"]
             ),
-            MCPServerConfig(
+            MCPServerConfig()
                 name="flash_loan_mcp",
                 port=8002,
                 script_path="working_flash_loan_mcp.py",
@@ -122,7 +124,7 @@ class MCPServerManager:
                 capabilities=["arbitrage_detection", "price_monitoring", "trade_execution"],
                 dependencies=["web3", "requests", "pandas"]
             ),
-            MCPServerConfig(
+            MCPServerConfig()
                 name="context7_mcp",
                 port=8003,
                 script_path="clean_context7_mcp_server.py",
@@ -130,7 +132,7 @@ class MCPServerManager:
                 capabilities=["context_retrieval", "documentation", "api_integration"],
                 dependencies=["requests", "beautifulsoup4"]
             ),
-            MCPServerConfig(
+            MCPServerConfig()
                 name="real_time_price_mcp",
                 port=8004,
                 script_path="real_time_price_mcp_server.py",
@@ -138,7 +140,7 @@ class MCPServerManager:
                 capabilities=["price_monitoring", "market_data", "alerts"],
                 dependencies=["websockets", "requests", "pandas"]
             ),
-            MCPServerConfig(
+            MCPServerConfig()
                 name="aave_flash_loan_mcp",
                 port=8005,
                 script_path="aave_flash_loan_mcp_server.py",
@@ -146,7 +148,7 @@ class MCPServerManager:
                 capabilities=["aave_integration", "flash_loans", "defi_protocols"],
                 dependencies=["web3", "eth-brownie"]
             ),
-            MCPServerConfig(
+            MCPServerConfig()
                 name="foundry_mcp",
                 port=8006,
                 script_path="foundry_mcp_mcp_server.py",
@@ -154,27 +156,27 @@ class MCPServerManager:
                 capabilities=["smart_contracts", "testing", "deployment"],
                 dependencies=["foundry"]
             ),
-            MCPServerConfig(
+            MCPServerConfig()
                 name="evm_mcp",
                 port=8007,
                 script_path="evm_mcp_server.py",
                 description="EVM blockchain integration MCP server",
                 capabilities=["blockchain_interaction", "transaction_monitoring", "contract_calls"],
                 dependencies=["web3", "eth-utils"]
-            )
-        ]
+            
+        
         
         for config in server_configs:
-            self.servers[config.name] = {
+            self.servers[config.name] = {}
                 "config": config,
                 "status": MCPServerStatus.STOPPED,
                 "process": None,
                 "last_health_check": None,
                 "restart_count": 0,
                 "training_data": []
-            }
+            
         
-        logger.info(f"✅ Initialized {len(server_configs)} MCP server configurations")
+        logger.info(str(f"[OK] Initialized {len(server_configs} MCP server configurations")
     
     async def start_server(self, server_name: str) -> Dict[str, Any]:
         """Start an MCP server"""
@@ -187,7 +189,7 @@ class MCPServerManager:
         if server_info["status"] == MCPServerStatus.RUNNING:
             return {"success": False, "error": f"Server {server_name} is already running"}
         
-        logger.info(f"🚀 Starting MCP server: {server_name}")
+        logger.info(str(f"[INIT] Starting MCP server: {server_name}")
         
         try:
             # Update status
@@ -199,19 +201,19 @@ class MCPServerManager:
                 return {"success": False, "error": f"Script not found: {script_path}"}
             
             # Start process
-            cmd = [
+            cmd = []
                 "python",
                 str(script_path),
                 "--port", str(config.port),
                 "--name", server_name
-            ]
             
-            process = await asyncio.create_subprocess_exec(
+            
+            process = await asyncio.create_subprocess_exec()
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=self.mcp_servers_path
-            )
+            
             
             # Store process
             server_info["process"] = process
@@ -225,13 +227,13 @@ class MCPServerManager:
                 server_info["status"] = MCPServerStatus.RUNNING
                 server_info["last_health_check"] = datetime.now()
                 
-                logger.info(f"✅ MCP server {server_name} started successfully on port {config.port}")
-                return {
+                logger.info(str(f"[OK] MCP server {server_name} started successfully on port {config.port}")
+                return {}
                     "success": True,
                     "server": server_name,
                     "port": config.port,
                     "status": "running"
-                }
+                
             else:
                 server_info["status"] = MCPServerStatus.ERROR
                 stdout, stderr = await process.communicate()
@@ -240,12 +242,12 @@ class MCPServerManager:
                 if stderr:
                     error_msg += f". Error: {stderr.decode()}"
                 
-                logger.error(f"❌ Failed to start MCP server {server_name}: {error_msg}")
+                logger.error(str(f"[ERROR] Failed to start MCP server {server_name}: {error_msg}")
                 return {"success": False, "error": error_msg}
                 
         except Exception as e:
             server_info["status"] = MCPServerStatus.ERROR
-            logger.error(f"❌ Exception starting server {server_name}: {e}")
+            logger.error(str(f"[ERROR] Exception starting server {server_name}: {e}")
             return {"success": False, "error": str(e)}
     
     async def stop_server(self, server_name: str) -> Dict[str, Any]:
@@ -258,7 +260,7 @@ class MCPServerManager:
         if server_info["status"] == MCPServerStatus.STOPPED:
             return {"success": False, "error": f"Server {server_name} is already stopped"}
         
-        logger.info(f"🛑 Stopping MCP server: {server_name}")
+        logger.info(str(f"[STOP] Stopping MCP server: {server_name}")
         
         try:
             process = server_info["process"]
@@ -269,7 +271,7 @@ class MCPServerManager:
                 try:
                     await asyncio.wait_for(process.wait(), timeout=10)
                 except asyncio.TimeoutError:
-                    logger.warning(f"⚠️ Force killing server {server_name}")
+                    logger.warning(str(f"[WARN] Force killing server {server_name}")
                     process.kill()
                     await process.wait()
             
@@ -280,16 +282,16 @@ class MCPServerManager:
             if server_name in self.processes:
                 del self.processes[server_name]
             
-            logger.info(f"✅ MCP server {server_name} stopped successfully")
+            logger.info(str(f"[OK] MCP server {server_name} stopped successfully")
             return {"success": True, "server": server_name, "status": "stopped"}
             
         except Exception as e:
-            logger.error(f"❌ Error stopping server {server_name}: {e}")
+            logger.error(str(f"[ERROR] Error stopping server {server_name}: {e}")
             return {"success": False, "error": str(e)}
     
     async def restart_server(self, server_name: str) -> Dict[str, Any]:
         """Restart an MCP server"""
-        logger.info(f"🔄 Restarting MCP server: {server_name}")
+        logger.info(str(f"[SYNC] Restarting MCP server: {server_name}")
         
         # Stop server
         stop_result = await self.stop_server(server_name)
@@ -309,7 +311,7 @@ class MCPServerManager:
     
     async def start_all_servers(self) -> Dict[str, Any]:
         """Start all MCP servers"""
-        logger.info("🚀 Starting all MCP servers...")
+        logger.info("[INIT] Starting all MCP servers...")
         
         results = {}
         
@@ -322,18 +324,18 @@ class MCPServerManager:
         
         successful_starts = sum(1 for r in results.values() if r["success"])
         
-        logger.info(f"✅ Started {successful_starts}/{len(results)} MCP servers")
+        logger.info(str(f"[OK] Started {successful_starts}/{len(results} MCP servers")
         
-        return {
+        return {}
             "success": True,
             "total_servers": len(results),
             "successful_starts": successful_starts,
             "results": results
-        }
+        
     
     async def stop_all_servers(self) -> Dict[str, Any]:
         """Stop all MCP servers"""
-        logger.info("🛑 Stopping all MCP servers...")
+        logger.info("[STOP] Stopping all MCP servers...")
         
         results = {}
         
@@ -343,14 +345,14 @@ class MCPServerManager:
         
         successful_stops = sum(1 for r in results.values() if r["success"])
         
-        logger.info(f"✅ Stopped {successful_stops}/{len(results)} MCP servers")
+        logger.info(str(f"[OK] Stopped {successful_stops}/{len(results} MCP servers")
         
-        return {
+        return {}
             "success": True,
             "total_servers": len(results),
             "successful_stops": successful_stops,
             "results": results
-        }
+        
     
     async def check_server_health(self, server_name: str) -> Dict[str, Any]:
         """Check health of an MCP server"""
@@ -386,18 +388,18 @@ class MCPServerManager:
             if process_running:
                 try:
                     proc = psutil.Process(process.pid)
-                    metrics = {
+                    metrics = {}
                         "cpu_percent": proc.cpu_percent(),
                         "memory_mb": proc.memory_info().rss / 1024 / 1024,
                         "status": proc.status()
-                    }
+                    
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     metrics = {"error": "Could not access process metrics"}
             
             # Update last health check
             server_info["last_health_check"] = datetime.now()
             
-            return {
+            return {}
                 "success": True,
                 "server": server_name,
                 "process_running": process_running,
@@ -405,15 +407,15 @@ class MCPServerManager:
                 "metrics": metrics,
                 "response_data": response_data,
                 "last_check": server_info["last_health_check"].isoformat()
-            }
+            
             
         except Exception as e:
-            logger.error(f"❌ Health check failed for {server_name}: {e}")
-            return {
+            logger.error(str(f"[ERROR] Health check failed for {server_name}: {e}")
+            return {}
                 "success": False,
                 "server": server_name,
                 "error": str(e)
-            }
+            
     
     async def check_all_servers_health(self) -> Dict[str, Any]:
         """Check health of all MCP servers"""
@@ -424,26 +426,26 @@ class MCPServerManager:
         
         healthy_servers = sum(1 for r in results.values() if r.get("success") and r.get("health_status") == "healthy")
         
-        return {
+        return {}
             "total_servers": len(results),
             "healthy_servers": healthy_servers,
             "health_percentage": (healthy_servers / len(results) * 100) if results else 0,
             "results": results,
             "timestamp": datetime.now().isoformat()
-        }
+        
     
     async def add_training_data(self, server_name: str, input_data: Dict, expected_output: Dict, feedback_score: float = 0.0) -> str:
         """Add training data for an MCP server"""
         if server_name not in self.servers:
             raise ValueError(f"Server {server_name} not found")
         
-        training_data = TrainingData(
+        training_data = TrainingData()
             data_id=str(uuid.uuid4()),
             server_name=server_name,
             input_data=input_data,
             expected_output=expected_output,
             feedback_score=feedback_score
-        )
+        
         
         # Add to server's training data
         self.servers[server_name]["training_data"].append(training_data)
@@ -451,14 +453,14 @@ class MCPServerManager:
         # Save to file
         await self._save_training_data(training_data)
         
-        logger.info(f"📊 Added training data for {server_name}: {training_data.data_id}")
+        logger.info(str(f"[METRICS] Added training data for {server_name}: {training_data.data_id}")
         return training_data.data_id
     
     async def _save_training_data(self, training_data: TrainingData):
         """Save training data to file"""
         file_path = self.training_data_path / f"{training_data.server_name}_training_data.jsonl"
         
-        data_line = {
+        data_line = {}
             "data_id": training_data.data_id,
             "server_name": training_data.server_name,
             "input_data": training_data.input_data,
@@ -466,10 +468,10 @@ class MCPServerManager:
             "feedback_score": training_data.feedback_score,
             "timestamp": training_data.timestamp.isoformat(),
             "metadata": training_data.metadata
-        }
+        
         
         async with aiofiles.open(file_path, 'a', encoding='utf-8') as f:
-            await f.write(json.dumps(data_line) + '\n')
+            await f.write(json.dumps(data_line, ensure_ascii=True, default=str) + '\n')
     
     async def train_server(self, server_name: str, training_data: List[TrainingData] = None) -> Dict[str, Any]:
         """Train an MCP server with provided or collected data"""
@@ -485,7 +487,7 @@ class MCPServerManager:
         if not training_data:
             return {"success": False, "error": f"No training data available for {server_name}"}
         
-        logger.info(f"🎓 Starting training for MCP server: {server_name} with {len(training_data)} samples")
+        logger.info(str(f"🎓 Starting training for MCP server: {server_name} with {len(training_data} samples")
         
         try:
             # Update server status
@@ -493,7 +495,7 @@ class MCPServerManager:
             
             # Create training session
             session_id = str(uuid.uuid4())
-            training_session = {
+            training_session = {}
                 "session_id": session_id,
                 "server_name": server_name,
                 "start_time": datetime.now(),
@@ -501,7 +503,7 @@ class MCPServerManager:
                 "processed_samples": 0,
                 "success_rate": 0.0,
                 "status": "running"
-            }
+            
             
             self.training_sessions[session_id] = training_session
             
@@ -521,21 +523,21 @@ class MCPServerManager:
                     processed_samples += 1
                     
                     if i % 10 == 0:
-                        logger.info(f"📊 Training progress: {i+1}/{len(training_data)} samples processed")
+                        logger.info(str(f"[METRICS] Training progress: {i+1}/{len(training_data} samples processed")
                 
                 except Exception as e:
-                    logger.error(f"❌ Error processing training sample {i}: {e}")
+                    logger.error(str(f"[ERROR] Error processing training sample {i}: {e}")
             
             # Calculate results
             success_rate = successful_samples / processed_samples if processed_samples > 0 else 0
             
             # Update training session
-            training_session.update({
+            training_session.update({)}
                 "end_time": datetime.now(),
                 "processed_samples": processed_samples,
                 "success_rate": success_rate,
                 "status": "completed"
-            })
+            
             
             # Update server status
             server_info["status"] = MCPServerStatus.RUNNING
@@ -543,20 +545,20 @@ class MCPServerManager:
             # Save training results
             await self._save_training_session(training_session)
             
-            logger.info(f"✅ Training completed for {server_name}. Success rate: {success_rate:.2%}")
+            logger.info(str(f"[OK] Training completed for {server_name}. Success rate: {success_rate:.2%}")
             
-            return {
+            return {}
                 "success": True,
                 "session_id": session_id,
                 "server_name": server_name,
                 "processed_samples": processed_samples,
                 "success_rate": success_rate,
                 "duration": str(training_session["end_time"] - training_session["start_time"])
-            }
+            
             
         except Exception as e:
             server_info["status"] = MCPServerStatus.ERROR
-            logger.error(f"❌ Training failed for {server_name}: {e}")
+            logger.error(str(f"[ERROR] Training failed for {server_name}: {e}")
             return {"success": False, "error": str(e)}
     
     async def _save_training_session(self, session: Dict[str, Any]):
@@ -570,19 +572,19 @@ class MCPServerManager:
                 session_copy[key] = value.isoformat()
         
         async with aiofiles.open(file_path, 'w', encoding='utf-8') as f:
-            await f.write(json.dumps(session_copy, indent=2))
+            await f.write(json.dumps(session_copy, indent=2, ensure_ascii=True, default=str))
     
     async def get_server_status(self) -> Dict[str, Any]:
         """Get status of all MCP servers"""
-        status = {
+        status = {}
             "timestamp": datetime.now().isoformat(),
             "total_servers": len(self.servers),
             "servers": {}
-        }
+        
         
         for server_name, server_info in self.servers.items():
             config = server_info["config"]
-            status["servers"][server_name] = {
+            status["servers"][server_name] = {}
                 "name": server_name,
                 "port": config.port,
                 "status": server_info["status"].value,
@@ -591,13 +593,13 @@ class MCPServerManager:
                 "restart_count": server_info["restart_count"],
                 "training_data_count": len(server_info["training_data"]),
                 "last_health_check": server_info["last_health_check"].isoformat() if server_info["last_health_check"] else None
-            }
+            
         
         return status
     
     async def start_monitoring(self):
         """Start background monitoring of servers"""
-        logger.info("🔍 Starting MCP server monitoring...")
+        logger.info("[SEARCH] Starting MCP server monitoring...")
         
         while True:
             try:
@@ -611,14 +613,14 @@ class MCPServerManager:
                         config = server_info["config"]
                         
                         if config.auto_restart and server_info["status"] == MCPServerStatus.RUNNING:
-                            logger.warning(f"⚠️ Server {server_name} is unhealthy, attempting restart...")
+                            logger.warning(str(f"[WARN] Server {server_name} is unhealthy, attempting restart...")
                             await self.restart_server(server_name)
                 
                 # Wait before next check
                 await asyncio.sleep(30)  # Check every 30 seconds
                 
             except Exception as e:
-                logger.error(f"❌ Error in monitoring loop: {e}")
+                logger.error(str(f"[ERROR] Error in monitoring loop: {e}")
                 await asyncio.sleep(60)  # Wait longer on error
     
     async def generate_performance_report(self) -> Dict[str, Any]:
@@ -627,19 +629,19 @@ class MCPServerManager:
         status = await self.get_server_status()
         
         # Calculate aggregate metrics
-        total_training_samples = sum(
+        total_training_samples = sum()
             len(server_info["training_data"]) 
             for server_info in self.servers.values()
-        )
         
-        total_restarts = sum(
+        
+        total_restarts = sum()
             server_info["restart_count"]
             for server_info in self.servers.values()
-        )
         
-        report = {
+        
+        report = {}
             "generated_at": datetime.now().isoformat(),
-            "summary": {
+            "summary": {}
                 "total_servers": len(self.servers),
                 "healthy_servers": health_check["healthy_servers"],
                 "health_percentage": health_check["health_percentage"],
@@ -650,7 +652,7 @@ class MCPServerManager:
             "server_details": status["servers"],
             "health_check_results": health_check["results"],
             "training_sessions": list(self.training_sessions.keys())
-        }
+        
         
         return report
 
@@ -660,7 +662,7 @@ async def main():
     
     try:
         # Start all servers
-        logger.info("🚀 Starting MCP Server Manager demo...")
+        logger.info("[INIT] Starting MCP Server Manager demo...")
         
         start_results = await manager.start_all_servers()
         print(f"Started {start_results['successful_starts']} servers")
@@ -673,20 +675,20 @@ async def main():
         print(f"Health check: {health_results['healthy_servers']}/{health_results['total_servers']} servers healthy")
         
         # Add some training data
-        await manager.add_training_data(
+        await manager.add_training_data()
             "copilot_mcp",
             {"code": "def hello():", "language": "python"},
             {"suggestion": "Add proper documentation and error handling"},
             0.8
-        )
+        
         
         # Generate report
         report = await manager.generate_performance_report()
         print("Performance Report:")
-        print(json.dumps(report, indent=2, default=str))
+        print(json.dumps(report, indent=2, default=str, ensure_ascii=True, default=str))
         
     except KeyboardInterrupt:
-        logger.info("🛑 Shutting down...")
+        logger.info("[STOP] Shutting down...")
     finally:
         await manager.stop_all_servers()
 

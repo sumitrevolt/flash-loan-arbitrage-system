@@ -1,12 +1,18 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+import json
+
+import requests
+
+
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python3
 """
 MCP Server Status Verification
 Checks status of all MCP servers for Cline integration
 """
 
-import requests
-import json
-from pathlib import Path
 
 def test_mcp_server(name, port):
     """Test MCP server health and capabilities"""
@@ -21,7 +27,7 @@ def test_mcp_server(name, port):
         cap_ok = cap_response.status_code == 200
         cap_data = cap_response.json() if cap_ok else {}
         
-        return {
+        return {}
             'name': name,
             'port': port,
             'health_ok': health_ok,
@@ -29,27 +35,27 @@ def test_mcp_server(name, port):
             'health_data': health_data,
             'capabilities': cap_data.get('capabilities', {}),
             'status': 'online' if health_ok and cap_ok else 'offline'
-        }
+        
     except Exception as e:
-        return {
+        return {}
             'name': name,
             'port': port,
             'health_ok': False,
             'capabilities_ok': False,
             'error': str(e),
             'status': 'offline'
-        }
+        
 
 def main():
-    print("🔍 MCP Server Status Verification for Cline")
+    print("[SEARCH] MCP Server Status Verification for Cline")
     print("=" * 50)
     
     # Define MCP servers that should be running
-    servers = [
+    servers = []
         ("context7_clean", 4100),
         ("flash_loan_blockchain", 4101),
         ("matic_mcp_server", 4102)
-    ]
+    
     
     results = []
     online_count = 0
@@ -61,7 +67,7 @@ def main():
             online_count += 1
     
     # Print results
-    print(f"\n📊 MCP Server Status:")
+    print(f"\n[METRICS] MCP Server Status:")
     print("-" * 50)
     
     for result in results:
@@ -76,9 +82,9 @@ def main():
                     tools += f" (+{len(caps['tools'])-3} more)"
                 print(f"   └─ Tools: {tools}")
     
-    print(f"\n📈 Summary:")
+    print(f"\n[GROWTH] Summary:")
     print(f"   Online: {online_count}/{len(servers)} servers")
-    print(f"   Status: {'✅ READY' if online_count == len(servers) else '⚠️ PARTIAL' if online_count > 0 else '❌ OFFLINE'}")
+    print(f"   Status: {'[OK] READY' if online_count == len(servers) else '[WARN] PARTIAL' if online_count > 0 else '[ERROR] OFFLINE'}")
     
     # Check VS Code configuration
     settings_file = Path(".vscode/settings.json")
@@ -93,22 +99,22 @@ def main():
                 print(f"   Configured MCP servers: {', '.join(configured_servers)}")
                 print(f"   Configuration file: {settings_file.absolute()}")
             else:
-                print(f"\n⚠️  VS Code configuration missing mcpServers section")
+                print(f"\n[WARN]  VS Code configuration missing mcpServers section")
         except Exception as e:
-            print(f"\n❌ Error reading VS Code configuration: {e}")
+            print(f"\n[ERROR] Error reading VS Code configuration: {e}")
     else:
-        print(f"\n❌ VS Code settings file not found: {settings_file.absolute()}")
+        print(f"\n[ERROR] VS Code settings file not found: {settings_file.absolute()}")
     
-    print(f"\n🎯 Next Steps for Cline:")
+    print(f"\n[TASK] Next Steps for Cline:")
     if online_count == len(servers):
-        print(f"   1. ✅ All MCP servers are running")
-        print(f"   2. 🔄 Restart VS Code/Cline to reload MCP configuration")
-        print(f"   3. 🔍 Check Cline UI - servers should show as 'online'")
+        print(f"   1. [OK] All MCP servers are running")
+        print(f"   2. [SYNC] Restart VS Code/Cline to reload MCP configuration")
+        print(f"   3. [SEARCH] Check Cline UI - servers should show as 'online'")
         print(f"   4. ✨ Test MCP functionality in Cline")
     else:
-        print(f"   1. ❌ Some MCP servers are offline")
-        print(f"   2. 🔧 Run: python simple_mcp_orchestrator.py")
-        print(f"   3. 🔄 Then restart VS Code/Cline")
+        print(f"   1. [ERROR] Some MCP servers are offline")
+        print(f"   2. [SETUP] Run: python simple_mcp_orchestrator.py")
+        print(f"   3. [SYNC] Then restart VS Code/Cline")
     
     return 0 if online_count == len(servers) else 1
 

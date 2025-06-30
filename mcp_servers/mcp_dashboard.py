@@ -1,4 +1,23 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+                import random
+from datetime import datetime, timedelta
+from decimal import Decimal, getcontext
+from typing import Dict, Any, List, Optional
+import asyncio
+import json
+import logging
+import os
+import platform
+import threading
+import time
+
+from dataclasses import dataclass, asdict
+from flask import Flask, render_template, jsonify, request, send_from_directory
+from flask_cors import CORS
+from flask_socketio import SocketIO, emit
+import aiohttp
+import requests
 """
 MCP Dashboard - Consolidated Version
 ===================================
@@ -14,35 +33,32 @@ Real-time monitoring dashboard with integrated chat, DEX price monitoring,
 and comprehensive system management for the flash loan arbitrage system.
 """
 
-import asyncio
-import os
-import logging
-import time
-import threading
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass, asdict
-from decimal import Decimal, getcontext
-import json
 
-from flask import Flask, render_template, jsonify, request, send_from_directory
-from flask_socketio import SocketIO, emit
-from flask_cors import CORS
-import aiohttp
-import requests
 
 # Set high precision for financial calculations
 getcontext().prec = 28
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+
 logger = logging.getLogger(__name__)
 
 # Fix for Windows event loop issue
-import platform
 if platform.system() == 'Windows':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
@@ -105,13 +121,13 @@ class MCPDashboard:
         self.ai_agents_status: Dict[str, Dict[str, Any]] = {}
         
         # Configuration
-        self.config = {
+        self.config = {}
             "coordinator_url": os.getenv("COORDINATOR_URL", "http://localhost:4000"),
             "redis_url": os.getenv("REDIS_URL", "redis://localhost:6379"),
             "update_interval": int(os.getenv("UPDATE_INTERVAL", "5")),
             "max_opportunities": int(os.getenv("MAX_OPPORTUNITIES", "50")),
             "max_chat_history": int(os.getenv("MAX_CHAT_HISTORY", "100"))
-        }
+        
         
         # Initialize routes and websocket handlers
         self._setup_routes()
@@ -121,7 +137,7 @@ class MCPDashboard:
         self.start_time = time.time()
         self._start_background_tasks()
         
-        logger.info(f"MCP Dashboard initialized on port {port}")
+        logger.info(str(f"MCP Dashboard initialized on port {port}")
     
     def _setup_routes(self):
         """Setup Flask routes"""
@@ -134,24 +150,24 @@ class MCPDashboard:
         @self.app.route('/health')
         def health():
             """Health check endpoint"""
-            return jsonify({
+            return jsonify({)}
                 "status": "healthy",
                 "service": "MCP Dashboard",
                 "uptime": time.time() - self.start_time,
                 "version": "1.0.0"
-            })
+            
         
         @self.app.route('/api/system-status')
         def get_system_status():
             """Get comprehensive system status"""
-            return jsonify({
+            return jsonify({)}
                 "system_metrics": asdict(self.system_metrics),
                 "mcp_servers": self.mcp_servers_status,
                 "ai_agents": self.ai_agents_status,
                 "opportunities_count": len(self.arbitrage_opportunities),
                 "uptime": time.time() - self.start_time,
                 "timestamp": datetime.now().isoformat()
-            })
+            
         
         @self.app.route('/api/opportunities')
         def get_opportunities():
@@ -162,41 +178,41 @@ class MCPDashboard:
                 opp_dict['timestamp'] = opp.timestamp.isoformat()
                 opportunities_data.append(opp_dict)
             
-            return jsonify({
+            return jsonify({)}
                 "opportunities": opportunities_data,
                 "count": len(opportunities_data),
                 "timestamp": datetime.now().isoformat()
-            })
+            
         
         @self.app.route('/api/dex-prices')
         def get_dex_prices():
             """Get current DEX prices"""
-            return jsonify({
+            return jsonify({)}
                 "prices": self.dex_prices,
                 "timestamp": datetime.now().isoformat()
-            })
+            
         
         @self.app.route('/api/chat-history')
         def get_chat_history():
             """Get chat history"""
-            return jsonify({
+            return jsonify({)}
                 "messages": self.chat_history[-self.config["max_chat_history"]:],
                 "count": len(self.chat_history)
-            })
+            
         
         @self.app.route('/api/metrics')
         def get_metrics():
             """Get detailed metrics"""
-            return jsonify({
+            return jsonify({)}
                 "metrics": asdict(self.system_metrics),
-                "performance": {
+                "performance": {}
                     "opportunities_per_hour": len(self.arbitrage_opportunities) / max((time.time() - self.start_time) / 3600, 1),
                     "success_rate": self.system_metrics.success_rate,
                     "average_profit": self.system_metrics.average_profit_per_trade,
                     "total_revenue": self.system_metrics.total_revenue
                 },
                 "timestamp": datetime.now().isoformat()
-            })
+            
         
         @self.app.route('/static/<path:filename>')
         def static_files(filename):
@@ -209,31 +225,31 @@ class MCPDashboard:
         @self.socketio.on('connect')
         def handle_connect():
             """Handle client connection"""
-            logger.info(f"Client connected: {request.sid}")
+            logger.info(str(f"Client connected: {request.sid}")
             # Send initial data
-            emit('system_status', {
+            emit('system_status', {)}
                 "metrics": asdict(self.system_metrics),
                 "opportunities": len(self.arbitrage_opportunities),
                 "servers": len(self.mcp_servers_status),
                 "agents": len(self.ai_agents_status)
-            })
+            
         
         @self.socketio.on('disconnect')
         def handle_disconnect():
             """Handle client disconnection"""
-            logger.info(f"Client disconnected: {request.sid}")
+            logger.info(str(f"Client disconnected: {request.sid}")
         
         @self.socketio.on('chat_message')
         def handle_chat_message(data):
             """Handle chat messages"""
             try:
-                message = {
+                message = {}
                     "id": f"msg_{int(time.time() * 1000)}",
                     "user": data.get("user", "Anonymous"),
                     "message": data.get("message", ""),
                     "timestamp": datetime.now().isoformat(),
                     "type": "user"
-                }
+                
                 
                 self.chat_history.append(message)
                 
@@ -248,7 +264,7 @@ class MCPDashboard:
                 asyncio.create_task(self._process_chat_message(data.get("message", "")))
                 
             except Exception as e:
-                logger.error(f"Error handling chat message: {e}")
+                logger.error(str(f"Error handling chat message: {e}")
                 emit('error', {"message": "Failed to process chat message"})
         
         @self.socketio.on('request_update')
@@ -304,7 +320,7 @@ class MCPDashboard:
                 await asyncio.sleep(self.config["update_interval"])
                 
             except Exception as e:
-                logger.error(f"System monitoring error: {e}")
+                logger.error(str(f"System monitoring error: {e}")
                 await asyncio.sleep(10)
     
     async def _monitor_opportunities(self):
@@ -326,7 +342,7 @@ class MCPDashboard:
                 await asyncio.sleep(10)  # Check every 10 seconds
                 
             except Exception as e:
-                logger.error(f"Opportunity monitoring error: {e}")
+                logger.error(str(f"Opportunity monitoring error: {e}")
                 await asyncio.sleep(15)
     
     async def _update_dex_prices(self):
@@ -334,7 +350,6 @@ class MCPDashboard:
         while True:
             try:
                 # Mock DEX price data (replace with real price fetching)
-                import random
                 
                 dexes = ["uniswap", "sushiswap", "pancakeswap", "curve", "balancer"]
                 tokens = ["ETH", "USDC", "USDT", "WBTC", "DAI"]
@@ -352,7 +367,7 @@ class MCPDashboard:
                 await asyncio.sleep(5)  # Update every 5 seconds
                 
             except Exception as e:
-                logger.error(f"DEX price update error: {e}")
+                logger.error(str(f"DEX price update error: {e}")
                 await asyncio.sleep(10)
     
     async def _send_periodic_updates(self):
@@ -362,20 +377,20 @@ class MCPDashboard:
                 await self._send_live_updates()
                 await asyncio.sleep(self.config["update_interval"])
             except Exception as e:
-                logger.error(f"Periodic update error: {e}")
+                logger.error(str(f"Periodic update error: {e}")
                 await asyncio.sleep(10)
     
     async def _send_live_updates(self):
         """Send live updates to all connected clients"""
         try:
             # System status update
-            self.socketio.emit('system_update', {
+            self.socketio.emit('system_update', {)}
                 "metrics": asdict(self.system_metrics),
                 "opportunities_count": len(self.arbitrage_opportunities),
                 "servers_count": len(self.mcp_servers_status),
                 "agents_count": len(self.ai_agents_status),
                 "timestamp": datetime.now().isoformat()
-            })
+            
             
             # Recent opportunities update
             recent_opportunities = []
@@ -384,19 +399,19 @@ class MCPDashboard:
                 opp_dict['timestamp'] = opp.timestamp.isoformat()
                 recent_opportunities.append(opp_dict)
             
-            self.socketio.emit('opportunities_update', {
+            self.socketio.emit('opportunities_update', {)}
                 "opportunities": recent_opportunities,
                 "total_count": len(self.arbitrage_opportunities)
-            })
+            
             
             # DEX prices update
-            self.socketio.emit('prices_update', {
+            self.socketio.emit('prices_update', {)}
                 "prices": self.dex_prices,
                 "timestamp": datetime.now().isoformat()
-            })
+            
             
         except Exception as e:
-            logger.error(f"Live update error: {e}")
+            logger.error(str(f"Live update error: {e}")
     
     async def _fetch_coordinator_data(self):
         """Fetch data from the system coordinator"""
@@ -416,12 +431,12 @@ class MCPDashboard:
                             self.system_metrics.total_revenue = metrics_data.get("total_profit_usd", 0.0)
                             
                             if self.system_metrics.total_trades > 0:
-                                self.system_metrics.success_rate = (
+                                self.system_metrics.success_rate = ()
                                     self.system_metrics.successful_trades / self.system_metrics.total_trades
-                                )
-                                self.system_metrics.average_profit_per_trade = (
+                                
+                                self.system_metrics.average_profit_per_trade = ()
                                     self.system_metrics.total_revenue / self.system_metrics.total_trades
-                                )
+                                
                         
                         # Update component status
                         if "agent_status" in data:
@@ -431,12 +446,11 @@ class MCPDashboard:
                             self.mcp_servers_status = data["service_status"]
                 
         except Exception as e:
-            logger.warning(f"Could not fetch coordinator data: {e}")
+            logger.warning(str(f"Could not fetch coordinator data: {e}")
             # Continue with mock data for demo purposes
     
     def _generate_mock_opportunity(self) -> ArbitrageOpportunity:
         """Generate mock arbitrage opportunity for demo"""
-        import random
         
         token_pairs = ["ETH/USDC", "WBTC/ETH", "USDT/USDC", "DAI/USDT"]
         dexes = ["uniswap", "sushiswap", "pancakeswap", "curve", "balancer"]
@@ -454,7 +468,7 @@ class MCPDashboard:
         profit_usd = trade_amount * price_spread
         profit_percentage = price_spread * 100
         
-        return ArbitrageOpportunity(
+        return ArbitrageOpportunity()
             id=f"opp_{int(time.time() * 1000)}_{random.randint(100, 999)}",
             token_pair=token_pair,
             dex_buy=dex_buy,
@@ -471,19 +485,19 @@ class MCPDashboard:
             gas_cost=random.uniform(20, 100),
             slippage_impact=random.uniform(0.1, 1.0),
             liquidity_available=random.uniform(50000, 500000)
-        )
+        
     
     async def _process_chat_message(self, message: str):
         """Process chat message with AI (if available)"""
         try:
             # Simple AI responses for demo
-            responses = {
+            responses = {}
                 "status": "System is running normally. All components are operational.",
                 "help": "Available commands: status, opportunities, metrics, health",
                 "opportunities": f"Currently tracking {len(self.arbitrage_opportunities)} opportunities.",
                 "metrics": f"Success rate: {self.system_metrics.success_rate:.1%}, Total revenue: ${self.system_metrics.total_revenue:.2f}",
                 "health": f"System health: {self.system_metrics.system_health}"
-            }
+            
             
             # Find matching response
             response_text = "I'm here to help! Try asking about status, opportunities, metrics, or health."
@@ -493,19 +507,19 @@ class MCPDashboard:
                     break
             
             # Add AI response to chat
-            ai_message = {
+            ai_message = {}
                 "id": f"ai_{int(time.time() * 1000)}",
                 "user": "AI Assistant",
                 "message": response_text,
                 "timestamp": datetime.now().isoformat(),
                 "type": "ai"
-            }
+            
             
             self.chat_history.append(ai_message)
             self.socketio.emit('new_chat_message', ai_message)
             
         except Exception as e:
-            logger.error(f"Chat processing error: {e}")
+            logger.error(str(f"Chat processing error: {e}")
     
     async def _execute_opportunity(self, opportunity_id: str):
         """Execute an arbitrage opportunity"""
@@ -534,22 +548,22 @@ class MCPDashboard:
             
             # Update success rate
             if self.system_metrics.total_trades > 0:
-                self.system_metrics.success_rate = (
+                self.system_metrics.success_rate = ()
                     self.system_metrics.successful_trades / self.system_metrics.total_trades
-                )
+                
             
             # Notify clients
-            self.socketio.emit('execution_result', {
+            self.socketio.emit('execution_result', {)}
                 "opportunity_id": opportunity_id,
                 "success": success,
                 "profit": opportunity.profit_usd if success else 0,
                 "message": f"Execution {'successful' if success else 'failed'}"
-            })
             
-            logger.info(f"Executed opportunity {opportunity_id}: {'success' if success else 'failed'}")
+            
+            logger.info(str(f"Executed opportunity {opportunity_id}: {'success' if success else 'failed'}")
             
         except Exception as e:
-            logger.error(f"Execution error: {e}")
+            logger.error(str(f"Execution error: {e}")
             self.socketio.emit('execution_error', {"message": str(e)})
     
     def create_dashboard_template(self):
@@ -597,7 +611,7 @@ class MCPDashboard:
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 MCP Flash Loan Dashboard</h1>
+            <h1>[INIT] MCP Flash Loan Dashboard</h1>
             <p>Real-time monitoring and control for autonomous arbitrage trading</p>
             <div id="system-status">
                 <span class="status-indicator status-healthy"></span>
@@ -625,7 +639,7 @@ class MCPDashboard:
         </div>
 
         <div class="opportunities-section">
-            <h2>🎯 Live Arbitrage Opportunities</h2>
+            <h2>[TASK] Live Arbitrage Opportunities</h2>
             <div id="opportunities-list">
                 <p>Loading opportunities...</p>
             </div>
@@ -642,24 +656,24 @@ class MCPDashboard:
         const socket = io();
         
         // Update system metrics
-        function updateMetrics(metrics) {
+        function updateMetrics(metrics) {}
             document.getElementById('total-revenue').textContent = `$${metrics.total_revenue.toFixed(2)}`;
             document.getElementById('success-rate').textContent = `${(metrics.success_rate * 100).toFixed(1)}%`;
             document.getElementById('total-trades').textContent = metrics.total_trades;
             document.getElementById('health-status').textContent = metrics.system_health;
-        }
+        
         
         // Update opportunities list
-        function updateOpportunities(opportunities) {
+        function updateOpportunities(opportunities) {}
             const container = document.getElementById('opportunities-list');
             document.getElementById('opportunities-count').textContent = opportunities.length;
             
-            if (opportunities.length === 0) {
+            if (opportunities.length === 0) {}
                 container.innerHTML = '<p>No opportunities available</p>';
                 return;
-            }
             
-            container.innerHTML = opportunities.map(opp => `
+            
+            container.innerHTML = opportunities.map(opp => `)
                 <div class="opportunity-item">
                     <strong>${opp.token_pair}</strong> - ${opp.dex_buy} → ${opp.dex_sell}
                     <div class="opportunity-profit">Profit: $${opp.profit_usd.toFixed(2)} (${opp.profit_percentage.toFixed(2)}%)</div>
@@ -667,10 +681,10 @@ class MCPDashboard:
                     <button class="btn" onclick="executeOpportunity('${opp.id}')">Execute</button>
                 </div>
             `).join('');
-        }
+        
         
         // Add chat message
-        function addChatMessage(msg) {
+        function addChatMessage(msg) {}
             const container = document.getElementById('chat-messages');
             const msgDiv = document.createElement('div');
             msgDiv.innerHTML = `
@@ -679,20 +693,20 @@ class MCPDashboard:
             `;
             container.appendChild(msgDiv);
             container.scrollTop = container.scrollHeight;
-        }
+        
         
         // Execute opportunity
-        function executeOpportunity(opportunityId) {
+        function executeOpportunity(opportunityId) {}
             socket.emit('execute_opportunity', { opportunity_id: opportunityId });
-        }
+        
         
         // Socket event handlers
         socket.on('system_update', data => updateMetrics(data.metrics));
         socket.on('opportunities_update', data => updateOpportunities(data.opportunities));
         socket.on('new_chat_message', addChatMessage);
         
-        socket.on('execution_result', data => {
-            addChatMessage({
+        socket.on('execution_result', data => {)}
+            addChatMessage({)}
                 user: 'System',
                 message: `Opportunity ${data.opportunity_id}: ${data.message}`,
                 timestamp: new Date().toISOString()
@@ -700,14 +714,14 @@ class MCPDashboard:
         });
         
         // Chat input handler
-        document.getElementById('chat-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
+        document.getElementById('chat-input').addEventListener('keypress', function(e) {)}
+            if (e.key === 'Enter') {}
                 const message = this.value.trim();
-                if (message) {
+                if (message) {}
                     socket.emit('chat_message', { user: 'User', message: message });
                     this.value = '';
-                }
-            }
+                
+            
         });
         
         // Initial data request
@@ -727,16 +741,16 @@ class MCPDashboard:
         if not Path("templates/dashboard.html").exists():
             self.create_dashboard_template()
         
-        logger.info(f"Starting MCP Dashboard on port {self.port}")
-        logger.info(f"Dashboard will be available at: http://localhost:{self.port}")
+        logger.info(str(f"Starting MCP Dashboard on port {self.port}")
+        logger.info(str(f"Dashboard will be available at: http://localhost:{self.port}")
         
-        self.socketio.run(
+        self.socketio.run()
             self.app,
             host='0.0.0.0',
             port=self.port,
             debug=debug,
             allow_unsafe_werkzeug=True
-        )
+        
 
 def main():
     """Main function to start the dashboard"""

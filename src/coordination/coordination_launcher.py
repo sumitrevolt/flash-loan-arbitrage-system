@@ -1,4 +1,15 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+from typing import Dict, List, Any
+import asyncio
+import json
+import logging
+import os
+import re
+import subprocess
+import sys
+import time
 """
 Docker Coordination System Launcher
 ===================================
@@ -11,25 +22,29 @@ This script launches the complete coordination system with:
 - Infrastructure services
 """
 
-import asyncio
-import subprocess
-import sys
-import os
-import time
-import json
-import logging
-from pathlib import Path
-from typing import Dict, List, Any
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.FileHandler('coordination_launcher.log'),
         logging.StreamHandler()
-    ]
-)
+    
+
 logger = logging.getLogger(__name__)
 
 class CoordinationSystemLauncher:
@@ -44,27 +59,27 @@ class CoordinationSystemLauncher:
         """Check if all prerequisites are met"""
         try:
             # Check if Docker is installed and running
-            result = subprocess.run(['docker', '--version'], 
-                                  capture_output=True, text=True)
+            result = subprocess.run(['docker', '--version'], )
+                                  capture_output=True, text=True
             if result.returncode != 0:
                 logger.error("Docker is not installed or not running")
                 return False
                 
             # Check if Docker Compose is available
-            result = subprocess.run(['docker', 'compose', 'version'], 
-                                  capture_output=True, text=True)
+            result = subprocess.run(['docker', 'compose', 'version'], )
+                                  capture_output=True, text=True
             if result.returncode != 0:
                 logger.error("Docker Compose is not available")
                 return False
                 
             # Check if required files exist
-            required_files = [
+            required_files = []
                 self.docker_compose_file,
                 'docker_coordination_system.py',
                 'unified_mcp_config.json',
                 'ai_agents_config.json',
                 'requirements-coordination.txt'
-            ]
+            
             
             missing_files = []
             for file_path in required_files:
@@ -72,14 +87,14 @@ class CoordinationSystemLauncher:
                     missing_files.append(file_path)
                     
             if missing_files:
-                logger.error(f"Missing required files: {missing_files}")
+                logger.error(str(f"Missing required files: {missing_files}")
                 return False
                 
             logger.info("All prerequisites met")
             return True
             
         except Exception as e:
-            logger.error(f"Error checking prerequisites: {e}")
+            logger.error(str(f"Error checking prerequisites: {e}")
             return False
             
     def create_environment_file(self):
@@ -124,7 +139,7 @@ GITHUB_TOKEN=your_github_token_here
             logger.info("Environment file created/updated")
             
         except Exception as e:
-            logger.error(f"Error creating environment file: {e}")
+            logger.error(str(f"Error creating environment file: {e}")
             
     def build_docker_images(self) -> bool:
         """Build all Docker images"""
@@ -132,11 +147,11 @@ GITHUB_TOKEN=your_github_token_here
             logger.info("Building Docker images...")
             
             # Build images using Docker Compose
-            cmd = [
+            cmd = []
                 'docker', 'compose', 
                 '-f', self.docker_compose_file,
                 'build', '--parallel'
-            ]
+            
             
             result = subprocess.run(cmd, capture_output=True, text=True)
             
@@ -144,11 +159,11 @@ GITHUB_TOKEN=your_github_token_here
                 logger.info("Docker images built successfully")
                 return True
             else:
-                logger.error(f"Error building Docker images: {result.stderr}")
+                logger.error(str(f"Error building Docker images: {result.stderr}")
                 return False
                 
         except Exception as e:
-            logger.error(f"Error building Docker images: {e}")
+            logger.error(str(f"Error building Docker images: {e}")
             return False
             
     def start_infrastructure(self) -> bool:
@@ -156,27 +171,27 @@ GITHUB_TOKEN=your_github_token_here
         try:
             logger.info("Starting infrastructure services...")
             
-            infrastructure_services = [
+            infrastructure_services = []
                 'redis',
                 'rabbitmq', 
                 'postgres',
                 'ollama'
-            ]
+            
             
             for service in infrastructure_services:
-                cmd = [
+                cmd = []
                     'docker', 'compose',
                     '-f', self.docker_compose_file,
                     'up', '-d', service
-                ]
+                
                 
                 result = subprocess.run(cmd, capture_output=True, text=True)
                 
                 if result.returncode == 0:
-                    logger.info(f"Started {service} successfully")
+                    logger.info(str(f"Started {service} successfully")
                     self.services_status[service] = 'running'
                 else:
-                    logger.error(f"Error starting {service}: {result.stderr}")
+                    logger.error(str(f"Error starting {service}: {result.stderr}")
                     self.services_status[service] = 'failed'
                     
             # Wait for infrastructure to be ready
@@ -186,7 +201,7 @@ GITHUB_TOKEN=your_github_token_here
             return all(status == 'running' for status in self.services_status.values())
             
         except Exception as e:
-            logger.error(f"Error starting infrastructure: {e}")
+            logger.error(str(f"Error starting infrastructure: {e}")
             return False
             
     def start_mcp_servers(self) -> bool:
@@ -194,27 +209,27 @@ GITHUB_TOKEN=your_github_token_here
         try:
             logger.info("Starting MCP servers...")
             
-            mcp_services = [
+            mcp_services = []
                 'mcp_price_feed',
                 'mcp_flash_loan',
                 'mcp_dex_aggregator',
                 'mcp_evm_interaction'
-            ]
+            
             
             for service in mcp_services:
-                cmd = [
+                cmd = []
                     'docker', 'compose',
                     '-f', self.docker_compose_file,
                     'up', '-d', service
-                ]
+                
                 
                 result = subprocess.run(cmd, capture_output=True, text=True)
                 
                 if result.returncode == 0:
-                    logger.info(f"Started {service} successfully")
+                    logger.info(str(f"Started {service} successfully")
                     self.services_status[service] = 'running'
                 else:
-                    logger.error(f"Error starting {service}: {result.stderr}")
+                    logger.error(str(f"Error starting {service}: {result.stderr}")
                     self.services_status[service] = 'failed'
                     
             # Wait for MCP servers to initialize
@@ -222,7 +237,7 @@ GITHUB_TOKEN=your_github_token_here
             return True
             
         except Exception as e:
-            logger.error(f"Error starting MCP servers: {e}")
+            logger.error(str(f"Error starting MCP servers: {e}")
             return False
             
     def start_ai_agents(self) -> bool:
@@ -230,7 +245,7 @@ GITHUB_TOKEN=your_github_token_here
         try:
             logger.info("Starting AI agents...")
             
-            agent_services = [
+            agent_services = []
                 'agent_arbitrage_detector',
                 'agent_risk_manager',
                 'agent_flash_loan_optimizer',
@@ -241,22 +256,22 @@ GITHUB_TOKEN=your_github_token_here
                 'agent_liquidity_monitor',
                 'agent_security_analyst',
                 'agent_compliance_checker'
-            ]
+            
             
             for service in agent_services:
-                cmd = [
+                cmd = []
                     'docker', 'compose',
                     '-f', self.docker_compose_file,
                     'up', '-d', service
-                ]
+                
                 
                 result = subprocess.run(cmd, capture_output=True, text=True)
                 
                 if result.returncode == 0:
-                    logger.info(f"Started {service} successfully")
+                    logger.info(str(f"Started {service} successfully")
                     self.services_status[service] = 'running'
                 else:
-                    logger.error(f"Error starting {service}: {result.stderr}")
+                    logger.error(str(f"Error starting {service}: {result.stderr}")
                     self.services_status[service] = 'failed'
                     
             # Wait for agents to initialize
@@ -264,7 +279,7 @@ GITHUB_TOKEN=your_github_token_here
             return True
             
         except Exception as e:
-            logger.error(f"Error starting AI agents: {e}")
+            logger.error(str(f"Error starting AI agents: {e}")
             return False
             
     def start_coordination_services(self) -> bool:
@@ -272,26 +287,26 @@ GITHUB_TOKEN=your_github_token_here
         try:
             logger.info("Starting coordination services...")
             
-            coordination_services = [
+            coordination_services = []
                 'langchain_coordinator',
                 'autogen_system',
                 'coordination_orchestrator'
-            ]
+            
             
             for service in coordination_services:
-                cmd = [
+                cmd = []
                     'docker', 'compose',
                     '-f', self.docker_compose_file,
                     'up', '-d', service
-                ]
+                
                 
                 result = subprocess.run(cmd, capture_output=True, text=True)
                 
                 if result.returncode == 0:
-                    logger.info(f"Started {service} successfully")
+                    logger.info(str(f"Started {service} successfully")
                     self.services_status[service] = 'running'
                 else:
-                    logger.error(f"Error starting {service}: {result.stderr}")
+                    logger.error(str(f"Error starting {service}: {result.stderr}")
                     self.services_status[service] = 'failed'
                     
             # Wait for coordination services to initialize
@@ -299,7 +314,7 @@ GITHUB_TOKEN=your_github_token_here
             return True
             
         except Exception as e:
-            logger.error(f"Error starting coordination services: {e}")
+            logger.error(str(f"Error starting coordination services: {e}")
             return False
             
     def start_monitoring_services(self) -> bool:
@@ -307,33 +322,33 @@ GITHUB_TOKEN=your_github_token_here
         try:
             logger.info("Starting monitoring services...")
             
-            monitoring_services = [
+            monitoring_services = []
                 'coordination_dashboard',
                 'grafana',
                 'prometheus',
                 'health_monitor'
-            ]
+            
             
             for service in monitoring_services:
-                cmd = [
+                cmd = []
                     'docker', 'compose',
                     '-f', self.docker_compose_file,
                     'up', '-d', service
-                ]
+                
                 
                 result = subprocess.run(cmd, capture_output=True, text=True)
                 
                 if result.returncode == 0:
-                    logger.info(f"Started {service} successfully")
+                    logger.info(str(f"Started {service} successfully")
                     self.services_status[service] = 'running'
                 else:
-                    logger.error(f"Error starting {service}: {result.stderr}")
+                    logger.error(str(f"Error starting {service}: {result.stderr}")
                     self.services_status[service] = 'failed'
                     
             return True
             
         except Exception as e:
-            logger.error(f"Error starting monitoring services: {e}")
+            logger.error(str(f"Error starting monitoring services: {e}")
             return False
             
     def check_system_health(self) -> Dict[str, Any]:
@@ -342,11 +357,11 @@ GITHUB_TOKEN=your_github_token_here
             logger.info("Checking system health...")
             
             # Get container status
-            cmd = [
+            cmd = []
                 'docker', 'compose',
                 '-f', self.docker_compose_file,
                 'ps', '--format', 'json'
-            ]
+            
             
             result = subprocess.run(cmd, capture_output=True, text=True)
             
@@ -356,13 +371,13 @@ GITHUB_TOKEN=your_github_token_here
                     if line.strip():
                         containers.append(json.loads(line))
                         
-                health_report = {
+                health_report = {}
                     'total_containers': len(containers),
                     'running_containers': len([c for c in containers if c.get('State') == 'running']),
                     'healthy_containers': len([c for c in containers if 'healthy' in c.get('Health', '').lower()]),
                     'services_status': self.services_status,
                     'containers': containers
-                }
+                
                 
                 return health_report
             else:
@@ -370,7 +385,7 @@ GITHUB_TOKEN=your_github_token_here
                 return {'error': result.stderr}
                 
         except Exception as e:
-            logger.error(f"Error checking system health: {e}")
+            logger.error(str(f"Error checking system health: {e}")
             return {'error': str(e)}
             
     def display_system_info(self):
@@ -381,7 +396,7 @@ GITHUB_TOKEN=your_github_token_here
 ║                                   STARTED                                            ║
 ╠══════════════════════════════════════════════════════════════════════════════════════╣
 ║                                                                                      ║
-║  🌐 Web Interfaces:                                                                  ║
+║  [NETWORK] Web Interfaces:                                                                  ║
 ║     • Main Dashboard:        http://localhost:8080                                  ║
 ║     • Coordination API:      http://localhost:8000                                  ║
 ║     • LangChain Coordinator: http://localhost:8001                                  ║
@@ -389,7 +404,7 @@ GITHUB_TOKEN=your_github_token_here
 ║     • Grafana Monitoring:    http://localhost:3000 (admin/admin)                   ║
 ║     • RabbitMQ Management:   http://localhost:15672 (coordination/coordination_pass)║
 ║                                                                                      ║
-║  🔧 Infrastructure:                                                                  ║
+║  [SETUP] Infrastructure:                                                                  ║
 ║     • Redis:                 localhost:6379                                         ║
 ║     • PostgreSQL:            localhost:5432                                         ║
 ║     • RabbitMQ:              localhost:5672                                         ║
@@ -401,7 +416,7 @@ GITHUB_TOKEN=your_github_token_here
 ║     • DEX Aggregator:        http://localhost:8102                                  ║
 ║     • EVM Interaction:       http://localhost:8103                                  ║
 ║                                                                                      ║
-║  🎯 AI Agents:                                                                       ║
+║  [TASK] AI Agents:                                                                       ║
 ║     • Arbitrage Detector:    http://localhost:9001                                  ║
 ║     • Risk Manager:          http://localhost:9002                                  ║
 ║     • Flash Loan Optimizer:  http://localhost:9003                                  ║
@@ -413,10 +428,10 @@ GITHUB_TOKEN=your_github_token_here
 ║     • Security Analyst:      http://localhost:9009                                  ║
 ║     • Compliance Checker:    http://localhost:9010                                  ║
 ║                                                                                      ║
-║  📊 Monitoring:                                                                      ║
+║  [METRICS] Monitoring:                                                                      ║
 ║     • Prometheus:            http://localhost:9090                                  ║
 ║                                                                                      ║
-║  📝 Logs:                                                                            ║
+║  [LOG] Logs:                                                                            ║
 ║     • View logs: docker compose -f {self.docker_compose_file} logs -f              ║
 ║     • Health check: python coordination_launcher.py --health                       ║
 ║                                                                                      ║
@@ -478,7 +493,7 @@ curl -X POST http://localhost:8000/coordinate \\
             
             # Step 10: Check system health
             health_report = self.check_system_health()
-            logger.info(f"System health: {health_report}")
+            logger.info(str(f"System health: {health_report}")
             
             # Step 11: Display system information
             self.display_system_info()
@@ -487,7 +502,7 @@ curl -X POST http://localhost:8000/coordinate \\
             return True
             
         except Exception as e:
-            logger.error(f"Error launching system: {e}")
+            logger.error(str(f"Error launching system: {e}")
             return False
             
     def stop_system(self):
@@ -495,21 +510,21 @@ curl -X POST http://localhost:8000/coordinate \\
         try:
             logger.info("Stopping Docker Coordination System...")
             
-            cmd = [
+            cmd = []
                 'docker', 'compose',
                 '-f', self.docker_compose_file,
                 'down', '-v'
-            ]
+            
             
             result = subprocess.run(cmd, capture_output=True, text=True)
             
             if result.returncode == 0:
                 logger.info("System stopped successfully")
             else:
-                logger.error(f"Error stopping system: {result.stderr}")
+                logger.error(str(f"Error stopping system: {result.stderr}")
                 
         except Exception as e:
-            logger.error(f"Error stopping system: {e}")
+            logger.error(str(f"Error stopping system: {e}")
 
 def main():
     """Main function"""
@@ -518,7 +533,7 @@ def main():
     if len(sys.argv) > 1:
         if sys.argv[1] == '--health':
             health_report = launcher.check_system_health()
-            print(json.dumps(health_report, indent=2))
+            print(json.dumps(health_report, indent=2, ensure_ascii=True, default=str))
             return
         elif sys.argv[1] == '--stop':
             launcher.stop_system()
@@ -531,18 +546,18 @@ def main():
     success = launcher.launch_system()
     
     if success:
-        print("\n✅ System launched successfully!")
+        print("\n[OK] System launched successfully!")
         print("Press Ctrl+C to stop the system")
         
         try:
             while True:
                 time.sleep(10)
         except KeyboardInterrupt:
-            print("\n🛑 Stopping system...")
+            print("\n[STOP] Stopping system...")
             launcher.stop_system()
-            print("✅ System stopped")
+            print("[OK] System stopped")
     else:
-        print("\n❌ Failed to launch system")
+        print("\n[ERROR] Failed to launch system")
         sys.exit(1)
 
 if __name__ == "__main__":

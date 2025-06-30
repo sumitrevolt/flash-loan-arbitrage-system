@@ -1,4 +1,19 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+            import glob
+            import os
+from datetime import datetime
+from typing import Dict, List, Any, Union
+import asyncio
+import logging
+import pickle
+
+            import joblib
+        from multi_agent_coordinator import MultiAgentCoordinator
+from dataclasses import dataclass
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import StandardScaler
+import numpy as np
 """
 ENHANCED AI AGENT SYSTEM
 ========================
@@ -6,18 +21,21 @@ Advanced AI-powered agents that integrate with the existing multi-agent coordina
 Provides ML-based predictions, advanced risk assessment, and intelligent decision making
 """
 
-import asyncio
-import numpy as np
-import logging
-from typing import Dict, List, Any, Union
-from dataclasses import dataclass
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.preprocessing import StandardScaler
-import pickle
-import os
-from datetime import datetime
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -52,9 +70,6 @@ class MLPredictionEngine:
         """Load the latest trained models from MCP training coordinator"""
         
         try:
-            import joblib
-            import os
-            import glob
             
             model_dir = "models"
             if os.path.exists(model_dir):
@@ -112,7 +127,7 @@ class MLPredictionEngine:
     def train_model(self, historical_data: List[Dict[str, Any]]) -> bool:
         """Train the ML model on historical arbitrage data"""
         if len(historical_data) < 50:
-            logger.warning("Insufficient data for training (need at least 50 samples)")
+            logger.warning("Insufficient data for training (need at least 50 samples")
             return False
         
         # Prepare training data
@@ -136,7 +151,7 @@ class MLPredictionEngine:
         
         # Save model
         self.save_model()
-        logger.info(f"ML model trained on {len(historical_data)} samples")
+        logger.info(str(f"ML model trained on {len(historical_data} samples")
         return True
     
     async def predict_arbitrage_profit(self, opportunity_data: Dict) -> Dict[str, Any]:
@@ -147,7 +162,7 @@ class MLPredictionEngine:
         
         try:
             # Prepare features
-            features = [
+            features = []
                 opportunity_data.get("price_diff_percent", 0),
                 opportunity_data.get("liquidity_ratio", 1.0),
                 opportunity_data.get("gas_cost_usd", 20),
@@ -156,7 +171,7 @@ class MLPredictionEngine:
                 opportunity_data.get("market_cap_ratio", 0.1),
                 opportunity_data.get("dex_liquidity_depth", 10000),
                 opportunity_data.get("slippage_estimate", 0.01)
-            ]
+            
             
             model = self.trained_models["arbitrage_predictor"]
             predicted_profit = model.predict([features])[0]
@@ -166,12 +181,12 @@ class MLPredictionEngine:
             tree_predictions = [tree.predict([features])[0] for tree in model.estimators_]
             confidence = 1.0 - (np.std(tree_predictions) / np.mean(tree_predictions))
             
-            return {
+            return {}
                 "predicted_profit": float(predicted_profit),
                 "confidence": float(confidence),
                 "model_used": "arbitrage_predictor",
                 "features_used": len(features)
-            }
+            
             
         except Exception as e:
             return {"error": f"Prediction failed: {e}"}
@@ -203,14 +218,14 @@ class MLPredictionEngine:
             action = "SKIP_OPPORTUNITY"
             risk = "VERY_HIGH"
         
-        return MarketPrediction(
+        return MarketPrediction()
             token_pair=market_data.get('token_pair', 'UNKNOWN'),
             predicted_profit=predicted_profit,
             confidence_score=confidence,
             recommended_action=action,
             risk_assessment=risk,
             time_horizon=30
-        )
+        
     
     def _calculate_confidence(self, features_scaled: np.ndarray) -> float:
         """Calculate prediction confidence based on model uncertainty"""
@@ -229,14 +244,14 @@ class MLPredictionEngine:
         sell_price = market_data.get('sell_price', 0)
         profit_estimate = (sell_price - buy_price) / buy_price if buy_price > 0 else 0
         
-        return MarketPrediction(
+        return MarketPrediction()
             token_pair=market_data.get('token_pair', 'UNKNOWN'),
             predicted_profit=profit_estimate * 0.8,  # Conservative estimate
             confidence_score=0.3,
             recommended_action="EXECUTE_WITH_CAUTION" if profit_estimate > 0.01 else "SKIP_OPPORTUNITY",
             risk_assessment="MEDIUM",
             time_horizon=60
-        )
+        
     
     def save_model(self):
         """Save trained model and scaler"""
@@ -258,20 +273,20 @@ class MLPredictionEngine:
                 self.is_trained = True
                 logger.info("ML model loaded successfully")
         except Exception as e:
-            logger.warning(f"Could not load ML model: {e}")
+            logger.warning(str(f"Could not load ML model: {e}")
 
 class AdvancedRiskAgent:
     """Advanced risk assessment agent with ML capabilities"""
     
     def __init__(self):
         self.ml_engine = MLPredictionEngine()
-        self.risk_limits = {
+        self.risk_limits = {}
             'max_slippage_percent': 2.0,
             'max_gas_price_gwei': 100.0,
             'min_profit_usd': 10.0,
             'max_trade_size_usd': 50000.0,
             'min_liquidity_usd': 10000.0
-        }
+        
         self.consecutive_losses = 0
         self.last_trade_timestamp = None
     
@@ -285,18 +300,18 @@ class AdvancedRiskAgent:
         risk_assessment = self._assess_risk_factors(opportunity)
         
         # Make final decision
-        should_execute = (
+        should_execute = ()
             prediction.recommended_action in ['EXECUTE_IMMEDIATELY', 'EXECUTE_WITH_CAUTION'] and
             risk_assessment['overall_risk_score'] > 0.6 and
             self.consecutive_losses < 3
-        )
+        
         
         # Generate explanation
         explanation = self._generate_explanation(prediction, risk_assessment, should_execute)
         
-        return {
+        return {}
             'should_execute': should_execute,
-            'ml_prediction': {
+            'ml_prediction': {}
                 'predicted_profit': prediction.predicted_profit,
                 'confidence': prediction.confidence_score,
                 'recommended_action': prediction.recommended_action
@@ -304,29 +319,29 @@ class AdvancedRiskAgent:
             'risk_assessment': risk_assessment,
             'explanation': explanation,
             'timestamp': datetime.now().isoformat()
-        }
+        
     
     def _assess_risk_factors(self, opportunity: Dict[str, Any]) -> Dict[str, Any]:
         """Assess various risk factors"""
-        checks = {
+        checks = {}
             'profit_sufficient': opportunity.get('profit_usd', 0) >= self.risk_limits['min_profit_usd'],
             'slippage_acceptable': opportunity.get('slippage_percent', 5) <= self.risk_limits['max_slippage_percent'],
-            'liquidity_adequate': min(
+            'liquidity_adequate': min()
                 opportunity.get('buy_liquidity', 0),
                 opportunity.get('sell_liquidity', 0)
             ) >= self.risk_limits['min_liquidity_usd'],
             'gas_price_reasonable': opportunity.get('gas_price_gwei', 100) < self.risk_limits['max_gas_price_gwei']
-        }
+        
         
         passed_checks = sum(checks.values())
         risk_score = passed_checks / len(checks)
         
-        return {
+        return {}
             'individual_checks': checks,
             'overall_risk_score': risk_score,
             'passed_checks': passed_checks,
             'total_checks': len(checks)
-        }
+        
     
     def _generate_explanation(self, prediction: MarketPrediction, risk_assessment: Dict[str, Any], should_execute: bool) -> str:
         """Generate human-readable explanation for the decision"""
@@ -351,12 +366,12 @@ class IntelligentCoordinator:
     def __init__(self):
         self.risk_agent = AdvancedRiskAgent()
         self.ml_engine = MLPredictionEngine()
-        self.performance_metrics = {
+        self.performance_metrics = {}
             'total_opportunities_evaluated': 0,
             'opportunities_executed': 0,
             'success_rate': 0.0,
             'total_profit': 0.0
-        }
+        
     
     async def enhance_opportunity_evaluation(self, opportunity: Dict[str, Any]) -> Dict[str, Any]:
         """Enhanced evaluation that can be integrated with existing coordinator"""
@@ -367,11 +382,11 @@ class IntelligentCoordinator:
         evaluation = await self.risk_agent.evaluate_opportunity(opportunity)
         
         # Add performance context
-        evaluation['performance_context'] = {
+        evaluation['performance_context'] = {}
             'success_rate': self.performance_metrics['success_rate'],
             'total_evaluated': self.performance_metrics['total_opportunities_evaluated'],
             'recommendation_weight': min(1.0, self.performance_metrics['success_rate'] + 0.3)
-        }
+        
         
         return evaluation
     
@@ -388,23 +403,22 @@ class IntelligentCoordinator:
         
         # Calculate success rate
         if self.performance_metrics['total_opportunities_evaluated'] > 0:
-            self.performance_metrics['success_rate'] = (
+            self.performance_metrics['success_rate'] = ()
                 self.performance_metrics['opportunities_executed'] / 
                 self.performance_metrics['total_opportunities_evaluated']
-            )
+            
         
         # Add result to training data (in real implementation, this would be persistent)
         training_sample = {**opportunity, 'actual_profit': actual_result.get('profit', 0)}
         
-        logger.info(f"Learning from trade result: Success={actual_result.get('success', False)}, "
-                   f"Profit={actual_result.get('profit', 0):.4f}")
+        logger.info(str(f"Learning from trade result: Success={actual_result.get('success', False}, ")
+                   f"Profit={actual_result.get('profit', 0):.4f}"
 
 # Integration functions for existing multi-agent coordinator
 async def enhance_existing_coordinator():
     """Function to enhance the existing multi-agent coordinator with AI capabilities"""
     try:
         # Import the existing coordinator
-        from multi_agent_coordinator import MultiAgentCoordinator
         
         # Create enhanced coordinator
         coordinator = MultiAgentCoordinator()
@@ -413,10 +427,10 @@ async def enhance_existing_coordinator():
         # Start the enhanced system
         await coordinator.start_system()
         
-        logger.info("✅ Enhanced AI multi-agent system started successfully!")
+        logger.info("[OK] Enhanced AI multi-agent system started successfully!")
         logger.info("🤖 ML prediction engine ready")
-        logger.info("⚡ Advanced risk assessment active")
-        logger.info("🎯 Intelligent coordination layer operational")
+        logger.info("[FAST] Advanced risk assessment active")
+        logger.info("[TASK] Intelligent coordination layer operational")
         
         return coordinator, ai_coordinator
         
@@ -435,7 +449,7 @@ async def test_enhanced_ai_system():
     ai_coordinator = IntelligentCoordinator()
     
     # Test opportunity
-    test_opportunity = {
+    test_opportunity = {}
         'token_pair': 'WETH/USDC',
         'buy_price': 1000.50,
         'sell_price': 1002.75,
@@ -445,28 +459,28 @@ async def test_enhanced_ai_system():
         'market_volatility': 0.015,
         'profit_usd': 45.30,
         'slippage_percent': 1.2
-    }
+    
     
     # Evaluate opportunity
     evaluation = await ai_coordinator.enhance_opportunity_evaluation(test_opportunity)
     
     # Display results
-    print(f"🎯 Opportunity: {test_opportunity['token_pair']}")
+    print(f"[TASK] Opportunity: {test_opportunity['token_pair']}")
     print(f"   Should Execute: {evaluation['should_execute']}")
     print(f"   ML Confidence: {evaluation['ml_prediction']['confidence']:.2f}")
     print(f"   Risk Score: {evaluation['risk_assessment']['overall_risk_score']:.2f}")
     print(f"   Explanation: {evaluation['explanation']}")
     
     # Simulate trade result
-    trade_result: str = {
+    trade_result: str = {}
         'success': evaluation['should_execute'],
         'profit': test_opportunity['profit_usd'] * 0.85 if evaluation['should_execute'] else 0
-    }
+    
     
     # Learn from result
     await ai_coordinator.learn_from_trade_result(test_opportunity, trade_result)
     
-    print(f"\n📊 Performance Metrics:")
+    print(f"\n[METRICS] Performance Metrics:")
     print(f"   Total Evaluated: {ai_coordinator.performance_metrics['total_opportunities_evaluated']}")
     print(f"   Success Rate: {ai_coordinator.performance_metrics['success_rate']:.2f}")
     print(f"   Total Profit: ${ai_coordinator.performance_metrics['total_profit']:.2f}")

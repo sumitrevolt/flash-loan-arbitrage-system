@@ -1,18 +1,19 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+from typing import Dict, List, Optional, Any
+import argparse
+import asyncio
+import logging
+import os
+import platform
+import subprocess
+import sys
 """
 Unified Project Launcher
 Manages all components of the flash loan arbitrage system
 """
 
-import asyncio
-import sys
-import os
-import platform
-import subprocess
-from pathlib import Path
-from typing import Dict, List, Optional, Any
-import logging
-import argparse
 
 class ProjectLauncher:
     """Unified launcher for all project components"""
@@ -34,33 +35,33 @@ class ProjectLauncher:
             self.logger.addHandler(handler)
         
         # Component configurations with proper type annotations
-        self.components: Dict[str, Dict[str, Any]] = {
-            'flash_loan_mcp': {
+        self.components: Dict[str, Dict[str, Any]] = {}
+            'flash_loan_mcp': {}
                 'script': 'working_flash_loan_mcp.py',
                 'port': 8001,
                 'description': 'Main Flash Loan MCP Server',
                 'required': True
             },
-            'monitoring': {
+            'monitoring': {}
                 'script': 'monitoring/unified_monitoring_dashboard.py',
                 'port': 8080,
                 'description': 'Monitoring Dashboard',
                 'required': False
             },
-            'price_monitor': {
+            'price_monitor': {}
                 'script': 'monitoring/live_blockchain_verification.py',
                 'port': None,
                 'description': 'Price Monitoring Service',
                 'required': False
-            }
-        }
+            
+        
 
     async def check_dependencies(self) -> List[str]:
         """Check if all required dependencies are installed"""
         missing: List[str] = []
         
         # Check Python packages
-        required_packages = [
+        required_packages = []
             'flask',
             'fastapi',
             'uvicorn',
@@ -70,7 +71,7 @@ class ProjectLauncher:
             'numpy',
             'redis',
             'psutil'
-        ]
+        
         
         for package in required_packages:
             try:
@@ -103,7 +104,7 @@ class ProjectLauncher:
         try:
             script_path = self.base_dir / config['script']
             if not script_path.exists():
-                self.logger.error(f"❌ Script not found: {script_path}")
+                self.logger.error(str(f"[ERROR] Script not found: {script_path}")
                 return False
             
             # Prepare command based on script type
@@ -112,17 +113,17 @@ class ProjectLauncher:
             else:
                 cmd = [str(script_path)]
             
-            self.logger.info(f"🚀 Starting {config['description']}...")
+            self.logger.info(str(f"[INIT] Starting {config['description']}...")
             
             # Start the process
-            process = subprocess.Popen(
+            process = subprocess.Popen()
                 cmd,
                 cwd=str(self.base_dir),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 env=os.environ,
                 shell=(platform.system() == 'Windows')
-            )
+            
             
             self.processes[name] = process
             
@@ -130,16 +131,16 @@ class ProjectLauncher:
             await asyncio.sleep(2)
             if process.poll() is not None:
                 _, stderr = process.communicate()
-                self.logger.error(f"❌ Component {name} failed to start: {stderr.decode()}")
+                self.logger.error(str(f"[ERROR] Component {name} failed to start: {stderr.decode(}")
                 return False
             
-            self.logger.info(f"✅ {config['description']} started successfully")
+            self.logger.info(str(f"[OK] {config['description']} started successfully")
             if config['port']:
-                self.logger.info(f"   Available on http://localhost:{config['port']}")
+                self.logger.info(str(f"   Available on http://localhost:{config['port']}")
             return True
         
         except Exception as e:
-            self.logger.error(f"❌ Failed to start {name}: {str(e)}")
+            self.logger.error(str(f"[ERROR] Failed to start {name}: {str(e}")
             return False
 
     async def stop_component(self, name: str) -> None:
@@ -147,7 +148,7 @@ class ProjectLauncher:
         if name in self.processes:
             process = self.processes[name]
             if process.poll() is None:
-                self.logger.info(f"🛑 Stopping {name}...")
+                self.logger.info(str(f"[STOP] Stopping {name}...")
                 process.terminate()
                 try:
                     process.wait(timeout=10)
@@ -160,7 +161,7 @@ class ProjectLauncher:
         """Start all or specified components"""
         components_to_start = components or list(self.components.keys())
         
-        self.logger.info("🚀 Starting Flash Loan Arbitrage System")
+        self.logger.info("[INIT] Starting Flash Loan Arbitrage System")
         self.logger.info("=" * 50)
         
         self.running = True
@@ -168,7 +169,7 @@ class ProjectLauncher:
         
         for name in components_to_start:
             if name not in self.components:
-                self.logger.warning(f"⚠️ Unknown component: {name}")
+                self.logger.warning(str(f"[WARN] Unknown component: {name}")
                 continue
             
             config = self.components[name]
@@ -177,44 +178,44 @@ class ProjectLauncher:
             if success:
                 success_count += 1
             elif config['required']:
-                self.logger.error(f"❌ Required component {name} failed to start. Stopping...")
+                self.logger.error(str(f"[ERROR] Required component {name} failed to start. Stopping...")
                 await self.stop_all()
                 return
         
         self.logger.info("=" * 50)
-        self.logger.info(f"✅ System started: {success_count}/{len(components_to_start)} components running")
+        self.logger.info(str(f"[OK] System started: {success_count}/{len(components_to_start} components running")
         
         if success_count > 0:
-            self.logger.info("\n📊 Available Services:")
+            self.logger.info("\n[METRICS] Available Services:")
             for name, config in self.components.items():
                 if name in self.processes and config['port']:
-                    self.logger.info(f"   {config['description']}: http://localhost:{config['port']}")
+                    self.logger.info(str(f"   {config['description']}: http://localhost:{config['port']}")
             
-            self.logger.info("\n🎯 Quick Start:")
+            self.logger.info("\n[TASK] Quick Start:")
             self.logger.info("   - Main MCP Server: http://localhost:8001/health")
             self.logger.info("   - Press Ctrl+C to stop all services")
 
     async def stop_all(self) -> None:
         """Stop all running components"""
-        self.logger.info("🛑 Stopping all components...")
+        self.logger.info("[STOP] Stopping all components...")
         self.running = False
         
         for name in list(self.processes.keys()):
             await self.stop_component(name)
         
-        self.logger.info("✅ All components stopped")
+        self.logger.info("[OK] All components stopped")
 
     async def monitor_processes(self) -> None:
         """Monitor running processes and restart if needed"""
         while self.running:
             for name, process in list(self.processes.items()):
                 if process.poll() is not None:
-                    self.logger.warning(f"⚠️ Component {name} has stopped unexpectedly")
+                    self.logger.warning(str(f"[WARN] Component {name} has stopped unexpectedly")
                     del self.processes[name]
                     
                     # Attempt to restart if configured
                     if name in self.components and self.components[name].get('restart_on_failure', True):
-                        self.logger.info(f"🔄 Attempting to restart {name}")
+                        self.logger.info(str(f"[SYNC] Attempting to restart {name}")
                         await self.start_component(name, self.components[name])
             
             await asyncio.sleep(5)  # Check every 5 seconds
@@ -233,7 +234,7 @@ class ProjectLauncher:
                     await asyncio.sleep(1)
                     
         except KeyboardInterrupt:
-            self.logger.info("\n🛑 Shutdown signal received")
+            self.logger.info("\n[STOP] Shutdown signal received")
         finally:
             await self.stop_all()
 
@@ -245,7 +246,7 @@ class ProjectLauncher:
             # Check missing dependencies
             missing_deps = await self.check_dependencies()
             if missing_deps:
-                self.logger.warning(f"Missing dependencies: {', '.join(missing_deps)}")
+                self.logger.warning(str(f"Missing dependencies: {', '.join(missing_deps}")
                 print("\nWould you like to install missing dependencies? (y/n): ", end='')
                 if input().lower() == 'y':
                     print("Please run: pip install " + " ".join(missing_deps))
@@ -256,7 +257,7 @@ class ProjectLauncher:
             if env_issues:
                 self.logger.warning("Environment issues found:")
                 for issue in env_issues:
-                    self.logger.warning(f"  - {issue}")
+                    self.logger.warning(str(f"  - {issue}")
             
             # Start monitor task
             asyncio.create_task(self.monitor_processes())
@@ -296,7 +297,7 @@ class ProjectLauncher:
         except KeyboardInterrupt:
             self.logger.info("\nShutdown requested...")
         except Exception as e:
-            self.logger.error(f"Unexpected error: {e}")
+            self.logger.error(str(f"Unexpected error: {e}")
         finally:
             await self.stop()
     
@@ -308,7 +309,7 @@ class ProjectLauncher:
         
         # Stop all processes
         for name, process in self.processes.items():
-            self.logger.info(f"Stopping {name}")
+            self.logger.info(str(f"Stopping {name}")
             try:
                 process.terminate()
                 # Give process time to terminate gracefully
@@ -316,14 +317,14 @@ class ProjectLauncher:
                 if process.poll() is None:
                     process.kill()
             except Exception as e:
-                self.logger.error(f"Error stopping {name}: {e}")
+                self.logger.error(str(f"Error stopping {name}: {e}")
         
         self.processes.clear()
         self.logger.info("All components stopped")
 
     async def start_selected_components(self, selected: List[str]):
         """Start selected components by name"""
-        self.logger.info(f"🚀 Starting selected components: {', '.join(selected)}")
+        self.logger.info(str(f"[INIT] Starting selected components: {', '.join(selected}")
         
         success_count = 0
         for name in selected:
@@ -334,9 +335,9 @@ class ProjectLauncher:
                 if success:
                     success_count += 1
             else:
-                self.logger.warning(f"⚠️ Unknown component: {name}")
+                self.logger.warning(str(f"[WARN] Unknown component: {name}")
         
-        self.logger.info(f"✅ Started {success_count}/{len(selected)} components")
+        self.logger.info(str(f"[OK] Started {success_count}/{len(selected} components")
 
 def main():
     parser = argparse.ArgumentParser(description='Flash Loan Project Launcher')

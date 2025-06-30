@@ -1,15 +1,17 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Dict, List
+import json
+import socket
+
+import docker
+import requests
 """
 Docker vs Application Health Check Comparison
 Shows the difference between Docker health checks and actual service availability
 """
 
-import docker
-import requests
-import socket
-import json
-from datetime import datetime
-from typing import Dict, List
 
 def get_docker_health_status():
     """Get Docker container health status"""
@@ -22,11 +24,11 @@ def get_docker_health_status():
             if 'flashloan-' in container.name:
                 health = container.attrs.get('State', {}).get('Health', {})
                 status = health.get('Status', 'unknown')
-                docker_status[container.name] = {
+                docker_status[container.name] = {}
                     'status': status,
                     'container_status': container.status,
                     'ports': [port.get('PublicPort') for port in container.attrs['NetworkSettings']['Ports'].values() if port]
-                }
+                
         
         return docker_status
     except Exception as e:
@@ -65,7 +67,7 @@ def test_application_health(port: int) -> tuple:
 
 def main():
     """Compare Docker health vs application health"""
-    print("🔍 Docker vs Application Health Check Comparison")
+    print("[SEARCH] Docker vs Application Health Check Comparison")
     print("=" * 70)
     print(f"⏰ Check Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print()
@@ -75,7 +77,7 @@ def main():
     docker_status = get_docker_health_status()
     
     # Define port mappings for key services
-    service_ports = {
+    service_ports = {}
         'flashloan-flash-loan-mcp-1': 4001,
         'flashloan-web3-provider-mcp-1': 4002,
         'flashloan-dex-price-server-1': 4003,
@@ -86,9 +88,9 @@ def main():
         'flashloan-coordinator-agent-1': 5001,
         'flashloan-arbitrage-agent-1': 5002,
         'flashloan-monitoring-agent-1': 5003,
-    }
     
-    print("📊 Comparison Results:")
+    
+    print("[METRICS] Comparison Results:")
     print("-" * 70)
     print(f"{'Service Name':<35} {'Docker':<12} {'App Health':<12} {'Status'}")
     print("-" * 70)
@@ -110,19 +112,19 @@ def main():
         # Determine overall application status
         if http_healthy:
             app_status = "healthy"
-            app_icon = "✅"
+            app_icon = "[OK]"
         elif port_open:
             app_status = "port_open"
             app_icon = "🟡"
         else:
             app_status = "down"
-            app_icon = "❌"
+            app_icon = "[ERROR]"
         
         # Determine Docker status icon
         if docker_health == 'healthy':
-            docker_icon = "✅"
+            docker_icon = "[OK]"
         elif docker_health == 'unhealthy':
-            docker_icon = "❌"
+            docker_icon = "[ERROR]"
         elif docker_health == 'starting':
             docker_icon = "🟡"
         else:
@@ -131,10 +133,10 @@ def main():
         # Check for discrepancies
         discrepancy = ""
         if docker_health == 'unhealthy' and http_healthy:
-            discrepancy = "⚠️  Docker unhealthy but app responding!"
+            discrepancy = "[WARN]  Docker unhealthy but app responding!"
             discrepancies += 1
         elif docker_health == 'healthy' and not http_healthy:
-            discrepancy = "⚠️  Docker healthy but app not responding!"
+            discrepancy = "[WARN]  Docker healthy but app not responding!"
             discrepancies += 1
         
         # Format service name
@@ -143,30 +145,30 @@ def main():
         print(f"{service_display:<35} {docker_icon} {docker_health:<10} {app_icon} {app_status:<10} {discrepancy}")
     
     print("-" * 70)
-    print(f"\n📊 Summary:")
+    print(f"\n[METRICS] Summary:")
     print(f"   Total Services Checked: {total_services}")
     print(f"   Health Check Discrepancies: {discrepancies}")
     
     if discrepancies == 0:
-        print("   🎉 All health checks are consistent!")
+        print("   [CELEBRATE] All health checks are consistent!")
     else:
-        print(f"   ⚠️  {discrepancies} discrepancies found - Docker health checks may need adjustment")
+        print(f"   [WARN]  {discrepancies} discrepancies found - Docker health checks may need adjustment")
     
-    print(f"\n💡 Key Insights:")
+    print(f"\n[INFO] Key Insights:")
     print(f"   • Docker health checks may timeout during startup while installing dependencies")
     print(f"   • Application-level health checks test actual service responsiveness")
     print(f"   • Services showing 'unhealthy' in Docker but responding to HTTP are actually working")
     print(f"   • Consider increasing health check start_period and timeout values")
     
-    print(f"\n🔧 Recommendations:")
+    print(f"\n[SETUP] Recommendations:")
     if discrepancies > 0:
         print(f"   1. Use the enhanced Docker Compose configuration:")
         print(f"      docker-compose -f docker-compose.enhanced.yml up -d")
         print(f"   2. The enhanced config has longer start_period values (90-120s)")
         print(f"   3. Monitor with: python realtime_health_monitor.py")
     else:
-        print(f"   ✅ Current configuration is working well!")
-        print(f"   📈 Continue monitoring with: python realtime_health_monitor.py")
+        print(f"   [OK] Current configuration is working well!")
+        print(f"   [GROWTH] Continue monitoring with: python realtime_health_monitor.py")
 
 if __name__ == "__main__":
     main()

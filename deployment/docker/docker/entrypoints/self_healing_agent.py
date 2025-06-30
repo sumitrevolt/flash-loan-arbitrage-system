@@ -1,4 +1,19 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Any
+import asyncio
+import json
+import logging
+import os
+import time
+
+from fastapi import FastAPI, HTTPException
+import aiohttp
+import docker
+import psutil
+import redis.asyncio as redis
+import uvicorn
 """
 Self-Healing AI Agent for Docker Coordination System
 ====================================================
@@ -12,29 +27,29 @@ This agent monitors the entire system and provides self-healing capabilities:
 - System diagnostics
 """
 
-import asyncio
-import docker
-import logging
-import json
-import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
-import aiohttp
-import redis.asyncio as redis
-from fastapi import FastAPI, HTTPException
-import uvicorn
-import psutil
-import os
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(),
         logging.FileHandler('/app/logs/self_healing.log', mode='a')
-    ]
-)
+    
+
 
 logger = logging.getLogger(__name__)
 
@@ -65,22 +80,22 @@ class SelfHealingAgent:
         
         @self.app.get("/health")
         async def health_check():
-            return {
+            return {}
                 "status": "healthy",
                 "agent": "self_healing_agent",
                 "port": self.port,
                 "monitoring": len(self.service_health),
                 "active_healings": sum(1 for h in self.service_health.values() if not h)
-            }
+            
         
         @self.app.get("/system-status")
         async def get_system_status():
-            return {
+            return {}
                 "system_health": await self.get_system_health(),
                 "resource_usage": await self.get_resource_usage(),
                 "service_status": self.service_health,
                 "recent_healings": await self.get_recent_healings()
-            }
+            
         
         @self.app.post("/heal-service")
         async def heal_service(request: dict):
@@ -102,7 +117,7 @@ class SelfHealingAgent:
         try:
             # Setup Redis connection
             redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
-            self.redis_client = redis.from_url(redis_url)
+            self.redis_client = redis.from_url(redis_url, decode_responses=True, encoding="utf-8")
             await self.redis_client.ping()
             logger.info("Connected to Redis for coordination")
             
@@ -114,7 +129,7 @@ class SelfHealingAgent:
             logger.info("Self-healing agent initialized successfully")
             
         except Exception as e:
-            logger.error(f"Failed to initialize self-healing agent: {e}")
+            logger.error(str(f"Failed to initialize self-healing agent: {e}")
             
     async def continuous_health_monitoring(self):
         """Continuously monitor system health"""
@@ -125,7 +140,7 @@ class SelfHealingAgent:
                 await asyncio.sleep(self.health_check_interval)
                 
             except Exception as e:
-                logger.error(f"Error in health monitoring: {e}")
+                logger.error(str(f"Error in health monitoring: {e}")
                 await asyncio.sleep(5)
     
     async def check_all_services_health(self):
@@ -144,10 +159,10 @@ class SelfHealingAgent:
                 self.service_health[container_name] = is_healthy
                 
                 if not is_healthy:
-                    logger.warning(f"Service {container_name} is unhealthy")
+                    logger.warning(str(f"Service {container_name} is unhealthy")
                     
         except Exception as e:
-            logger.error(f"Error checking services health: {e}")
+            logger.error(str(f"Error checking services health: {e}")
     
     async def check_container_health(self, container) -> bool:
         """Check if a container is healthy"""
@@ -177,7 +192,7 @@ class SelfHealingAgent:
             return container.status == 'running'
             
         except Exception as e:
-            logger.error(f"Error checking container {container.name} health: {e}")
+            logger.error(str(f"Error checking container {container.name} health: {e}")
             return False
     
     async def auto_heal_failed_services(self):
@@ -195,20 +210,20 @@ class SelfHealingAgent:
             
             # Check cooldown period
             if time.time() - last_restart < self.restart_cooldown:
-                return {
+                return {}
                     "action": "skipped",
                     "reason": "cooldown_period",
                     "next_attempt_in": self.restart_cooldown - (time.time() - last_restart)
-                }
+                
             
             # Check max restart attempts
             if error_count >= self.max_restart_attempts:
-                logger.error(f"Service {service_name} exceeded max restart attempts")
-                return {
+                logger.error(str(f"Service {service_name} exceeded max restart attempts")
+                return {}
                     "action": "failed",
                     "reason": "max_attempts_exceeded",
                     "error_count": error_count
-                }
+                
             
             # Attempt to heal the service
             healing_result = await self.perform_healing_actions(service_name)
@@ -223,7 +238,7 @@ class SelfHealingAgent:
             return healing_result
             
         except Exception as e:
-            logger.error(f"Error healing service {service_name}: {e}")
+            logger.error(str(f"Error healing service {service_name}: {e}")
             return {"action": "error", "error": str(e)}
     
     async def perform_healing_actions(self, service_name: str) -> Dict[str, Any]:
@@ -231,7 +246,7 @@ class SelfHealingAgent:
         try:
             container = self.docker_client.containers.get(service_name)
             
-            logger.info(f"Attempting to heal service: {service_name}")
+            logger.info(str(f"Attempting to heal service: {service_name}")
             
             # Step 1: Try to restart the container
             container.restart()
@@ -247,40 +262,40 @@ class SelfHealingAgent:
                 is_healthy = await self.check_container_health(container)
                 
                 if is_healthy:
-                    logger.info(f"Successfully healed service: {service_name}")
+                    logger.info(str(f"Successfully healed service: {service_name}")
                     # Reset error count on successful healing
                     self.error_counts[service_name] = 0
                     
-                    return {
+                    return {}
                         "action": "healed",
                         "method": "container_restart",
                         "status": "healthy"
-                    }
+                    
                 else:
-                    return {
+                    return {}
                         "action": "partial_heal",
                         "method": "container_restart",
                         "status": "running_but_unhealthy"
-                    }
+                    
             else:
-                return {
+                return {}
                     "action": "failed",
                     "method": "container_restart",
                     "status": container.status
-                }
+                
                 
         except docker.errors.NotFound:
-            return {
+            return {}
                 "action": "failed",
                 "error": "container_not_found",
                 "suggestion": "recreate_container"
-            }
+            
         except Exception as e:
-            logger.error(f"Error performing healing actions on {service_name}: {e}")
-            return {
+            logger.error(str(f"Error performing healing actions on {service_name}: {e}")
+            return {}
                 "action": "error",
                 "error": str(e)
-            }
+            
     
     async def emergency_system_recovery(self) -> Dict[str, Any]:
         """Emergency recovery for critical system failures"""
@@ -293,40 +308,40 @@ class SelfHealingAgent:
             for service_name, is_healthy in self.service_health.items():
                 if not is_healthy:
                     result = await self.perform_healing_actions(service_name)
-                    recovery_actions.append({
+                    recovery_actions.append({)}
                         "service": service_name,
                         "action": result
-                    })
+                    
             
             # Step 2: Check system resources
             resource_status = await self.get_resource_usage()
             if resource_status.get('memory_percent', 0) > 90:
                 logger.warning("High memory usage detected during emergency recovery")
-                recovery_actions.append({
+                recovery_actions.append({)}
                     "action": "memory_cleanup",
                     "result": "initiated"
-                })
+                
             
             # Step 3: Verify coordination system
             coordination_healthy = await self.verify_coordination_system()
-            recovery_actions.append({
+            recovery_actions.append({)}
                 "action": "coordination_check",
                 "result": "healthy" if coordination_healthy else "unhealthy"
-            })
             
-            return {
+            
+            return {}
                 "emergency_recovery": "completed",
                 "actions": recovery_actions,
                 "timestamp": datetime.now().isoformat()
-            }
+            
             
         except Exception as e:
-            logger.error(f"Error during emergency recovery: {e}")
-            return {
+            logger.error(str(f"Error during emergency recovery: {e}")
+            return {}
                 "emergency_recovery": "failed",
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
-            }
+            
     
     async def resource_monitoring(self):
         """Monitor system resources"""
@@ -336,30 +351,30 @@ class SelfHealingAgent:
                 
                 # Check for resource issues
                 if self.system_metrics.get('memory_percent', 0) > 85:
-                    logger.warning(f"High memory usage: {self.system_metrics['memory_percent']}%")
+                    logger.warning(str(f"High memory usage: {self.system_metrics['memory_percent']}%")
                     await self.handle_high_memory_usage()
                 
                 if self.system_metrics.get('cpu_percent', 0) > 80:
-                    logger.warning(f"High CPU usage: {self.system_metrics['cpu_percent']}%")
+                    logger.warning(str(f"High CPU usage: {self.system_metrics['cpu_percent']}%")
                     await self.handle_high_cpu_usage()
                 
                 await asyncio.sleep(60)  # Check every minute
                 
             except Exception as e:
-                logger.error(f"Error in resource monitoring: {e}")
+                logger.error(str(f"Error in resource monitoring: {e}")
                 await asyncio.sleep(10)
     
     async def get_resource_usage(self) -> Dict[str, Any]:
         """Get current system resource usage"""
         try:
-            return {
+            return {}
                 "cpu_percent": psutil.cpu_percent(),
                 "memory_percent": psutil.virtual_memory().percent,
                 "disk_percent": psutil.disk_usage('/').percent,
                 "timestamp": datetime.now().isoformat()
-            }
+            
         except Exception as e:
-            logger.error(f"Error getting resource usage: {e}")
+            logger.error(str(f"Error getting resource usage: {e}")
             return {}
     
     async def get_system_health(self) -> Dict[str, Any]:
@@ -367,24 +382,24 @@ class SelfHealingAgent:
         healthy_services = sum(1 for h in self.service_health.values() if h)
         total_services = len(self.service_health)
         
-        return {
+        return {}
             "healthy_services": healthy_services,
             "total_services": total_services,
             "health_percentage": (healthy_services / total_services * 100) if total_services > 0 else 0,
             "system_status": "healthy" if healthy_services == total_services else "degraded",
             "timestamp": datetime.now().isoformat()
-        }
+        
     
     async def log_healing_action(self, service_name: str, result: Dict[str, Any]):
         """Log healing actions for analysis"""
-        log_entry = {
+        log_entry = {}
             "service": service_name,
             "healing_result": result,
             "timestamp": datetime.now().isoformat()
-        }
+        
         
         if self.redis_client:
-            await self.redis_client.lpush("healing_logs", json.dumps(log_entry))
+            await self.redis_client.lpush("healing_logs", json.dumps(log_entry, ensure_ascii=True, default=str))
             await self.redis_client.ltrim("healing_logs", 0, 1000)  # Keep last 1000 logs
     
     async def get_recent_healings(self) -> List[Dict[str, Any]]:
@@ -396,7 +411,7 @@ class SelfHealingAgent:
             logs = await self.redis_client.lrange("healing_logs", 0, 10)
             return [json.loads(log) for log in logs]
         except Exception as e:
-            logger.error(f"Error getting recent healings: {e}")
+            logger.error(str(f"Error getting recent healings: {e}")
             return []
     
     async def handle_high_memory_usage(self):
@@ -427,7 +442,7 @@ class SelfHealingAgent:
                 # Placeholder for log analysis
                 await asyncio.sleep(300)  # Every 5 minutes
             except Exception as e:
-                logger.error(f"Error in log analysis: {e}")
+                logger.error(str(f"Error in log analysis: {e}")
                 await asyncio.sleep(60)
 
 # Global instance
@@ -445,14 +460,14 @@ async def shutdown_event():
 def run_agent():
     """Run the self-healing agent"""
     try:
-        uvicorn.run(
+        uvicorn.run()
             self_healing_agent.app,
             host="0.0.0.0",
             port=self_healing_agent.port,
             log_level="info"
-        )
+        
     except Exception as e:
-        logger.error(f"Failed to start self-healing agent: {e}")
+        logger.error(str(f"Failed to start self-healing agent: {e}")
 
 if __name__ == "__main__":
     run_agent()

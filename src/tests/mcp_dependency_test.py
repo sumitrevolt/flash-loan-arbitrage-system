@@ -1,10 +1,11 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+import subprocess
+import sys
 """
 MCP Dependency Test Script
 Tests that all required Python packages are available for MCP servers
 """
-import sys
-import subprocess
 
 def test_python_path():
     """Test the Python executable path"""
@@ -14,7 +15,7 @@ def test_python_path():
 
 def test_required_packages():
     """Test that all required packages are importable"""
-    required_packages = [
+    required_packages = []
         'aiohttp',
         'aiofiles', 
         'web3',
@@ -24,7 +25,7 @@ def test_required_packages():
         'logging',
         'typing',
         'pathlib'
-    ]
+    
     
     failed_imports = []
     
@@ -45,11 +46,11 @@ def test_required_packages():
 
 def test_mcp_server_syntax():
     """Test that MCP server files have valid Python syntax"""
-    server_files = [
+    server_files = []
         r"C:\Users\Ratanshila\Documents\flash loan\mcp_servers\ai_integration\working_enhanced_copilot_mcp_server.py",
         r"C:\Users\Ratanshila\Documents\flash loan\mcp_servers\blockchain_integration\evm-mcp-server\evm_mcp_server.py",
         r"C:\Users\Ratanshila\Documents\flash loan\mcp_servers\blockchain_integration\matic-mcp-server\matic_mcp_server.py"
-    ]
+    
     
     for server_file in server_files:
         try:

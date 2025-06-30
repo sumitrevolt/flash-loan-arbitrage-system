@@ -1,0 +1,15 @@
+{
+  "POSTGRES_HOST": "localhost",
+  "POSTGRES_PORT": "5432",
+  "POSTGRES_DB": "flash_loan_db",
+  "POSTGRES_USER": "postgres",
+  "POSTGRES_PASSWORD": "flash_loan_secure_2025",
+  "POSTGRES_USER_ALT": "flash_loan_user",
+  "POSTGRES_PASSWORD_ALT": "flash_loan_secure_2025",
+  "REDIS_HOST": "localhost",
+  "REDIS_PORT": "6379",
+  "REDIS_PASSWORD": "flash_loan_redis_2025",
+  "REDIS_URL": "redis://:flash_loan_redis_2025@localhost:6379/0",
+  "LOG_LEVEL": "INFO",
+  "ENVIRONMENT": "development"
+}

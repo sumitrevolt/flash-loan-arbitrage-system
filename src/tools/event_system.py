@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from collections import defaultdict
+from typing import Any, Dict, List, Callable, Optional
+import asyncio
+import logging
+
+from ..utils.async_utils import AsyncQueue, safe_cancel_task
 """
 Event System for Foundry MCP Server
 
@@ -5,12 +13,7 @@ Simple in-memory event system for bi-directional communication
 between the MCP server and existing flash loan system components.
 """
 
-import asyncio
-import logging
-from typing import Any, Dict, List, Callable, Optional
-from collections import defaultdict
 
-from ..utils.async_utils import AsyncQueue, safe_cancel_task
 
 
 class EventSystem:
@@ -71,7 +74,7 @@ class EventSystem:
             return True
             
         except Exception as e:
-            self.logger.error(f"Failed to initialize event system: {e}", exc_info=True)
+            self.logger.error(str(f"Failed to initialize event system: {e}"), exc_info=True)
             return False
     
     async def publish(self, event_type: str, data: Dict[str, Any]) -> bool:
@@ -89,27 +92,27 @@ class EventSystem:
             return False
         
         try:
-            event = {
+            event = {}
                 "type": event_type,
                 "timestamp": asyncio.get_event_loop().time(),
                 "channel": f"{self.channel_prefix}.{event_type}",
                 "data": data,
                 "id": f"{event_type}_{self._events_published}"
-            }
+            
             
             # Add to queue for processing
             success = await self._event_queue.put(event, timeout=1.0)
             
             if success:
                 self._events_published += 1
-                self.logger.debug(f"Published event: {event_type}")
+                self.logger.debug(str(f"Published event: {event_type}")
                 return True
             else:
-                self.logger.warning(f"Event queue full, dropped event: {event_type}")
+                self.logger.warning(str(f"Event queue full, dropped event: {event_type}")
                 return False
                 
         except Exception as e:
-            self.logger.error(f"Error publishing event {event_type}: {e}")
+            self.logger.error(str(f"Error publishing event {event_type}: {e}")
             return False
     
     def subscribe(self, event_type: str, callback: Callable) -> bool:
@@ -128,11 +131,11 @@ class EventSystem:
                 return False
             
             self._subscribers[event_type].append(callback)
-            self.logger.debug(f"Added subscriber for event type: {event_type}")
+            self.logger.debug(str(f"Added subscriber for event type: {event_type}")
             return True
             
         except Exception as e:
-            self.logger.error(f"Error subscribing to {event_type}: {e}")
+            self.logger.error(str(f"Error subscribing to {event_type}: {e}")
             return False
     
     def unsubscribe(self, event_type: str, callback: Callable) -> bool:
@@ -150,12 +153,12 @@ class EventSystem:
             if event_type in self._subscribers:
                 if callback in self._subscribers[event_type]:
                     self._subscribers[event_type].remove(callback)
-                    self.logger.debug(f"Removed subscriber for event type: {event_type}")
+                    self.logger.debug(str(f"Removed subscriber for event type: {event_type}")
                     return True
             return False
             
         except Exception as e:
-            self.logger.error(f"Error unsubscribing from {event_type}: {e}")
+            self.logger.error(str(f"Error unsubscribing from {event_type}: {e}")
             return False
     
     async def _event_worker(self) -> None:
@@ -178,7 +181,7 @@ class EventSystem:
                 self._add_to_history(event)
                 
             except Exception as e:
-                self.logger.error(f"Error in event worker: {e}", exc_info=True)
+                self.logger.error(str(f"Error in event worker: {e}"), exc_info=True)
                 await asyncio.sleep(0.1)  # Brief pause on error
         
         self.logger.info("Event worker stopped")
@@ -196,7 +199,7 @@ class EventSystem:
         
         # Notify subscribers
         if matching_subscribers:
-            self.logger.debug(f"Notifying {len(matching_subscribers)} subscribers for {event_type}")
+            self.logger.debug(str(f"Notifying {len(matching_subscribers} subscribers for {event_type}")
             
             # Run callbacks concurrently
             tasks = []
@@ -234,16 +237,16 @@ class EventSystem:
             else:
                 callback(event)
         except Exception as e:
-            self.logger.error(f"Error in event callback: {e}", exc_info=True)
+            self.logger.error(str(f"Error in event callback: {e}"), exc_info=True)
     
     def _add_to_history(self, event: Dict[str, Any]) -> None:
         """Add event to history for debugging."""
-        self._event_history.append({
+        self._event_history.append({)}
             "type": event["type"],
             "timestamp": event["timestamp"],
             "channel": event["channel"],
             "id": event["id"]
-        })
+        
         
         # Trim history
         if len(self._event_history) > self._max_history:
@@ -251,7 +254,7 @@ class EventSystem:
     
     def get_statistics(self) -> Dict[str, Any]:
         """Get event system statistics."""
-        return {
+        return {}
             "enabled": self.enabled,
             "running": self._running,
             "events_published": self._events_published,
@@ -260,7 +263,7 @@ class EventSystem:
             "subscribers_count": sum(len(subs) for subs in self._subscribers.values()),
             "subscription_patterns": list(self._subscribers.keys()),
             "recent_events": self._event_history[-10:]  # Last 10 events
-        }
+        
     
     async def shutdown(self) -> None:
         """Shutdown the event system."""
@@ -278,30 +281,30 @@ class EventSystem:
             self.logger.info("Event system shutdown complete")
             
         except Exception as e:
-            self.logger.error(f"Error during event system shutdown: {e}", exc_info=True)
+            self.logger.error(str(f"Error during event system shutdown: {e}"), exc_info=True)
 
 
 # Helper functions for common events
 async def publish_tool_executed(event_system: EventSystem, tool_name: str, result: Dict[str, Any]) -> None:
     """Publish a tool execution event."""
-    await event_system.publish("tool.executed", {
+    await event_system.publish("tool.executed", {)}
         "tool_name": tool_name,
         "success": result.get("success", False),
         "result": result
-    })
+    
 
 
 async def publish_compilation_completed(event_system: EventSystem, success: bool, details: Dict[str, Any]) -> None:
     """Publish a compilation completion event."""
-    await event_system.publish("compilation.completed", {
+    await event_system.publish("compilation.completed", {)}
         "success": success,
         "details": details
-    })
+    
 
 
 async def publish_server_status(event_system: EventSystem, status: str, details: Dict[str, Any]) -> None:
     """Publish a server status event."""
-    await event_system.publish("server.status", {
+    await event_system.publish("server.status", {)}
         "status": status,
         "details": details
-    })
+    

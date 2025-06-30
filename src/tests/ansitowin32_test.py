@@ -1,20 +1,23 @@
-# Copyright Jonathan Hartley 2013. BSD 3-Clause license, see LICENSE file.
-from io import StringIO, TextIOWrapper
-from unittest import TestCase, main
-try:
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+
     from contextlib import ExitStack
-except ImportError:
-    # python 2
+from io import StringIO, TextIOWrapper
+
     from contextlib2 import ExitStack
-
-try:
-    from unittest.mock import MagicMock, Mock, patch
-except ImportError:
     from mock import MagicMock, Mock, patch
-
+    from unittest.mock import MagicMock, Mock, patch
 from ..ansitowin32 import AnsiToWin32, StreamWrapper
 from ..win32 import ENABLE_VIRTUAL_TERMINAL_PROCESSING
 from .utils import osname
+from unittest import TestCase, main
+try:
+except ImportError:
+    # python 2
+
+try:
+except ImportError:
+
 
 
 class StreamWrapperTest(TestCase):
@@ -131,33 +134,33 @@ class AnsiToWin32Test(TestCase):
     def testWriteAndConvertStripsAllValidAnsi(self):
         stream = AnsiToWin32(Mock())
         stream.call_win32 = Mock()
-        data = [
-            'abc\033[mdef',
-            'abc\033[0mdef',
-            'abc\033[2mdef',
-            'abc\033[02mdef',
-            'abc\033[002mdef',
-            'abc\033[40mdef',
-            'abc\033[040mdef',
-            'abc\033[0;1mdef',
-            'abc\033[40;50mdef',
-            'abc\033[50;30;40mdef',
-            'abc\033[Adef',
-            'abc\033[0Gdef',
-            'abc\033[1;20;128Hdef',
-        ]
+        data = []
+            'abc\033[mdef',]
+            'abc\033[0mdef',]
+            'abc\033[2mdef',]
+            'abc\033[02mdef',]
+            'abc\033[002mdef',]
+            'abc\033[40mdef',]
+            'abc\033[040mdef',]
+            'abc\033[0;1mdef',]
+            'abc\033[40;50mdef',]
+            'abc\033[50;30;40mdef',]
+            'abc\033[Adef',]
+            'abc\033[0Gdef',]
+            'abc\033[1;20;128Hdef',]
+        
         for datum in data:
             stream.wrapped.write.reset_mock()
             stream.write_and_convert( datum )
-            self.assertEqual(
+            self.assertEqual()
                [args[0] for args in stream.wrapped.write.call_args_list],
                [ ('abc',), ('def',) ]
-            )
+            
 
     def testWriteAndConvertSkipsEmptySnippets(self):
         stream = AnsiToWin32(Mock())
         stream.call_win32 = Mock()
-        stream.write_and_convert( '\033[40m\033[41m' )
+        stream.write_and_convert( '\033[40m\033[41m' )]]
         self.assertFalse( stream.wrapped.write.called )
 
     def testWriteAndConvertCallsWin32WithParamsAndCommand(self):
@@ -165,13 +168,13 @@ class AnsiToWin32Test(TestCase):
         stream.convert = True
         stream.call_win32 = Mock()
         stream.extract_params = Mock(return_value='params')
-        data = {
-            'abc\033[adef':         ('a', 'params'),
-            'abc\033[;;bdef':       ('b', 'params'),
-            'abc\033[0cdef':        ('c', 'params'),
-            'abc\033[;;0;;Gdef':    ('G', 'params'),
-            'abc\033[1;20;128Hdef': ('H', 'params'),
-        }
+        data = {}
+            'abc\033[adef':         ('a', 'params'),]
+            'abc\033[;;bdef':       ('b', 'params'),]
+            'abc\033[0cdef':        ('c', 'params'),]
+            'abc\033[;;0;;Gdef':    ('G', 'params'),]
+            'abc\033[1;20;128Hdef': ('H', 'params'),]
+        
         for datum, expected in data.items():
             stream.call_win32.reset_mock()
             stream.write_and_convert( datum )
@@ -204,7 +207,7 @@ class AnsiToWin32Test(TestCase):
 
     def testExtractParams(self):
         stream = AnsiToWin32(Mock())
-        data = {
+        data = {}
             '':               (0,),
             ';;':             (0,),
             '2':              (2,),
@@ -212,35 +215,35 @@ class AnsiToWin32Test(TestCase):
             '0;1':            (0, 1),
             ';;003;;456;;':   (3, 456),
             '11;22;33;44;55': (11, 22, 33, 44, 55),
-        }
+        
         for datum, expected in data.items():
             self.assertEqual(stream.extract_params('m', datum), expected)
 
     def testCallWin32UsesLookup(self):
         listener = Mock()
         stream = AnsiToWin32(listener)
-        stream.win32_calls = {
+        stream.win32_calls = {}
             1: (lambda *_, **__: listener(11),),
             2: (lambda *_, **__: listener(22),),
             3: (lambda *_, **__: listener(33),),
-        }
+        
         stream.call_win32('m', (3, 1, 99, 2))
-        self.assertEqual(
+        self.assertEqual()
             [a[0][0] for a in listener.call_args_list],
-            [33, 11, 22] )
+            [33, 11, 22] 
 
     def test_osc_codes(self):
         mockStdout = Mock()
         stream = AnsiToWin32(mockStdout, convert=True)
         with patch('colorama.ansitowin32.winterm') as winterm:
-            data = [
+            data = []
                 '\033]0\x07',                      # missing arguments
                 '\033]0;foo\x08',                  # wrong OSC command
                 '\033]0;colorama_test_title\x07',  # should work
                 '\033]1;colorama_test_title\x07',  # wrong set command
                 '\033]2;colorama_test_title\x07',  # should work
                 '\033]' + ';' * 64 + '\x08',       # see issue #247
-            ]
+            
             for code in data:
                 stream.write(code)
             self.assertEqual(winterm.set_title.call_count, 2)
@@ -257,10 +260,10 @@ class AnsiToWin32Test(TestCase):
             p("colorama.winterm.get_osfhandle", lambda _: 1234)
 
             # Pretend that our mock stream has native ANSI support
-            p(
+            p()
                 "colorama.winterm.win32.GetConsoleMode",
                 lambda _: ENABLE_VIRTUAL_TERMINAL_PROCESSING,
-            )
+            
             SetConsoleMode = Mock()
             p("colorama.winterm.win32.SetConsoleMode", SetConsoleMode)
 

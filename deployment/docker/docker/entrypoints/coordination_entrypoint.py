@@ -1,32 +1,47 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+from typing import Any, Optional
+import asyncio
+import logging
+import os
+import signal
+import sys
+
+from docker_coordination_system import DockerCoordinationSystem
 """
 Docker Coordination System Entrypoint
 Main orchestrator for MCP servers and AI agents
 """
 
-import asyncio
-import os
-import sys
-import logging
-import signal
-from pathlib import Path
-from typing import Any, Optional
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from docker_coordination_system import DockerCoordinationSystem
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(sys.stdout),
         logging.FileHandler('/app/logs/coordination.log', mode='a')
-    ]
-)
+    
+
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +63,7 @@ class CoordinationEntrypoint:
             return True
             
         except Exception as e:
-            logger.error(f"Failed to initialize coordination system: {e}")
+            logger.error(str(f"Failed to initialize coordination system: {e}")
             return False
     
     async def start(self) -> bool:
@@ -65,7 +80,7 @@ class CoordinationEntrypoint:
             return True
             
         except Exception as e:
-            logger.error(f"Error running coordination system: {e}")
+            logger.error(str(f"Error running coordination system: {e}")
             return False
     
     async def shutdown(self):
@@ -80,7 +95,7 @@ class CoordinationEntrypoint:
     
     def handle_signal(self, signum: int, frame: Any):
         """Handle shutdown signals"""
-        logger.info(f"Received signal {signum}, initiating shutdown...")
+        logger.info(str(f"Received signal {signum}, initiating shutdown...")
         asyncio.create_task(self.shutdown())
 
 async def main():
@@ -108,7 +123,7 @@ async def main():
     except KeyboardInterrupt:
         logger.info("Received keyboard interrupt")
     except Exception as e:
-        logger.error(f"Unexpected error: {e}")
+        logger.error(str(f"Unexpected error: {e}")
         sys.exit(1)
     finally:
         await entrypoint.shutdown()

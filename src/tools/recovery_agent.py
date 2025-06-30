@@ -1,25 +1,42 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from contextlib import asynccontextmanager
+from datetime import datetime, timezone
+from typing import Dict, List, Set, Optional
+import asyncio
+import logging
+import re
+
+from dataclasses import dataclass
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import psutil
+import uvicorn
 """
 Simple Recovery Agent for MCP Flash Loan System
 Monitors service health with Docker orchestration support for 121 MCP agents
 """
 
-import asyncio
-import logging
-import psutil
-from typing import Dict, List, Set, Optional
-from datetime import datetime, timezone
-from pydantic import BaseModel
-import uvicorn
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from dataclasses import dataclass
-from contextlib import asynccontextmanager
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+
 logger = logging.getLogger(__name__)
 
 @dataclass
@@ -56,12 +73,12 @@ class SimpleRecoveryAgent:
         self.running = False
         
         # Recovery actions
-        self.recovery_actions = {
+        self.recovery_actions = {}
             "restart": self._restart_service,
             "recreate": self._recreate_service,
             "scale": self._scale_service,
             "rollback": self._rollback_service
-        }
+        
         
     async def initialize(self) -> None:
         """Initialize and discover services"""
@@ -71,7 +88,7 @@ class SimpleRecoveryAgent:
             logger.info("Recovery agent initialized")
             
         except Exception as e:
-            logger.error(f"Failed to initialize recovery agent: {e}")
+            logger.error(str(f"Failed to initialize recovery agent: {e}")
             raise
 
     async def _discover_services(self) -> None:
@@ -86,11 +103,11 @@ class SimpleRecoveryAgent:
                     if any(keyword in cmdline_str.lower() for keyword in ['mcp', 'flash-loan', 'arbitrage', 'coordinator']):
                         service_name = f"mcp_service_{proc.info['pid']}"
                         self.monitored_services.add(service_name)
-                        logger.info(f"Monitoring service: {service_name} (PID: {proc.info['pid']})")
+                        logger.info(str(f"Monitoring service: {service_name} (PID: {proc.info['pid']}")
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
         except Exception as e:
-            logger.error(f"Failed to discover services: {e}")
+            logger.error(str(f"Failed to discover services: {e}")
             
     async def start_monitoring(self) -> None:
         """Start the monitoring loop"""
@@ -110,7 +127,7 @@ class SimpleRecoveryAgent:
                 await asyncio.sleep(self.config.check_interval)
                 
             except Exception as e:
-                logger.error(f"Error in monitoring loop: {e}")
+                logger.error(str(f"Error in monitoring loop: {e}")
                 await asyncio.sleep(5)  # Short wait before retrying
 
     async def _check_service_health(self, service_name: str) -> None:
@@ -119,7 +136,7 @@ class SimpleRecoveryAgent:
             pid = int(service_name.split('_')[-1])
             
             if not psutil.pid_exists(pid):
-                logger.warning(f"Service {service_name} (PID: {pid}) no longer exists")
+                logger.warning(str(f"Service {service_name} (PID: {pid} no longer exists")
                 self.monitored_services.discard(service_name)
                 return
                 
@@ -133,7 +150,7 @@ class SimpleRecoveryAgent:
             status = proc.status()
             
             # Create health record
-            health = ServiceHealth(
+            health = ServiceHealth()
                 service_id=str(pid),
                 name=service_name,
                 status=status,
@@ -143,7 +160,7 @@ class SimpleRecoveryAgent:
                 memory_percent=memory_percent,
                 last_check=datetime.now(timezone.utc),
                 error_logs=[]  # Would need to check log files
-            )
+            
             
             # Store health record
             if service_name not in self.health_history:
@@ -158,51 +175,51 @@ class SimpleRecoveryAgent:
             await self._evaluate_recovery_need(service_name, health)
             
         except (psutil.NoSuchProcess, psutil.AccessDenied):
-            logger.warning(f"Cannot access service {service_name}")
+            logger.warning(str(f"Cannot access service {service_name}")
             self.monitored_services.discard(service_name)
         except Exception as e:
-            logger.error(f"Failed to check health for {service_name}: {e}")
+            logger.error(str(f"Failed to check health for {service_name}: {e}")
 
     async def _evaluate_recovery_need(self, service_name: str, current_health: ServiceHealth) -> None:
         """Evaluate if recovery action is needed"""
         try:
             # Check resource thresholds
             if current_health.cpu_percent > self.config.max_cpu_threshold:
-                await self._queue_recovery_action(
+                await self._queue_recovery_action()
                     service_name, "restart", 
                     f"High CPU usage: {current_health.cpu_percent}%", 8
-                )
+                
                 
             if current_health.memory_percent > self.config.max_memory_threshold:
-                await self._queue_recovery_action(
+                await self._queue_recovery_action()
                     service_name, "restart",
                     f"High memory usage: {current_health.memory_percent}%", 8
-                )
+                
                 
             # Check if service is unhealthy
             if current_health.health_status != "healthy":
-                await self._queue_recovery_action(
+                await self._queue_recovery_action()
                     service_name, "restart",
                     f"Service unhealthy: {current_health.status}", 9
-                )
+                
                 
         except Exception as e:
-            logger.error(f"Error evaluating recovery need: {e}")
+            logger.error(str(f"Error evaluating recovery need: {e}")
 
     async def _queue_recovery_action(self, service_name: str, action: str, reason: str, priority: int) -> None:
         """Queue a recovery action"""
-        recovery_action = RecoveryAction(
+        recovery_action = RecoveryAction()
             service_name=service_name,
             action=action,
             reason=reason,
             priority=priority
-        )
+        
         
         # Avoid duplicate actions
         existing = [r for r in self.recovery_queue if r.service_name == service_name and r.action == action]
         if not existing:
             self.recovery_queue.append(recovery_action)
-            logger.info(f"Queued recovery action: {action} for {service_name} - {reason}")
+            logger.info(str(f"Queued recovery action: {action} for {service_name} - {reason}")
 
     async def _process_recovery_queue(self) -> None:
         """Process queued recovery actions"""
@@ -217,30 +234,30 @@ class SimpleRecoveryAgent:
         
         try:
             if action.action in self.recovery_actions:
-                logger.info(f"Executing recovery action: {action.action} for {action.service_name}")
+                logger.info(str(f"Executing recovery action: {action.action} for {action.service_name}")
                 await self.recovery_actions[action.action](action.service_name, action.reason)
             else:
-                logger.warning(f"Unknown recovery action: {action.action}")
+                logger.warning(str(f"Unknown recovery action: {action.action}")
                 
         except Exception as e:
-            logger.error(f"Failed to execute recovery action {action.action} for {action.service_name}: {e}")
+            logger.error(str(f"Failed to execute recovery action {action.action} for {action.service_name}: {e}")
 
     async def _restart_service(self, service_name: str, reason: str) -> None:
         """Restart a service (simplified)"""
-        logger.info(f"Would restart service {service_name} - {reason}")
+        logger.info(str(f"Would restart service {service_name} - {reason}")
         # In a real implementation, this would restart the actual service
 
     async def _recreate_service(self, service_name: str, reason: str) -> None:
         """Recreate a service (simplified)"""
-        logger.info(f"Would recreate service {service_name} - {reason}")
+        logger.info(str(f"Would recreate service {service_name} - {reason}")
 
     async def _scale_service(self, service_name: str, reason: str) -> None:
         """Scale a service (simplified)"""
-        logger.info(f"Would scale service {service_name} - {reason}")
+        logger.info(str(f"Would scale service {service_name} - {reason}")
 
     async def _rollback_service(self, service_name: str, reason: str) -> None:
         """Rollback a service (simplified)"""
-        logger.info(f"Would rollback service {service_name} - {reason}")
+        logger.info(str(f"Would rollback service {service_name} - {reason}")
 
     async def stop(self) -> None:
         """Stop the recovery agent"""
@@ -250,13 +267,13 @@ class SimpleRecoveryAgent:
 # FastAPI app for health checks and API
 app = FastAPI(title="Simple Recovery Agent", version="1.0.0")
 
-app.add_middleware(
+app.add_middleware()
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-)
+
 
 # Global agent instance
 agent: Optional[SimpleRecoveryAgent] = None
@@ -289,12 +306,12 @@ async def health_check() -> Dict[str, str]:
     if not agent:
         return {"status": "error", "message": "Agent not initialized"}
     
-    return {
+    return {}
         "status": "healthy",
         "monitored_services": str(len(agent.monitored_services)),
         "recovery_queue_size": str(len(agent.recovery_queue)),
         "uptime": "running"
-    }
+    
 
 @app.get("/services")
 async def get_monitored_services() -> Dict[str, List[str]]:
@@ -312,7 +329,7 @@ async def get_service_health(service_name: str) -> Dict[str, str]:
     if not recent_health:
         return {"error": "No health data available"}
     
-    return {
+    return {}
         "service_id": recent_health.service_id,
         "name": recent_health.name,
         "status": recent_health.status,
@@ -320,14 +337,14 @@ async def get_service_health(service_name: str) -> Dict[str, str]:
         "cpu_percent": str(recent_health.cpu_percent),
         "memory_percent": str(recent_health.memory_percent),
         "last_check": recent_health.last_check.isoformat()
-    }
+    
 
 if __name__ == "__main__":
     # Run the FastAPI app
-    uvicorn.run(
+    uvicorn.run()
         "recovery_agent:app",
         host="0.0.0.0",
         port=8080,
         reload=False,
         log_level="info"
-    )
+    

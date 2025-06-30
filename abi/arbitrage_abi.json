@@ -1,0 +1,89 @@
+[
+  {
+    "type": "function",
+    "name": "executeFlashLoan",
+    "inputs": [
+      {
+        "name": "assets",
+        "type": "address[]"
+      },
+      {
+        "name": "amounts",
+        "type": "uint256[]"
+      },
+      {
+        "name": "modes",
+        "type": "uint256[]"
+      },
+      {
+        "name": "onBehalfOf",
+        "type": "address"
+      },
+      {
+        "name": "params",
+        "type": "bytes"
+      },
+      {
+        "name": "referralCode",
+        "type": "uint16"
+      }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "executeOperation",
+    "inputs": [
+      {
+        "name": "assets",
+        "type": "address[]"
+      },
+      {
+        "name": "amounts",
+        "type": "uint256[]"
+      },
+      {
+        "name": "premiums",
+        "type": "uint256[]"
+      },
+      {
+        "name": "initiator",
+        "type": "address"
+      },
+      {
+        "name": "params",
+        "type": "bytes"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "getProfit",
+    "inputs": [
+      {
+        "name": "token0",
+        "type": "address"
+      },
+      {
+        "name": "token1",
+        "type": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "profit",
+        "type": "uint256"
+      }
+    ]
+  }
+]

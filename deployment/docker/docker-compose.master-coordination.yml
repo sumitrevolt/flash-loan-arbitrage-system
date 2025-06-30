@@ -1,0 +1,585 @@
+# =============================================================================
+# MASTER DOCKER COORDINATION SYSTEM
+# =============================================================================
+# Unified orchestration for:
+# - 21 MCP Servers
+# - 10 AI Agents  
+# - LangChain Multi-Agent System
+# - AutoGen Framework
+# - Centralized Coordination & Load Balancing
+# =============================================================================
+
+version: '3.8'
+
+networks:
+  master_coordination:
+    driver: bridge
+    name: master-coordination-network
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.25.0.0/16
+          gateway: 172.25.0.1
+
+volumes:
+  # Core Infrastructure
+  redis_master_data:
+    name: master-redis-data
+  postgres_master_data:
+    name: master-postgres-data  
+  rabbitmq_master_data:
+    name: master-rabbitmq-data
+  
+  # AI & ML Data
+  vector_store_data:
+    name: master-vector-store
+  agent_memory_data:
+    name: master-agent-memory
+  langchain_models:
+    name: master-langchain-models
+  autogen_data:
+    name: master-autogen-data
+  
+  # Monitoring & Logs
+  coordination_logs:
+    name: master-coordination-logs
+  grafana_data:
+    name: master-grafana-data
+  prometheus_data:
+    name: master-prometheus-data
+
+# =============================================================================
+# SERVICES CONFIGURATION
+# =============================================================================
+
+services:
+  # ==========================================================================
+  # CORE INFRASTRUCTURE SERVICES
+  # ==========================================================================
+  
+  redis-master:
+    image: redis:7-alpine
+    container_name: master-redis
+    hostname: redis-master
+    ports:
+      - "6380:6379"  # Changed from 6379 to avoid conflicts
+    environment:
+      - REDIS_PASSWORD=master_coordination_2025
+    command: >
+      redis-server 
+      --appendonly yes 
+      --requirepass master_coordination_2025
+      --maxmemory 4gb
+      --maxmemory-policy allkeys-lru
+      --bind 0.0.0.0
+    volumes:
+      - redis_master_data:/data
+    networks:
+      master_coordination:
+        ipv4_address: 172.25.0.10
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "master_coordination_2025", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 2G
+
+  postgres-master:
+    image: postgres:15-alpine
+    container_name: master-postgres
+    hostname: postgres-master
+    ports:
+      - "5433:5432"  # Changed from 5432 to avoid conflicts
+    environment:
+      POSTGRES_DB: master_coordination
+      POSTGRES_USER: master_coord_user
+      POSTGRES_PASSWORD: master_coord_secure_2025
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
+    volumes:
+      - postgres_master_data:/var/lib/postgresql/data
+      - ./init_scripts:/docker-entrypoint-initdb.d
+    networks:
+      master_coordination:
+        ipv4_address: 172.25.0.11
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U master_coord_user -d master_coordination"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+  rabbitmq-master:
+    image: rabbitmq:3-management-alpine
+    container_name: master-rabbitmq
+    hostname: rabbitmq-master
+    ports:
+      - "5673:5672"   # Changed from 5672 to avoid conflicts
+      - "15673:15672" # Changed from 15672 to avoid conflicts
+    environment:
+      RABBITMQ_DEFAULT_USER: master_coord_mq
+      RABBITMQ_DEFAULT_PASS: master_coord_mq_2025
+      RABBITMQ_DEFAULT_VHOST: master_coord_vhost
+    volumes:
+      - rabbitmq_master_data:/var/lib/rabbitmq
+    networks:
+      master_coordination:
+        ipv4_address: 172.25.0.12
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # ==========================================================================
+  # MASTER COORDINATION ORCHESTRATOR
+  # ==========================================================================
+
+  master-coordinator:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.master-coordination
+    container_name: master-coordinator
+    hostname: master-coordinator
+    ports:
+      - "8500:8500"  # Main coordination API
+      - "8501:8501"  # Service discovery
+      - "8502:8502"  # Load balancer
+      - "8503:8503"  # Health monitoring
+    environment:
+      # Core Configuration
+      - SERVICE_NAME=master_coordinator
+      - COORDINATION_MODE=master
+      - LOG_LEVEL=INFO
+      
+      # Infrastructure connections
+      - REDIS_URL=redis://:master_coordination_2025@redis-master:6379
+      - POSTGRES_URL=postgresql://master_coord_user:master_coord_secure_2025@postgres-master:5432/master_coordination
+      - RABBITMQ_URL=amqp://master_coord_mq:master_coord_mq_2025@rabbitmq-master:5672/master_coord_vhost
+      
+      # Component counts
+      - MCP_SERVERS_COUNT=21
+      - AI_AGENTS_COUNT=10
+      - LANGCHAIN_AGENTS_COUNT=7
+      - AUTOGEN_AGENTS_COUNT=4
+      
+      # Load balancing
+      - ENABLE_LOAD_BALANCING=true
+      - MAX_CONCURRENT_TASKS=50
+      - TASK_TIMEOUT=300
+      
+      # API Keys (from environment)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      
+    volumes:
+      - ./coordination_system:/app/coordination
+      - ./config:/app/config:ro
+      - coordination_logs:/app/logs
+      - ./mcp_servers:/app/mcp_servers:ro
+      - ./ai_agents:/app/ai_agents:ro
+    networks:
+      master_coordination:
+        ipv4_address: 172.25.0.20
+    depends_on:
+      redis-master:
+        condition: service_healthy
+      postgres-master:
+        condition: service_healthy
+      rabbitmq-master:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8500/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+  # ==========================================================================
+  # ENHANCED LANGCHAIN MULTI-AGENT SYSTEM
+  # ==========================================================================
+
+  langchain-master:
+    build:
+      context: ./langchain
+      dockerfile: Dockerfile
+    container_name: langchain-master
+    hostname: langchain-master
+    ports:
+      - "8600:8000"  # Main LangChain API (changed from 8000)
+      - "8601:8001"  # Agent coordination
+      - "8602:8002"  # RAG service
+      - "8603:8080"  # Metrics/health
+    environment:
+      # Service configuration
+      - SERVICE_NAME=langchain_master
+      - SERVICE_PORT=8000
+      - HOST=0.0.0.0
+      - WORKERS=2
+      - COORDINATION_MODE=enhanced
+      
+      # Database connections  
+      - POSTGRES_HOST=postgres-master
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=master_coordination
+      - POSTGRES_USER=master_coord_user
+      - POSTGRES_PASSWORD=master_coord_secure_2025
+      
+      # Redis configuration
+      - REDIS_HOST=redis-master
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=master_coordination_2025
+      
+      # RabbitMQ configuration
+      - RABBITMQ_HOST=rabbitmq-master
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=master_coord_mq
+      - RABBITMQ_PASSWORD=master_coord_mq_2025
+      - RABBITMQ_VHOST=master_coord_vhost
+      
+      # Master coordination
+      - MASTER_COORDINATOR_URL=http://master-coordinator:8500
+      
+      # API Keys
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      
+      # LangChain configuration
+      - LLM_MODEL=gpt-4-turbo-preview
+      - LLM_TEMPERATURE=0.1
+      - LLM_MAX_TOKENS=4000
+      - VECTOR_STORE_PROVIDER=chroma
+      - VECTOR_STORE_DIR=/app/vector_store
+      - EMBEDDING_MODEL=text-embedding-ada-002
+      
+      # Enhanced features
+      - MAX_CONCURRENT_TASKS=10
+      - ENABLE_CODE_EXECUTION=true
+      - ENABLE_RAG=true
+      - ENABLE_MEMORY=true
+      
+    volumes:
+      - vector_store_data:/app/vector_store
+      - agent_memory_data:/app/data
+      - langchain_models:/app/models
+      - coordination_logs:/app/logs
+      - ./langchain/data:/app/data/docs:ro
+      - ./config:/app/config:ro
+    networks:
+      master_coordination:
+        ipv4_address: 172.25.0.30
+    depends_on:
+      - master-coordinator
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+
+  # ==========================================================================
+  # AUTOGEN MULTI-AGENT FRAMEWORK
+  # ==========================================================================
+
+  autogen-master:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.autogen
+    container_name: autogen-master
+    hostname: autogen-master
+    ports:
+      - "8700:8000"  # AutoGen API (changed from 8002)
+      - "8701:8001"  # Group chat management
+      - "8702:8002"  # Agent coordination
+    environment:
+      # Service configuration
+      - SERVICE_NAME=autogen_master
+      - SERVICE_PORT=8000
+      - AUTOGEN_MODE=enhanced
+      
+      # Infrastructure connections
+      - REDIS_URL=redis://:master_coordination_2025@redis-master:6379
+      - RABBITMQ_URL=amqp://master_coord_mq:master_coord_mq_2025@rabbitmq-master:5672/master_coord_vhost
+      
+      # Master coordination
+      - MASTER_COORDINATOR_URL=http://master-coordinator:8500
+      
+      # API Keys
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-dummy_key}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      
+      # AutoGen configuration
+      - AUTOGEN_AGENTS_COUNT=4
+      - MAX_ROUND=10
+      - GROUP_CHAT_ENABLED=true
+      - CODE_EXECUTION_ENABLED=true
+      
+    volumes:
+      - autogen_data:/app/data
+      - coordination_logs:/app/logs
+      - ./autogen_agents:/app/autogen_agents:ro
+    networks:
+      master_coordination:
+        ipv4_address: 172.25.0.40
+    depends_on:
+      - master-coordinator
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '3'
+          memory: 6G
+        reservations:
+          cpus: '1.5'
+          memory: 3G
+
+  # ==========================================================================
+  # MCP SERVERS (21 servers with load balancing)
+  # ==========================================================================
+
+  mcp-server-pool:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.mcp-pool
+    container_name: mcp-server-pool
+    hostname: mcp-server-pool
+    ports:
+      - "9000-9020:9000-9020"  # Port range for 21 MCP servers
+    environment:
+      - SERVICE_NAME=mcp_server_pool
+      - MCP_SERVERS_COUNT=21
+      - REDIS_URL=redis://:master_coordination_2025@redis-master:6379
+      - MASTER_COORDINATOR_URL=http://master-coordinator:8500
+      - LOAD_BALANCING_ENABLED=true
+      - AUTO_SCALING_ENABLED=true
+      - MIN_SERVERS=5
+      - MAX_SERVERS=21
+    volumes:
+      - ./mcp_servers:/app/mcp_servers:ro
+      - coordination_logs:/app/logs
+    networks:
+      master_coordination:
+        ipv4_address: 172.25.1.0/24
+    depends_on:
+      - master-coordinator
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '8'
+          memory: 16G
+        reservations:
+          cpus: '4'
+          memory: 8G
+
+  # ==========================================================================
+  # AI AGENTS POOL (10 agents with coordination)
+  # ==========================================================================
+
+  ai-agents-pool:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ai-agents-pool
+    container_name: ai-agents-pool
+    hostname: ai-agents-pool
+    ports:
+      - "9100-9109:9100-9109"  # Port range for 10 AI agents
+    environment:
+      - SERVICE_NAME=ai_agents_pool
+      - AI_AGENTS_COUNT=10
+      - REDIS_URL=redis://:master_coordination_2025@redis-master:6379
+      - RABBITMQ_URL=amqp://master_coord_mq:master_coord_mq_2025@rabbitmq-master:5672/master_coord_vhost
+      - MASTER_COORDINATOR_URL=http://master-coordinator:8500
+      - AGENT_COORDINATION_ENABLED=true
+    volumes:
+      - ./ai_agents:/app/ai_agents:ro
+      - coordination_logs:/app/logs
+    networks:
+      master_coordination:
+        ipv4_address: 172.25.2.0/24
+    depends_on:
+      - master-coordinator
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '6'
+          memory: 12G
+        reservations:
+          cpus: '3'
+          memory: 6G
+
+  # ==========================================================================
+  # MONITORING & VISUALIZATION
+  # ==========================================================================
+
+  grafana-master:
+    image: grafana/grafana:latest
+    container_name: master-grafana
+    hostname: grafana-master
+    ports:
+      - "3001:3000"  # Changed from 3000 to avoid conflicts
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=redis-datasource,postgres-datasource
+    volumes:
+      - ./monitoring/grafana:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    networks:
+      master_coordination:
+        ipv4_address: 172.25.0.50
+    depends_on:
+      - master-coordinator
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  prometheus-master:
+    image: prom/prometheus:latest
+    container_name: master-prometheus
+    hostname: prometheus-master
+    ports:
+      - "9091:9090"  # Changed from 9090 to avoid conflicts
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      master_coordination:
+        ipv4_address: 172.25.0.51
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # ==========================================================================
+  # LOAD BALANCER & REVERSE PROXY
+  # ==========================================================================
+
+  nginx-master:
+    image: nginx:alpine
+    container_name: master-nginx
+    hostname: nginx-master
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx-master.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    networks:
+      master_coordination:
+        ipv4_address: 172.25.0.60
+    depends_on:
+      - master-coordinator
+      - langchain-master
+      - autogen-master
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+# =============================================================================
+# HEALTH CHECK & MONITORING
+# =============================================================================
+
+  health-monitor:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.health-monitor
+    container_name: master-health-monitor
+    hostname: health-monitor
+    environment:
+      - SERVICE_NAME=health_monitor
+      - REDIS_URL=redis://:master_coordination_2025@redis-master:6379
+      - CHECK_INTERVAL=30
+      - ALERT_WEBHOOK_URL=${ALERT_WEBHOOK_URL}
+    volumes:
+      - coordination_logs:/app/logs
+    networks:
+      master_coordination:
+        ipv4_address: 172.25.0.70
+    depends_on:
+      - redis-master
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M

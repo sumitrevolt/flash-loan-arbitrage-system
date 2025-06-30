@@ -7,11 +7,11 @@ export class FlashLoanAIService {
   private isAnalyzing: boolean = false;
   constructor(providerUrl?: string, aiProvider?: string) {
     // Force GitHub provider if set in environment
-    const provider = aiProvider || process.env.AI_PROVIDER || 'github';
+    const provider = aiProvider || 'github';
     console.log(`🤖 Initializing with AI Provider: ${provider.toUpperCase()}`);
     
     this.analyzer = new MultiProviderFlashLoanAIAnalyzer(provider);
-    this.rpcUrl = providerUrl || process.env.RPC_URL || 'https://mainnet.infura.io/v3/your-key';
+    this.rpcUrl = providerUrl || 'https://mainnet.infura.io/v3/your-key';
   }
 
   async analyzeCurrentMarket(): Promise<any> {

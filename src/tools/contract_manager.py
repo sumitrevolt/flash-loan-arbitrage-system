@@ -1,23 +1,26 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+import json
+import logging
+import os
+
+from web3.types import TxParams, Wei, ChecksumAddress
+
+from src.utils.middleware_compat import apply_poa_middleware
+from src.utils.web3_provider import Web3, WEB3_IMPORTED
+from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
+from src.utils.web3_provider import requires_web3
 """
 Contract manager for the Flash Loan Arbitrage System.
 Handles contract interactions and ABI loading.
 """
 # Import requires_web3 decorator from central provider
-from src.utils.web3_provider import requires_web3
 
 
-import os
-import json
-import logging
 # Import from central web3_provider
-from src.utils.web3_provider import Web3, WEB3_IMPORTED
-from web3.types import TxParams, Wei, ChecksumAddress
 # Import exceptions from central provider
-from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
 # Import middleware from centralized modules
-from src.utils.middleware_compat import apply_poa_middleware
 
-import logging
 logger = logging.getLogger(__name__)
 logger = logging.getLogger("ContractManager")
 
@@ -59,7 +62,7 @@ class ContractManager:
                 logger.warning("Network configuration file not found")
                 return {}
         except Exception as e:
-            logger.error(f"Failed to load configuration: {e}")
+            logger.error(str(f"Failed to load configuration: {e}")
             return {}
 
     def _create_erc20_abi(self):
@@ -69,8 +72,8 @@ class ContractManager:
             return
 
         # ERC20 ABI
-        erc20_abi = [
-            {
+        erc20_abi = []
+            {}
                 "constant": True,
                 "inputs": [],
                 "name": "name",
@@ -79,7 +82,7 @@ class ContractManager:
                 "stateMutability": "view",
                 "type": "function"
             },
-            {
+            {}
                 "constant": True,
                 "inputs": [],
                 "name": "symbol",
@@ -88,7 +91,7 @@ class ContractManager:
                 "stateMutability": "view",
                 "type": "function"
             },
-            {
+            {}
                 "constant": True,
                 "inputs": [],
                 "name": "decimals",
@@ -97,7 +100,7 @@ class ContractManager:
                 "stateMutability": "view",
                 "type": "function"
             },
-            {
+            {}
                 "constant": True,
                 "inputs": [],
                 "name": "totalSupply",
@@ -106,7 +109,7 @@ class ContractManager:
                 "stateMutability": "view",
                 "type": "function"
             },
-            {
+            {}
                 "constant": True,
                 "inputs": [{"name": "owner", "type": "address"}],
                 "name": "balanceOf",
@@ -115,7 +118,7 @@ class ContractManager:
                 "stateMutability": "view",
                 "type": "function"
             },
-            {
+            {}
                 "constant": True,
                 "inputs": [{"name": "owner", "type": "address"}, {"name": "spender", "type": "address"}],
                 "name": "allowance",
@@ -124,7 +127,7 @@ class ContractManager:
                 "stateMutability": "view",
                 "type": "function"
             },
-            {
+            {}
                 "constant": False,
                 "inputs": [{"name": "spender", "type": "address"}, {"name": "value", "type": "uint256"}],
                 "name": "approve",
@@ -133,7 +136,7 @@ class ContractManager:
                 "stateMutability": "nonpayable",
                 "type": "function"
             },
-            {
+            {}
                 "constant": False,
                 "inputs": [{"name": "to", "type": "address"}, {"name": "value", "type": "uint256"}],
                 "name": "transfer",
@@ -142,7 +145,7 @@ class ContractManager:
                 "stateMutability": "nonpayable",
                 "type": "function"
             },
-            {
+            {}
                 "constant": False,
                 "inputs": [{"name": "from", "type": "address"}, {"name": "to", "type": "address"}, {"name": "value", "type": "uint256"}],
                 "name": "transferFrom",
@@ -150,8 +153,8 @@ class ContractManager:
                 "payable": False,
                 "stateMutability": "nonpayable",
                 "type": "function"
-            }
-        ]
+            
+        
 
         with open(abi_path, "w") as f:
             json.dump(erc20_abi, f, indent=2)
@@ -181,7 +184,7 @@ class ContractManager:
                 abi_path = os.path.join("contracts", "abi", f"{contract_type}.json")
 
             if not os.path.exists(abi_path):
-                logger.error(f"ABI file not found: {abi_path}")
+                logger.error(str(f"ABI file not found: {abi_path}")
                 return None
 
             with open(abi_path, "r") as f:
@@ -196,7 +199,7 @@ class ContractManager:
             return contract
 
         except Exception as e:
-            logger.error(f"Failed to get contract: {e}")
+            logger.error(str(f"Failed to get contract: {e}")
             return None
 
     def get_flash_loan_contract(self):
@@ -215,7 +218,7 @@ class ContractManager:
             return self.get_contract(contract_address, "FlashLoanArbitrage")
 
         except Exception as e:
-            logger.error(f"Failed to get flash loan contract: {e}")
+            logger.error(str(f"Failed to get flash loan contract: {e}")
             return None
 
     def get_contract_address(self):
@@ -234,7 +237,7 @@ class ContractManager:
             return Web3.to_checksum_address(contract_address)
 
         except Exception as e:
-            logger.error(f"Failed to get contract address: {e}")
+            logger.error(str(f"Failed to get contract address: {e}")
             return None
 
     def get_token_contract(self, token_address):
@@ -251,7 +254,7 @@ class ContractManager:
             return self.get_contract(token_address, "ERC20")
 
         except Exception as e:
-            logger.error(f"Failed to get token contract: {e}")
+            logger.error(str(f"Failed to get token contract: {e}")
             return None
 
     def get_token_decimals(self, token_address):
@@ -273,7 +276,7 @@ class ContractManager:
             return decimals
 
         except Exception as e:
-            logger.error(f"Failed to get token decimals: {e}")
+            logger.error(str(f"Failed to get token decimals: {e}")
             return 18  # Default to 18 decimals
 
     def get_token_symbol(self, token_address):
@@ -295,7 +298,7 @@ class ContractManager:
             return symbol
 
         except Exception as e:
-            logger.error(f"Failed to get token symbol: {e}")
+            logger.error(str(f"Failed to get token symbol: {e}")
             return "UNKNOWN"
 
     def get_token_balance(self, token_address, wallet_address):
@@ -318,7 +321,7 @@ class ContractManager:
             return balance
 
         except Exception as e:
-            logger.error(f"Failed to get token balance: {e}")
+            logger.error(str(f"Failed to get token balance: {e}")
             return 0
 
     def get_token_allowance(self, token_address, owner_address, spender_address):
@@ -342,5 +345,5 @@ class ContractManager:
             return allowance
 
         except Exception as e:
-            logger.error(f"Failed to get token allowance: {e}")
+            logger.error(str(f"Failed to get token allowance: {e}")
             return 0

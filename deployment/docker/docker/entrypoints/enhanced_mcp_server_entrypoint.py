@@ -1,32 +1,47 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+from typing import Any, Optional, Dict
+import asyncio
+import json
+import logging
+import os
+import signal
+import sys
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
+import importlib.util
+import redis.asyncio as redis
+import uvicorn
 """
 Enhanced MCP Server Entrypoint for Docker
 Supports all 81 MCP server types with dynamic configuration
 """
 
-import asyncio
-import os
-import sys
-import logging
-import signal
-import importlib.util
-import json
-from pathlib import Path
-from typing import Any, Optional, Dict
-import uvicorn
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
-import redis.asyncio as redis
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(sys.stdout),
         logging.FileHandler('/app/logs/mcp_server.log', mode='a')
-    ]
-)
+    
+
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +64,7 @@ class EnhancedMCPServer:
                     return mcp_config.get('servers', {}).get(self.server_type, {})
             return {}
         except Exception as e:
-            logger.warning(f"Could not load server config: {e}")
+            logger.warning(str(f"Could not load server config: {e}")
             return {}
         
     def setup_routes(self):
@@ -57,13 +72,13 @@ class EnhancedMCPServer:
         
         @self.app.get("/health")
         async def health_check():
-            return {
+            return {}
                 "status": "healthy", 
                 "service": f"mcp_{self.server_type}",
                 "port": self.port,
                 "type": self.server_type,
                 "enabled": self.config.get('enabled', True)
-            }
+            
         
         @self.app.post("/query")
         async def process_query(request: dict):
@@ -71,34 +86,34 @@ class EnhancedMCPServer:
                 result = await self.handle_query(request)
                 return {"status": "success", "result": result}
             except Exception as e:
-                logger.error(f"Error processing query: {e}")
+                logger.error(str(f"Error processing query: {e}")
                 raise HTTPException(status_code=500, detail=str(e))
         
         @self.app.get("/capabilities")
         async def get_capabilities():
-            return {
+            return {}
                 "server_type": self.server_type,
                 "capabilities": self.get_server_capabilities(),
                 "config": self.config
-            }
+            
         
         @self.app.get("/status")
         async def get_status():
             redis_status = "connected" if self.redis_client else "disconnected"
-            return {
+            return {}
                 "server_type": self.server_type,
                 "port": self.port,
                 "redis_status": redis_status,
                 "uptime": asyncio.get_event_loop().time(),
                 "config": self.config
-            }
+            
     
     async def handle_query(self, request: dict) -> dict:
         """Handle incoming queries based on server type"""
         query_type = request.get('type', 'unknown')
         
         # Define server type handlers
-        handlers = {
+        handlers = {}
             # Price and Market Data
             'price_feed_server': self.handle_price_query,
             'real_time_price_mcp_server': self.handle_real_time_price_query,
@@ -166,143 +181,143 @@ class EnhancedMCPServer:
             'training_mcp_server': self.handle_training_query,
             'mcp_server_trainer': self.handle_training_query,
             'mcp_training_coordinator': self.handle_training_coordination_query,
-        }
+        
         
         handler = handlers.get(self.server_type, self.handle_generic_query)
         return await handler(request)
     
     async def handle_generic_query(self, request: dict) -> dict:
         """Handle generic queries for unknown server types"""
-        return {
+        return {}
             "type": "generic_response",
             "server": self.server_type,
             "message": f"Generic MCP server response for {request.get('type', 'unknown')}",
             "timestamp": asyncio.get_event_loop().time()
-        }
+        
     
     # Specialized handlers for different server types
     async def handle_price_query(self, request: dict) -> dict:
         symbol = request.get('symbol', 'ETH')
-        return {
+        return {}
             "type": "price_data",
             "symbol": symbol,
             "price": 2000.0 + (hash(symbol) % 1000),  # Mock varying prices
             "timestamp": asyncio.get_event_loop().time(),
             "source": "price_feed_server"
-        }
+        
     
     async def handle_real_time_price_query(self, request: dict) -> dict:
         symbols = request.get('symbols', ['ETH', 'BTC', 'MATIC'])
-        return {
+        return {}
             "type": "real_time_prices",
             "data": {symbol: 2000.0 + (hash(symbol) % 1000) for symbol in symbols},
             "timestamp": asyncio.get_event_loop().time(),
             "source": "real_time_price_server"
-        }
+        
     
     async def handle_arbitrage_query(self, request: dict) -> dict:
-        return {
+        return {}
             "type": "arbitrage_opportunity",
-            "opportunities": [
+            "opportunities": []
                 {"pair": "ETH/USDC", "profit": 0.05, "dexes": ["Uniswap", "SushiSwap"]},
                 {"pair": "MATIC/USDT", "profit": 0.03, "dexes": ["Quickswap", "1inch"]}
             ],
             "timestamp": asyncio.get_event_loop().time()
-        }
+        
     
     async def handle_flash_loan_query(self, request: dict) -> dict:
-        return {
+        return {}
             "type": "flash_loan_status",
-            "available_liquidity": {
+            "available_liquidity": {}
                 "USDC": 1000000,
                 "USDT": 800000,
                 "DAI": 500000
             },
             "fee_rate": 0.0009,
             "max_loan": 1000000
-        }
+        
     
     async def handle_aave_flash_loan_query(self, request: dict) -> dict:
-        return {
+        return {}
             "type": "aave_flash_loan",
             "available_assets": ["USDC", "USDT", "DAI", "WETH", "WMATIC"],
             "liquidity": {asset: 1000000 + (hash(asset) % 500000) for asset in ["USDC", "USDT", "DAI", "WETH", "WMATIC"]},
             "fee_rate": 0.0009
-        }
+        
     
     async def handle_risk_management_query(self, request: dict) -> dict:
-        return {
+        return {}
             "type": "risk_assessment",
             "risk_level": "moderate",
-            "metrics": {
+            "metrics": {}
                 "volatility": 0.15,
                 "liquidity_risk": 0.08,
                 "smart_contract_risk": 0.05
             },
             "recommendations": ["Limit position size", "Monitor slippage"]
-        }
+        
     
     async def handle_portfolio_query(self, request: dict) -> dict:
-        return {
+        return {}
             "type": "portfolio_data",
             "total_value": 50000,
-            "assets": {
+            "assets": {}
                 "ETH": {"amount": 15, "value": 30000},
                 "MATIC": {"amount": 10000, "value": 8000},
                 "USDC": {"amount": 12000, "value": 12000}
             },
             "performance": {"24h": 0.05, "7d": 0.12}
-        }
+        
     
     async def handle_monitoring_query(self, request: dict) -> dict:
-        return {
+        return {}
             "type": "monitoring_data",
             "system_status": "healthy",
-            "metrics": {
+            "metrics": {}
                 "cpu_usage": 45,
                 "memory_usage": 60,
                 "active_connections": 25
             },
             "alerts": []
-        }
+        
     
     async def handle_blockchain_query(self, request: dict) -> dict:
-        return {
+        return {}
             "type": "blockchain_data",
             "network": "polygon",
             "block_height": 50000000,
             "gas_price": 35,
             "transaction_count": 150
-        }
+        
     
     async def handle_coordination_query(self, request: dict) -> dict:
-        return {
+        return {}
             "type": "coordination_status",
             "active_agents": 8,
             "active_servers": 15,
             "tasks_pending": 5,
             "system_health": "optimal"
-        }
+        
     
     async def handle_enhanced_coordination_query(self, request: dict) -> dict:
-        return {
+        return {}
             "type": "enhanced_coordination",
             "orchestration_status": "active",
             "agent_coordination": "synchronized",
-            "performance_metrics": {
+            "performance_metrics": {}
                 "throughput": 1000,
                 "latency": 50,
                 "success_rate": 0.98
-            }
-        }
+            
+        
     
     async def handle_training_query(self, request: dict) -> dict:
-        return {
+        return {}
             "type": "training_status",
             "model_accuracy": 0.95,
             "training_progress": 0.85,
             "last_update": asyncio.get_event_loop().time()
-        }
+        
     
     # Add more specialized handlers as needed...
     async def handle_market_analysis_query(self, request: dict) -> dict:
@@ -352,7 +367,7 @@ class EnhancedMCPServer:
         base_capabilities = ["query", "health_check", "status"]
         
         # Define capabilities by server category
-        capability_map = {
+        capability_map = {}
             # Price and Market
             'price_feed_server': ["price_data", "market_data", "real_time_feeds"],
             'real_time_price_mcp_server': ["real_time_prices", "price_alerts", "market_trends"],
@@ -370,7 +385,7 @@ class EnhancedMCPServer:
             
             # Default for unknown servers
             'default': ["basic_query", "status_check"]
-        }
+        
         
         server_capabilities = capability_map.get(self.server_type, capability_map['default'])
         return base_capabilities + server_capabilities
@@ -379,24 +394,24 @@ class EnhancedMCPServer:
         """Initialize Redis connection"""
         try:
             redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
-            self.redis_client = redis.from_url(redis_url)
+            self.redis_client = redis.from_url(redis_url, decode_responses=True, encoding="utf-8")
             await self.redis_client.ping()
             logger.info("Connected to Redis successfully")
         except Exception as e:
-            logger.warning(f"Failed to connect to Redis: {e}")
+            logger.warning(str(f"Failed to connect to Redis: {e}")
     
     async def startup(self):
         """Startup tasks"""
         os.makedirs('/app/logs', exist_ok=True)
         await self.initialize_redis()
-        logger.info(f"Enhanced MCP Server ({self.server_type}) starting on port {self.port}")
-        logger.info(f"Server config loaded: {self.config}")
+        logger.info(str(f"Enhanced MCP Server ({self.server_type} starting on port {self.port}")
+        logger.info(str(f"Server config loaded: {self.config}")
     
     async def shutdown(self):
         """Cleanup tasks"""
         if self.redis_client:
             await self.redis_client.close()
-        logger.info(f"Enhanced MCP Server ({self.server_type}) shutdown complete")
+        logger.info(str(f"Enhanced MCP Server ({self.server_type} shutdown complete")
 
 # Create the server instance
 enhanced_mcp_server = EnhancedMCPServer()
@@ -412,14 +427,14 @@ async def shutdown_event():
 def run_server():
     """Run the Enhanced MCP server"""
     try:
-        uvicorn.run(
+        uvicorn.run()
             enhanced_mcp_server.app,
             host="0.0.0.0",
             port=enhanced_mcp_server.port,
             log_level="info"
-        )
+        
     except Exception as e:
-        logger.error(f"Failed to start Enhanced MCP server: {e}")
+        logger.error(str(f"Failed to start Enhanced MCP server: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

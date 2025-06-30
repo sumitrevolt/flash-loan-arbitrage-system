@@ -1,0 +1,57 @@
+{
+  "mcpServers": {
+    "context7-mcp-server": {
+      "command": "python",
+      "args": [
+        "mcp_servers/context7_mcp_server.py"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "search_docs",
+        "get_library_info",
+        "get_context_suggestions",
+        "analyze_code_context",
+        "health_check"
+      ],
+      "alwaysAllow": [
+        "search_docs",
+        "get_library_info",
+        "get_context_suggestions",
+        "analyze_code_context",
+        "health_check",
+        "register_with_coordinator"
+      ]
+    },
+    "filesystem": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "c:\\Users\\Ratanshila\\Documents\\flash loan"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "read_file",
+        "read_multiple_files",
+        "get_file_info",
+        "list_allowed_directories",
+        "search_files",
+        "list_directory"
+      ],
+      "alwaysAllow": [
+        "read_file",
+        "read_multiple_files",
+        "get_file_info",
+        "list_allowed_directories",
+        "search_files",
+        "list_directory",
+        "write_file",
+        "edit_file",
+        "create_directory",
+        "move_file"
+      ]
+    }
+  }
+} 

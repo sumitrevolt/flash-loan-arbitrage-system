@@ -1,6 +1,10 @@
+# -*- coding: utf-8 -*-
 # src/flash_loan/core/dex_integration_singleton.py
-from .dex_integration import DEXIntegration
 
+
+# -*- coding: utf-8 -*-
+
+from .dex_integration import DEXIntegration
 class DEXIntegrationSingleton:
     _instance = None
     _initialized_successfully = False # New flag to track successful initialization
@@ -40,11 +44,11 @@ class DEXIntegrationSingleton:
 
         # After attempting initialization (either explicit or automatic via the call above), check the flag
         if not DEXIntegrationSingleton._initialized_successfully:
-            raise RuntimeError(
+            raise RuntimeError()
                 "DEXIntegrationSingleton could not be initialized. "
                 "Ensure DEXIntegration class can be instantiated correctly (it may require a valid rpc_manager) "
                 "and that DEXIntegrationSingleton.initialize() is called successfully before get_instance()."
-            )
+            
         return DEXIntegrationSingleton._instance
 
 # Helper functions for easier access

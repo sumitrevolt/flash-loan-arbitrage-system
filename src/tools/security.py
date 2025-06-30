@@ -1,6 +1,9 @@
+# -*- coding: utf-8 -*-
 import os
 import pathlib
 
+
+# -*- coding: utf-8 -*-
 def is_safe_path(base_dir, path):
     """
     Verify that a path doesn't contain symlinks and is within the base directory

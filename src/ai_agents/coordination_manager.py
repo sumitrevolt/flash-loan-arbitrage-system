@@ -1,23 +1,26 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from typing import Dict, List, Any, Optional, Tuple
+import asyncio
+import json
+import logging
+import uuid
+
+            import aiohttp
+from aio_pika import Message, DeliveryMode
+from dataclasses import dataclass, field
+from enum import Enum
+import aio_pika
+import aioredis
+import asyncpg
 """
 Coordination Manager for MCP Servers and AI Agents
 Manages communication and task distribution across all services
 """
 
-import asyncio
-import logging
-import json
-import uuid
-from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass, field  # type: ignore
-from enum import Enum  # type: ignore
 
 # Suppressed unresolved imports
-import aioredis  # type: ignore
-import asyncpg  # type: ignore
-import aio_pika  # type: ignore
-from aio_pika import Message, DeliveryMode  # type: ignore
 
 logger = logging.getLogger("CoordinationManager")
 
@@ -91,40 +94,40 @@ class CoordinationManager:
             self.channel = await self.rabbitmq.channel()
             
             # Declare coordination exchange
-            self.coordination_exchange = await self.channel.declare_exchange(
+            self.coordination_exchange = await self.channel.declare_exchange()
                 "coordination",
                 aio_pika.ExchangeType.TOPIC,
                 durable=True
-            )
+            
             
             # Declare task queue
-            task_queue = await self.channel.declare_queue(
+            task_queue = await self.channel.declare_queue()
                 "system_tasks",
                 durable=True
-            )
+            
             
             # Declare heartbeat queue
-            heartbeat_queue = await self.channel.declare_queue(
+            heartbeat_queue = await self.channel.declare_queue()
                 "service_heartbeats",
                 durable=False
-            )
+            
             
             # Set up consumers
             await task_queue.consume(self._handle_task_message)
             await heartbeat_queue.consume(self._handle_heartbeat_message)
             
-            logger.info("✅ RabbitMQ coordination components initialized")
+            logger.info("[OK] RabbitMQ coordination components initialized")
             
         except Exception as e:
-            logger.error(f"❌ Failed to initialize RabbitMQ: {e}")
+            logger.error(str(f"[ERROR] Failed to initialize RabbitMQ: {e}")
     
     async def _initialize_database(self):
         """Initialize database tables"""
         try:
             async with self.postgres.acquire() as conn:
                 # Create services table
-                await conn.execute("""
-                    CREATE TABLE IF NOT EXISTS services (
+                await conn.execute(""")
+                    CREATE TABLE IF NOT EXISTS services ()
                         name TEXT PRIMARY KEY,
                         service_type TEXT NOT NULL,
                         status TEXT NOT NULL,
@@ -133,12 +136,12 @@ class CoordinationManager:
                         load_value FLOAT DEFAULT 0.0,
                         health_score FLOAT DEFAULT 1.0,
                         endpoint TEXT DEFAULT ''
-                    )
-                """)
+                    
+                """
                 
                 # Create tasks table
-                await conn.execute("""
-                    CREATE TABLE IF NOT EXISTS coordination_tasks (
+                await conn.execute(""")
+                    CREATE TABLE IF NOT EXISTS coordination_tasks ()
                         id TEXT PRIMARY KEY,
                         task_type TEXT NOT NULL,
                         parameters JSONB NOT NULL,
@@ -149,24 +152,24 @@ class CoordinationManager:
                         target_services JSONB,
                         result JSONB,
                         error TEXT
-                    )
-                """)
+                    
+                """
                 
                 # Create task history table
-                await conn.execute("""
-                    CREATE TABLE IF NOT EXISTS task_history (
+                await conn.execute(""")
+                    CREATE TABLE IF NOT EXISTS task_history ()
                         id SERIAL PRIMARY KEY,
                         task_id TEXT NOT NULL,
                         status_change TEXT NOT NULL,
                         timestamp TIMESTAMP DEFAULT NOW(),
                         details JSONB
-                    )
-                """)
+                    
+                """
                 
-                logger.info("✅ Database tables initialized")
+                logger.info("[OK] Database tables initialized")
                 
         except Exception as e:
-            logger.error(f"❌ Failed to initialize database: {e}")
+            logger.error(str(f"[ERROR] Failed to initialize database: {e}")
     
     async def _start_coordination_loops(self):
         """Start background coordination loops"""
@@ -177,14 +180,14 @@ class CoordinationManager:
         asyncio.create_task(self._health_monitoring_loop())
         asyncio.create_task(self._cleanup_loop())
         
-        logger.info("✅ Coordination loops started")
+        logger.info("[OK] Coordination loops started")
     
-    async def submit_task(self, task_type: str, parameters: Dict[str, Any], 
+    async def submit_task(self, task_type: str, parameters: Dict[str, Any], )
                          priority: int = 1, target_services: Optional[List[str]] = None) -> str:
         """Submit a new task for execution"""
         task_id = str(uuid.uuid4())
         
-        task = Task(
+        task = Task()
             id=task_id,
             task_type=task_type,
             parameters=parameters,
@@ -193,7 +196,7 @@ class CoordinationManager:
             assigned_to=None,
             created_at=datetime.now(),
             target_services=target_services
-        )
+        
         
         self.tasks[task_id] = task
         
@@ -205,29 +208,29 @@ class CoordinationManager:
         
         # Publish task notification
         if self.coordination_exchange:
-            message = Message(
-                json.dumps({
+            message = Message()
+                json.dumps({)}
                     "type": "new_task",
                     "task_id": task_id,
                     "task_type": task_type,
                     "priority": priority
-                }).encode(),
+                }, ensure_ascii=True, default=str).encode(),
                 delivery_mode=DeliveryMode.PERSISTENT
-            )
             
-            await self.coordination_exchange.publish(
+            
+            await self.coordination_exchange.publish()
                 message,
                 routing_key="tasks.new"
-            )
+            
         
-        logger.info(f"📋 Submitted task {task_id}: {task_type}")
+        logger.info(str(f"📋 Submitted task {task_id}: {task_type}")
         return task_id
     
     async def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
         """Get status of a specific task"""
         if task_id in self.tasks:
             task = self.tasks[task_id]
-            return {
+            return {}
                 "id": task.id,
                 "type": task.task_type,
                 "status": task.status.value,
@@ -235,18 +238,18 @@ class CoordinationManager:
                 "created_at": task.created_at.isoformat(),
                 "result": task.result,
                 "error": task.error
-            }
+            
         
         # Check database
         try:
             async with self.postgres.acquire() as conn:
-                row = await conn.fetchrow(
+                row = await conn.fetchrow()
                     "SELECT * FROM coordination_tasks WHERE id = $1",
                     task_id
-                )
+                
                 
                 if row:
-                    return {
+                    return {}
                         "id": row["id"],
                         "type": row["task_type"],
                         "status": row["status"],
@@ -254,23 +257,23 @@ class CoordinationManager:
                         "created_at": row["created_at"].isoformat(),
                         "result": row["result"],
                         "error": row["error"]
-                    }
+                    
                     
         except Exception as e:
-            logger.error(f"Failed to get task status from DB: {e}")
+            logger.error(str(f"Failed to get task status from DB: {e}")
         
         return None
     
     async def register_service(self, name: str, service_type: ServiceType, capabilities: List[str], endpoint: str = ""):
         """Register a service with the coordinator"""
-        service = ServiceInfo(
+        service = ServiceInfo()
             name=name,
             service_type=service_type,
             status="active",
             last_heartbeat=datetime.now(),
             capabilities=capabilities,
             endpoint=endpoint
-        )
+        
         
         self.services[name] = service
         
@@ -278,17 +281,17 @@ class CoordinationManager:
         await self._store_service_in_db(service)
         
         # Store in Redis for fast access
-        service_data = {
+        service_data = {}
             "service_type": service_type.value,
             "status": service.status,
             "capabilities": capabilities,
             "endpoint": endpoint,
             "last_heartbeat": service.last_heartbeat.isoformat()
-        }
+        
         
         await self.redis.hset(f"service:{name}", mapping=service_data)
         
-        logger.info(f"📝 Registered service: {name} ({service_type.value})")
+        logger.info(str(f"[LOG] Registered service: {name} ({service_type.value}")
     
     async def update_service_heartbeat(self, service_name: str, load: float = 0.0, health_score: float = 1.0):
         """Update service heartbeat"""
@@ -299,16 +302,16 @@ class CoordinationManager:
             service.health_score = health_score
             
             # Update in Redis
-            await self.redis.hset(
+            await self.redis.hset()
                 f"service:{service_name}",
-                mapping={
+                mapping={}
                     "last_heartbeat": service.last_heartbeat.isoformat(),
                     "load": str(load),
                     "health_score": str(health_score)
-                }
-            )
+                
+            
         
-        logger.debug(f"💓 Heartbeat updated for {service_name}")
+        logger.debug(str(f"💓 Heartbeat updated for {service_name}")
     
     async def coordinate_services(self):
         """Main coordination logic called periodically"""
@@ -326,7 +329,7 @@ class CoordinationManager:
             await self._optimize_task_distribution()
             
         except Exception as e:
-            logger.error(f"Coordination error: {e}")
+            logger.error(str(f"Coordination error: {e}")
     
     async def _service_discovery_loop(self):
         """Discover and monitor services"""
@@ -340,12 +343,12 @@ class CoordinationManager:
                     if server_name not in self.services:
                         # Try to discover service
                         if await self._ping_service(f"http://fl_{server_name}:400{i}"):
-                            await self.register_service(
+                            await self.register_service()
                                 server_name,
                                 ServiceType.MCP_SERVER,
                                 [f"mcp_capability_{i}"],
                                 f"http://fl_{server_name}:400{i}"
-                            )
+                            
                 
                 # Discover AI agents
                 for i in range(1, 11):  # 10 AI agents
@@ -353,17 +356,17 @@ class CoordinationManager:
                     if agent_name not in self.services:
                         # Try to discover service
                         if await self._ping_service(f"http://fl_agent_{agent_name}:500{i}"):
-                            await self.register_service(
+                            await self.register_service()
                                 agent_name,
                                 ServiceType.AI_AGENT,
                                 [f"ai_capability_{i}"],
                                 f"http://fl_agent_{agent_name}:500{i}"
-                            )
+                            
                 
-                logger.debug("🔍 Service discovery completed")
+                logger.debug("[SEARCH] Service discovery completed")
                 
             except Exception as e:
-                logger.error(f"Service discovery error: {e}")
+                logger.error(str(f"Service discovery error: {e}")
     
     async def _task_distribution_loop(self):
         """Distribute tasks to available services"""
@@ -388,7 +391,7 @@ class CoordinationManager:
                 await asyncio.sleep(1)  # Small delay to prevent busy waiting
                 
             except Exception as e:
-                logger.error(f"Task distribution error: {e}")
+                logger.error(str(f"Task distribution error: {e}")
     
     async def _health_monitoring_loop(self):
         """Monitor service health"""
@@ -405,10 +408,10 @@ class CoordinationManager:
                     if time_since_heartbeat.total_seconds() > self.heartbeat_timeout:
                         service.status = "unhealthy"
                         unhealthy_services.append(name)
-                        logger.warning(f"⚠️ Service {name} is unhealthy (no heartbeat for {time_since_heartbeat})")
+                        logger.warning(str(f"[WARN] Service {name} is unhealthy (no heartbeat for {time_since_heartbeat}")
                     elif service.status == "unhealthy" and time_since_heartbeat.total_seconds() <= 60:
                         service.status = "active"
-                        logger.info(f"✅ Service {name} is healthy again")
+                        logger.info(str(f"[OK] Service {name} is healthy again")
                 
                 # Update unhealthy services in Redis
                 if unhealthy_services:
@@ -417,7 +420,7 @@ class CoordinationManager:
                     await self.redis.delete("unhealthy_services")
                 
             except Exception as e:
-                logger.error(f"Health monitoring error: {e}")
+                logger.error(str(f"Health monitoring error: {e}")
     
     async def _cleanup_loop(self):
         """Clean up old tasks and data"""
@@ -428,26 +431,26 @@ class CoordinationManager:
                 # Clean up completed tasks older than 24 hours
                 cutoff_time = datetime.now() - timedelta(hours=24)
                 
-                completed_tasks = [
+                completed_tasks = []
                     task_id for task_id, task in self.tasks.items()
                     if task.status in [TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED]
                     and task.created_at < cutoff_time
-                ]
+                
                 
                 for task_id in completed_tasks:
                     del self.tasks[task_id]
                 
                 # Clean up database
                 async with self.postgres.acquire() as conn:
-                    await conn.execute(
+                    await conn.execute()
                         "DELETE FROM coordination_tasks WHERE created_at < $1 AND status IN ('completed', 'failed', 'cancelled')",
                         cutoff_time
-                    )
+                    
                 
-                logger.info(f"🧹 Cleaned up {len(completed_tasks)} old tasks")
+                logger.info(str(f"🧹 Cleaned up {len(completed_tasks} old tasks")
                 
             except Exception as e:
-                logger.error(f"Cleanup error: {e}")
+                logger.error(str(f"Cleanup error: {e}")
     
     def _service_can_handle_task(self, service: ServiceInfo, task: Task) -> bool:
         """Check if a service can handle a specific task"""
@@ -461,25 +464,25 @@ class CoordinationManager:
         
         # Filter services based on target services if specified
         if task.target_services:
-            candidate_services = [
+            candidate_services = []
                 name for name, service in self.services.items()
                 if name in task.target_services and service.status == "active"
-            ]
+            
         else:
             # Find services with relevant capabilities
-            candidate_services = [
+            candidate_services = []
                 name for name, service in self.services.items()
                 if service.status == "active" and self._service_can_handle_task(service, task)
-            ]
+            
         
         if not candidate_services:
             return None
         
         # Sort by load and health score
-        candidate_services.sort(key=lambda name: (
+        candidate_services.sort(key=lambda name: ())
             self.services[name].load,
             -self.services[name].health_score
-        ))
+
         
         return candidate_services[0]
     
@@ -493,22 +496,22 @@ class CoordinationManager:
         
         # Send task to service via RabbitMQ
         if self.coordination_exchange:
-            message = Message(
-                json.dumps({
+            message = Message()
+                json.dumps({)}
                     "task_id": task.id,
                     "task_type": task.task_type,
                     "parameters": task.parameters,
                     "priority": task.priority
-                }).encode(),
+                }, ensure_ascii=True, default=str).encode(),
                 delivery_mode=DeliveryMode.PERSISTENT
-            )
             
-            await self.coordination_exchange.publish(
+            
+            await self.coordination_exchange.publish()
                 message,
                 routing_key=f"tasks.{service_name}"
-            )
+            
         
-        logger.info(f"📤 Assigned task {task.id} to {service_name}")
+        logger.info(str(f"📤 Assigned task {task.id} to {service_name}")
     
     async def _handle_task_message(self, message: aio_pika.IncomingMessage):  # type: ignore
         """Handle incoming task messages"""
@@ -516,10 +519,10 @@ class CoordinationManager:
             try:
                 data = json.loads(message.body.decode())  # type: ignore
                 # Handle task status updates, results, etc.
-                logger.debug(f"Received task message: {data}")
+                logger.debug(str(f"Received task message: {data}")
                 
             except Exception as e:
-                logger.error(f"Failed to process task message: {e}")
+                logger.error(str(f"Failed to process task message: {e}")
     
     async def _handle_heartbeat_message(self, message: aio_pika.IncomingMessage):  # type: ignore
         """Handle incoming heartbeat messages"""
@@ -534,13 +537,13 @@ class CoordinationManager:
                     await self.update_service_heartbeat(service_name, load, health_score)
                 
             except Exception as e:
-                logger.error(f"Failed to process heartbeat message: {e}")
+                logger.error(str(f"Failed to process heartbeat message: {e}")
     
     async def _store_task_in_db(self, task: Task):
         """Store task in database"""
         try:
             async with self.postgres.acquire() as conn:
-                await conn.execute("""
+                await conn.execute(""")
                     INSERT INTO coordination_tasks 
                     (id, task_type, parameters, priority, status, assigned_to, created_at, target_services)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -548,34 +551,34 @@ class CoordinationManager:
                     status = EXCLUDED.status,
                     assigned_to = EXCLUDED.assigned_to
                 """, 
-                task.id, task.task_type, json.dumps(task.parameters), task.priority,
+                task.id, task.task_type, json.dumps(task.parameters, ensure_ascii=True, default=str), task.priority,
                 task.status.value, task.assigned_to, task.created_at, 
-                json.dumps(task.target_services) if task.target_services else None)
+                json.dumps(task.target_services, ensure_ascii=True, default=str) if task.target_services else None
                 
         except Exception as e:
-            logger.error(f"Failed to store task in DB: {e}")
+            logger.error(str(f"Failed to store task in DB: {e}")
     
     async def _update_task_in_db(self, task: Task):
         """Update task in database"""
         try:
             async with self.postgres.acquire() as conn:
-                await conn.execute("""
+                await conn.execute(""")
                     UPDATE coordination_tasks 
                     SET status = $2, assigned_to = $3, result = $4, error = $5
                     WHERE id = $1
                 """, 
                 task.id, task.status.value, task.assigned_to,
-                json.dumps(task.result) if task.result else None,
-                task.error)
+                json.dumps(task.result, ensure_ascii=True, default=str) if task.result else None,
+                task.error
                 
         except Exception as e:
-            logger.error(f"Failed to update task in DB: {e}")
+            logger.error(str(f"Failed to update task in DB: {e}")
     
     async def _store_service_in_db(self, service: ServiceInfo):
         """Store service in database"""
         try:
             async with self.postgres.acquire() as conn:
-                await conn.execute("""
+                await conn.execute(""")
                     INSERT INTO services 
                     (name, service_type, status, last_heartbeat, capabilities, load_value, health_score, endpoint)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -586,16 +589,15 @@ class CoordinationManager:
                     health_score = EXCLUDED.health_score
                 """, 
                 service.name, service.service_type.value, service.status,
-                service.last_heartbeat, json.dumps(service.capabilities),
-                service.load, service.health_score, service.endpoint)
+                service.last_heartbeat, json.dumps(service.capabilities, ensure_ascii=True, default=str),
+                service.load, service.health_score, service.endpoint
                 
         except Exception as e:
-            logger.error(f"Failed to store service in DB: {e}")
+            logger.error(str(f"Failed to store service in DB: {e}")
     
     async def _ping_service(self, endpoint: str) -> bool:
         """Ping a service to check if it's available"""
         try:
-            import aiohttp
             async with aiohttp.ClientSession() as session:
                 async with session.get(f"{endpoint}/health", timeout=5) as response:
                     return response.status == 200

@@ -1,4 +1,17 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+            import shutil
+from pathlib import Path
+from typing import Dict, List, Optional
+import asyncio
+import json
+import logging
+import os
+import platform
+import signal
+import subprocess
+import sys
+import time
 """
 Master Flash Loan Arbitrage System Launcher
 ==========================================
@@ -16,27 +29,29 @@ Author: AI Assistant
 Version: 1.0.0
 """
 
-import asyncio
-import subprocess
-import sys
-import os
-import time
-import json
-import logging
-from pathlib import Path
-from typing import Dict, List, Optional
-import signal
-import platform
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.FileHandler('master_coordination_launcher.log'),
         logging.StreamHandler()
-    ]
-)
+    
+
 logger = logging.getLogger(__name__)
 
 class MasterCoordinationLauncher:
@@ -50,7 +65,7 @@ class MasterCoordinationLauncher:
         self.system_status = {}
         
         # Service URLs for monitoring
-        self.service_urls = {
+        self.service_urls = {}
             'master_orchestrator': 'http://localhost:8000',
             'dashboard': 'http://localhost:8080',
             'langchain_coordinator': 'http://localhost:8001',
@@ -62,22 +77,22 @@ class MasterCoordinationLauncher:
             'ai_risk_manager': 'http://localhost:9002',
             'self_healing_agent': 'http://localhost:8300',
             'health_monitor': 'http://localhost:8400'
-        }
+        
         
     def display_banner(self):
         """Display system banner"""
         banner = """
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                                                                              ║
-║        🚀 MASTER FLASH LOAN ARBITRAGE COORDINATION SYSTEM 🚀                ║
+║        [INIT] MASTER FLASH LOAN ARBITRAGE COORDINATION SYSTEM [INIT]                ║
 ║                                                                              ║
 ║  ┌─────────────────────────────────────────────────────────────────────┐    ║
 ║  │  💎 80+ MCP Servers    🤖 10+ AI Agents    🧠 LangChain/AutoGen     │    ║
-║  │  🔧 Self-Healing       📊 Real-time Dashboard   🛡️ Security          │    ║
-║  │  ⚡ Flash Loans        💰 Arbitrage Trading     🔄 24/7 Operation     │    ║
+║  │  [SETUP] Self-Healing       [METRICS] Real-time Dashboard   🛡️ Security          │    ║
+║  │  [FAST] Flash Loans        💰 Arbitrage Trading     [SYNC] 24/7 Operation     │    ║
 ║  └─────────────────────────────────────────────────────────────────────┘    ║
 ║                                                                              ║
-║  🎯 Autonomous Multi-Chain Arbitrage with Advanced AI Coordination          ║
+║  [TASK] Autonomous Multi-Chain Arbitrage with Advanced AI Coordination          ║
 ║                                                                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
         """
@@ -85,7 +100,7 @@ class MasterCoordinationLauncher:
         
     def check_system_requirements(self) -> bool:
         """Check if system requirements are met"""
-        print("\n🔍 CHECKING SYSTEM REQUIREMENTS")
+        print("\n[SEARCH] CHECKING SYSTEM REQUIREMENTS")
         print("=" * 80)
         
         requirements_met = True
@@ -94,65 +109,64 @@ class MasterCoordinationLauncher:
         try:
             result = subprocess.run(['docker', '--version'], capture_output=True, text=True)
             if result.returncode == 0:
-                print(f"✅ Docker: {result.stdout.strip()}")
+                print(f"[OK] Docker: {result.stdout.strip()}")
             else:
-                print("❌ Docker not found or not working")
+                print("[ERROR] Docker not found or not working")
                 requirements_met = False
         except FileNotFoundError:
-            print("❌ Docker not installed")
+            print("[ERROR] Docker not installed")
             requirements_met = False
             
         # Check Docker Compose
         try:
             result = subprocess.run(['docker', 'compose', 'version'], capture_output=True, text=True)
             if result.returncode == 0:
-                print(f"✅ Docker Compose: {result.stdout.strip()}")
+                print(f"[OK] Docker Compose: {result.stdout.strip()}")
             else:
-                print("❌ Docker Compose not found or not working")
+                print("[ERROR] Docker Compose not found or not working")
                 requirements_met = False
         except FileNotFoundError:
-            print("❌ Docker Compose not available")
+            print("[ERROR] Docker Compose not available")
             requirements_met = False
             
         # Check Python version
         python_version = sys.version.split()[0]
         if sys.version_info >= (3, 11):
-            print(f"✅ Python: {python_version}")
+            print(f"[OK] Python: {python_version}")
         else:
-            print(f"⚠️  Python: {python_version} (Recommended: 3.11+)")
+            print(f"[WARN]  Python: {python_version} (Recommended: 3.11+)")
             
         # Check available disk space
         try:
-            import shutil
             total, used, free = shutil.disk_usage('.')
             free_gb = free // (1024**3)
             if free_gb >= 10:
-                print(f"✅ Disk Space: {free_gb}GB available")
+                print(f"[OK] Disk Space: {free_gb}GB available")
             else:
-                print(f"⚠️  Disk Space: {free_gb}GB available (Recommended: 10GB+)")
+                print(f"[WARN]  Disk Space: {free_gb}GB available (Recommended: 10GB+)")
         except:
-            print("⚠️  Could not check disk space")
+            print("[WARN]  Could not check disk space")
             
         # Check required files
-        required_files = [
+        required_files = []
             'docker/docker-compose-master.yml',
             'docker/Dockerfile.mcp-enhanced',
             'docker/Dockerfile.agent',
             'docker/Dockerfile.coordination',
             'requirements-coordination-fixed.txt'
-        ]
+        
         
         for file_path in required_files:
             if (self.base_dir / file_path).exists():
-                print(f"✅ {file_path}")
+                print(f"[OK] {file_path}")
             else:
-                print(f"❌ Missing: {file_path}")
+                print(f"[ERROR] Missing: {file_path}")
                 requirements_met = False
                 
         if requirements_met:
-            print("\n🎉 All system requirements met!")
+            print("\n[CELEBRATE] All system requirements met!")
         else:
-            print("\n❌ Some requirements not met. Please install missing dependencies.")
+            print("\n[ERROR] Some requirements not met. Please install missing dependencies.")
             
         return requirements_met
         
@@ -204,13 +218,13 @@ DEBUG=false
         if not env_file.exists():
             with open(env_file, 'w') as f:
                 f.write(env_content)
-            print(f"✅ Created environment file: {env_file}")
+            print(f"[OK] Created environment file: {env_file}")
         else:
-            print(f"✅ Environment file exists: {env_file}")
+            print(f"[OK] Environment file exists: {env_file}")
             
     def setup_directories(self):
         """Setup required directories"""
-        directories = [
+        directories = []
             'docker/volumes/postgres_data',
             'docker/volumes/redis_data', 
             'docker/volumes/rabbitmq_data',
@@ -219,7 +233,7 @@ DEBUG=false
             'docker/volumes/ollama_data',
             'logs',
             'data'
-        ]
+        
         
         print("\n📁 SETTING UP DIRECTORIES")
         print("=" * 80)
@@ -227,7 +241,7 @@ DEBUG=false
         for directory in directories:
             dir_path = self.base_dir / directory
             dir_path.mkdir(parents=True, exist_ok=True)
-            print(f"✅ {directory}")
+            print(f"[OK] {directory}")
             
     async def start_docker_services(self):
         """Start Docker services using docker-compose"""
@@ -237,47 +251,47 @@ DEBUG=false
         compose_file = self.docker_dir / "docker-compose-master.yml"
         
         if not compose_file.exists():
-            print(f"❌ Docker compose file not found: {compose_file}")
+            print(f"[ERROR] Docker compose file not found: {compose_file}")
             return False
             
         try:
             # Stop any existing services
-            print("🛑 Stopping existing services...")
-            subprocess.run([
+            print("[STOP] Stopping existing services...")
+            subprocess.run([)]
                 'docker', 'compose', '-f', str(compose_file), 'down'
-            ], cwd=self.base_dir, capture_output=True)
+            ], cwd=self.base_dir, capture_output=True
             
             # Pull latest images
             print("📥 Pulling latest images...")
-            result = subprocess.run([
+            result = subprocess.run([)]
                 'docker', 'compose', '-f', str(compose_file), 'pull'
-            ], cwd=self.base_dir, capture_output=True, text=True)
+            ], cwd=self.base_dir, capture_output=True, text=True
             
             # Build custom images
             print("🔨 Building custom images...")
-            result = subprocess.run([
+            result = subprocess.run([)]
                 'docker', 'compose', '-f', str(compose_file), 'build'
-            ], cwd=self.base_dir, capture_output=True, text=True)
+            ], cwd=self.base_dir, capture_output=True, text=True
             
             if result.returncode != 0:
-                print(f"⚠️  Build warnings: {result.stderr}")
+                print(f"[WARN]  Build warnings: {result.stderr}")
             
             # Start services
-            print("🚀 Starting all services...")
-            result = subprocess.run([
+            print("[INIT] Starting all services...")
+            result = subprocess.run([)]
                 'docker', 'compose', '-f', str(compose_file), 'up', '-d'
-            ], cwd=self.base_dir, capture_output=True, text=True)
+            ], cwd=self.base_dir, capture_output=True, text=True
             
             if result.returncode == 0:
-                print("✅ Docker services started successfully")
+                print("[OK] Docker services started successfully")
                 self.is_running = True
                 return True
             else:
-                print(f"❌ Failed to start services: {result.stderr}")
+                print(f"[ERROR] Failed to start services: {result.stderr}")
                 return False
                 
         except Exception as e:
-            print(f"❌ Error starting Docker services: {e}")
+            print(f"[ERROR] Error starting Docker services: {e}")
             return False
             
     async def wait_for_services(self):
@@ -288,42 +302,42 @@ DEBUG=false
         max_wait_time = 300  # 5 minutes
         start_time = time.time()
         
-        services_to_check = [
+        services_to_check = []
             ('Infrastructure', ['redis', 'rabbitmq', 'postgres']),
             ('MCP Servers', ['mcp_price_feed', 'mcp_arbitrage', 'mcp_flash_loan']),
             ('AI Agents', ['ai_arbitrage_detector', 'ai_risk_manager']),
             ('Coordination', ['master_orchestrator', 'langchain_coordinator'])
-        ]
+        
         
         while time.time() - start_time < max_wait_time:
             all_healthy = True
             
             for category, services in services_to_check:
-                print(f"\n🔍 Checking {category}:")
+                print(f"\n[SEARCH] Checking {category}:")
                 for service in services:
                     if await self.check_service_health(service):
-                        print(f"  ✅ {service}")
+                        print(f"  [OK] {service}")
                     else:
                         print(f"  ⏳ {service} (starting...)")
                         all_healthy = False
                         
             if all_healthy:
-                print(f"\n🎉 All services are healthy! (took {time.time() - start_time:.1f}s)")
+                print(f"\n[CELEBRATE] All services are healthy! (took {time.time() - start_time:.1f}s)")
                 return True
                 
             await asyncio.sleep(10)
             
-        print(f"\n⚠️  Timeout waiting for services (after {max_wait_time}s)")
+        print(f"\n[WARN]  Timeout waiting for services (after {max_wait_time}s)")
         return False
         
     async def check_service_health(self, service_name: str) -> bool:
         """Check if a service is healthy"""
         try:
             # Use docker health check
-            result = subprocess.run([
+            result = subprocess.run([)]
                 'docker', 'ps', '--filter', f'name={service_name}', 
                 '--format', 'table {{.Names}}\t{{.Status}}'
-            ], capture_output=True, text=True)
+            ], capture_output=True, text=True
             
             if service_name in result.stdout and 'healthy' in result.stdout:
                 return True
@@ -331,20 +345,20 @@ DEBUG=false
                 return True  # Service is up but may not have health check
                 
         except Exception as e:
-            logger.debug(f"Health check error for {service_name}: {e}")
+            logger.debug(str(f"Health check error for {service_name}: {e}")
             
         return False
         
     def display_service_status(self):
         """Display current service status"""
-        print("\n📊 SERVICE STATUS OVERVIEW")
+        print("\n[METRICS] SERVICE STATUS OVERVIEW")
         print("=" * 80)
         
         try:
-            result = subprocess.run([
+            result = subprocess.run([)]
                 'docker', 'ps', '--format', 
                 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
-            ], capture_output=True, text=True)
+            ], capture_output=True, text=True
             
             if result.returncode == 0:
                 lines = result.stdout.strip().split('\n')
@@ -352,30 +366,30 @@ DEBUG=false
                     if 'flashloan_' in line or 'mcp_' in line or 'ai_agent_' in line:
                         print(f"  {line}")
             else:
-                print("❌ Could not retrieve service status")
+                print("[ERROR] Could not retrieve service status")
                 
         except Exception as e:
-            print(f"❌ Error checking service status: {e}")
+            print(f"[ERROR] Error checking service status: {e}")
             
     def display_access_urls(self):
         """Display access URLs for the system"""
-        print("\n🌐 SYSTEM ACCESS URLS")
+        print("\n[NETWORK] SYSTEM ACCESS URLS")
         print("=" * 80)
         
-        urls = {
+        urls = {}
             '🎛️  Master Dashboard': 'http://localhost:8080',
-            '🚀 Master Orchestrator': 'http://localhost:8000',
+            '[INIT] Master Orchestrator': 'http://localhost:8000',
             '🧠 LangChain Coordinator': 'http://localhost:8001',
             '🤝 AutoGen System': 'http://localhost:8002',
             '💰 Price Feed Server': 'http://localhost:8100',
-            '⚡ Arbitrage Server': 'http://localhost:8101',
+            '[FAST] Arbitrage Server': 'http://localhost:8101',
             '💸 Flash Loan Server': 'http://localhost:8102',
-            '🔧 Self-Healing Agent': 'http://localhost:8300',
-            '📊 Health Monitor': 'http://localhost:8400',
+            '[SETUP] Self-Healing Agent': 'http://localhost:8300',
+            '[METRICS] Health Monitor': 'http://localhost:8400',
             '🐰 RabbitMQ Management': 'http://localhost:15672',
-            '📈 Grafana Dashboard': 'http://localhost:3000',
-            '📊 Prometheus Metrics': 'http://localhost:9090'
-        }
+            '[GROWTH] Grafana Dashboard': 'http://localhost:3000',
+            '[METRICS] Prometheus Metrics': 'http://localhost:9090'
+        
         
         for name, url in urls.items():
             print(f"  {name}: {url}")
@@ -383,7 +397,7 @@ DEBUG=false
     def display_usage_instructions(self):
         """Display usage instructions"""
         instructions = """
-🎯 SYSTEM USAGE INSTRUCTIONS
+[TASK] SYSTEM USAGE INSTRUCTIONS
 ========================================
 
 📋 Getting Started:
@@ -398,13 +412,13 @@ DEBUG=false
   • Monitor trades via the dashboard or orchestrator API
   • Adjust settings in the .env file
 
-🔧 Management:
+[SETUP] Management:
   • View all services: docker ps
   • Check logs: docker logs <service_name>
   • Restart a service: docker restart <service_name>
   • Stop system: Ctrl+C or run this script with --stop
 
-📊 Monitoring:
+[METRICS] Monitoring:
   • Real-time dashboard: http://localhost:8080
   • Grafana metrics: http://localhost:3000
   • RabbitMQ management: http://localhost:15672
@@ -416,7 +430,7 @@ DEBUG=false
   • Monitor for unusual activity
   • Keep system updated
 
-⚠️  Important Notes:
+[WARN]  Important Notes:
   • Ensure sufficient funds for gas fees
   • Test with small amounts first
   • Monitor market conditions
@@ -426,7 +440,7 @@ DEBUG=false
         
     async def monitor_system(self):
         """Monitor system and provide real-time status"""
-        print("\n🔄 MONITORING SYSTEM (Press Ctrl+C to stop)")
+        print("\n[SYNC] MONITORING SYSTEM (Press Ctrl+C to stop)")
         print("=" * 80)
         
         try:
@@ -448,34 +462,34 @@ DEBUG=false
                 await asyncio.sleep(30)  # Check every 30 seconds
                 
         except KeyboardInterrupt:
-            print("\n\n🛑 Monitoring stopped by user")
+            print("\n\n[STOP] Monitoring stopped by user")
             
     async def stop_system(self):
         """Stop all system services"""
-        print("\n🛑 STOPPING SYSTEM")
+        print("\n[STOP] STOPPING SYSTEM")
         print("=" * 80)
         
         compose_file = self.docker_dir / "docker-compose-master.yml"
         
         try:
-            result = subprocess.run([
+            result = subprocess.run([)]
                 'docker', 'compose', '-f', str(compose_file), 'down'
-            ], cwd=self.base_dir, capture_output=True, text=True)
+            ], cwd=self.base_dir, capture_output=True, text=True
             
             if result.returncode == 0:
-                print("✅ All services stopped successfully")
+                print("[OK] All services stopped successfully")
             else:
-                print(f"⚠️  Some services may still be running: {result.stderr}")
+                print(f"[WARN]  Some services may still be running: {result.stderr}")
                 
             self.is_running = False
             
         except Exception as e:
-            print(f"❌ Error stopping services: {e}")
+            print(f"[ERROR] Error stopping services: {e}")
             
     def setup_signal_handlers(self):
         """Setup signal handlers for graceful shutdown"""
         def signal_handler(signum, frame):
-            print(f"\n🛑 Received signal {signum}, stopping system...")
+            print(f"\n[STOP] Received signal {signum}, stopping system...")
             asyncio.create_task(self.stop_system())
             sys.exit(0)
             
@@ -505,7 +519,7 @@ DEBUG=false
                 
             # Wait for services
             if not await self.wait_for_services():
-                print("⚠️  Some services may not be ready, but continuing...")
+                print("[WARN]  Some services may not be ready, but continuing...")
                 
             # Display status and URLs
             self.display_service_status()
@@ -518,7 +532,7 @@ DEBUG=false
             return True
             
         except Exception as e:
-            logger.error(f"❌ System error: {e}")
+            logger.error(str(f"[ERROR] System error: {e}")
             return False
         finally:
             if self.is_running:
@@ -537,7 +551,7 @@ async def main():
             launcher.display_service_status()
             return
         elif sys.argv[1] == '--help':
-            print("""
+            print(""")
 Flash Loan Arbitrage Master Coordination System
 
 Usage:
@@ -545,16 +559,16 @@ Usage:
   python launch_master_coordination_system.py --stop    # Stop the system
   python launch_master_coordination_system.py --status  # Show status
   python launch_master_coordination_system.py --help    # Show this help
-            """)
+            """
             return
     
     # Run the system
     success = await launcher.run_master_system()
     
     if success:
-        print("\n🎉 Master coordination system completed successfully!")
+        print("\n[CELEBRATE] Master coordination system completed successfully!")
     else:
-        print("\n❌ Master coordination system encountered errors.")
+        print("\n[ERROR] Master coordination system encountered errors.")
         sys.exit(1)
 
 if __name__ == "__main__":
@@ -563,5 +577,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\n👋 System shutdown requested by user")
     except Exception as e:
-        print(f"\n❌ Fatal error: {e}")
+        print(f"\n[ERROR] Fatal error: {e}")
         sys.exit(1)

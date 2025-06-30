@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  redis:
+    image: "redis:7.0"
+    container_name: redis_langchain
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  langchain:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: langchain
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379
+    restart: unless-stopped
+
+volumes:
+  redis_data: 

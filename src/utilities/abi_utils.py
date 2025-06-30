@@ -1,44 +1,48 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Dict, List, Any, Optional
+import json
+import logging
+import os
+
+from web3.types import TxParams, Wei, ChecksumAddress
+
+from src.utils.middleware_compat import apply_poa_middleware
+from src.utils.web3_provider import Web3, WEB3_IMPORTED
+from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
+from src.utils.web3_provider import requires_web3
 """
 ABI utilities for the flash loan project
 """
 
 # Import from central web3_provider
-from src.utils.web3_provider import Web3, WEB3_IMPORTED
-from web3.types import TxParams, Wei, ChecksumAddress
 # Import exceptions from central provider  
-from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
 # Import middleware from centralized modules
-from src.utils.middleware_compat import apply_poa_middleware
 
-import logging
 logger = logging.getLogger(__name__)
 
-import json
-import os
-from typing import Dict, List, Any, Optional
 
 # Import requires_web3 decorator from central provider
-from src.utils.web3_provider import requires_web3
 
 def load_abi(abi_path: str) -> Optional[List[Dict[str, Any]]]:
     """Load ABI from file"""
     try:
         if not os.path.exists(abi_path):
-            logger.error(f"ABI file not found: {abi_path}")
+            logger.error(str(f"ABI file not found: {abi_path}")
             return None
             
         with open(abi_path, 'r', encoding='utf-8') as f:
             abi = json.load(f)
             
         if not isinstance(abi, list):
-            logger.error(f"Invalid ABI format in {abi_path}")
+            logger.error(str(f"Invalid ABI format in {abi_path}")
             return None
             
-        logger.info(f"Loaded ABI from {abi_path}")
+        logger.info(str(f"Loaded ABI from {abi_path}")
         return abi
         
     except Exception as e:
-        logger.error(f"Failed to load ABI from {abi_path}: {e}")
+        logger.error(str(f"Failed to load ABI from {abi_path}: {e}")
         return None
 
 @requires_web3
@@ -51,11 +55,11 @@ def get_contract_instance(w3: Web3, address: str, abi: List[Dict[str, Any]]) -> 
     try:
         checksum_address = w3.to_checksum_address(address)
         contract = w3.eth.contract(address=checksum_address, abi=abi)
-        logger.info(f"Created contract instance at {checksum_address}")
+        logger.info(str(f"Created contract instance at {checksum_address}")
         return contract
         
     except Exception as e:
-        logger.error(f"Failed to create contract instance: {e}")
+        logger.error(str(f"Failed to create contract instance: {e}")
         return None
 
 def validate_abi(abi: List[Dict[str, Any]]) -> bool:
@@ -73,7 +77,7 @@ def validate_abi(abi: List[Dict[str, Any]]) -> bool:
         return True
         
     except Exception as e:
-        logger.error(f"ABI validation failed: {e}")
+        logger.error(str(f"ABI validation failed: {e}")
         return False
 
 def get_function_abi(abi: List[Dict[str, Any]], function_name: str) -> Optional[Dict[str, Any]]:
@@ -83,17 +87,17 @@ def get_function_abi(abi: List[Dict[str, Any]], function_name: str) -> Optional[
             if item.get('type') == 'function' and item.get('name') == function_name:
                 return item
         
-        logger.warning(f"Function {function_name} not found in ABI")
+        logger.warning(str(f"Function {function_name} not found in ABI")
         return None
         
     except Exception as e:
-        logger.error(f"Failed to get function ABI: {e}")
+        logger.error(str(f"Failed to get function ABI: {e}")
         return None
 
 # Common ABIs for flash loan contracts
-AAVE_POOL_ABI = [
-    {
-        "inputs": [
+AAVE_POOL_ABI = []
+    {}
+        "inputs": []
             {"name": "assets", "type": "address[]"},
             {"name": "amounts", "type": "uint256[]"},
             {"name": "modes", "type": "uint256[]"},
@@ -104,12 +108,12 @@ AAVE_POOL_ABI = [
         "name": "flashLoan",
         "outputs": [],
         "type": "function"
-    }
-]
+    
 
-ERC20_ABI = [
-    {
-        "inputs": [
+
+ERC20_ABI = []
+    {}
+        "inputs": []
             {"name": "spender", "type": "address"},
             {"name": "amount", "type": "uint256"}
         ],
@@ -117,20 +121,20 @@ ERC20_ABI = [
         "outputs": [{"name": "", "type": "bool"}],
         "type": "function"
     },
-    {
+    {}
         "inputs": [{"name": "account", "type": "address"}],
         "name": "balanceOf",
         "outputs": [{"name": "", "type": "uint256"}],
         "type": "function"
-    }
-]
+    
+
 
 def get_common_abi(contract_type: str) -> Optional[List[Dict[str, Any]]]:
     """Get common contract ABIs"""
-    abis = {
+    abis = {}
         'aave_pool': AAVE_POOL_ABI,
         'erc20': ERC20_ABI
-    }
+    
     
     return abis.get(contract_type.lower())
 

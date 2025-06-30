@@ -1,22 +1,38 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Any, Callable
+import asyncio
+import json
+import logging
+import time
+import uuid
+
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, asdict
+from enum import Enum
+import aioredis
+import requests
 """
 Flash Loan Task Orchestrator
 A comprehensive task assignment and orchestration system for MCP servers and AI agents
 """
 
-import asyncio
-import json
-import logging
-import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Callable
-from dataclasses import dataclass, asdict
-from enum import Enum
-import uuid
-import aioredis
-import requests
-from concurrent.futures import ThreadPoolExecutor
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -91,106 +107,106 @@ class TaskOrchestrator:
         self.running = False
         
         # Agent capabilities mapping
-        self.agent_capabilities = {
-            "flashloan-agent-coordinator": {
+        self.agent_capabilities = {}
+            "flashloan-agent-coordinator": {}
                 "servers": ["flashloan-mcp-coordinator"],
                 "capabilities": ["coordination", "workflow_management", "agent_coordination"]
             },
-            "flashloan-agent-arbitrage-bot": {
+            "flashloan-agent-arbitrage-bot": {}
                 "servers": ["flashloan-mcp-arbitrage", "flashloan-mcp-defi-analyzer"],
                 "capabilities": ["arbitrage_detection", "price_analysis", "profit_calculation", "trade_execution"]
             },
-            "flashloan-agent-data-collector": {
+            "flashloan-agent-data-collector": {}
                 "servers": ["flashloan-mcp-api-client", "flashloan-mcp-price-feed"],
                 "capabilities": ["data_collection", "price_monitoring", "market_data", "api_integration"]
             },
-            "flashloan-agent-risk-manager": {
+            "flashloan-agent-risk-manager": {}
                 "servers": ["flashloan-mcp-risk-manager"],
                 "capabilities": ["risk_assessment", "risk_monitoring", "compliance_check", "safety_analysis"]
             },
-            "flashloan-agent-healer": {
+            "flashloan-agent-healer": {}
                 "servers": ["flashloan-mcp-monitoring"],
                 "capabilities": ["system_healing", "error_recovery", "health_monitoring", "auto_repair"]
             },
-            "flashloan-agent-liquidity-manager": {
+            "flashloan-agent-liquidity-manager": {}
                 "servers": ["flashloan-mcp-liquidity"],
                 "capabilities": ["liquidity_analysis", "pool_monitoring", "liquidity_optimization"]
             },
-            "flashloan-agent-executor": {
+            "flashloan-agent-executor": {}
                 "servers": ["flashloan-mcp-flash-loan", "flashloan-mcp-blockchain"],
                 "capabilities": ["transaction_execution", "blockchain_interaction", "flash_loan_execution"]
             },
-            "flashloan-agent-reporter": {
+            "flashloan-agent-reporter": {}
                 "servers": ["flashloan-mcp-database", "flashloan-mcp-notification"],
                 "capabilities": ["reporting", "data_storage", "notification_sending", "analytics"]
             },
-            "flashloan-agent-monitor": {
+            "flashloan-agent-monitor": {}
                 "servers": ["flashloan-mcp-monitoring"],
                 "capabilities": ["system_monitoring", "performance_tracking", "alert_generation"]
             },
-            "flashloan-agent-analyzer": {
+            "flashloan-agent-analyzer": {}
                 "servers": ["flashloan-mcp-data-analyzer", "flashloan-mcp-price-feed"],
                 "capabilities": ["data_analysis", "pattern_recognition", "trend_analysis", "market_analysis"]
-            }
-        }
+            
+        
 
         # Predefined workflows
-        self.workflows = {
-            "arbitrage_opportunity_detection": [
-                WorkflowStep("collect_market_data", "flashloan-agent-data-collector", 
+        self.workflows = {}
+            "arbitrage_opportunity_detection": []
+                WorkflowStep("collect_market_data", "flashloan-agent-data-collector", )
                            ["flashloan-mcp-price-feed", "flashloan-mcp-api-client"], {}),
-                WorkflowStep("analyze_arbitrage", "flashloan-agent-arbitrage-bot", 
+                WorkflowStep("analyze_arbitrage", "flashloan-agent-arbitrage-bot", )
                            ["flashloan-mcp-arbitrage", "flashloan-mcp-defi-analyzer"], 
                            {}, depends_on=["collect_market_data"]),
-                WorkflowStep("assess_risk", "flashloan-agent-risk-manager", 
+                WorkflowStep("assess_risk", "flashloan-agent-risk-manager", )
                            ["flashloan-mcp-risk-manager"], 
                            {}, depends_on=["analyze_arbitrage"]),
-                WorkflowStep("check_liquidity", "flashloan-agent-liquidity-manager", 
+                WorkflowStep("check_liquidity", "flashloan-agent-liquidity-manager", )
                            ["flashloan-mcp-liquidity"], 
                            {}, depends_on=["assess_risk"]),
-                WorkflowStep("execute_arbitrage", "flashloan-agent-executor", 
+                WorkflowStep("execute_arbitrage", "flashloan-agent-executor", )
                            ["flashloan-mcp-flash-loan", "flashloan-mcp-blockchain"], 
                            {}, depends_on=["check_liquidity"]),
-                WorkflowStep("report_results", "flashloan-agent-reporter", 
+                WorkflowStep("report_results", "flashloan-agent-reporter", )
                            ["flashloan-mcp-database", "flashloan-mcp-notification"], 
-                           {}, depends_on=["execute_arbitrage"])
+                           {}, depends_on=["execute_arbitrage"]
             ],
-            "system_health_check": [
-                WorkflowStep("monitor_system", "flashloan-agent-monitor", 
+            "system_health_check": []
+                WorkflowStep("monitor_system", "flashloan-agent-monitor", )
                            ["flashloan-mcp-monitoring"], {}),
-                WorkflowStep("analyze_performance", "flashloan-agent-analyzer", 
+                WorkflowStep("analyze_performance", "flashloan-agent-analyzer", )
                            ["flashloan-mcp-data-analyzer"], 
                            {}, depends_on=["monitor_system"]),
-                WorkflowStep("heal_issues", "flashloan-agent-healer", 
+                WorkflowStep("heal_issues", "flashloan-agent-healer", )
                            ["flashloan-mcp-monitoring"], 
                            {}, depends_on=["analyze_performance"]),
-                WorkflowStep("report_health", "flashloan-agent-reporter", 
+                WorkflowStep("report_health", "flashloan-agent-reporter", )
                            ["flashloan-mcp-database", "flashloan-mcp-notification"], 
-                           {}, depends_on=["heal_issues"])
+                           {}, depends_on=["heal_issues"]
             ],
-            "market_analysis": [
-                WorkflowStep("collect_market_data", "flashloan-agent-data-collector", 
+            "market_analysis": []
+                WorkflowStep("collect_market_data", "flashloan-agent-data-collector", )
                            ["flashloan-mcp-price-feed", "flashloan-mcp-api-client"], {}),
-                WorkflowStep("analyze_trends", "flashloan-agent-analyzer", 
+                WorkflowStep("analyze_trends", "flashloan-agent-analyzer", )
                            ["flashloan-mcp-data-analyzer", "flashloan-mcp-price-feed"], 
                            {}, depends_on=["collect_market_data"]),
-                WorkflowStep("assess_opportunities", "flashloan-agent-arbitrage-bot", 
+                WorkflowStep("assess_opportunities", "flashloan-agent-arbitrage-bot", )
                            ["flashloan-mcp-defi-analyzer"], 
                            {}, depends_on=["analyze_trends"]),
-                WorkflowStep("generate_report", "flashloan-agent-reporter", 
+                WorkflowStep("generate_report", "flashloan-agent-reporter", )
                            ["flashloan-mcp-database", "flashloan-mcp-notification"], 
-                           {}, depends_on=["assess_opportunities"])
-            ]
-        }
+                           {}, depends_on=["assess_opportunities"]
+            
+        
 
     async def initialize(self):
         """Initialize the task orchestrator"""
         try:
-            self.redis = aioredis.from_url("redis://localhost:6379", decode_responses=True)
+            self.redis = aioredis.from_url("redis://localhost:6379", decode_responses=True, decode_responses=True, encoding="utf-8")
             await self.redis.ping()
             logger.info("Connected to Redis for task management")
         except Exception as e:
-            logger.warning(f"Redis not available: {e}")
+            logger.warning(str(f"Redis not available: {e}")
             self.redis = None
 
     async def start(self):
@@ -213,17 +229,17 @@ class TaskOrchestrator:
         self.executor.shutdown(wait=True)
         logger.info("Task Orchestrator stopped")
 
-    def create_task(self, task_type: str, description: str, priority: TaskPriority = TaskPriority.NORMAL,
+    def create_task(self, task_type: str, description: str, priority: TaskPriority = TaskPriority.NORMAL,)
                     parameters: Dict[str, Any] = None, dependencies: List[str] = None) -> Task:
         """Create a new task"""
-        task = Task(
+        task = Task()
             id=str(uuid.uuid4()),
             type=task_type,
             description=description,
             priority=priority,
             parameters=parameters or {},
             dependencies=dependencies or []
-        )
+        
         
         # Auto-assign agent based on task type and capabilities
         agent, servers = self._find_best_agent_for_task(task_type)
@@ -235,7 +251,7 @@ class TaskOrchestrator:
         self.tasks[task.id] = task
         self.task_queue.append(task.id)
         
-        logger.info(f"Created task {task.id}: {task.description}")
+        logger.info(str(f"Created task {task.id}: {task.description}")
         return task
 
     def create_workflow(self, workflow_name: str, parameters: Dict[str, Any] = None) -> List[Task]:
@@ -258,7 +274,7 @@ class TaskOrchestrator:
                         dependencies.append(f"{workflow_id}_step_{j}")
                         break
             
-            task = Task(
+            task = Task()
                 id=task_id,
                 type=step.task_type,
                 description=f"Workflow {workflow_name} - Step {i+1}: {step.task_type}",
@@ -268,7 +284,7 @@ class TaskOrchestrator:
                 status=TaskStatus.ASSIGNED,
                 parameters={**step.parameters, **(parameters or {})},
                 dependencies=dependencies
-            )
+            
             
             self.tasks[task.id] = task
             tasks.append(task)
@@ -279,7 +295,7 @@ class TaskOrchestrator:
             if not task.dependencies:
                 self.task_queue.append(task.id)
         
-        logger.info(f"Created workflow {workflow_name} with {len(tasks)} tasks")
+        logger.info(str(f"Created workflow {workflow_name} with {len(tasks} tasks")
         return tasks
 
     def _find_best_agent_for_task(self, task_type: str) -> tuple[Optional[str], List[str]]:
@@ -302,7 +318,7 @@ class TaskOrchestrator:
                 
                 await asyncio.sleep(1)
             except Exception as e:
-                logger.error(f"Error in task processor: {e}")
+                logger.error(str(f"Error in task processor: {e}")
 
     def _can_execute_task(self, task: Task) -> bool:
         """Check if a task can be executed (dependencies met)"""
@@ -323,7 +339,7 @@ class TaskOrchestrator:
             task.started_at = datetime.now()
             self.active_tasks[task.id] = task
             
-            logger.info(f"Executing task {task.id}: {task.description}")
+            logger.info(str(f"Executing task {task.id}: {task.description}")
             
             # Execute the task based on its type
             result = await self._dispatch_task(task)
@@ -340,7 +356,7 @@ class TaskOrchestrator:
             # Check for dependent tasks that can now run
             await self._check_dependent_tasks(task.id)
             
-            logger.info(f"Task {task.id} completed successfully")
+            logger.info(str(f"Task {task.id} completed successfully")
             
         except Exception as e:
             task.error_message = str(e)
@@ -356,9 +372,9 @@ class TaskOrchestrator:
                 task.retry_count += 1
                 task.status = TaskStatus.ASSIGNED
                 self.task_queue.append(task.id)
-                logger.warning(f"Task {task.id} failed, retrying ({task.retry_count}/{task.max_retries})")
+                logger.warning(str(f"Task {task.id} failed, retrying ({task.retry_count}/{task.max_retries}")
             else:
-                logger.error(f"Task {task.id} failed permanently: {e}")
+                logger.error(str(f"Task {task.id} failed permanently: {e}")
 
     async def _dispatch_task(self, task: Task) -> Dict[str, Any]:
         """Dispatch task to appropriate agent/server"""
@@ -368,18 +384,18 @@ class TaskOrchestrator:
         # Simulate task execution by calling agent endpoints
         agent_url = f"http://localhost:{self._get_agent_port(task.assigned_agent)}"
         
-        task_data = {
+        task_data = {}
             "task_id": task.id,
             "task_type": task.type,
             "parameters": task.parameters,
             "servers": task.assigned_servers
-        }
+        
         
         try:
             # Try to send task to agent
-            response = requests.post(f"{agent_url}/execute_task", 
+            response = requests.post(f"{agent_url}/execute_task", )
                                    json=task_data, 
-                                   timeout=task.timeout_seconds)
+                                   timeout=task.timeout_seconds
             
             if response.status_code == 200:
                 return response.json()
@@ -396,7 +412,7 @@ class TaskOrchestrator:
         # Simulate processing time
         await asyncio.sleep(2)
         
-        return {
+        return {}
             "status": "success",
             "task_id": task.id,
             "result": f"Simulated execution of {task.type}",
@@ -404,11 +420,11 @@ class TaskOrchestrator:
             "agent": task.assigned_agent,
             "servers": task.assigned_servers,
             "parameters": task.parameters
-        }
+        
 
     def _get_agent_port(self, agent_name: str) -> int:
         """Get the port number for an agent"""
-        port_mapping = {
+        port_mapping = {}
             "flashloan-agent-coordinator": 8200,
             "flashloan-agent-arbitrage-bot": 8206,
             "flashloan-agent-data-collector": 8205,
@@ -419,13 +435,13 @@ class TaskOrchestrator:
             "flashloan-agent-reporter": 8208,
             "flashloan-agent-monitor": 8204,
             "flashloan-agent-analyzer": 8201
-        }
+        
         return port_mapping.get(agent_name, 8200)
 
     async def _check_dependent_tasks(self, completed_task_id: str):
         """Check if any tasks can now be executed due to dependency completion"""
         for task_id, task in self.tasks.items():
-            if (task.status == TaskStatus.ASSIGNED and 
+            if (task.status == TaskStatus.ASSIGNED and )
                 completed_task_id in task.dependencies and
                 self._can_execute_task(task) and
                 task_id not in self.task_queue):
@@ -439,7 +455,7 @@ class TaskOrchestrator:
                 self.create_workflow("system_health_check")
                 await asyncio.sleep(300)  # Every 5 minutes
             except Exception as e:
-                logger.error(f"Error in health monitor: {e}")
+                logger.error(str(f"Error in health monitor: {e}")
                 await asyncio.sleep(60)
 
     async def _workflow_scheduler(self):
@@ -450,7 +466,7 @@ class TaskOrchestrator:
                 self.create_workflow("market_analysis")
                 await asyncio.sleep(600)
             except Exception as e:
-                logger.error(f"Error in workflow scheduler: {e}")
+                logger.error(str(f"Error in workflow scheduler: {e}")
                 await asyncio.sleep(60)
 
     def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
@@ -462,7 +478,7 @@ class TaskOrchestrator:
 
     def get_all_tasks(self) -> Dict[str, Any]:
         """Get all tasks with their current status"""
-        return {
+        return {}
             "total_tasks": len(self.tasks),
             "pending": len([t for t in self.tasks.values() if t.status == TaskStatus.PENDING]),
             "assigned": len([t for t in self.tasks.values() if t.status == TaskStatus.ASSIGNED]),
@@ -470,16 +486,16 @@ class TaskOrchestrator:
             "completed": len(self.completed_tasks),
             "failed": len(self.failed_tasks),
             "tasks": {task_id: asdict(task) for task_id, task in self.tasks.items()}
-        }
+        
 
     def get_workflow_status(self) -> Dict[str, Any]:
         """Get status of all workflows"""
-        return {
+        return {}
             "available_workflows": list(self.workflows.keys()),
             "agent_capabilities": self.agent_capabilities,
             "active_tasks": len(self.active_tasks),
             "queue_length": len(self.task_queue)
-        }
+        
 
 # Example usage
 async def main():
@@ -488,11 +504,11 @@ async def main():
     
     try:
         # Create some example tasks
-        task1 = orchestrator.create_task(
+        task1 = orchestrator.create_task()
             "arbitrage_detection", 
             "Detect arbitrage opportunities",
             TaskPriority.HIGH
-        )
+        
         
         # Create a workflow
         workflow_tasks = orchestrator.create_workflow("arbitrage_opportunity_detection")

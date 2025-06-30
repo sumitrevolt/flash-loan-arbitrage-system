@@ -1,19 +1,34 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Dict, List, Any, Optional
+import asyncio
+import json
+import logging
+import os
+
+from enum import Enum
+import requests
 """
 Simple GitHub Copilot Multi-Agent System
 Lightweight version without database dependency
 """
 
-import asyncio
-import os
-import logging
-import json
-from datetime import datetime
-from typing import Dict, List, Any, Optional
-from enum import Enum
-import requests
 
 # Set up logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -45,17 +60,17 @@ class GitHubModelsLLM:
     def invoke(self, prompt: str, **kwargs) -> str:
         """Invoke the LLM with a prompt"""
         try:
-            headers = {
+            headers = {}
                 "Authorization": f"Bearer {self.github_token}",
                 "Content-Type": "application/json"
-            }
             
-            data = {
+            
+            data = {}
                 "model": self.model,
                 "messages": [{"role": "user", "content": prompt}],
                 "max_tokens": kwargs.get("max_tokens", 2000),
                 "temperature": kwargs.get("temperature", self.temperature)
-            }
+            
             
             response = requests.post(self.base_url, json=data, headers=headers, timeout=30)
             
@@ -63,11 +78,11 @@ class GitHubModelsLLM:
                 result: str = response.json()
                 return result["choices"][0]["message"]["content"]
             else:
-                logger.error(f"GitHub Models API error: {response.status_code} - {response.text}")
+                logger.error(str(f"GitHub Models API error: {response.status_code} - {response.text}")
                 return f"Error: Unable to get response from GitHub Models API"
                 
         except Exception as e:
-            logger.error(f"LLM invocation failed: {e}")
+            logger.error(str(f"LLM invocation failed: {e}")
             return f"Error: {str(e)}"
 
 class MultiAgentCoordinator:
@@ -83,52 +98,52 @@ class MultiAgentCoordinator:
     
     def _init_agents(self):
         """Initialize specialized agents"""
-        self.agents = {
-            AgentRole.CODE_ANALYST: {
+        self.agents = {}
+            AgentRole.CODE_ANALYST: {}
                 "role": "Code Analyst",
                 "prompt_prefix": "You are a senior code analyst specializing in DeFi and smart contracts. Analyze code for bugs, vulnerabilities, and improvements. Focus on:",
                 "expertise": ["code review", "bug detection", "best practices", "smart contract analysis"]
             },
-            AgentRole.CODE_GENERATOR: {
+            AgentRole.CODE_GENERATOR: {}
                 "role": "Code Generator", 
                 "prompt_prefix": "You are an expert code generator specializing in Solidity, DeFi protocols, and flash loans. Generate clean, efficient, and secure code. Focus on:",
                 "expertise": ["smart contract development", "Solidity", "DeFi protocols", "flash loans"]
             },
-            AgentRole.ARCHITECTURE_DESIGNER: {
+            AgentRole.ARCHITECTURE_DESIGNER: {}
                 "role": "Architecture Designer",
                 "prompt_prefix": "You are a blockchain architecture expert. Design scalable, secure system architectures for DeFi applications. Focus on:",
                 "expertise": ["system design", "scalability", "protocol integration", "architecture patterns"]
             },
-            AgentRole.SECURITY_AUDITOR: {
+            AgentRole.SECURITY_AUDITOR: {}
                 "role": "Security Auditor",
                 "prompt_prefix": "You are a blockchain security expert specializing in smart contract auditing. Identify security vulnerabilities and provide recommendations. Focus on:",
                 "expertise": ["security vulnerabilities", "smart contract audits", "attack vectors", "security best practices"]
             },
-            AgentRole.PERFORMANCE_OPTIMIZER: {
+            AgentRole.PERFORMANCE_OPTIMIZER: {}
                 "role": "Performance Optimizer",
                 "prompt_prefix": "You are a performance optimization expert for blockchain applications. Optimize for gas efficiency and execution speed. Focus on:",
                 "expertise": ["gas optimization", "performance tuning", "efficiency improvements", "cost reduction"]
             },
-            AgentRole.COORDINATOR: {
+            AgentRole.COORDINATOR: {}
                 "role": "Coordinator",
                 "prompt_prefix": "You are a project coordinator who synthesizes input from multiple specialists to provide comprehensive solutions. Focus on:",
                 "expertise": ["project coordination", "synthesis", "decision making", "comprehensive solutions"]
-            }
-        }
+            
+        
     
     async def coordinate_agents(self, task: str, required_roles: List[AgentRole]) -> Dict[str, Any]:
         """Coordinate multiple agents to solve a task"""
         start_time = datetime.now()
         
-        logger.info(f"🚀 Starting multi-agent coordination for task: {task[:100]}...")
+        logger.info(str(f"[INIT] Starting multi-agent coordination for task: {task[:100]}...")
         
-        results = {
+        results = {}
             "task": task,
             "agents_involved": [role.value for role in required_roles],
             "phases": [],
             "execution_time": None,
             "final_result": None
-        }
+        
         
         # Phase 1: Individual agent analysis
         agent_results = {}
@@ -147,22 +162,22 @@ Please provide your specialized analysis and recommendations from your expertise
 Be specific, actionable, and focus on your area of specialization.
 """
             
-            logger.info(f"🤖 Running {agent_info['role']} analysis...")
+            logger.info(str(f"🤖 Running {agent_info['role']} analysis...")
             
             try:
                 result: str = await self.llm.ainvoke(prompt)
                 agent_results[role] = result
                 
-                results["phases"].append({
+                results["phases"].append({)}
                     "phase": f"{agent_info['role']} Analysis",
                     "agent": role.value,
                     "result": result
-                })
                 
-                logger.info(f"✅ {agent_info['role']} completed analysis")
+                
+                logger.info(str(f"[OK] {agent_info['role']} completed analysis")
                 
             except Exception as e:
-                logger.error(f"❌ {agent_info['role']} failed: {e}")
+                logger.error(str(f"[ERROR] {agent_info['role']} failed: {e}")
                 agent_results[role] = f"Error: {str(e)}"
         
         # Phase 2: Coordinator synthesis
@@ -170,10 +185,10 @@ Be specific, actionable, and focus on your area of specialization.
             coordinator_info = self.agents[AgentRole.COORDINATOR]
             
             # Prepare synthesis prompt with all agent results
-            synthesis_context = "\n\n".join([
+            synthesis_context = "\n\n".join([)]
                 f"=== {self.agents[role]['role']} Analysis ===\n{result}"
                 for role, result in agent_results.items()
-            ])
+            
             
             synthesis_prompt = f"""
 {coordinator_info['prompt_prefix']}
@@ -195,45 +210,45 @@ As the coordinator, please:
 Provide a well-structured final recommendation that incorporates the best insights from all specialists.
 """
             
-            logger.info("🎯 Running Coordinator synthesis...")
+            logger.info("[TASK] Running Coordinator synthesis...")
             
             try:
                 final_result: str = await self.llm.ainvoke(synthesis_prompt)
                 results["final_result"] = final_result
                 
-                results["phases"].append({
+                results["phases"].append({)}
                     "phase": "Coordinator Synthesis",
                     "agent": AgentRole.COORDINATOR.value,
                     "result": final_result
-                })
                 
-                logger.info("✅ Coordinator completed synthesis")
+                
+                logger.info("[OK] Coordinator completed synthesis")
                 
             except Exception as e:
-                logger.error(f"❌ Coordinator synthesis failed: {e}")
+                logger.error(str(f"[ERROR] Coordinator synthesis failed: {e}")
                 results["final_result"] = f"Synthesis error: {str(e)}"
         
         # Calculate execution time
         end_time = datetime.now()
         results["execution_time"] = str(end_time - start_time)
         
-        logger.info(f"🏁 Multi-agent coordination completed in {results['execution_time']}")
+        logger.info(str(f"🏁 Multi-agent coordination completed in {results['execution_time']}")
         
         return results
     
     def get_agent_status(self) -> Dict[str, Any]:
         """Get status of all agents"""
-        return {
+        return {}
             "total_agents": len(self.agents),
-            "agents": {
-                role.value: {
+            "agents": {}
+                role.value: {}
                     "role": info["role"],
                     "expertise": info["expertise"],
                     "conversation_count": len(self.conversation_history)
-                }
+                
                 for role, info in self.agents.items()
-            }
-        }
+            
+        
 
 class SimpleCoordinator:
     """Simple coordinator without database dependency"""
@@ -245,29 +260,29 @@ class SimpleCoordinator:
     async def initialize(self) -> bool:
         """Initialize the coordinator"""
         try:
-            logger.info("🔧 Initializing Simple GitHub Copilot Coordinator...")
+            logger.info("[SETUP] Initializing Simple GitHub Copilot Coordinator...")
             
             # Check GitHub token
             github_token = os.getenv('GITHUB_TOKEN')
             if not github_token:
-                logger.error("❌ GITHUB_TOKEN not found")
+                logger.error("[ERROR] GITHUB_TOKEN not found")
                 return False
             
             # Initialize multi-agent system
             self.multi_agent_llm = MultiAgentCoordinator()
-            logger.info("✅ Multi-agent system initialized")
+            logger.info("[OK] Multi-agent system initialized")
             
             self.initialized = True
-            logger.info("✅ Simple Coordinator initialization complete")
+            logger.info("[OK] Simple Coordinator initialization complete")
             return True
             
         except Exception as e:
-            logger.error(f"❌ Coordinator initialization failed: {e}")
+            logger.error(str(f"[ERROR] Coordinator initialization failed: {e}")
             return False
     
     async def shutdown(self):
         """Shutdown the coordinator"""
-        logger.info("🛑 Shutting down Simple Coordinator...")
+        logger.info("[STOP] Shutting down Simple Coordinator...")
         self.initialized = False
 
 # Export the coordinator class that the test script expects

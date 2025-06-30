@@ -1,4 +1,18 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+            import subprocess
+    import argparse
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Union
+import asyncio
+import json
+import logging
+import os
+import shutil
+import socket
+import sys
+import time
 """
 Consolidated System Repair and Maintenance Tools
 ================================================
@@ -13,18 +27,6 @@ This consolidated tool provides comprehensive system repair capabilities includi
 - System monitoring and maintenance
 """
 
-import asyncio
-import subprocess
-import sys
-import os
-import json
-import time
-import shutil
-import socket
-import logging
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Any, Optional, Union
 
 class SystemRepairTool:
     """
@@ -41,33 +43,33 @@ class SystemRepairTool:
         self.still_failing = []
         
         # Configuration file paths to check
-        self.config_files = [
+        self.config_files = []
             'mcp_servers/config_files/complete_cline_mcp_config.json',
             'mcp_servers/config_files/working_cline_mcp_config.json',
             'mcp_servers/config_files/FINAL_WORKING_CLINE_CONFIG.json'
-        ]
+        
         
         # Known problematic servers
-        self.failed_servers = [
+        self.failed_servers = []
             "matic-mcp", "foundry-mcp", "evm-mcp", "copilot-mcp",
             "flash-loan-mcp", "price-oracle-mcp", "context7-mcp", 
             "risk-management-mcp", "task-manager-mcp", "contract-executor-mcp",
             "flash-loan-strategist", "transaction-optimizer", "production-mcp"
-        ]
+        
         
         # Default server ports for health checks
-        self.default_servers = {
+        self.default_servers = {}
             "Flash Loan MCP": 3001,
             "Enhanced Copilot MCP": 3002, 
             "Enhanced Foundry MCP": 3003,
             "Flash Loan Arbitrage MCP (TS)": 3004,
             "TaskManager MCP": 3005
-        }
+        
         
         # Ensure logs directory
         os.makedirs('logs', exist_ok=True)
         
-        self.log("🔧 System Repair Tool initialized")
+        self.log("[SETUP] System Repair Tool initialized")
     
     def log(self, message: str) -> None:
         """Enhanced logging with timestamp"""
@@ -110,33 +112,33 @@ class SystemRepairTool:
                 if config_full_path.exists():
                     with open(config_full_path, 'r') as f:
                         config = json.load(f)
-                    self.log(f"✅ Loaded config: {config_file}")
+                    self.log(f"[OK] Loaded config: {config_file}")
                     return config.get('mcpServers', {})
             except Exception as e:
-                self.log(f"❌ Error loading {config_file}: {e}")
+                self.log(f"[ERROR] Error loading {config_file}: {e}")
                 continue
         
-        self.log("⚠️ No valid MCP config found, using defaults")
+        self.log("[WARN] No valid MCP config found, using defaults")
         return {}
     
     def scan_all_mcp_servers(self) -> Dict[str, List[str]]:
         """Scan for all MCP server files in the directory"""
-        self.log("🔍 Scanning for MCP servers...")
+        self.log("[SEARCH] Scanning for MCP servers...")
         
-        server_files = {
+        server_files = {}
             'python': [],
             'typescript': [],
             'javascript': []
-        }
+        
         
         # Common MCP server locations
-        search_paths = [
+        search_paths = []
             'mcp_servers',
             'src',
             'core',
             'infrastructure/mcp_servers',
             '.'
-        ]
+        
         
         for search_path in search_paths:
             full_path = self.workspace_path / search_path
@@ -169,29 +171,29 @@ class SystemRepairTool:
                 if args:
                     python_file = args[0]
                     if self.check_file_exists(python_file):
-                        self.log(f"✅ {server_name}: Python file exists - {python_file}")
+                        self.log(f"[OK] {server_name}: Python file exists - {python_file}")
                         return True
                     else:
-                        self.log(f"❌ {server_name}: Python file missing - {python_file}")
+                        self.log(f"[ERROR] {server_name}: Python file missing - {python_file}")
                         return False
             elif command == 'npx':
-                self.log(f"✅ {server_name}: NPX command configured")
+                self.log(f"[OK] {server_name}: NPX command configured")
                 return True
             elif command == 'node':
                 if args:
                     node_file = args[0]
                     if self.check_file_exists(node_file):
-                        self.log(f"✅ {server_name}: Node file exists - {node_file}")
+                        self.log(f"[OK] {server_name}: Node file exists - {node_file}")
                         return True
                     else:
-                        self.log(f"❌ {server_name}: Node file missing - {node_file}")
+                        self.log(f"[ERROR] {server_name}: Node file missing - {node_file}")
                         return False
             
-            self.log(f"⚠️ {server_name}: Unknown command type - {command}")
+            self.log(f"[WARN] {server_name}: Unknown command type - {command}")
             return False
             
         except Exception as e:
-            self.log(f"❌ {server_name}: Test failed - {e}")
+            self.log(f"[ERROR] {server_name}: Test failed - {e}")
             return False
     
     def fix_python_imports(self, file_path: str) -> bool:
@@ -205,10 +207,10 @@ class SystemRepairTool:
             
             # Fix aiodns import issues
             if 'aiohttp' in content and 'aiodns' not in content:
-                content = content.replace(
+                content = content.replace()
                     'import aiohttp',
                     'import aiohttp\n# aiodns removed to avoid compatibility issues'
-                )
+                
                 fixes_applied.append('aiodns-compatibility')
             
             # Fix relative imports
@@ -224,13 +226,13 @@ class SystemRepairTool:
             if fixes_applied:
                 with open(file_path, 'w') as f:
                     f.write(content)
-                self.log(f"🔧 Fixed {file_path}: {', '.join(fixes_applied)}")
+                self.log(f"[SETUP] Fixed {file_path}: {', '.join(fixes_applied)}")
                 return True
             
             return False
             
         except Exception as e:
-            self.log(f"❌ Failed to fix {file_path}: {e}")
+            self.log(f"[ERROR] Failed to fix {file_path}: {e}")
             return False
     
     def fix_typescript_dependencies(self, directory: str) -> bool:
@@ -240,36 +242,36 @@ class SystemRepairTool:
             
             if package_json_path.exists():
                 # Install dependencies
-                result: str = subprocess.run(
+                result: str = subprocess.run()
                     ['npm', 'install'], 
                     cwd=directory,
                     capture_output=True,
                     text=True
-                )
+                
                 
                 if result.returncode == 0:
-                    self.log(f"✅ Dependencies installed in {directory}")
+                    self.log(f"[OK] Dependencies installed in {directory}")
                     return True
                 else:
-                    self.log(f"❌ Failed to install dependencies in {directory}: {result.stderr}")
+                    self.log(f"[ERROR] Failed to install dependencies in {directory}: {result.stderr}")
             
             return False
             
         except Exception as e:
-            self.log(f"❌ Failed to fix dependencies in {directory}: {e}")
+            self.log(f"[ERROR] Failed to fix dependencies in {directory}: {e}")
             return False
     
     async def test_all_servers_health(self, servers: Optional[Dict[str, int]] = None) -> Dict[str, bool]:
         """Test health of all MCP servers using socket connections"""
         test_servers = servers or self.default_servers
         
-        self.log("🔍 Running socket-based health checks...")
+        self.log("[SEARCH] Running socket-based health checks...")
         results = {}
         
         for server_name, port in test_servers.items():
             is_healthy = await self.socket_health_check("localhost", port)
             results[server_name] = is_healthy
-            status = "✅ HEALTHY" if is_healthy else "❌ UNREACHABLE"
+            status = "[OK] HEALTHY" if is_healthy else "[ERROR] UNREACHABLE"
             self.log(f"{server_name:<35} Port {port}: {status}")
         
         healthy_count = sum(1 for h in results.values() if h)
@@ -288,10 +290,6 @@ Auto-generated MCP Server Startup Script
 Generated on: {datetime.now().isoformat()}
 """
 
-import subprocess
-import sys
-import time
-from pathlib import Path
 
 def start_server(name, command, args, env=None):
     """Start a single MCP server"""
@@ -308,45 +306,45 @@ def start_server(name, command, args, env=None):
             print(f"Unknown command: {{command}}")
             return None
         
-        proc = subprocess.Popen(
+        proc = subprocess.Popen()
             cmd,
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
-        )
         
-        print(f"✅ {{name}} started (PID: {{proc.pid}})")
+        
+        print(f"[OK] {{name}} started (PID: {{proc.pid}})")
         return proc
         
     except Exception as e:
-        print(f"❌ Failed to start {{name}}: {{e}}")
+        print(f"[ERROR] Failed to start {{name}}: {{e}}")
         return None
 
 def main():
     """Start all MCP servers"""
-    print("🚀 Starting all MCP servers...")
+    print("[INIT] Starting all MCP servers...")
     
     servers = {servers_config}
     processes = []
     
     for server_name, config in servers.items():
-        proc = start_server(
+        proc = start_server()
             server_name,
             config.get('command'),
             config.get('args', []),
             config.get('env')
-        )
+        
         if proc:
             processes.append((server_name, proc))
     
-    print(f"\\n✅ Started {{len(processes)}} servers")
+    print(f"\\n[OK] Started {{len(processes)}} servers")
     print("Press Ctrl+C to stop all servers")
     
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        print("\\n🛑 Stopping all servers...")
+        print("\\n[STOP] Stopping all servers...")
         for name, proc in processes:
             proc.terminate()
             print(f"Stopped {{name}}")
@@ -364,21 +362,21 @@ if __name__ == "__main__":
         except Exception:
             pass
         
-        self.log(f"✅ Created startup script: {script_path}")
+        self.log(f"[OK] Created startup script: {script_path}")
         return str(script_path)
     
     async def full_system_repair(self) -> Dict[str, Any]:
         """Run comprehensive system repair"""
-        self.log("🔧 Starting full system repair...")
+        self.log("[SETUP] Starting full system repair...")
         
-        repair_results = {
+        repair_results = {}
             'config_loaded': False,
             'servers_scanned': {},
             'files_fixed': [],
             'health_check': {},
             'startup_script': None,
             'summary': {}
-        }
+        
         
         # 1. Load configuration
         config = self.load_mcp_config()
@@ -412,40 +410,40 @@ if __name__ == "__main__":
         total_servers = sum(len(files) for files in scanned_servers.values())
         healthy_servers = sum(1 for h in health_results.values() if h)
         
-        repair_results['summary'] = {
+        repair_results['summary'] = {}
             'total_servers_found': total_servers,
             'files_fixed': len(repair_results['files_fixed']),
             'healthy_servers': f"{healthy_servers}/{len(health_results)}",
             'startup_script_created': bool(repair_results['startup_script'])
-        }
         
-        self.log("✅ Full system repair completed")
+        
+        self.log("[OK] Full system repair completed")
         return repair_results
     
     async def health_check_only(self) -> Dict[str, bool]:
         """Run health check only"""
-        self.log("🔍 Running health check...")
+        self.log("[SEARCH] Running health check...")
         return await self.test_all_servers_health()
     
     def validate_configuration(self) -> Dict[str, Any]:
         """Validate system configuration"""
-        self.log("🔍 Validating system configuration...")
+        self.log("[SEARCH] Validating system configuration...")
         
-        validation_results = {
+        validation_results = {}
             'config_files': {},
             'required_directories': {},
             'python_environment': {},
             'node_environment': {}
-        }
+        
         
         # Check config files
         for config_file in self.config_files:
             config_path = self.workspace_path / config_file
-            validation_results['config_files'][config_file] = {
+            validation_results['config_files'][config_file] = {}
                 'exists': config_path.exists(),
                 'readable': False,
                 'valid_json': False
-            }
+            
             
             if config_path.exists():
                 try:
@@ -464,7 +462,6 @@ if __name__ == "__main__":
         
         # Check Python environment
         try:
-            import subprocess
             result: str = subprocess.run([sys.executable, '--version'], capture_output=True, text=True)
             validation_results['python_environment']['version'] = result.stdout.strip()
             validation_results['python_environment']['available'] = True
@@ -479,12 +476,11 @@ if __name__ == "__main__":
         except Exception:
             validation_results['node_environment']['available'] = False
         
-        self.log("✅ Configuration validation completed")
+        self.log("[OK] Configuration validation completed")
         return validation_results
 
 async def main():
     """Main function for command-line usage"""
-    import argparse
     
     parser = argparse.ArgumentParser(description='System Repair and Maintenance Tool')
     parser.add_argument('--full-repair', action='store_true', help='Run full system repair')
@@ -501,7 +497,7 @@ async def main():
         print("\n" + "="*50)
         print("FULL SYSTEM REPAIR RESULTS")
         print("="*50)
-        print(json.dumps(results['summary'], indent=2))
+        print(json.dumps(results['summary'], indent=2, ensure_ascii=True, default=str))
         
     elif args.health_check:
         results = await repair_tool.health_check_only()
@@ -517,7 +513,7 @@ async def main():
         print("\n" + "="*50)
         print("CONFIGURATION VALIDATION")
         print("="*50)
-        print(json.dumps(results, indent=2))
+        print(json.dumps(results, indent=2, ensure_ascii=True, default=str))
         
     else:
         print("System Repair Tool")

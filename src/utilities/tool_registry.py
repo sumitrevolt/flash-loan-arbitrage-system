@@ -1,3 +1,19 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Type, Callable, Union
+import asyncio
+import inspect
+import json
+import logging
+import time
+import traceback
+
+    from mcp.types import Tool
+    from pydantic import BaseModel
+from dataclasses import dataclass, asdict
+import importlib
 """
 Enhanced Tool Registry for Enterprise MCP Server
 
@@ -11,17 +27,6 @@ Manages registration, discovery, and execution of all MCP tools including:
 - Circuit breaker and failover mechanisms
 """
 
-import asyncio
-import importlib
-import inspect
-import logging
-import time
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, Callable, Union
-from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
-import json
-import traceback
 
 
 async def run_with_timeout(coro, timeout_seconds: float):
@@ -29,8 +34,6 @@ async def run_with_timeout(coro, timeout_seconds: float):
     return await asyncio.wait_for(coro, timeout=timeout_seconds)
 
 try:
-    from mcp.types import Tool
-    from pydantic import BaseModel
 except ImportError:
     # Fallback for when MCP types aren't available
     class Tool:
@@ -86,10 +89,10 @@ class BaseTool:
         """Initialize the tool. Should be overridden by subclasses."""
         try:
             self._initialized = True
-            self.logger.info(f"✅ Tool {self.__class__.__name__} initialized successfully")
+            self.logger.info(str(f"[OK] Tool {self.__class__.__name__} initialized successfully")
             return True
         except Exception as e:
-            self.logger.error(f"❌ Failed to initialize tool {self.__class__.__name__}: {e}")
+            self.logger.error(str(f"[ERROR] Failed to initialize tool {self.__class__.__name__}: {e}")
             return False
 
     async def execute(self, **kwargs) -> Dict[str, Any]:
@@ -124,11 +127,11 @@ class EnterpriseToolRegistry:
         
         # Enterprise features
         self.circuit_breakers = {}
-        self.performance_thresholds = {
+        self.performance_thresholds = {}
             'max_execution_time_ms': 30000,
             'max_error_rate': 0.2,
             'max_consecutive_failures': 3
-        }
+        
 
     async def execute_tool_with_monitoring(self, tool: BaseTool, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute tool with comprehensive monitoring and error handling"""
@@ -145,14 +148,14 @@ class EnterpriseToolRegistry:
             
             # Log execution start
             if tool.get_schema().audit_logging:
-                self.logger.info(f"🔄 Executing {tool.__class__.__name__} with args: {json.dumps(validated_args, default=str)}")
+                self.logger.info(str(f"[SYNC] Executing {tool.__class__.__name__} with args: {json.dumps(validated_args, default=str, ensure_ascii=True, default=str}")
             
             # Execute with timeout
             schema = tool.get_schema()
-            result: str = await asyncio.wait_for(
+            result: str = await asyncio.wait_for()
                 tool.execute(**validated_args),
                 timeout=schema.timeout
-            )
+            
             
             # Update metrics
             execution_time = (time.time() - start_time) * 1000
@@ -171,27 +174,27 @@ class EnterpriseToolRegistry:
                 tool.metrics.avg_execution_time_ms = execution_time
             
             # Add to execution history
-            tool.metrics.execution_history.append({
+            tool.metrics.execution_history.append({)}
                 'execution_id': execution_id,
                 'timestamp': datetime.now().isoformat(),
                 'execution_time_ms': execution_time,
                 'success': True,
                 'arguments': validated_args
-            })
+            
             
             # Keep only last 50 executions
             if len(tool.metrics.execution_history) > 50:
                 tool.metrics.execution_history = tool.metrics.execution_history[-50:]
             
-            self.logger.info(f"✅ {tool.__class__.__name__} executed successfully in {execution_time:.1f}ms")
+            self.logger.info(str(f"[OK] {tool.__class__.__name__} executed successfully in {execution_time:.1f}ms")
             
-            return {
+            return {}
                 'success': True,
                 'result': result,
                 'execution_time_ms': execution_time,
                 'execution_id': execution_id,
                 'timestamp': datetime.now().isoformat()
-            }
+            
             
         except asyncio.TimeoutError:
             error_msg = f"Tool execution timeout after {schema.timeout}s"
@@ -213,22 +216,22 @@ class EnterpriseToolRegistry:
         tool.metrics.last_error = error_msg
         
         # Add to execution history
-        tool.metrics.execution_history.append({
+        tool.metrics.execution_history.append({)}
             'execution_id': execution_id,
             'timestamp': datetime.now().isoformat(),
             'execution_time_ms': execution_time,
             'success': False,
             'error': error_msg
-        })
+        
         
         # Log error with context
-        self.logger.error(f"❌ {tool.__class__.__name__} execution failed: {error_msg}")
+        self.logger.error(str(f"[ERROR] {tool.__class__.__name__} execution failed: {error_msg}")
         
         # Check if tool should be deactivated due to repeated failures
         recent_failures = [h for h in tool.metrics.execution_history[-10:] if not h['success']]
         if len(recent_failures) >= 5:  # 5 failures in last 10 executions
             tool.is_active = False
-            self.logger.warning(f"🔴 Tool {tool.__class__.__name__} deactivated due to repeated failures")
+            self.logger.warning(str(f"🔴 Tool {tool.__class__.__name__} deactivated due to repeated failures")
     
     def register_tool(self, tool: BaseTool) -> bool:
         """Register a tool in the registry with enterprise validation"""
@@ -240,7 +243,7 @@ class EnterpriseToolRegistry:
             tool_name = schema.name
             
             if tool_name in self.tools:
-                self.logger.warning(f"Tool '{tool_name}' already registered, skipping")
+                self.logger.warning(str(f"Tool '{tool_name}' already registered, skipping")
                 return False
             
             # Initialize tool
@@ -261,18 +264,18 @@ class EnterpriseToolRegistry:
             self._tool_metrics[tool_name] = tool.metrics
             
             # Initialize circuit breaker
-            self.circuit_breakers[tool_name] = {
+            self.circuit_breakers[tool_name] = {}
                 'enabled': True,
                 'triggered': False,
                 'failure_count': 0,
                 'last_failure': None
-            }
             
-            self.logger.info(f"✅ Registered tool: {tool_name} ({category})")
+            
+            self.logger.info(str(f"[OK] Registered tool: {tool_name} ({category}")
             return True
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to register tool: {e}")
+            self.logger.error(str(f"[ERROR] Failed to register tool: {e}")
             return False
     
     async def execute_tool(self, tool_name: str, arguments: Dict[str, Any] = None) -> Dict[str, Any]:
@@ -322,14 +325,14 @@ class EnterpriseToolRegistry:
             
             # Log execution start
             if tool.get_schema().audit_logging:
-                self.logger.info(f"🔄 Executing {tool.__class__.__name__} with args: {json.dumps(validated_args, default=str)}")
+                self.logger.info(str(f"[SYNC] Executing {tool.__class__.__name__} with args: {json.dumps(validated_args, default=str, ensure_ascii=True, default=str}")
             
             # Execute with timeout
             schema = tool.get_schema()
-            result: str = await asyncio.wait_for(
+            result: str = await asyncio.wait_for()
                 tool.execute(**validated_args),
                 timeout=schema.timeout
-            )
+            
             
             # Update metrics
             execution_time = (time.time() - start_time) * 1000
@@ -348,27 +351,27 @@ class EnterpriseToolRegistry:
                 tool.metrics.avg_execution_time_ms = execution_time
             
             # Add to execution history
-            tool.metrics.execution_history.append({
+            tool.metrics.execution_history.append({)}
                 'execution_id': execution_id,
                 'timestamp': datetime.now().isoformat(),
                 'execution_time_ms': execution_time,
                 'success': True,
                 'arguments': validated_args
-            })
+            
             
             # Keep only last 50 executions
             if len(tool.metrics.execution_history) > 50:
                 tool.metrics.execution_history = tool.metrics.execution_history[-50:]
             
-            self.logger.info(f"✅ {tool.__class__.__name__} executed successfully in {execution_time:.1f}ms")
+            self.logger.info(str(f"[OK] {tool.__class__.__name__} executed successfully in {execution_time:.1f}ms")
             
-            return {
+            return {}
                 'success': True,
                 'result': result,
                 'execution_time_ms': execution_time,
                 'execution_id': execution_id,
                 'timestamp': datetime.now().isoformat()
-            }
+            
             
         except asyncio.TimeoutError:
             error_msg = f"Tool execution timeout after {schema.timeout}s"
@@ -390,22 +393,22 @@ class EnterpriseToolRegistry:
         tool.metrics.last_error = error_msg
         
         # Add to execution history
-        tool.metrics.execution_history.append({
+        tool.metrics.execution_history.append({)}
             'execution_id': execution_id,
             'timestamp': datetime.now().isoformat(),
             'execution_time_ms': execution_time,
             'success': False,
             'error': error_msg
-        })
+        
         
         # Log error with context
-        self.logger.error(f"❌ {tool.__class__.__name__} execution failed: {error_msg}")
+        self.logger.error(str(f"[ERROR] {tool.__class__.__name__} execution failed: {error_msg}")
         
         # Check if tool should be deactivated due to repeated failures
         recent_failures = [h for h in tool.metrics.execution_history[-10:] if not h['success']]
         if len(recent_failures) >= 5:  # 5 failures in last 10 executions
             tool.is_active = False
-            self.logger.warning(f"🔴 Tool {tool.__class__.__name__} deactivated due to repeated failures")
+            self.logger.warning(str(f"🔴 Tool {tool.__class__.__name__} deactivated due to repeated failures")
 
     def _is_circuit_breaker_triggered(self, tool_name: str) -> bool:
         """Check if circuit breaker is triggered for a tool"""
@@ -430,7 +433,7 @@ class EnterpriseToolRegistry:
         # Trigger circuit breaker after 3 consecutive failures
         if cb['failure_count'] >= self.performance_thresholds['max_consecutive_failures']:
             cb['triggered'] = True
-            self.logger.warning(f"🔴 Circuit breaker triggered for tool {tool_name}")
+            self.logger.warning(str(f"🔴 Circuit breaker triggered for tool {tool_name}")
 
     def list_tools(self) -> List[Dict[str, Any]]:
         """List all registered tools with their schemas and metrics"""
@@ -440,21 +443,21 @@ class EnterpriseToolRegistry:
             schema = self._tool_schemas[tool_name]
             metrics = tool.metrics
             
-            tools_list.append({
+            tools_list.append({)}
                 'name': tool_name,
                 'description': schema.description,
                 'category': schema.category,
                 'tags': schema.tags,
                 'risk_level': schema.risk_level,
                 'is_active': tool.is_active,
-                'metrics': {
+                'metrics': {}
                     'total_executions': metrics.total_executions,
                     'success_rate': (metrics.successful_executions / max(1, metrics.total_executions)) * 100,
                     'avg_execution_time_ms': metrics.avg_execution_time_ms,
                     'last_execution': metrics.last_execution_time.isoformat() if metrics.last_execution_time else None
                 },
                 'circuit_breaker': self.circuit_breakers.get(tool_name, {})
-            })
+            
         
         return tools_list
 
@@ -465,22 +468,22 @@ class EnterpriseToolRegistry:
                 raise ValueError(f"Tool '{tool_name}' not found")
             
             tool = self.tools[tool_name]
-            return {
+            return {}
                 'tool_name': tool_name,
                 'metrics': asdict(tool.metrics),
                 'circuit_breaker': self.circuit_breakers.get(tool_name, {}),
                 'is_active': tool.is_active,
                 'last_used': tool.last_used.isoformat() if tool.last_used else None
-            }
+            
         else:
             # Return metrics for all tools
             all_metrics = {}
             for tool_name, tool in self.tools.items():
-                all_metrics[tool_name] = {
+                all_metrics[tool_name] = {}
                     'metrics': asdict(tool.metrics),
                     'circuit_breaker': self.circuit_breakers.get(tool_name, {}),
                     'is_active': tool.is_active
-                }
+                
             return all_metrics
 
     def get_tools_by_category(self, category: str) -> List[str]:
@@ -493,7 +496,7 @@ class EnterpriseToolRegistry:
             return False
         
         self._reset_circuit_breaker(tool_name)
-        self.logger.info(f"🟢 Circuit breaker reset for tool {tool_name}")
+        self.logger.info(str(f"🟢 Circuit breaker reset for tool {tool_name}")
         return True
 
     def deactivate_tool(self, tool_name: str) -> bool:
@@ -502,7 +505,7 @@ class EnterpriseToolRegistry:
             return False
         
         self.tools[tool_name].is_active = False
-        self.logger.warning(f"🔴 Tool {tool_name} deactivated")
+        self.logger.warning(str(f"🔴 Tool {tool_name} deactivated")
         return True
 
     def activate_tool(self, tool_name: str) -> bool:
@@ -511,7 +514,7 @@ class EnterpriseToolRegistry:
             return False
         
         self.tools[tool_name].is_active = True
-        self.logger.info(f"🟢 Tool {tool_name} activated")
+        self.logger.info(str(f"🟢 Tool {tool_name} activated")
         return True
 
 
@@ -536,13 +539,13 @@ class ToolRegistry(EnterpriseToolRegistry):
         for i, result in enumerate(results):
             tool_name = list(self._tools.keys())[i]
             if isinstance(result, Exception):
-                self.logger.error(f"Failed to initialize tool '{tool_name}': {result}")
+                self.logger.error(str(f"Failed to initialize tool '{tool_name}': {result}")
             elif result:
                 successful += 1
             else:
-                self.logger.warning(f"Tool '{tool_name}' initialization returned False")
+                self.logger.warning(str(f"Tool '{tool_name}' initialization returned False")
         
-        self.logger.info(f"Successfully initialized {successful}/{len(self._tools)} tools")
+        self.logger.info(str(f"Successfully initialized {successful}/{len(self._tools} tools")
     
     async def _initialize_single_tool(self, name: str, tool: BaseTool) -> bool:
         """Initialize a single tool with timeout and error handling."""
@@ -554,10 +557,10 @@ class ToolRegistry(EnterpriseToolRegistry):
             return result
             
         except asyncio.TimeoutError:
-            self.logger.error(f"Tool '{name}' initialization timed out")
+            self.logger.error(str(f"Tool '{name}' initialization timed out")
             return False
         except Exception as e:
-            self.logger.error(f"Error initializing tool '{name}': {e}")
+            self.logger.error(str(f"Error initializing tool '{name}': {e}")
             return False
     
     async def list_tools(self) -> List[Tool]:
@@ -567,11 +570,11 @@ class ToolRegistry(EnterpriseToolRegistry):
         
         tools = []
         for name, schema in self._tool_schemas.items():
-            tool = Tool(
+            tool = Tool()
                 name=name,
                 description=schema.description,
                 inputSchema=schema.input_schema
-            )
+            
             tools.append(tool)
         
         return tools
@@ -593,12 +596,12 @@ class ToolRegistry(EnterpriseToolRegistry):
             
             # Execute with timeout
             timeout = getattr(schema, 'timeout', 30)
-            result: str = await run_with_timeout(
+            result: str = await run_with_timeout()
                 tool.execute(**validated_args), 
                 timeout
-            )
             
-            self.logger.info(f"Tool '{name}' executed successfully")
+            
+            self.logger.info(str(f"Tool '{name}' executed successfully")
             return result
             
         except asyncio.TimeoutError:
@@ -619,7 +622,7 @@ class ToolRegistry(EnterpriseToolRegistry):
         schema = self._tool_schemas[name]
         tool = self._tools[name]
         
-        return {
+        return {}
             "name": schema.name,
             "description": schema.description,
             "category": schema.category,
@@ -628,7 +631,7 @@ class ToolRegistry(EnterpriseToolRegistry):
             "initialized": tool._initialized,
             "requires_foundry": getattr(schema, 'requires_foundry', False),
             "requires_network": getattr(schema, 'requires_network', False),
-        }
+        
     
     def get_tools_by_category(self, category: str) -> List[str]:
         """Get list of tool names in a specific category."""
@@ -645,21 +648,21 @@ class ToolRegistry(EnterpriseToolRegistry):
         
         category_stats = {}
         for category, tools in self._tool_categories.items():
-            category_stats[category] = {
+            category_stats[category] = {}
                 "count": len(tools),
                 "tools": tools
-            }
+            
         
-        return {
+        return {}
             "total_tools": total_tools,
             "initialized_tools": initialized_tools,
             "categories": category_stats,
             "initialization_rate": initialized_tools / total_tools if total_tools > 0 else 0
-        }
+        
 
 
 # Tool discovery helpers
-def create_tool_schema(
+def create_tool_schema()
     name: str,
     description: str,
     input_schema: Dict[str, Any],
@@ -670,7 +673,7 @@ def create_tool_schema(
     requires_network: bool = False
 ) -> ToolSchema:
     """Helper function to create a tool schema."""
-    return ToolSchema(
+    return ToolSchema()
         name=name,
         description=description,
         input_schema=input_schema,
@@ -679,4 +682,4 @@ def create_tool_schema(
         timeout=timeout,
         requires_foundry=requires_foundry,
         requires_network=requires_network
-    )
+    

@@ -1,14 +1,16 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+import json
+import random
+import sys
 """
 FLASH LOAN ARBITRAGE SYSTEM - COMPLETE STATUS DISPLAY
 Shows all calculations, contract verification, and transaction fixing capabilities
 """
 
-print("🚀 FLASH LOAN ARBITRAGE SYSTEM - COMPREHENSIVE STATUS")
+print("[INIT] FLASH LOAN ARBITRAGE SYSTEM - COMPREHENSIVE STATUS")
 print("=" * 70)
 
-import json
-import sys
 
 # 1. CONFIGURATION FILES STATUS
 print("\n📁 CONFIGURATION FILES STATUS:")
@@ -18,20 +20,20 @@ try:
     # Load production config
     with open('production_config.json', 'r') as f:
         prod_config = json.load(f)
-    print("✅ production_config.json - LOADED")
+    print("[OK] production_config.json - LOADED")
     
     # Load contract config
     with open('deployed_contract_config.json', 'r') as f:
         contract_config = json.load(f)
-    print("✅ deployed_contract_config.json - LOADED")
+    print("[OK] deployed_contract_config.json - LOADED")
     
     # Load ABI
     with open('contract_abi.json', 'r') as f:
         contract_abi = json.load(f)
-    print("✅ contract_abi.json - LOADED")
+    print("[OK] contract_abi.json - LOADED")
     
 except Exception as e:
-    print(f"❌ Configuration Error: {e}")
+    print(f"[ERROR] Configuration Error: {e}")
     sys.exit(1)
 
 # 2. DEPLOYED CONTRACT INFORMATION
@@ -42,7 +44,7 @@ contract_addr = contract_config['deployed_contract']['address']
 network = contract_config['deployed_contract']['network']
 
 print(f"📍 Contract Address: {contract_addr}")
-print(f"🌐 Network: {network.upper()}")
+print(f"[NETWORK] Network: {network.upper()}")
 print(f"📄 Contract Name: {contract_config['deployed_contract']['contract_name']}")
 
 # 3. DEX ROUTERS CONFIGURATION
@@ -50,7 +52,7 @@ print("\n🏪 DEX ROUTERS CONFIGURATION:")
 print("-" * 40)
 
 dex_routers = prod_config.get('dex_routers', {})
-print(f"📊 Total DEXes Configured: {len(dex_routers)}")
+print(f"[METRICS] Total DEXes Configured: {len(dex_routers)}")
 
 for dex_name, dex_info in dex_routers.items():
     address = dex_info.get('address', 'N/A')
@@ -64,7 +66,7 @@ print("\n🪙 TOKEN CONFIGURATION:")
 print("-" * 40)
 
 tokens = prod_config.get('tokens', {})
-print(f"📊 Total Tokens: {len(tokens)}")
+print(f"[METRICS] Total Tokens: {len(tokens)}")
 
 for symbol, token_info in tokens.items():
     address = token_info.get('address', 'N/A')
@@ -74,11 +76,11 @@ for symbol, token_info in tokens.items():
     print(f"    Decimals: {decimals}")
 
 # 5. TRADING PAIRS
-print("\n📈 TRADING PAIRS:")
+print("\n[GROWTH] TRADING PAIRS:")
 print("-" * 40)
 
 trading_pairs = prod_config.get('trading', {}).get('token_pairs', [])
-print(f"📊 Total Pairs: {len(trading_pairs)}")
+print(f"[METRICS] Total Pairs: {len(trading_pairs)}")
 
 for i, pair in enumerate(trading_pairs[:5], 1):  # Show first 5
     token_a = pair.get('token_a', {})
@@ -92,10 +94,10 @@ print("\n💰 REVENUE TARGETS:")
 print("-" * 40)
 
 revenue = contract_config.get('revenue_targets', {})
-print(f"📊 Daily Target: ${revenue.get('daily_target_usd', 0)}")
-print(f"📊 Hourly Target: ${revenue.get('hourly_target_usd', 0)}")
-print(f"📊 Min Profit/Trade: ${revenue.get('min_profit_per_trade', 0)}")
-print(f"📊 Success Rate Target: {revenue.get('success_rate_target', 0)*100}%")
+print(f"[METRICS] Daily Target: ${revenue.get('daily_target_usd', 0)}")
+print(f"[METRICS] Hourly Target: ${revenue.get('hourly_target_usd', 0)}")
+print(f"[METRICS] Min Profit/Trade: ${revenue.get('min_profit_per_trade', 0)}")
+print(f"[METRICS] Success Rate Target: {revenue.get('success_rate_target', 0)*100}%")
 
 # 7. TRADING PARAMETERS
 print("\n⚙️ TRADING PARAMETERS:")
@@ -105,14 +107,13 @@ trading = contract_config.get('trading_parameters', {})
 print(f"💵 Initial Trade Size: ${trading.get('initial_trade_size_usd', 0)}")
 print(f"💵 Max Trade Size: ${trading.get('max_trade_size_usd', 0)}")
 print(f"💵 Profit Threshold: ${trading.get('profit_threshold_usd', 0)}")
-print(f"📊 Max Slippage: {trading.get('max_slippage_percent', 0)}%")
+print(f"[METRICS] Max Slippage: {trading.get('max_slippage_percent', 0)}%")
 print(f"⛽ Gas Price Limit: {trading.get('gas_price_limit_gwei', 0)} Gwei")
 
 # 8. SIMULATED DEX PRICE CALCULATIONS
 print("\n💹 SIMULATED DEX PRICE CALCULATIONS:")
 print("-" * 40)
 
-import random
 
 sample_pairs = ["USDC/USDT", "WMATIC/USDC", "WETH/USDC", "DAI/USDC", "LINK/USDC"]
 
@@ -132,16 +133,16 @@ for pair in sample_pairs:
     print(f"{pair:<14} | {uni_price:.7f} | {sushi_price:.7f} | {quick_price:.7f} | {spread_pct:.3f}%")
 
 # 9. ARBITRAGE OPPORTUNITIES
-print("\n🎯 CURRENT ARBITRAGE OPPORTUNITIES:")
+print("\n[TASK] CURRENT ARBITRAGE OPPORTUNITIES:")
 print("-" * 40)
 
-opportunities = [
+opportunities = []
     ("USDC/USDT", "SushiSwap", "Uniswap V2", 0.245, "🟢"),
     ("WMATIC/USDC", "QuickSwap", "SushiSwap", 0.156, "🟡"),
     ("WETH/USDC", "Uniswap V2", "QuickSwap", 0.334, "🟢"),
     ("DAI/USDC", "SushiSwap", "QuickSwap", 0.089, "🔴"),
     ("LINK/USDC", "QuickSwap", "Uniswap V2", 0.278, "🟢"),
-]
+
 
 print("Pair           | Buy From    | Sell To     | Profit % | Status")
 print("-" * 65)
@@ -155,34 +156,34 @@ print("\n🛡️ RISK MANAGEMENT:")
 print("-" * 40)
 
 risk = contract_config.get('risk_management', {})
-print(f"📊 Max Daily Loss: ${risk.get('max_daily_loss', 0)}")
-print(f"🔴 Circuit Breaker: {'✅ ENABLED' if risk.get('circuit_breaker_enabled') else '❌ DISABLED'}")
-print(f"📊 Max Consecutive Failures: {risk.get('max_consecutive_failures', 0)}")
+print(f"[METRICS] Max Daily Loss: ${risk.get('max_daily_loss', 0)}")
+print(f"🔴 Circuit Breaker: {'[OK] ENABLED' if risk.get('circuit_breaker_enabled') else '[ERROR] DISABLED'}")
+print(f"[METRICS] Max Consecutive Failures: {risk.get('max_consecutive_failures', 0)}")
 print(f"⏰ Cooldown Minutes: {risk.get('cooldown_minutes', 0)}")
-print(f"🚨 Emergency Stop Loss: ${risk.get('emergency_stop_loss', 0)}")
+print(f"[ALERT] Emergency Stop Loss: ${risk.get('emergency_stop_loss', 0)}")
 
 # 11. MONITORING SETTINGS
-print("\n📊 MONITORING SETTINGS:")
+print("\n[METRICS] MONITORING SETTINGS:")
 print("-" * 40)
 
 monitoring = contract_config.get('monitoring', {})
 print(f"⏱️ Scan Interval: {monitoring.get('scan_interval_seconds', 0)} seconds")
 print(f"💓 Health Check Interval: {monitoring.get('health_check_interval', 0)} seconds")
-print(f"📈 Performance Report: {monitoring.get('performance_report_interval', 0)} seconds")
-print(f"🚨 Low Performance Alert: {'✅ ON' if monitoring.get('alert_on_low_performance') else '❌ OFF'}")
+print(f"[GROWTH] Performance Report: {monitoring.get('performance_report_interval', 0)} seconds")
+print(f"[ALERT] Low Performance Alert: {'[OK] ON' if monitoring.get('alert_on_low_performance') else '[ERROR] OFF'}")
 
 # 12. TRANSACTION FIXING CAPABILITIES
-print("\n🔧 TRANSACTION FIXING CAPABILITIES:")
+print("\n[SETUP] TRANSACTION FIXING CAPABILITIES:")
 print("-" * 40)
 
-print("✅ Gas Estimation & Optimization")
-print("✅ Nonce Management & Recovery")
-print("✅ Router Approval Handling")
-print("✅ MEV Protection")
-print("✅ Network Congestion Detection")
-print("✅ Failed Transaction Recovery")
-print("✅ Dynamic Gas Price Adjustment")
-print("✅ Slippage Protection")
+print("[OK] Gas Estimation & Optimization")
+print("[OK] Nonce Management & Recovery")
+print("[OK] Router Approval Handling")
+print("[OK] MEV Protection")
+print("[OK] Network Congestion Detection")
+print("[OK] Failed Transaction Recovery")
+print("[OK] Dynamic Gas Price Adjustment")
+print("[OK] Slippage Protection")
 
 # 13. MCP SERVER INTEGRATION
 print("\n🔗 MCP SERVER INTEGRATION:")
@@ -196,7 +197,7 @@ print("🔸 Matic MCP Server - Port 8003")
 print("  Features: Polygon-specific operations, gas optimization")
 
 # 14. SYSTEM STATUS SUMMARY
-print("\n✅ SYSTEM STATUS SUMMARY:")
+print("\n[OK] SYSTEM STATUS SUMMARY:")
 print("-" * 40)
 
 print("🟢 Configuration Files: LOADED")
@@ -211,7 +212,7 @@ print("🟢 Transaction Fixing: READY")
 print("🟢 MCP Servers: AVAILABLE")
 
 print("\n" + "=" * 70)
-print("🎯 FLASH LOAN ARBITRAGE SYSTEM - FULLY OPERATIONAL")
-print("💡 All components configured and ready for trading!")
-print("🚀 Ready to execute profitable arbitrage opportunities!")
+print("[TASK] FLASH LOAN ARBITRAGE SYSTEM - FULLY OPERATIONAL")
+print("[INFO] All components configured and ready for trading!")
+print("[INIT] Ready to execute profitable arbitrage opportunities!")
 print("=" * 70)

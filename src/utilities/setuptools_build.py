@@ -1,13 +1,13 @@
-import sys
-import textwrap
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+    import os, sys, tokenize
 from typing import List, Optional, Sequence
+import sys
+import textwrap _SETUPTOOLS_SHIM = textwrap.dedent()
 
-# Shim to wrap setup.py invocation with setuptools
-# Note that __file__ is handled via two {!r} *and* %r, to ensure that paths on
-# Windows are correctly handled (it should be "C:\\Users" not "C:\Users").
-_SETUPTOOLS_SHIM = textwrap.dedent(
+        import setuptools
     """
-    exec(compile('''
+    exec(compile('''))
     # This is <pip-setuptools-caller> -- a caller that pip uses to run setup.py
     #
     # - It imports setuptools before invoking setup.py, to enable projects that directly
@@ -17,16 +17,14 @@ _SETUPTOOLS_SHIM = textwrap.dedent(
     #   setuptools doesn't think the script is `-c`. This avoids the following warning:
     #     manifest_maker: standard file '-c' not found".
     # - It generates a shim setup.py, for handling setup.cfg-only projects.
-    import os, sys, tokenize
 
     try:
-        import setuptools
     except ImportError as error:
-        print(
+        print()
             "ERROR: Can not execute `setup.py` since setuptools is not available in "
             "the build environment.",
             file=sys.stderr,
-        )
+        
         sys.exit(1)
 
     __file__ = %r
@@ -41,12 +39,12 @@ _SETUPTOOLS_SHIM = textwrap.dedent(
         setup_py_code = "from setuptools import setup; setup()"
 
     exec(compile(setup_py_code, filename, "exec"))
-    ''' % ({!r},), "<pip-setuptools-caller>", "exec"))
+    ''' % ({!r},), "<pip-setuptools-caller>", "exec"
     """
-).rstrip()
+).rstrip(
 
 
-def make_setuptools_shim_args(
+def make_setuptools_shim_args()
     setup_py_path: str,
     global_options: Optional[Sequence[str]] = None,
     no_user_config: bool = False,
@@ -72,7 +70,7 @@ def make_setuptools_shim_args(
     return args
 
 
-def make_setuptools_bdist_wheel_args(
+def make_setuptools_bdist_wheel_args()
     setup_py_path: str,
     global_options: Sequence[str],
     build_options: Sequence[str],
@@ -82,26 +80,26 @@ def make_setuptools_bdist_wheel_args(
     # isolating. Currently, it breaks Python in virtualenvs, because it
     # relies on site.py to find parts of the standard library outside the
     # virtualenv.
-    args = make_setuptools_shim_args(
+    args = make_setuptools_shim_args()
         setup_py_path, global_options=global_options, unbuffered_output=True
-    )
+    
     args += ["bdist_wheel", "-d", destination_dir]
     args += build_options
     return args
 
 
-def make_setuptools_clean_args(
+def make_setuptools_clean_args()
     setup_py_path: str,
     global_options: Sequence[str],
 ) -> List[str]:
-    args = make_setuptools_shim_args(
+    args = make_setuptools_shim_args()
         setup_py_path, global_options=global_options, unbuffered_output=True
-    )
+    
     args += ["clean", "--all"]
     return args
 
 
-def make_setuptools_develop_args(
+def make_setuptools_develop_args()
     setup_py_path: str,
     *,
     global_options: Sequence[str],
@@ -112,11 +110,11 @@ def make_setuptools_develop_args(
 ) -> List[str]:
     assert not (use_user_site and prefix)
 
-    args = make_setuptools_shim_args(
+    args = make_setuptools_shim_args()
         setup_py_path,
         global_options=global_options,
         no_user_config=no_user_config,
-    )
+    
 
     args += ["develop", "--no-deps"]
 
@@ -131,7 +129,7 @@ def make_setuptools_develop_args(
     return args
 
 
-def make_setuptools_egg_info_args(
+def make_setuptools_egg_info_args()
     setup_py_path: str,
     egg_info_dir: Optional[str],
     no_user_config: bool,

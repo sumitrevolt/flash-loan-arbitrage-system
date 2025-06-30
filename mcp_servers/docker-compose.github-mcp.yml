@@ -1,0 +1,39 @@
+{
+  "version": "3.8",
+  "services": {
+    "mcp-github": {
+      "image": "ghcr.io/github/github-mcp-server",
+      "container_name": "mcp-github",
+      "environment": [
+        "GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_PERSONAL_ACCESS_TOKEN}",
+        "GITHUB_TOOLSETS=all"
+      ],
+      "ports": [
+        "8017:8017"
+      ],
+      "restart": "unless-stopped",
+      "networks": [
+        "mcp-network"
+      ]
+    },
+    "mcp-filesystem": {
+      "image": "ghcr.io/cyanheads/filesystem-mcp-server",
+      "container_name": "mcp-filesystem",
+      "ports": [
+        "8018:8018"
+      ],
+      "volumes": [
+        ".:/workspace:rw"
+      ],
+      "restart": "unless-stopped",
+      "networks": [
+        "mcp-network"
+      ]
+    }
+  },
+  "networks": {
+    "mcp-network": {
+      "external": true
+    }
+  }
+}

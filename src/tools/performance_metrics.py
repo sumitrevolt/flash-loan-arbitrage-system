@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from typing import Dict, Any, Optional, List, Tuple
+import json
+import logging
+import os
+import statistics
+import threading
+import time
 """
 Performance metrics collector for flash loan arbitrage.
 
@@ -5,14 +15,6 @@ This module collects and analyzes performance metrics for the flash loan
 arbitrage system to feed into the parameter tuner.
 """
 
-import logging
-import time
-import json
-import os
-from typing import Dict, Any, Optional, List, Tuple
-from datetime import datetime, timedelta
-import threading
-import statistics
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -55,9 +57,9 @@ class PerformanceMetricsCollector:
 
         # Initialize state if needed
         if not self.state:
-            self.state = {
+            self.state = {}
                 "transactions": [],
-                "metrics": {
+                "metrics": {}
                     "success_rate": 0.0,
                     "average_profit_usd": 0.0,
                     "average_gas_cost_usd": 0.0,
@@ -67,12 +69,12 @@ class PerformanceMetricsCollector:
                 },
                 "token_metrics": {},
                 "dex_metrics": {},
-                "time_metrics": {
+                "time_metrics": {}
                     "hourly": {},
                     "daily": {}
                 },
                 "last_update": time.time()
-            }
+            
 
         # Initialize lock for thread safety
         self.lock = threading.Lock()
@@ -90,15 +92,15 @@ class PerformanceMetricsCollector:
                 with open(self.config_path, 'r') as f:
                     return json.load(f)
         except Exception as e:
-            self.logger.error(f"Error loading performance metrics config: {e}")
+            self.logger.error(str(f"Error loading performance metrics config: {e}")
 
         # Default configuration
-        return {
+        return {}
             "max_transactions_to_keep": 1000,
             "auto_save_enabled": True,
             "auto_save_interval_seconds": 300,
             "metrics_update_interval_seconds": 60,
-            "window_sizes": {
+            "window_sizes": {}
                 "short_term": 20,
                 "medium_term": 100,
                 "long_term": 500
@@ -106,7 +108,7 @@ class PerformanceMetricsCollector:
             "token_specific_metrics_enabled": True,
             "dex_specific_metrics_enabled": True,
             "time_based_metrics_enabled": True
-        }
+        
 
     def _load_state(self) -> Dict[str, Any]:
         """Load performance metrics state."""
@@ -115,7 +117,7 @@ class PerformanceMetricsCollector:
                 with open(self.state_path, 'r') as f:
                     return json.load(f)
         except Exception as e:
-            self.logger.error(f"Error loading performance metrics state: {e}")
+            self.logger.error(str(f"Error loading performance metrics state: {e}")
 
         return {}
 
@@ -133,9 +135,9 @@ class PerformanceMetricsCollector:
             with open(self.state_path, 'w') as f:
                 json.dump(self.state, f, indent=2)
 
-            self.logger.debug(f"Saved performance metrics state to {self.state_path}")
+            self.logger.debug(str(f"Saved performance metrics state to {self.state_path}")
         except Exception as e:
-            self.logger.error(f"Error saving performance metrics state: {e}")
+            self.logger.error(str(f"Error saving performance metrics state: {e}")
 
     def _auto_save_thread(self):
         """Auto-save thread function."""
@@ -233,7 +235,7 @@ class PerformanceMetricsCollector:
         retry_rate = sum(1 for r in retry_counts if r > 0) / total_txs if total_txs > 0 else 0
 
         # Update metrics
-        self.state["metrics"] = {
+        self.state["metrics"] = {}
             "success_rate": success_rate,
             "average_profit_usd": avg_profit,
             "average_gas_cost_usd": avg_gas_cost,
@@ -242,9 +244,9 @@ class PerformanceMetricsCollector:
             "retry_rate": retry_rate,
             "total_transactions": total_txs,
             "successful_transactions": successful_txs
-        }
+        
 
-        self.logger.debug(f"Updated global metrics: success_rate={success_rate:.2f}, avg_profit=${avg_profit:.2f}")
+        self.logger.debug(str(f"Updated global metrics: success_rate={success_rate:.2f}, avg_profit=${avg_profit:.2f}")
 
     def _update_token_metrics(self, transactions: List[Dict[str, Any]]):
         """
@@ -281,14 +283,14 @@ class PerformanceMetricsCollector:
             profit_per_gas = sum(profits) / sum(gas_costs) if sum(gas_costs) > 0 else 0
 
             # Update token metrics
-            self.state.setdefault("token_metrics", {})[token] = {
+            self.state.setdefault("token_metrics", {})[token] = {}
                 "success_rate": success_rate,
                 "average_profit_usd": avg_profit,
                 "average_gas_cost_usd": avg_gas_cost,
                 "profit_per_gas": profit_per_gas,
                 "total_transactions": total_txs,
                 "successful_transactions": successful_txs
-            }
+            
 
     def _update_dex_metrics(self, transactions: List[Dict[str, Any]]):
         """
@@ -327,14 +329,14 @@ class PerformanceMetricsCollector:
             profit_per_gas = sum(profits) / sum(gas_costs) if sum(gas_costs) > 0 else 0
 
             # Update DEX metrics
-            self.state.setdefault("dex_metrics", {})[dex_pair] = {
+            self.state.setdefault("dex_metrics", {})[dex_pair] = {}
                 "success_rate": success_rate,
                 "average_profit_usd": avg_profit,
                 "average_gas_cost_usd": avg_gas_cost,
                 "profit_per_gas": profit_per_gas,
                 "total_transactions": total_txs,
                 "successful_transactions": successful_txs
-            }
+            
 
     def _update_time_metrics(self, transactions: List[Dict[str, Any]]):
         """
@@ -380,14 +382,14 @@ class PerformanceMetricsCollector:
             total_gas_cost = sum(tx.get("gas_cost_usd", 0) for tx in txs)
 
             # Update hourly metrics
-            hourly_metrics[hour_key] = {
+            hourly_metrics[hour_key] = {}
                 "success_rate": success_rate,
                 "total_profit_usd": total_profit,
                 "total_gas_cost_usd": total_gas_cost,
                 "net_profit_usd": total_profit - total_gas_cost,
                 "total_transactions": total_txs,
                 "successful_transactions": successful_txs
-            }
+            
 
         # Calculate daily metrics
         daily_metrics = {}
@@ -404,20 +406,20 @@ class PerformanceMetricsCollector:
             total_gas_cost = sum(tx.get("gas_cost_usd", 0) for tx in txs)
 
             # Update daily metrics
-            daily_metrics[day_key] = {
+            daily_metrics[day_key] = {}
                 "success_rate": success_rate,
                 "total_profit_usd": total_profit,
                 "total_gas_cost_usd": total_gas_cost,
                 "net_profit_usd": total_profit - total_gas_cost,
                 "total_transactions": total_txs,
                 "successful_transactions": successful_txs
-            }
+            
 
         # Update time metrics
-        self.state["time_metrics"] = {
+        self.state["time_metrics"] = {}
             "hourly": hourly_metrics,
             "daily": daily_metrics
-        }
+        
 
     def get_metrics_for_tuning(self, window_size: str = "short_term") -> Dict[str, Any]:
         """
@@ -438,12 +440,12 @@ class PerformanceMetricsCollector:
             transactions = self.state.get("transactions", [])
 
             if not transactions:
-                return {
+                return {}
                     "success_rate": 0.0,
                     "average_profit_usd": 0.0,
                     "profit_per_gas": 0.0,
                     "status": "no_data"
-                }
+                
 
             # Use the most recent transactions for the specified window size
             recent_txs = transactions[-size:] if len(transactions) >= size else transactions
@@ -461,7 +463,7 @@ class PerformanceMetricsCollector:
 
             profit_per_gas = sum(profits) / sum(gas_costs) if sum(gas_costs) > 0 else 0
 
-            return {
+            return {}
                 "success_rate": success_rate,
                 "average_profit_usd": avg_profit,
                 "average_gas_cost_usd": avg_gas_cost,
@@ -469,7 +471,7 @@ class PerformanceMetricsCollector:
                 "total_transactions": total_txs,
                 "successful_transactions": successful_txs,
                 "status": "success"
-            }
+            
 
     def get_token_metrics_for_tuning(self, token_symbol: str) -> Dict[str, Any]:
         """
@@ -483,17 +485,17 @@ class PerformanceMetricsCollector:
         """
         with self.lock:
             if token_symbol in self.state.get("token_metrics", {}):
-                return {
+                return {}
                     **self.state["token_metrics"][token_symbol],
                     "status": "success"
-                }
+                
             else:
-                return {
+                return {}
                     "success_rate": 0.0,
                     "average_profit_usd": 0.0,
                     "profit_per_gas": 0.0,
                     "status": "no_data"
-                }
+                
 
     def get_dex_metrics_for_tuning(self, dex_name: str) -> Dict[str, Any]:
         """
@@ -527,17 +529,17 @@ class PerformanceMetricsCollector:
                         dex_metrics["profit_per_gas"] = (1 - weight) * dex_metrics["profit_per_gas"] + weight * metrics["profit_per_gas"]
 
             if dex_metrics:
-                return {
+                return {}
                     **dex_metrics,
                     "status": "success"
-                }
+                
             else:
-                return {
+                return {}
                     "success_rate": 0.0,
                     "average_profit_usd": 0.0,
                     "profit_per_gas": 0.0,
                     "status": "no_data"
-                }
+                
 
     def get_performance_summary(self) -> Dict[str, Any]:
         """
@@ -547,10 +549,10 @@ class PerformanceMetricsCollector:
             Dict[str, Any]: Performance summary
         """
         with self.lock:
-            return {
+            return {}
                 "global_metrics": self.state.get("metrics", {}),
                 "token_metrics": self.state.get("token_metrics", {}),
                 "dex_metrics": self.state.get("dex_metrics", {}),
                 "total_transactions": len(self.state.get("transactions", [])),
                 "last_update": self.state.get("last_update", 0)
-            }
+            

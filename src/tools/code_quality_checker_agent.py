@@ -1,23 +1,27 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Dict, List, Any, TypedDict, Optional
+import ast
 import asyncio\n"""
-Code Quality Checker Agent for MCP Flash Loan System
-Implements automated code quality checks with AI-enhanced analysis
-"""
-
-import os
 import json
 import logging
-from typing import Dict, List, Any, TypedDict, Optional
-from datetime import datetime, timezone
-import subprocess
-import ast
+import os
 import re
-from pathlib import Path
+import subprocess
 
-# Add FastAPI imports
+                import yaml
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
+Code Quality Checker Agent for MCP Flash Loan System
+Implements automated code quality checks with AI-enhanced analysis
+"""
+
+
+# Add FastAPI imports
 
 # MCP imports - removing unused imports
 # We're removing all the unused MCP imports
@@ -42,23 +46,36 @@ class RequiredIssueDict(TypedDict):
     rule: str
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+
 logger = logging.getLogger(__name__)
 
 # FastAPI app
 app = FastAPI(title="Code Quality Checker Agent", version="1.0.0")
 
 # Enable CORS
-app.add_middleware(
+app.add_middleware()
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-)
+
 
 # Request/Response models
 class CodeCheckRequest(BaseModel):
@@ -79,7 +96,7 @@ class CodeQualityChecker:
     
     def __init__(self):
         self.workspace_path = Path("/workspace")
-        self.supported_extensions = {
+        self.supported_extensions = {}
             '.py': 'python',
             '.js': 'javascript',
             '.ts': 'typescript',
@@ -87,7 +104,7 @@ class CodeQualityChecker:
             '.json': 'json',
             '.yml': 'yaml',
             '.yaml': 'yaml'
-        }
+        
         self.quality_metrics: Dict[str, Any] = {}
         self.issues_found: List[IssueDict] = []
         
@@ -100,10 +117,10 @@ class CodeQualityChecker:
             
         file_ext = full_path.suffix.lower()
         if file_ext not in self.supported_extensions:
-            return {
+            return {}
                 "status": "skipped",
                 "reason": f"Unsupported file type: {file_ext}"
-            }
+            
             
         language = self.supported_extensions[file_ext]
         content = full_path.read_text(encoding='utf-8')
@@ -127,14 +144,14 @@ class CodeQualityChecker:
         # AI-enhanced analysis
         suggestions = await self._get_ai_suggestions(content, language, issues)
         
-        return {
+        return {}
             "file_path": file_path,
             "status": "passed" if not issues else "failed",
             "issues": issues,
             "metrics": metrics,
             "suggestions": suggestions,
             "timestamp": datetime.now(timezone.utc).isoformat()
-        }
+        
         
     async def _check_python_file(self, file_path: Path, content: str, check_type: str) -> List[IssueDict]:
         """Check Python file quality"""
@@ -145,26 +162,26 @@ class CodeQualityChecker:
             try:
                 ast.parse(content)
             except SyntaxError as e:
-                issues.append({
+                issues.append({)}
                     "type": "syntax_error",
                     "severity": "error",
                     "line": e.lineno if e.lineno is not None else 1,  # Ensure line is never None
                     "message": str(e),
                     "rule": "python_syntax"
-                })
+                
                 
         # Style check with flake8
         if check_type in ["all", "style"]:
             try:
-                result: str = subprocess.run(
+                result: str = subprocess.run()
                     ["flake8", "--max-line-length=100", str(file_path)],
                     capture_output=True,
                     text=True
-                )
+                
                 for line in result.stdout.splitlines():
                     match = re.match(r"(.+):(\d+):(\d+): (\w+) (.+)", line)
                     if match:
-                        issues.append({
+                        issues.append({)}
                             "type": "style_violation",
                             "severity": "warning",
                             "line": int(match.group(2)),
@@ -172,105 +189,105 @@ class CodeQualityChecker:
                             "code": match.group(4),
                             "message": match.group(5),
                             "rule": "flake8"
-                        })
+                        
             except Exception as e:
-                logger.warning(f"Flake8 check failed: {e}")
+                logger.warning(str(f"Flake8 check failed: {e}")
                 
         # Security check
         if check_type in ["all", "security"]:
-            security_patterns = [
-        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative with safer alternative
+            security_patterns = []
+        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative)
+        # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative
+        # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative)
+        # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative
-        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative
+        # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative)
+        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative
+        # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative
+        # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative)
         # WARNING: This is a security risk
-                (r'eval\s*\(', "Avoid using eval() - security risk"),
-        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative with safer alternative with safer alternative
+                (r'eval\s*\(', "Avoid using eval() - security risk"),)
+        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative)
+        # TODO: Replace # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative with safer alternative
+        # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative)
+        # TODO: Replace # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative
-        # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative
+        # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative)
+        # TODO: Replace # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative
+        # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative
+        # TODO: Replace (r'exec\s*\(', "Avoid using exec() - security risk"), with safer alternative)
         # WARNING: This is a security risk
-                (r'exec\s*\(', "Avoid using exec() - security risk"),
-                (r'__import__\s*\(', "Dynamic imports can be security risk"),
-                (r'pickle\.loads?\s*\(', "Pickle can execute arbitrary code"),
+                (r'exec\s*\(', "Avoid using exec() - security risk"),)
+                (r'__import__\s*\(', "Dynamic imports can be security risk"),)
+                (r'pickle\.loads?\s*\(', "Pickle can execute arbitrary code"),)
                 (r'subprocess.*shell\s*=\s*True', "Shell injection risk"),
                 (r'private_key|secret_key|password\s*=\s*["\']', "Hardcoded secrets detected")
-            ]
+            
             
             for line_num, line in enumerate(content.splitlines(), 1):
                 for pattern, message in security_patterns:
                     if re.search(pattern, line, re.IGNORECASE):
-                        issues.append({
+                        issues.append({)}
                             "type": "security_issue",
                             "severity": "error",
                             "line": line_num,
                             "message": message,
                             "rule": "security_scan"
-                        })
+                        
                         
         # Performance check
         if check_type in ["all", "performance"]:
-            perf_patterns = [
-                (r'for .+ in range\(len\(', "Use enumerate() instead of range(len())"),
+            perf_patterns = []
+                (r'for .+ in range\(len\(', "Use enumerate() instead of range(len())"),))
                 (r'\.append\(.+\) for', "Consider list comprehension"),
-                (r'time\.sleep\(', "Blocking sleep in async context"),
+                (r'time\.sleep\(', "Blocking sleep in async context"),)
                 (r'requests\.', "Consider using aiohttp for async operations")
-            ]
+            
             
             for line_num, line in enumerate(content.splitlines(), 1):
                 for pattern, message in perf_patterns:
                     if re.search(pattern, line):
-                        issues.append({
+                        issues.append({)}
                             "type": "performance_issue",
                             "severity": "info",
                             "line": line_num,
                             "message": message,
                             "rule": "performance"
-                        })
+                        
                         
         return issues
         
@@ -283,60 +300,60 @@ class CodeQualityChecker:
             # Check for console.log statements
             for line_num, line in enumerate(content.splitlines(), 1):
                 if 'console.log' in line and not line.strip().startswith('//'):
-                    issues.append({
+                    issues.append({)}
                         "type": "style_violation",
                         "severity": "warning",
                         "line": line_num,
                         "message": "Remove console.log statements",
                         "rule": "no-console"
-                    })
+                    
                     
         # Security checks
         if check_type in ["all", "security"]:
-            security_patterns = [
-        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative with safer alternative
+            security_patterns = []
+        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative)
+        # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative
+        # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative)
+        # TODO: Replace # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative
-        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative
+        # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative)
+        # TODO: Replace # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative
+        # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative
+        # TODO: Replace (r'eval\s*\(', "Avoid using eval() - security risk"), with safer alternative)
         # WARNING: This is a security risk
-                (r'eval\s*\(', "Avoid using eval() - security risk"),
+                (r'eval\s*\(', "Avoid using eval() - security risk"),)
                 (r'innerHTML\s*=', "Use textContent to avoid XSS"),
                 (r'document\.write', "Avoid document.write()"),
                 (r'private_key|secret_key|api_key\s*[:=]\s*["\']', "Hardcoded secrets detected")
-            ]
+            
             
             for line_num, line in enumerate(content.splitlines(), 1):
                 for pattern, message in security_patterns:
                     if re.search(pattern, line, re.IGNORECASE):
-                        issues.append({
+                        issues.append({)}
                             "type": "security_issue",
                             "severity": "error",
                             "line": line_num,
                             "message": message,
                             "rule": "security_scan"
-                        })
+                        
                         
         return issues
         
@@ -346,26 +363,26 @@ class CodeQualityChecker:
         
         if check_type in ["all", "security"]:
             # Critical security patterns for smart contracts
-            security_patterns = [
+            security_patterns = []
                 (r'tx\.origin', "Use msg.sender instead of tx.origin"),
                 (r'block\.timestamp', "Block timestamp can be manipulated"),
-                (r'send\s*\(|transfer\s*\(', "Use call() with reentrancy guard"),
+                (r'send\s*\(|transfer\s*\(', "Use call() with reentrancy guard"),))
                 (r'delegatecall', "Delegatecall can be dangerous"),
                 (r'selfdestruct', "Selfdestruct is dangerous"),
                 (r'pragma\s+solidity\s+[\^><=]*0\.[4-6]\.', "Use Solidity 0.8.x or higher"),
-                (r'function\s+\w+\s*\([^)]*\)\s+public\s+payable', "Payable functions need careful review")
-            ]
+                (r'function\s+\w+\s*\([^)]*\)\s+public\s+payable', "Payable functions need careful review"
+            
             
             for line_num, line in enumerate(content.splitlines(), 1):
                 for pattern, message in security_patterns:
                     if re.search(pattern, line, re.IGNORECASE):
-                        issues.append({
+                        issues.append({)}
                             "type": "security_issue",
                             "severity": "critical",
                             "line": line_num,
                             "message": message,
                             "rule": "solidity_security"
-                        })
+                        
                         
         return issues
         
@@ -377,23 +394,22 @@ class CodeQualityChecker:
             if file_type == 'json':
                 json.loads(content)
             elif file_type in ['yaml', 'yml']:
-                import yaml
                 yaml.safe_load(content)
         except Exception as e:
-            issues.append({
+            issues.append({)}
                 "type": "syntax_error",
                 "severity": "error",
                 "line": 1,
                 "message": f"Invalid {file_type.upper()} format: {str(e)}",
                 "rule": f"{file_type}_validation"
-            })
+            
             
         return issues
         
     def _get_python_metrics(self, content: str) -> Dict[str, Any]:
         """Calculate Python code metrics"""
         lines = content.splitlines()
-        return {
+        return {}
             "total_lines": len(lines),
             "code_lines": sum(1 for line in lines if line.strip() and not line.strip().startswith('#')),
             "comment_lines": sum(1 for line in lines if line.strip().startswith('#')),
@@ -401,28 +417,28 @@ class CodeQualityChecker:
             "function_count": len(re.findall(r'^def\s+\w+', content, re.MULTILINE)),
             "class_count": len(re.findall(r'^class\s+\w+', content, re.MULTILINE)),
             "import_count": len(re.findall(r'^(import|from)\s+', content, re.MULTILINE))
-        }
+        
         
     def _get_js_metrics(self, content: str) -> Dict[str, Any]:
         """Calculate JavaScript code metrics"""
         lines = content.splitlines()
-        return {
+        return {}
             "total_lines": len(lines),
             "code_lines": sum(1 for line in lines if line.strip() and not line.strip().startswith('//')),
             "comment_lines": sum(1 for line in lines if line.strip().startswith('//')),
-            "function_count": len(re.findall(r'function\s+\w+|const\s+\w+\s*=\s*\(|=>\s*{', content)),
+            "function_count": len(re.findall(r'function\s+\w+|const\s+\w+\s*=\s*\(|=>\s*{', content)),)}
             "class_count": len(re.findall(r'class\s+\w+', content))
-        }
+        
         
     def _get_solidity_metrics(self, content: str) -> Dict[str, Any]:
         """Calculate Solidity code metrics"""
-        return {
+        return {}
             "total_lines": len(content.splitlines()),
             "contract_count": len(re.findall(r'contract\s+\w+', content)),
             "function_count": len(re.findall(r'function\s+\w+', content)),
             "modifier_count": len(re.findall(r'modifier\s+\w+', content)),
             "event_count": len(re.findall(r'event\s+\w+', content))
-        }
+        
         
     async def _get_ai_suggestions(self, content: str, language: str, issues: List[IssueDict]) -> List[str]:
         """Generate AI-powered improvement suggestions"""
@@ -432,13 +448,13 @@ class CodeQualityChecker:
         if language == 'python':
             if 'class' not in content and len(content.splitlines()) > 100:
                 suggestions.append("Consider organizing code into classes for better structure")
-            if 'logging' not in content and 'print(' in content:
+            if 'logging' not in content and 'print(' in content:)
                 suggestions.append("Replace print statements with proper logging")
-            if 'try:' not in content and ('open(' in content or 'requests.' in content):
+            if 'try:' not in content and ('open(' in content or 'requests.' in content):)
                 suggestions.append("Add error handling for I/O operations")
                 
         elif language == 'solidity':
-            if 'require(' not in content and 'function' in content:
+            if 'require(' not in content and 'function' in content:)
                 suggestions.append("Add input validation with require statements")
             if 'event' not in content:
                 suggestions.append("Add events for important state changes")
@@ -448,7 +464,7 @@ class CodeQualityChecker:
         # Severity-based suggestions
         critical_issues: List[IssueDict] = [i for i in issues if i.get('severity') == 'critical']
         if critical_issues:
-            suggestions.insert(0, f"⚠️ Fix {len(critical_issues)} critical security issues immediately")
+            suggestions.insert(0, f"[WARN] Fix {len(critical_issues)} critical security issues immediately")
             
         return suggestions
 
@@ -470,7 +486,7 @@ async def check_code(request: CodeCheckRequest) -> CodeCheckResponse:
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        logger.error(f"Code check failed: {e}")
+        logger.error(str(f"Code check failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Handle directory checks
@@ -490,34 +506,34 @@ async def check_directory(directory: str, check_type: str = "all") -> Dict[str, 
                 result: str = await checker.check_file(str(relative_path), check_type)
                 results.append(result)
             except Exception as e:
-                logger.error(f"Failed to check {file_path}: {e}")
+                logger.error(str(f"Failed to check {file_path}: {e}")
                 
-    return {
+    return {}
         "directory": directory,
         "files_checked": len(results),
         "passed": sum(1 for r in results if r["status"] == "passed"),
         "failed": sum(1 for r in results if r["status"] == "failed"),
         "results": results
-    }
+    
 
 @app.get("/metrics")
 async def get_quality_metrics() -> Dict[str, Any]:
     """Get overall code quality metrics"""
-    return {
+    return {}
         "total_files_checked": len(checker.quality_metrics),
         "total_issues": len(checker.issues_found),
         "metrics": checker.quality_metrics,
         "timestamp": datetime.now(timezone.utc).isoformat()
-    }
+    
 
 @app.post("/fix-issues")
 async def fix_issues(file_path: str) -> Dict[str, str]:
     """Attempt to automatically fix code issues"""
     # This is a placeholder for auto-fix functionality
-    return {
+    return {}
         "status": "not_implemented",
         "message": "Auto-fix functionality will be implemented in future versions"
-    }
+    
 
 # MCP Server implementation
 async def handle_mcp_request(request: Dict[str, Any]) -> Dict[str, Any]:
@@ -526,10 +542,10 @@ async def handle_mcp_request(request: Dict[str, Any]) -> Dict[str, Any]:
     params = request.get("params", {})
     
     if method == "check_code":
-        result: str = await checker.check_file(
+        result: str = await checker.check_file()
             params.get("file_path"),
             params.get("check_type", "all")
-        )
+        
         return {"result": result}
     elif method == "check_directory":
         # Implementation for directory checking
@@ -542,7 +558,7 @@ if __name__ == "__main__":
     # Check if running with FastAPI
     if os.getenv("ENABLE_FASTAPI", "true").lower() == "true":
         port = int(os.getenv("SERVER_PORT", "8010"))
-        logger.info(f"Starting Code Quality Checker with FastAPI on port {port}")
+        logger.info(str(f"Starting Code Quality Checker with FastAPI on port {port}")
         uvicorn.run(app, host="0.0.0.0", port=port)
     else:
         # Run as MCP server

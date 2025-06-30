@@ -1,4 +1,19 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+        import random
+from datetime import datetime
+from decimal import Decimal, getcontext
+from typing import Dict, List, Any, Optional
+import asyncio
+import json
+import logging
+import time
+
+from dataclasses import dataclass
+from enum import Enum
+from flask import Flask, jsonify, request
+from web3 import Web3
+import requests
 """
 Consolidated Trading MCP Server
 ==============================
@@ -6,27 +21,28 @@ Unified trading execution server combining flash loan and arbitrage functionalit
 Executes trades, manages risk, and coordinates with pricing servers
 """
 
-import asyncio
-import json
-import logging
-import time
-from decimal import Decimal, getcontext
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
-from datetime import datetime
-from enum import Enum
-from flask import Flask, jsonify, request
-from web3 import Web3
-import requests
 
 # Set precision for financial calculations
 getcontext().prec = 28
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+
 logger = logging.getLogger(__name__)
 
 class TradeStatus(Enum):
@@ -77,16 +93,16 @@ class ConsolidatedTradingServer:
         self.pricing_server_url = "http://localhost:8001"
         
         # Risk management
-        self.risk_limits = RiskLimits(
+        self.risk_limits = RiskLimits()
             max_trade_amount=Decimal("10000"),
             max_daily_trades=100,
             max_daily_loss=Decimal("1000"),
             min_profit_threshold=Decimal("0.1"),  # 0.1%
             max_slippage=Decimal("0.5")  # 0.5%
-        )
+        
         
         # Trading statistics
-        self.stats = {
+        self.stats = {}
             "total_trades": 0,
             "successful_trades": 0,
             "failed_trades": 0,
@@ -94,7 +110,7 @@ class ConsolidatedTradingServer:
             "total_gas_used": 0,
             "average_profit": Decimal("0"),
             "success_rate": 0.0
-        }
+        
         
         self.setup_routes()
         
@@ -103,13 +119,13 @@ class ConsolidatedTradingServer:
         
         @self.app.route('/health')
         def health():
-            return jsonify({
+            return jsonify({)}
                 "status": "healthy",
                 "timestamp": datetime.now().isoformat(),
                 "active_trades": len(self.active_trades),
                 "completed_trades": len(self.completed_trades),
                 "total_profit": float(self.stats["total_profit"])
-            })
+            
             
         @self.app.route('/execute', methods=['POST'])
         def execute_trade():
@@ -133,14 +149,14 @@ class ConsolidatedTradingServer:
                 # Execute trade asynchronously
                 asyncio.create_task(self.execute_trade_async(trade_order))
                 
-                return jsonify({
+                return jsonify({)}
                     "trade_id": trade_order.id,
                     "status": trade_order.status.value,
                     "expected_profit": float(trade_order.expected_profit)
-                })
+                
                 
             except Exception as e:
-                logger.error(f"Error executing trade: {e}")
+                logger.error(str(f"Error executing trade: {e}")
                 return jsonify({"error": str(e)}), 500
                 
         @self.app.route('/trades')
@@ -175,7 +191,7 @@ class ConsolidatedTradingServer:
         @self.app.route('/stats')
         def get_stats():
             """Get trading statistics"""
-            return jsonify({
+            return jsonify({)}
                 "total_trades": self.stats["total_trades"],
                 "successful_trades": self.stats["successful_trades"],
                 "failed_trades": self.stats["failed_trades"],
@@ -183,7 +199,7 @@ class ConsolidatedTradingServer:
                 "average_profit": float(self.stats["average_profit"]),
                 "success_rate": self.stats["success_rate"],
                 "total_gas_used": self.stats["total_gas_used"]
-            })
+            
             
         @self.app.route('/cancel/<trade_id>', methods=['POST'])
         def cancel_trade(trade_id: str):
@@ -211,7 +227,7 @@ class ConsolidatedTradingServer:
                         return opp
             return None
         except Exception as e:
-            logger.error(f"Error getting opportunities: {e}")
+            logger.error(str(f"Error getting opportunities: {e}")
             return None
             
     def create_trade_order(self, opportunity: Dict, amount: Decimal) -> TradeOrder:
@@ -220,7 +236,7 @@ class ConsolidatedTradingServer:
         
         expected_profit = Decimal(str(opportunity["estimated_profit"]))
         
-        trade_order = TradeOrder(
+        trade_order = TradeOrder()
             id=trade_id,
             token_pair=opportunity["token_pair"],
             amount=amount,
@@ -231,7 +247,7 @@ class ConsolidatedTradingServer:
             expected_profit=expected_profit,
             status=TradeStatus.PENDING,
             created_at=datetime.now()
-        )
+        
         
         self.active_trades[trade_id] = trade_order
         return trade_order
@@ -239,7 +255,7 @@ class ConsolidatedTradingServer:
     async def execute_trade_async(self, trade_order: TradeOrder):
         """Execute trade asynchronously"""
         try:
-            logger.info(f"Executing trade {trade_order.id}")
+            logger.info(str(f"Executing trade {trade_order.id}")
             
             # Risk checks
             if not self.risk_check(trade_order):
@@ -256,7 +272,7 @@ class ConsolidatedTradingServer:
             self.update_stats(trade_order)
             
         except Exception as e:
-            logger.error(f"Error executing trade {trade_order.id}: {e}")
+            logger.error(str(f"Error executing trade {trade_order.id}: {e}")
             trade_order.status = TradeStatus.FAILED
             self.move_to_completed(trade_order)
             
@@ -265,18 +281,18 @@ class ConsolidatedTradingServer:
         
         # Check trade amount limit
         if trade_order.amount > self.risk_limits.max_trade_amount:
-            logger.warning(f"Trade amount {trade_order.amount} exceeds limit")
+            logger.warning(str(f"Trade amount {trade_order.amount} exceeds limit")
             return False
             
         # Check minimum profit threshold
         profit_percentage = (trade_order.expected_profit / trade_order.amount) * 100
         if profit_percentage < self.risk_limits.min_profit_threshold:
-            logger.warning(f"Profit {profit_percentage}% below threshold")
+            logger.warning(str(f"Profit {profit_percentage}% below threshold")
             return False
             
         # Check daily trade limit
-        today_trades = sum(1 for t in self.completed_trades 
-                          if t.created_at.date() == datetime.now().date())
+        today_trades = sum(1 for t in self.completed_trades )
+                          if t.created_at.date() == datetime.now().date()
         if today_trades >= self.risk_limits.max_daily_trades:
             logger.warning("Daily trade limit reached")
             return False
@@ -290,7 +306,6 @@ class ConsolidatedTradingServer:
         await asyncio.sleep(2)
         
         # Simulate success/failure (90% success rate for demo)
-        import random
         success = random.random() < 0.9
         
         if success:
@@ -307,13 +322,13 @@ class ConsolidatedTradingServer:
             trade_order.gas_price = gas_price
             trade_order.tx_hash = f"0x{''.join(random.choices('0123456789abcdef', k=64))}"
             
-            logger.info(f"Trade {trade_order.id} completed successfully. "
-                       f"Profit: ${float(actual_profit):.2f}")
+            logger.info(str(f"Trade {trade_order.id} completed successfully. ")
+                       f"Profit: ${float(actual_profit):.2f}"
                        
         else:
             trade_order.status = TradeStatus.FAILED
             trade_order.executed_at = datetime.now()
-            logger.warning(f"Trade {trade_order.id} failed")
+            logger.warning(str(f"Trade {trade_order.id} failed")
             
         self.move_to_completed(trade_order)
         
@@ -339,23 +354,23 @@ class ConsolidatedTradingServer:
             self.stats["failed_trades"] += 1
             
         # Update success rate
-        self.stats["success_rate"] = (
+        self.stats["success_rate"] = ()
             self.stats["successful_trades"] / self.stats["total_trades"] * 100
             if self.stats["total_trades"] > 0 else 0
-        )
+        
         
         # Update average profit
-        self.stats["average_profit"] = (
+        self.stats["average_profit"] = ()
             self.stats["total_profit"] / self.stats["successful_trades"]
             if self.stats["successful_trades"] > 0 else Decimal("0")
-        )
+        
         
         if trade_order.gas_used:
             self.stats["total_gas_used"] += trade_order.gas_used
             
     def trade_to_dict(self, trade: TradeOrder) -> Dict:
         """Convert trade order to dictionary"""
-        return {
+        return {}
             "id": trade.id,
             "token_pair": trade.token_pair,
             "amount": float(trade.amount),
@@ -371,20 +386,20 @@ class ConsolidatedTradingServer:
             "tx_hash": trade.tx_hash,
             "gas_used": trade.gas_used,
             "gas_price": float(trade.gas_price) if trade.gas_price else None
-        }
+        
         
     def run(self, host='0.0.0.0', port=8002):
         """Run the trading server"""
-        logger.info(f"🚀 Starting Consolidated Trading MCP Server on {host}:{port}")
-        logger.info(f"Risk limits: Max trade ${float(self.risk_limits.max_trade_amount)}, "
-                   f"Min profit {float(self.risk_limits.min_profit_threshold)}%")
+        logger.info(str(f"[INIT] Starting Consolidated Trading MCP Server on {host}:{port}")
+        logger.info(str(f"Risk limits: Max trade ${float(self.risk_limits.max_trade_amount}, ")
+                   f"Min profit {float(self.risk_limits.min_profit_threshold)}%"
         
-        self.app.run(
+        self.app.run()
             host=host,
             port=port,
             debug=False,
             threaded=True
-        )
+        
 
 def main():
     """Main entry point"""

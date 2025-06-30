@@ -1,0 +1,425 @@
+version: '3.8'
+
+services:
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    container_name: flash-loan-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - flash-loan-network
+
+  # PostgreSQL for persistent data storage
+  postgres:
+    image: postgres:15-alpine
+    container_name: flash-loan-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: flash_loan_arbitrage
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password_2024}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d flash_loan_arbitrage"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - flash-loan-network
+
+  # Unified MCP Coordinator - Central coordination service
+  mcp-coordinator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-coordinator
+    container_name: flash-loan-mcp-coordinator
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://postgres:${POSTGRES_PASSWORD:-secure_password_2024}@postgres:5432/flash_loan_arbitrage
+      - LOG_LEVEL=WARNING
+      - DASHBOARD_HOST=0.0.0.0
+      - DASHBOARD_PORT=8080
+    ports:
+      - "8080:8080"  # Dashboard port
+      - "8000:8000"  # MCP coordination port
+    volumes:
+      - ../config:/app/config:ro
+      - ../logs:/app/logs
+      - mcp-data:/app/data
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - flash-loan-network
+
+  # LangChain Master Orchestrator
+  langchain-orchestrator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.langchain-orchestrator
+    container_name: flash-loan-langchain-orchestrator
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - REDIS_URL=redis://redis:6379
+      - MCP_HUB_URL=http://mcp-coordinator:8000
+      - AUTOGEN_URL=http://autogen-coordinator:8001
+      - LOG_LEVEL=WARNING
+      - TIMEOUT=300
+    ports:
+      - "8002:8002"
+    volumes:
+      - ../config:/app/config:ro
+      - ../logs:/app/logs
+    depends_on:
+      mcp-coordinator:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - flash-loan-network
+
+  # AutoGen Multi-Agent Coordinator
+  autogen-coordinator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.autogen-coordinator
+    container_name: flash-loan-autogen-coordinator
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - REDIS_URL=redis://redis:6379
+      - MCP_HUB_URL=http://mcp-coordinator:8000
+      - LOG_LEVEL=WARNING
+      - CIRCUIT_BREAKER_THRESHOLD=3
+    ports:
+      - "8001:8001"
+    volumes:
+      - ../config:/app/config:ro
+      - ../logs:/app/logs
+    depends_on:
+      mcp-coordinator:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - flash-loan-network
+
+  # Critical MCP Servers
+  mcp-filesystem:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-server
+      args:
+        SERVER_TYPE: filesystem
+    container_name: flash-loan-mcp-filesystem
+    restart: unless-stopped
+    environment:
+      - SERVER_TYPE=filesystem
+      - ALLOWED_PATHS=/app/data,/app/config,/app/logs
+      - MAX_FILE_SIZE=10MB
+    ports:
+      - "3023:3000"
+    volumes:
+      - ../data:/app/data
+      - ../config:/app/config:ro
+      - ../logs:/app/logs
+    networks:
+      - flash-loan-network
+
+  mcp-context7:
+    image: npx:@upstash/context7-mcp@latest
+    container_name: flash-loan-mcp-context7
+    restart: unless-stopped
+    ports:
+      - "3022:3000"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - flash-loan-network
+
+  mcp-supermemory:
+    build:
+      context: ../mcp_servers/supermemory
+      dockerfile: Dockerfile
+    container_name: flash-loan-mcp-supermemory
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - MEMORY_BACKEND=redis
+      - REDIS_URL=redis://redis:6379/1
+    ports:
+      - "3021:3000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - flash-loan-network
+
+  mcp-taskmanager:
+    build:
+      context: ../mcp_servers/taskmanager
+      dockerfile: Dockerfile
+    container_name: flash-loan-mcp-taskmanager
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379/2
+    ports:
+      - "3020:3000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - flash-loan-network
+
+  # Flash Loan Specialized Servers
+  mcp-aave-flash-loan:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-server
+      args:
+        SERVER_TYPE: aave_flash_loan
+    container_name: flash-loan-mcp-aave
+    restart: unless-stopped
+    environment:
+      - SERVER_TYPE=aave_flash_loan
+      - ETHEREUM_RPC_URL=${ETHEREUM_RPC_URL}
+      - POLYGON_RPC_URL=${POLYGON_RPC_URL}
+      - ARBITRUM_RPC_URL=${ARBITRUM_RPC_URL}
+      - AAVE_POOL_ADDRESS=${AAVE_POOL_ADDRESS}
+      - MAX_FLASH_LOAN_AMOUNT=1000000000000000000000  # 1000 ETH
+    ports:
+      - "3001:3000"
+    networks:
+      - flash-loan-network
+
+  mcp-arbitrage-detector:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-server
+      args:
+        SERVER_TYPE: arbitrage_detector
+    container_name: flash-loan-mcp-arbitrage
+    restart: unless-stopped
+    environment:
+      - SERVER_TYPE=arbitrage_detector
+      - DEX_APIS=${DEX_APIS}
+      - MIN_PROFIT_THRESHOLD=0.001
+      - MAX_GAS_PRICE=100000000000  # 100 gwei
+    ports:
+      - "3003:3000"
+    networks:
+      - flash-loan-network
+
+  mcp-risk-analyzer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp-server
+      args:
+        SERVER_TYPE: risk_analyzer
+    container_name: flash-loan-mcp-risk
+    restart: unless-stopped
+    environment:
+      - SERVER_TYPE=risk_analyzer
+      - RISK_THRESHOLD_LOW=0.3
+      - RISK_THRESHOLD_MEDIUM=0.6
+      - RISK_THRESHOLD_HIGH=0.8
+    ports:
+      - "3007:3000"
+    networks:
+      - flash-loan-network
+
+  # Monitoring and Observability
+  prometheus:
+    image: prom/prometheus:v2.40.0
+    container_name: flash-loan-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - flash-loan-network
+
+  grafana:
+    image: grafana/grafana:9.3.0
+    container_name: flash-loan-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ../monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ../monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    networks:
+      - flash-loan-network
+
+  alertmanager:
+    image: prom/alertmanager:v0.25.0
+    container_name: flash-loan-alertmanager
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    ports:
+      - "9093:9093"
+    volumes:
+      - ../monitoring/alertmanager.yml:/etc/alertmanager/config.yml:ro
+      - alertmanager-data:/alertmanager
+    networks:
+      - flash-loan-network
+
+  # Log aggregation
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.0
+    container_name: flash-loan-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - flash-loan-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.5.0
+    container_name: flash-loan-kibana
+    restart: unless-stopped
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - flash-loan-network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.5.0
+    container_name: flash-loan-logstash
+    restart: unless-stopped
+    volumes:
+      - ../monitoring/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ../logs:/app/logs:ro
+    depends_on:
+      - elasticsearch
+    networks:
+      - flash-loan-network
+
+  # Load Balancer and Reverse Proxy
+  nginx:
+    image: nginx:1.23-alpine
+    container_name: flash-loan-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../nginx/ssl:/etc/nginx/ssl:ro
+      - nginx-logs:/var/log/nginx
+    depends_on:
+      - mcp-coordinator
+      - langchain-orchestrator
+      - autogen-coordinator
+    networks:
+      - flash-loan-network
+
+  # Backup Service
+  backup:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backup
+    container_name: flash-loan-backup
+    restart: unless-stopped
+    environment:
+      - BACKUP_SCHEDULE=0 2 * * *  # Daily at 2 AM
+      - POSTGRES_URL=postgresql://postgres:${POSTGRES_PASSWORD:-secure_password_2024}@postgres:5432/flash_loan_arbitrage
+      - REDIS_URL=redis://redis:6379
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_BUCKET=${S3_BACKUP_BUCKET}
+    volumes:
+      - ../backups:/app/backups
+      - postgres-data:/postgres-data:ro
+      - redis-data:/redis-data:ro
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - flash-loan-network
+
+networks:
+  flash-loan-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  redis-data:
+    driver: local
+  postgres-data:
+    driver: local
+  mcp-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  alertmanager-data:
+    driver: local
+  elasticsearch-data:
+    driver: local
+  nginx-logs:
+    driver: local

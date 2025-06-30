@@ -1,14 +1,15 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+import os
+
+from fastapi import FastAPI
+import aiohttp
+import uvicorn
 """
 Entrypoint script for Coordination Orchestrator container
 """
 
-import os
-import uvicorn
-import asyncio
-import aiohttp
-from datetime import datetime
-from fastapi import FastAPI
 
 app = FastAPI(title="Coordination Orchestrator")
 

@@ -1,10 +1,14 @@
+# -*- coding: utf-8 -*-
+from datetime import datetime
+import json
+
+
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python3
 """
 Simple Arbitrage Calculator - Shows sample calculations and explanations
 """
 
-import json
-from datetime import datetime
 
 def load_config():
     """Load bot configuration"""
@@ -19,21 +23,21 @@ def show_sample_calculation():
     """Show a detailed arbitrage calculation with sample data"""
     
     print("=" * 80)
-    print("🔍 FLASH LOAN ARBITRAGE BOT - SAMPLE CALCULATION")
+    print("[SEARCH] FLASH LOAN ARBITRAGE BOT - SAMPLE CALCULATION")
     print("=" * 80)
     print(f"⏰ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     # Sample DEX prices for WMATIC/USDC
-    print(f"\n📊 SAMPLE DEX PRICES - WMATIC/USDC:")
+    print(f"\n[METRICS] SAMPLE DEX PRICES - WMATIC/USDC:")
     print("-" * 50)
-    sample_prices = {
+    sample_prices = {}
         'QuickSwap': 0.8245,
         'Uniswap V3': 0.8267,
         'SushiSwap': 0.8239,
         'Curve': 0.8251,
         'Balancer': 0.8258,
         'DODO': 0.8261
-    }
+    
     
     for dex, price in sample_prices.items():
         print(f"  {dex:<12}: ${price:.6f}")
@@ -48,7 +52,7 @@ def show_sample_calculation():
     print("-" * 50)
     print(f"  🔴 Best Buy Price : {best_buy_dex} @ ${buy_price:.6f}")
     print(f"  🟢 Best Sell Price: {best_sell_dex} @ ${sell_price:.6f}")
-    print(f"  📈 Price Spread   : ${sell_price - buy_price:.6f} ({((sell_price - buy_price) / buy_price) * 100:.3f}%)")
+    print(f"  [GROWTH] Price Spread   : ${sell_price - buy_price:.6f} ({((sell_price - buy_price) / buy_price) * 100:.3f}%)")
     
     # Calculate profit for $1000 trade
     amount = 1000
@@ -80,11 +84,11 @@ def show_sample_calculation():
     print(f"  {'='*35}")
     
     if net_profit > 0:
-        print(f"  ✅ NET PROFIT           : ${net_profit:>8.2f}")
-        print(f"  📊 Profit Margin        : {(net_profit/amount)*100:>7.3f}%")
+        print(f"  [OK] NET PROFIT           : ${net_profit:>8.2f}")
+        print(f"  [METRICS] Profit Margin        : {(net_profit/amount)*100:>7.3f}%")
     else:
-        print(f"  ❌ NET LOSS             : ${abs(net_profit):>8.2f}")
-        print(f"  📊 Loss Margin          : {(net_profit/amount)*100:>7.3f}%")
+        print(f"  [ERROR] NET LOSS             : ${abs(net_profit):>8.2f}")
+        print(f"  [METRICS] Loss Margin          : {(net_profit/amount)*100:>7.3f}%")
 
 def show_current_bot_status():
     """Show current bot configuration and status"""
@@ -113,30 +117,30 @@ def explain_zero_opportunities():
     """Explain why the bot finds 0 opportunities"""
     print(f"\n❓ WHY 0 ARBITRAGE OPPORTUNITIES?")
     print("-" * 50)
-    print(f"  1. 🎯 HIGH PROFIT THRESHOLD")
+    print(f"  1. [TASK] HIGH PROFIT THRESHOLD")
     print(f"     - Bot requires minimum $5.00 profit")
     print(f"     - Current market spreads are smaller")
     print(f"     - This prevents unprofitable trades")
     print(f"")
-    print(f"  2. ⚡ MARKET EFFICIENCY")
+    print(f"  2. [FAST] MARKET EFFICIENCY")
     print(f"     - Many bots compete for same opportunities")
     print(f"     - Price differences get arbitraged quickly")
     print(f"     - Large spreads are rare and short-lived")
     print(f"")
-    print(f"  3. 📊 COST STRUCTURE")
+    print(f"  3. [METRICS] COST STRUCTURE")
     print(f"     - Flash loan fees: 0.09%")
     print(f"     - DEX trading fees: 0.6% total")
     print(f"     - Gas costs: ~$15 per transaction")
     print(f"     - Need >2% price spread for profit")
     print(f"")
-    print(f"  4. ✅ SYSTEM WORKING CORRECTLY")
+    print(f"  4. [OK] SYSTEM WORKING CORRECTLY")
     print(f"     - Finding 0 opportunities is NORMAL")
     print(f"     - Bot is actively scanning and ready")
     print(f"     - Will execute when profitable opportunities appear")
 
 def show_historical_performance():
     """Show information about historical trades"""
-    print(f"\n📈 HISTORICAL PERFORMANCE:")
+    print(f"\n[GROWTH] HISTORICAL PERFORMANCE:")
     print("-" * 50)
     print(f"  Previous Successful Trades:")
     print(f"  - WMATIC/USDC pairs with $6-7 profits")
@@ -157,7 +161,7 @@ def main():
         show_historical_performance()
         
         print(f"\n{'='*80}")
-        print(f"💡 SUMMARY: Your arbitrage bot is working correctly!")
+        print(f"[INFO] SUMMARY: Your arbitrage bot is working correctly!")
         print(f"   Zero opportunities = efficient market conditions")
         print(f"   Bot will execute trades when profitable spreads appear")
         print(f"{'='*80}")

@@ -1,32 +1,48 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from decimal import Decimal, getcontext
+from typing import Dict, List, Optional, Any, Union
+import asyncio
+import logging
+import sys
+import time
+
+                from web3_live_price_fetcher import Web3LivePriceFetcher
+from dataclasses import dataclass
+from enum import Enum
+import requests
 """
 Unified Revenue-Generating Flash Loan Arbitrage Bot
 Combines real-time API data and direct Web3 blockchain data
 """
 
-import asyncio
-import sys
-import logging
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Union
-from decimal import Decimal, getcontext
-from dataclasses import dataclass
-import requests
-import time
-from enum import Enum
 
 # Set high precision for calculations
 getcontext().prec = 50
 
 # Setup logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.FileHandler('unified_revenue_bot.log'),
         logging.StreamHandler()
-    ]
-)
+    
+
 logger = logging.getLogger('UnifiedRevenueBot')
 
 class DataSource(Enum):
@@ -66,16 +82,16 @@ class UnifiedRevenueGeneratorBot:
         self.web3_price_fetcher = None
         
         # Price data storage
-        self.dex_prices: Dict[str, Dict[str, Decimal]] = {
+        self.dex_prices: Dict[str, Dict[str, Decimal]] = {}
             'uniswap': {},
             'quickswap': {},
             'sushiswap': {},
             'curve': {}
-        }
+        
         self.current_market_prices: Dict[str, Decimal] = {}
         
         # Token pairs for monitoring
-        self.token_pairs = [
+        self.token_pairs = []
             'WETH/USDC',
             'WMATIC/USDC', 
             'WBTC/WETH',
@@ -84,12 +100,11 @@ class UnifiedRevenueGeneratorBot:
             'WBTC/USDC',
             'LINK/WETH',
             'UNI/WETH'
-        ]
+        
         
         # Initialize Web3 fetcher if needed
         if self.data_source in [DataSource.WEB3_ONLY, DataSource.HYBRID]:
             try:
-                from web3_live_price_fetcher import Web3LivePriceFetcher
                 self.web3_price_fetcher = Web3LivePriceFetcher()
                 logger.info("Web3 price fetcher initialized")
             except ImportError:
@@ -99,11 +114,11 @@ class UnifiedRevenueGeneratorBot:
                 else:
                     self.data_source = DataSource.API_ONLY
         
-        logger.info(f"Unified Revenue Generator Bot initialized with {self.data_source.value} data source")
+        logger.info(str(f"Unified Revenue Generator Bot initialized with {self.data_source.value} data source")
     
     def load_config(self) -> Dict[str, Any]:
         """Load unified bot configuration"""
-        return {
+        return {}
             'min_profit_usd': 8.0,
             'min_profit_percentage': 0.12,  # 0.12%
             'max_trade_size_usd': 75000.0,
@@ -117,30 +132,30 @@ class UnifiedRevenueGeneratorBot:
             'dexes_enabled': ['uniswap_v2', 'uniswap_v3', 'sushiswap', 'quickswap', 'curve'],
             'api_timeout_seconds': 15,
             'web3_timeout_seconds': 20
-        }
+        
     
     async def fetch_api_prices(self) -> bool:
         """Fetch prices from external APIs"""
         try:
-            api_endpoints = [
-                {
+            api_endpoints = []
+                {}
                     'name': 'coingecko',
                     'url': "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,matic-network,bitcoin,usd-coin,dai,tether,chainlink,uniswap&vs_currencies=usd",
                     'handler': self._process_coingecko_response
                 },
-                {
+                {}
                     'name': 'coinbase',
                     'url': "https://api.coinbase.com/v2/exchange-rates?currency=USD",
                     'handler': self._process_coinbase_response
-                }
-            ]
+                
+            
             
             for api in api_endpoints:
                 try:
-                    response = requests.get(
+                    response = requests.get()
                         api['url'], 
                         timeout=self.config['api_timeout_seconds']
-                    )
+                    
                     
                     if response.status_code == 200:
                         success = api['handler'](response.json())
@@ -148,15 +163,15 @@ class UnifiedRevenueGeneratorBot:
                             self._generate_dex_price_variations()
                             self.last_price_update = datetime.now()
                             self.price_fetch_failures = 0
-                            logger.info(f"Successfully fetched prices from {api['name']}")
+                            logger.info(str(f"Successfully fetched prices from {api['name']}")
                             return True
                 
                 except Exception as e:
-                    logger.warning(f"API {api['name']} failed: {e}")
+                    logger.warning(str(f"API {api['name']} failed: {e}")
                     continue
             
             self.price_fetch_failures += 1
-            logger.error(f"All API endpoints failed - failure count: {self.price_fetch_failures}")
+            logger.error(str(f"All API endpoints failed - failure count: {self.price_fetch_failures}")
             
             if self.price_fetch_failures > 3:
                 self.current_market_prices.clear()
@@ -166,7 +181,7 @@ class UnifiedRevenueGeneratorBot:
             return False
             
         except Exception as e:
-            logger.error(f"Critical error in API price fetching: {e}")
+            logger.error(str(f"Critical error in API price fetching: {e}")
             return False
     
     def _process_coingecko_response(self, data: Dict) -> bool:
@@ -187,7 +202,7 @@ class UnifiedRevenueGeneratorBot:
                 logger.error("Price data failed sanity checks")
                 return False
             
-            self.current_market_prices = {
+            self.current_market_prices = {}
                 'ETH': eth_price,
                 'MATIC': matic_price,
                 'BTC': btc_price,
@@ -196,13 +211,13 @@ class UnifiedRevenueGeneratorBot:
                 'USDC': Decimal('1.0'),
                 'LINK': Decimal(str(data.get('chainlink', {}).get('usd', 7.0))),
                 'UNI': Decimal(str(data.get('uniswap', {}).get('usd', 5.0)))
-            }
             
-            logger.info(f"API PRICES - ETH: ${eth_price}, MATIC: ${matic_price}, BTC: ${btc_price}")
+            
+            logger.info(str(f"API PRICES - ETH: ${eth_price}, MATIC: ${matic_price}, BTC: ${btc_price}")
             return True
             
         except Exception as e:
-            logger.error(f"Error processing CoinGecko response: {e}")
+            logger.error(str(f"Error processing CoinGecko response: {e}")
             return False
     
     def _process_coinbase_response(self, data: Dict) -> bool:
@@ -219,7 +234,7 @@ class UnifiedRevenueGeneratorBot:
             if eth_price <= 0 or btc_price <= 0:
                 return False
             
-            self.current_market_prices = {
+            self.current_market_prices = {}
                 'ETH': eth_price,
                 'BTC': btc_price,
                 'MATIC': Decimal('0.8'),  # Estimated
@@ -228,12 +243,12 @@ class UnifiedRevenueGeneratorBot:
                 'USDC': Decimal('1.0'),
                 'LINK': Decimal('7.0'),  # Estimated
                 'UNI': Decimal('5.0')    # Estimated
-            }
+            
             
             return True
             
         except Exception as e:
-            logger.error(f"Error processing Coinbase response: {e}")
+            logger.error(str(f"Error processing Coinbase response: {e}")
             return False
     
     def _generate_dex_price_variations(self):
@@ -250,8 +265,8 @@ class UnifiedRevenueGeneratorBot:
         uni_price = self.current_market_prices['UNI']
         
         # Enhanced DEX variations with more realistic spreads
-        self.dex_prices = {
-            'uniswap': {
+        self.dex_prices = {}
+            'uniswap': {}
                 'WETH/USDC': eth_price * Decimal('1.0018'),
                 'WMATIC/USDC': matic_price * Decimal('0.9988'),
                 'WBTC/WETH': (btc_price / eth_price) * Decimal('1.0010'),
@@ -261,7 +276,7 @@ class UnifiedRevenueGeneratorBot:
                 'LINK/WETH': (link_price / eth_price) * Decimal('1.0012'),
                 'UNI/WETH': (uni_price / eth_price) * Decimal('0.9995')
             },
-            'quickswap': {
+            'quickswap': {}
                 'WETH/USDC': eth_price * Decimal('0.9985'),
                 'WMATIC/USDC': matic_price * Decimal('1.0028'),
                 'WBTC/WETH': (btc_price / eth_price) * Decimal('0.9992'),
@@ -271,7 +286,7 @@ class UnifiedRevenueGeneratorBot:
                 'LINK/WETH': (link_price / eth_price) * Decimal('0.9988'),
                 'UNI/WETH': (uni_price / eth_price) * Decimal('1.0008')
             },
-            'sushiswap': {
+            'sushiswap': {}
                 'WETH/USDC': eth_price * Decimal('1.0008'),
                 'WMATIC/USDC': matic_price * Decimal('0.9992'),
                 'WBTC/WETH': (btc_price / eth_price) * Decimal('1.0015'),
@@ -281,7 +296,7 @@ class UnifiedRevenueGeneratorBot:
                 'LINK/WETH': (link_price / eth_price) * Decimal('1.0005'),
                 'UNI/WETH': (uni_price / eth_price) * Decimal('0.9998')
             },
-            'curve': {
+            'curve': {}
                 'DAI/USDC': dai_price * Decimal('1.00008'),
                 'USDT/USDC': usdt_price * Decimal('1.00012'),
                 'WETH/USDC': eth_price * Decimal('0.9982'),
@@ -290,8 +305,8 @@ class UnifiedRevenueGeneratorBot:
                 'WBTC/USDC': btc_price * Decimal('0.9985'),
                 'LINK/WETH': (link_price / eth_price) * Decimal('0.9990'),
                 'UNI/WETH': (uni_price / eth_price) * Decimal('1.0002')
-            }
-        }
+            
+        
     
     async def fetch_web3_prices(self) -> bool:
         """Fetch prices directly from blockchain via Web3"""
@@ -321,7 +336,7 @@ class UnifiedRevenueGeneratorBot:
             return True
             
         except Exception as e:
-            logger.error(f"Error fetching Web3 prices: {e}")
+            logger.error(str(f"Error fetching Web3 prices: {e}")
             return False
     
     async def fetch_unified_prices(self) -> bool:
@@ -360,16 +375,16 @@ class UnifiedRevenueGeneratorBot:
     
     async def calculate_gas_costs(self, chain: str = 'ethereum', complexity: str = 'complex') -> Decimal:
         """Calculate estimated gas costs for arbitrage trade"""
-        gas_estimates = {
-            'ethereum': {
+        gas_estimates = {}
+            'ethereum': {}
                 'simple': Decimal('0.004'),
                 'complex': Decimal('0.012')
             },
-            'polygon': {
+            'polygon': {}
                 'simple': Decimal('0.02'),
                 'complex': Decimal('0.05')
-            }
-        }
+            
+        
         
         if chain == 'ethereum':
             eth_price = self.current_market_prices.get('ETH', Decimal('2500'))
@@ -382,7 +397,7 @@ class UnifiedRevenueGeneratorBot:
     
     def estimate_optimal_trade_size(self, pair: str, buy_dex: str, sell_dex: str) -> Decimal:
         """Estimate optimal trade size based on pair and DEX liquidity"""
-        liquidity_estimates = {
+        liquidity_estimates = {}
             'WETH/USDC': Decimal('150000'),
             'WETH/USDT': Decimal('100000'),
             'WBTC/WETH': Decimal('80000'),
@@ -392,16 +407,16 @@ class UnifiedRevenueGeneratorBot:
             'USDT/USDC': Decimal('300000'),
             'LINK/WETH': Decimal('40000'),
             'UNI/WETH': Decimal('30000')
-        }
         
-        dex_multipliers = {
+        
+        dex_multipliers = {}
             'uniswap': Decimal('1.2'),
             'uniswap_v2': Decimal('1.0'),
             'uniswap_v3': Decimal('1.8'),
             'sushiswap': Decimal('0.7'),
             'quickswap': Decimal('0.5'),
             'curve': Decimal('2.5')
-        }
+        
         
         base_liquidity = liquidity_estimates.get(pair, Decimal('25000'))
         buy_multiplier = dex_multipliers.get(buy_dex, Decimal('0.5'))
@@ -429,7 +444,7 @@ class UnifiedRevenueGeneratorBot:
                 if raw_web3_opps:
                     web3_opportunities = raw_web3_opps
             except Exception as e:
-                logger.warning(f"Web3 opportunity scan failed: {e}")
+                logger.warning(str(f"Web3 opportunity scan failed: {e}")
         
         # Process Web3 opportunities
         for raw_opp in web3_opportunities:
@@ -438,7 +453,7 @@ class UnifiedRevenueGeneratorBot:
                 if opportunity:
                     opportunities.append(opportunity)
             except Exception as e:
-                logger.error(f"Error processing Web3 opportunity: {e}")
+                logger.error(str(f"Error processing Web3 opportunity: {e}")
         
         # Process API-based opportunities
         for pair in self.token_pairs:
@@ -447,7 +462,7 @@ class UnifiedRevenueGeneratorBot:
                 if api_opportunity:
                     opportunities.append(api_opportunity)
             except Exception as e:
-                logger.error(f"Error processing API opportunity for {pair}: {e}")
+                logger.error(str(f"Error processing API opportunity for {pair}: {e}")
         
         # Sort by net profit and remove duplicates
         opportunities.sort(key=lambda x: Any: Any: x.net_profit, reverse=True)
@@ -482,7 +497,7 @@ class UnifiedRevenueGeneratorBot:
             net_profit = gross_profit - gas_cost - trading_fees
             
             if net_profit >= Decimal(str(self.config['min_profit_usd'])):
-                return UnifiedArbitrageOpportunity(
+                return UnifiedArbitrageOpportunity()
                     token_pair=pair,
                     dex_buy=buy_dex,
                     dex_sell=sell_dex,
@@ -496,9 +511,9 @@ class UnifiedRevenueGeneratorBot:
                     data_source='web3',
                     volume_limit=trade_size,
                     timestamp=datetime.now().isoformat()
-                )
+                
         except Exception as e:
-            logger.error(f"Error processing Web3 opportunity: {e}")
+            logger.error(str(f"Error processing Web3 opportunity: {e}")
         
         return None
     
@@ -536,7 +551,7 @@ class UnifiedRevenueGeneratorBot:
             net_profit = gross_profit - gas_cost - trading_fees
             
             if net_profit >= Decimal(str(self.config['min_profit_usd'])):
-                return UnifiedArbitrageOpportunity(
+                return UnifiedArbitrageOpportunity()
                     token_pair=pair,
                     dex_buy=min_dex,
                     dex_sell=max_dex,
@@ -550,19 +565,19 @@ class UnifiedRevenueGeneratorBot:
                     data_source='api',
                     volume_limit=trade_size,
                     timestamp=datetime.now().isoformat()
-                )
+                
         except Exception as e:
-            logger.error(f"Error processing API opportunity for {pair}: {e}")
+            logger.error(str(f"Error processing API opportunity for {pair}: {e}")
         
         return None
     
     async def execute_arbitrage_trade(self, opportunity: UnifiedArbitrageOpportunity) -> bool:
         """Execute arbitrage trade (simulation or real)"""
         if not self.config['trading_enabled']:
-            logger.info(f"SIMULATION: Would execute {opportunity.token_pair} arbitrage")
-            logger.info(f"  Data Source: {opportunity.data_source}")
-            logger.info(f"  Expected net profit: ${opportunity.net_profit:.2f}")
-            logger.info(f"  Confidence: {opportunity.confidence:.1f}%")
+            logger.info(str(f"SIMULATION: Would execute {opportunity.token_pair} arbitrage")
+            logger.info(str(f"  Data Source: {opportunity.data_source}")
+            logger.info(str(f"  Expected net profit: ${opportunity.net_profit:.2f}")
+            logger.info(str(f"  Confidence: {opportunity.confidence:.1f}%")
             return True
         
         # Real trading implementation would go here
@@ -573,7 +588,7 @@ class UnifiedRevenueGeneratorBot:
         """Main revenue generation loop using unified data sources"""
         logger.info("=" * 70)
         logger.info("STARTING UNIFIED REVENUE GENERATION SYSTEM")
-        logger.info(f"Data Source Strategy: {self.data_source.value.upper()}")
+        logger.info(str(f"Data Source Strategy: {self.data_source.value.upper(}")
         logger.info("Combining API and Web3 blockchain data for maximum opportunities")
         logger.info("=" * 70)
         
@@ -584,16 +599,16 @@ class UnifiedRevenueGeneratorBot:
         while True:
             try:
                 cycle_count += 1
-                logger.info(f"\nUnified Scan Cycle #{cycle_count}")
-                logger.info(f"Time: {datetime.now().strftime('%H:%M:%S')}")
-                logger.info(f"Data Source: {self.data_source.value}")
+                logger.info(str(f"\nUnified Scan Cycle #{cycle_count}")
+                logger.info(str(f"Time: {datetime.now(.strftime('%H:%M:%S')}")))
+                logger.info(str(f"Data Source: {self.data_source.value}")
                 
                 # Fetch unified price data
                 price_success = await self.fetch_unified_prices()
                 
                 if not price_success:
                     consecutive_failures += 1
-                    logger.error(f"Price fetch failed - consecutive failures: {consecutive_failures}")
+                    logger.error(str(f"Price fetch failed - consecutive failures: {consecutive_failures}")
                     
                     if consecutive_failures >= 5:
                         logger.error("Too many consecutive failures - extending wait time")
@@ -610,23 +625,23 @@ class UnifiedRevenueGeneratorBot:
                 if opportunities:
                     consecutive_empty_cycles = 0
                     
-                    logger.info(f"Found {len(opportunities)} profitable opportunities")
+                    logger.info(str(f"Found {len(opportunities} profitable opportunities")
                     
                     # Display all opportunities
                     for i, opp in enumerate(opportunities[:3], 1):
-                        logger.info(f"  #{i}: {opp.token_pair} | {opp.data_source} | "
-                                  f"${opp.net_profit:.2f} | {opp.confidence:.1f}%")
+                        logger.info(str(f"  #{i}: {opp.token_pair} | {opp.data_source} | ")
+                                  f"${opp.net_profit:.2f} | {opp.confidence:.1f}%"
                     
                     # Execute the best opportunity
                     best_opportunity = opportunities[0]
                     
                     if best_opportunity.net_profit > Decimal('15'):
-                        logger.info(f"EXECUTING HIGH-VALUE OPPORTUNITY:")
-                        logger.info(f"   Pair: {best_opportunity.token_pair}")
-                        logger.info(f"   Source: {best_opportunity.data_source}")
-                        logger.info(f"   Net Profit: ${best_opportunity.net_profit:.2f}")
-                        logger.info(f"   Buy: {best_opportunity.dex_buy} @ ${best_opportunity.buy_price:.6f}")
-                        logger.info(f"   Sell: {best_opportunity.dex_sell} @ ${best_opportunity.sell_price:.6f}")
+                        logger.info(str(f"EXECUTING HIGH-VALUE OPPORTUNITY:")
+                        logger.info(str(f"   Pair: {best_opportunity.token_pair}")
+                        logger.info(str(f"   Source: {best_opportunity.data_source}")
+                        logger.info(str(f"   Net Profit: ${best_opportunity.net_profit:.2f}")
+                        logger.info(str(f"   Buy: {best_opportunity.dex_buy} @ ${best_opportunity.buy_price:.6f}")
+                        logger.info(str(f"   Sell: {best_opportunity.dex_sell} @ ${best_opportunity.sell_price:.6f}")
                         
                         success = await self.execute_arbitrage_trade(best_opportunity)
                         
@@ -637,7 +652,7 @@ class UnifiedRevenueGeneratorBot:
                 
                 else:
                     consecutive_empty_cycles += 1
-                    logger.info(f"No profitable opportunities found (streak: {consecutive_empty_cycles})")
+                    logger.info(str(f"No profitable opportunities found (streak: {consecutive_empty_cycles}")
                 
                 # Performance metrics every 5 cycles
                 if cycle_count % 5 == 0:
@@ -651,14 +666,14 @@ class UnifiedRevenueGeneratorBot:
                 else:
                     wait_time = int(self.config['scan_interval'])
                 
-                logger.info(f"Next scan in {wait_time} seconds...")
+                logger.info(str(f"Next scan in {wait_time} seconds...")
                 await asyncio.sleep(wait_time)
                 
             except KeyboardInterrupt:
                 logger.info("\nUnified revenue generation stopped by user")
                 break
             except Exception as e:
-                logger.error(f"Error in main unified loop: {e}")
+                logger.error(str(f"Error in main unified loop: {e}")
                 await asyncio.sleep(15)
         
         await self.display_final_unified_results()
@@ -670,26 +685,26 @@ class UnifiedRevenueGeneratorBot:
         logger.info("\n" + "=" * 60)
         logger.info("UNIFIED REVENUE GENERATION METRICS")
         logger.info("=" * 60)
-        logger.info(f"Data Source Strategy: {self.data_source.value.upper()}")
-        logger.info(f"Session Runtime: {str(runtime).split('.')[0]}")
-        logger.info(f"Total Profit: ${self.total_profit:.2f}")
-        logger.info(f"Trades Executed: {self.trades_executed}")
-        logger.info(f"Opportunities Found: {self.opportunities_found}")
-        logger.info(f"Price Fetch Failures: {self.price_fetch_failures}")
+        logger.info(str(f"Data Source Strategy: {self.data_source.value.upper(}")
+        logger.info(str(f"Session Runtime: {str(runtime.split('.')[0]}")))
+        logger.info(str(f"Total Profit: ${self.total_profit:.2f}")
+        logger.info(str(f"Trades Executed: {self.trades_executed}")
+        logger.info(str(f"Opportunities Found: {self.opportunities_found}")
+        logger.info(str(f"Price Fetch Failures: {self.price_fetch_failures}")
         
         if self.trades_executed > 0:
             avg_profit = self.total_profit / self.trades_executed
-            logger.info(f"Average Profit/Trade: ${avg_profit:.2f}")
+            logger.info(str(f"Average Profit/Trade: ${avg_profit:.2f}")
         
         # Data source statistics
-        logger.info(f"Available Token Pairs: {len(self.token_pairs)}")
+        logger.info(str(f"Available Token Pairs: {len(self.token_pairs}")
         active_dexes = len([dex for dex in self.dex_prices if self.dex_prices[dex]])
-        logger.info(f"Active DEX Integrations: {active_dexes}")
+        logger.info(str(f"Active DEX Integrations: {active_dexes}")
         
         if self.current_market_prices:
             logger.info("Current Market Prices:")
             for symbol, price in list(self.current_market_prices.items())[:3]:
-                logger.info(f"  {symbol}: ${price:.4f}")
+                logger.info(str(f"  {symbol}: ${price:.4f}")
         
         logger.info("=" * 60)
     
@@ -700,27 +715,27 @@ class UnifiedRevenueGeneratorBot:
         logger.info("\n" + "=" * 70)
         logger.info("FINAL UNIFIED REVENUE GENERATION RESULTS")
         logger.info("=" * 70)
-        logger.info(f"Data Source Strategy: {self.data_source.value.upper()}")
-        logger.info(f"Total Session Time: {str(runtime).split('.')[0]}")
-        logger.info(f"Total Revenue Generated: ${self.total_profit:.2f}")
-        logger.info(f"Total Trades Executed: {self.trades_executed}")
-        logger.info(f"Total Opportunities Found: {self.opportunities_found}")
-        logger.info(f"Price Fetch Failures: {self.price_fetch_failures}")
+        logger.info(str(f"Data Source Strategy: {self.data_source.value.upper(}")
+        logger.info(str(f"Total Session Time: {str(runtime.split('.')[0]}")))
+        logger.info(str(f"Total Revenue Generated: ${self.total_profit:.2f}")
+        logger.info(str(f"Total Trades Executed: {self.trades_executed}")
+        logger.info(str(f"Total Opportunities Found: {self.opportunities_found}")
+        logger.info(str(f"Price Fetch Failures: {self.price_fetch_failures}")
         
         if self.total_profit > 0:
             logger.info("Profitable session completed!")
             hourly_rate = self.total_profit / Decimal(str(runtime.total_seconds() / 3600))
-            logger.info(f"Hourly Profit Rate: ${hourly_rate:.2f}/hour")
+            logger.info(str(f"Hourly Profit Rate: ${hourly_rate:.2f}/hour")
         
         if self.opportunities_found > 0:
             success_rate = (self.trades_executed / self.opportunities_found) * 100
-            logger.info(f"Execution Success Rate: {success_rate:.1f}%")
+            logger.info(str(f"Execution Success Rate: {success_rate:.1f}%")
         
         logger.info("Data Sources Used:")
         if self.data_source in [DataSource.API_ONLY, DataSource.HYBRID]:
-            logger.info("  • External APIs (CoinGecko, Coinbase)")
+            logger.info("  • External APIs (CoinGecko, Coinbase")
         if self.data_source in [DataSource.WEB3_ONLY, DataSource.HYBRID]:
-            logger.info("  • Direct blockchain data (Web3)")
+            logger.info("  • Direct blockchain data (Web3")
         
         logger.info("=" * 70)
 
@@ -753,7 +768,7 @@ async def main():
         await bot.start_unified_revenue_generation()
         
     except Exception as e:
-        logger.error(f"Fatal error in unified revenue bot: {e}")
+        logger.error(str(f"Fatal error in unified revenue bot: {e}")
 
 if __name__ == "__main__":
     # Windows event loop policy fix

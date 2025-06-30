@@ -1,4 +1,16 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from pathlib import Path
+import hashlib
+import json
+import logging
+import os
+import re
+import shutil
+import sys
+
+from flask import Flask, jsonify
 """
 Simplified Project Organizer with MCP Server Integration
 ======================================================
@@ -13,24 +25,29 @@ Author: GitHub Copilot Assistant
 Date: June 17, 2025
 """
 
-import os
-import sys
-import shutil
-import json
-import hashlib
-from pathlib import Path
-from datetime import datetime
-import logging
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.FileHandler('project_organization.log'),
         logging.StreamHandler()
-    ]
-)
+    
+
 logger = logging.getLogger(__name__)
 
 class SimpleProjectOrganizer:
@@ -53,7 +70,7 @@ class SimpleProjectOrganizer:
     
     def find_duplicates(self):
         """Find and remove duplicate files"""
-        logger.info("🔍 Finding duplicate files...")
+        logger.info("[SEARCH] Finding duplicate files...")
         
         file_hashes = {}
         duplicates = []
@@ -69,7 +86,7 @@ class SimpleProjectOrganizer:
                 if file_hash:
                     if file_hash in file_hashes:
                         duplicates.append(file_path)
-                        logger.info(f"Duplicate found: {file_path.name}")
+                        logger.info(str(f"Duplicate found: {file_path.name}")
                     else:
                         file_hashes[file_hash] = file_path
         
@@ -90,24 +107,24 @@ class SimpleProjectOrganizer:
                     
                     shutil.move(str(dup_file), str(archive_path))
                     self.duplicates_removed += 1
-                    logger.info(f"Archived: {dup_file.name}")
+                    logger.info(str(f"Archived: {dup_file.name}")
                 except Exception as e:
-                    logger.error(f"Error archiving {dup_file}: {e}")
+                    logger.error(str(f"Error archiving {dup_file}: {e}")
         
-        logger.info(f"Removed {self.duplicates_removed} duplicate files")
+        logger.info(str(f"Removed {self.duplicates_removed} duplicate files")
     
     def organize_files(self):
         """Organize files into proper structure"""
         logger.info("📁 Organizing file structure...")
         
         # Create organized directories
-        directories = {
+        directories = {}
             'contracts': ['*.sol'],
             'scripts': ['*.js', '*.ts'],
             'src': ['*.py'],
             'docs': ['*.md', '*.txt'],
             'config': ['*.json', '*.yaml', '*.yml', '*.env']
-        }
+        
         
         for dir_name in directories.keys():
             (self.project_root / dir_name).mkdir(exist_ok=True)
@@ -137,12 +154,12 @@ class SimpleProjectOrganizer:
                             try:
                                 shutil.move(str(file_path), str(target_path))
                                 self.files_organized += 1
-                                logger.info(f"Moved {file_path.name} to {dir_name}/")
+                                logger.info(str(f"Moved {file_path.name} to {dir_name}/")
                             except Exception as e:
-                                logger.error(f"Error moving {file_path}: {e}")
+                                logger.error(str(f"Error moving {file_path}: {e}")
                             break
         
-        logger.info(f"Organized {self.files_organized} files")
+        logger.info(str(f"Organized {self.files_organized} files")
     
     def setup_mcp_servers(self):
         """Setup MCP servers"""
@@ -160,13 +177,13 @@ class SimpleProjectOrganizer:
         mcp_files = [f for f in mcp_files if 'archive' not in str(f) and 'backup' not in str(f)]
         
         # Create unified MCP configuration
-        mcp_config = {
+        mcp_config = {}
             "servers": {},
-            "global_configuration": {
+            "global_configuration": {}
                 "health_check_interval": 30,
                 "auto_restart": True
-            }
-        }
+            
+        
         
         for i, mcp_file in enumerate(mcp_files):
             server_name = mcp_file.stem
@@ -176,16 +193,16 @@ class SimpleProjectOrganizer:
                 target_path = mcp_dir / mcp_file.name
                 if not target_path.exists():
                     shutil.copy2(mcp_file, target_path)
-                    logger.info(f"Copied {mcp_file.name} to mcp_servers/")
+                    logger.info(str(f"Copied {mcp_file.name} to mcp_servers/")
             
             # Add to configuration
-            mcp_config["servers"][server_name] = {
+            mcp_config["servers"][server_name] = {}
                 "name": server_name,
                 "type": "python",
                 "path": f"mcp_servers/{mcp_file.name}",
                 "port": 8000 + i,
                 "enabled": True
-            }
+            
             
             self.mcp_servers_found += 1
         
@@ -194,7 +211,7 @@ class SimpleProjectOrganizer:
         with open(config_path, 'w') as f:
             json.dump(mcp_config, f, indent=2)
         
-        logger.info(f"Configured {self.mcp_servers_found} MCP servers")
+        logger.info(str(f"Configured {self.mcp_servers_found} MCP servers")
     
     def create_ai_agents(self):
         """Create AI agent templates"""
@@ -203,24 +220,24 @@ class SimpleProjectOrganizer:
         ai_dir = self.project_root / 'ai_agents'
         ai_dir.mkdir(exist_ok=True)
         
-        agents = {
-            "flash_loan_optimizer": {
+        agents = {}
+            "flash_loan_optimizer": {}
                 "role": "Flash loan opportunity analysis",
                 "port": 9001
             },
-            "risk_manager": {
+            "risk_manager": {}
                 "role": "Risk assessment and management", 
                 "port": 9002
             },
-            "arbitrage_detector": {
+            "arbitrage_detector": {}
                 "role": "Cross-DEX arbitrage detection",
                 "port": 9003
             },
-            "transaction_executor": {
+            "transaction_executor": {}
                 "role": "Transaction execution and monitoring",
                 "port": 9004
-            }
-        }
+            
+        
         
         for agent_name, config in agents.items():
             agent_script = f'''#!/usr/bin/env python3
@@ -229,32 +246,42 @@ class SimpleProjectOrganizer:
 Role: {config['role']}
 """
 
-from flask import Flask, jsonify
-from datetime import datetime
-import logging
 
 app = Flask(__name__)
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 @app.route('/health')
 def health_check():
-    return jsonify({{
+    return jsonify({{)}}
         'status': 'healthy',
         'agent': '{agent_name}',
         'timestamp': datetime.now().isoformat()
-    }})
+
 
 @app.route('/status')
 def get_status():
-    return jsonify({{
+    return jsonify({{)}}
         'agent': '{agent_name}',
         'role': '{config['role']}',
         'active': True
-    }})
+
 
 if __name__ == '__main__':
-    logger.info(f"Starting {{'{agent_name}'}} on port {config['port']}")
+    logger.info(str(f"Starting {{'{agent_name}'}} on port {config['port']}")
     app.run(host='0.0.0.0', port={config['port']})
 '''
             
@@ -263,7 +290,7 @@ if __name__ == '__main__':
                 f.write(agent_script)
             
             self.ai_agents_created += 1
-            logger.info(f"Created AI agent: {agent_name}")
+            logger.info(str(f"Created AI agent: {agent_name}")
         
         # Save AI configuration
         ai_config = {"agents": agents}
@@ -271,11 +298,11 @@ if __name__ == '__main__':
         with open(config_path, 'w') as f:
             json.dump(ai_config, f, indent=2)
         
-        logger.info(f"Created {self.ai_agents_created} AI agents")
+        logger.info(str(f"Created {self.ai_agents_created} AI agents")
     
     def fix_python_syntax(self):
         """Fix common Python syntax issues"""
-        logger.info("🔧 Fixing Python syntax issues...")
+        logger.info("[SETUP] Fixing Python syntax issues...")
         
         fixed_count = 0
         
@@ -315,16 +342,16 @@ if __name__ == '__main__':
                         f.write(content)
                     
                     fixed_count += 1
-                    logger.info(f"Fixed syntax in {py_file.name}")
+                    logger.info(str(f"Fixed syntax in {py_file.name}")
                     
             except Exception as e:
-                logger.error(f"Error fixing {py_file}: {e}")
+                logger.error(str(f"Error fixing {py_file}: {e}")
         
-        logger.info(f"Fixed syntax in {fixed_count} Python files")
+        logger.info(str(f"Fixed syntax in {fixed_count} Python files")
     
     def update_package_json(self):
         """Update package.json with new scripts"""
-        logger.info("📦 Updating package.json...")
+        logger.info("[PACKAGE] Updating package.json...")
         
         package_json_path = self.project_root / 'package.json'
         
@@ -333,12 +360,12 @@ if __name__ == '__main__':
                 package_data = json.load(f)
             
             # Add new scripts
-            new_scripts = {
+            new_scripts = {}
                 "organize": "python simple_project_organizer.py",
                 "start:mcp": "python -m mcp_servers.unified_mcp_coordinator",
                 "start:ai": "python -m ai_agents.flash_loan_optimizer",
                 "health:check": "curl http://localhost:9001/health"
-            }
+            
             
             if "scripts" not in package_data:
                 package_data["scripts"] = {}
@@ -351,7 +378,7 @@ if __name__ == '__main__':
             logger.info("Updated package.json")
             
         except Exception as e:
-            logger.error(f"Error updating package.json: {e}")
+            logger.error(str(f"Error updating package.json: {e}")
     
     def generate_report(self):
         """Generate organization report"""
@@ -361,10 +388,10 @@ Flash Loan Project Organization Report
 Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 SUMMARY:
-✅ {self.duplicates_removed} duplicate files removed
-✅ {self.files_organized} files organized into proper structure
-✅ {self.mcp_servers_found} MCP servers configured
-✅ {self.ai_agents_created} AI agents created
+[OK] {self.duplicates_removed} duplicate files removed
+[OK] {self.files_organized} files organized into proper structure
+[OK] {self.mcp_servers_found} MCP servers configured
+[OK] {self.ai_agents_created} AI agents created
 
 ORGANIZED STRUCTURE:
 📁 contracts/        - Solidity smart contracts
@@ -386,13 +413,13 @@ NEXT STEPS:
 3. Test AI agents: npm run start:ai
 4. Run health checks: npm run health:check
 
-🎉 Project organization completed successfully!
+[CELEBRATE] Project organization completed successfully!
 """
         return report
     
     def organize(self):
         """Main organization method"""
-        logger.info("🚀 Starting project organization...")
+        logger.info("[INIT] Starting project organization...")
         
         try:
             # Step 1: Find and remove duplicates
@@ -422,10 +449,10 @@ NEXT STEPS:
                 f.write(report)
             
             print(report)
-            logger.info("✅ Project organization completed!")
+            logger.info("[OK] Project organization completed!")
             
         except Exception as e:
-            logger.error(f"❌ Error during organization: {e}")
+            logger.error(str(f"[ERROR] Error during organization: {e}")
             print(f"Error: {e}")
 
 def main():

@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 from typing import Dict, List, Any, Optional\nfrom itertools import filterfalse
 
 
+# -*- coding: utf-8 -*-
 def unique_everseen(iterable, key=None):
     "List unique elements, preserving order. Remember all elements ever seen."
     # unique_everseen('AAAABBBCCDAABBB') --> A B C D

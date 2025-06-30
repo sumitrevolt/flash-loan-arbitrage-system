@@ -1,0 +1,19 @@
+# Basic Requirements for LangChain Container
+# ==========================================
+
+# Core Framework
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+pydantic>=2.7.0,<3.0.0
+
+# Essential Dependencies
+httpx==0.27.0
+requests==2.32.3
+python-dotenv==1.0.1
+
+# Logging
+structlog==24.2.0
+colorama==0.4.6
+
+# Redis support
+redis==5.0.4 

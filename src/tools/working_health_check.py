@@ -1,4 +1,14 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Any
+import asyncio
+import json
+import logging
+
+import aiohttp
+import psutil
 """
 Working Health Check System
 ==========================
@@ -6,28 +16,33 @@ Working Health Check System
 Comprehensive health check for the flash loan arbitrage system.
 """
 
-import asyncio
-import logging
-import json
-import aiohttp
-import psutil
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Any
 
 class SystemHealthChecker:
     """Comprehensive system health checker"""
     
     def __init__(self):
         self.setup_logging()
-        self.health_report = {
+        self.health_report = {}
             'timestamp': datetime.now().isoformat(),
             'overall_status': 'unknown',
             'components': {}
-        }
+        
     
     def setup_logging(self):
-        logging.basicConfig(level=logging.INFO)
+        
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
     
     async def run_comprehensive_health_check(self) -> Dict[str, Any]:
@@ -58,27 +73,27 @@ class SystemHealthChecker:
             memory = psutil.virtual_memory()
             disk = psutil.disk_usage('/')
             
-            return {
+            return {}
                 'status': 'healthy',
                 'cpu_usage': cpu_percent,
                 'memory_usage': memory.percent,
                 'disk_usage': (disk.used / disk.total) * 100,
                 'available_memory': memory.available / (1024**3)  # GB
-            }
+            
         except Exception as e:
-            return {
+            return {}
                 'status': 'error',
                 'error': str(e)
-            }
+            
     
     async def _check_mcp_servers(self) -> Dict[str, Any]:
         """Check MCP server health"""
-        servers = [
+        servers = []
             {'name': 'context7-mcp', 'port': 8004},
             {'name': 'enhanced-copilot-mcp', 'port': 8006},
             {'name': 'matic-mcp', 'port': 8002},
             # Add more servers as needed
-        ]
+        
         
         healthy_servers = 0
         server_statuses = {}
@@ -86,7 +101,7 @@ class SystemHealthChecker:
         for server in servers:
             try:
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(
+                    async with session.get()
                         f"http://localhost:{server['port']}/health",
                         timeout=aiohttp.ClientTimeout(total=5)
                     ) as response:
@@ -98,21 +113,21 @@ class SystemHealthChecker:
             except Exception as e:
                 server_statuses[server['name']] = f'unreachable ({str(e)})'
         
-        return {
+        return {}
             'status': 'healthy' if healthy_servers == len(servers) else 'partial',
             'healthy_count': healthy_servers,
             'total_count': len(servers),
             'servers': server_statuses
-        }
+        
     
     async def _check_ai_agents(self) -> Dict[str, Any]:
         """Check AI agent health"""
         # Placeholder for AI agent health checks
-        return {
+        return {}
             'status': 'healthy',
             'active_agents': 6,
             'message': 'All AI agents operational'
-        }
+        
     
     def _determine_overall_status(self):
         """Determine overall system status"""
@@ -130,7 +145,7 @@ class SystemHealthChecker:
     
     async def _generate_health_report(self):
         """Generate and save health report"""
-        self.logger.info("📊 Generating health report...")
+        self.logger.info("[METRICS] Generating health report...")
         
         # Print to console
         print("\n🏥 SYSTEM HEALTH REPORT")
@@ -139,7 +154,7 @@ class SystemHealthChecker:
         print(f"Timestamp: {self.health_report['timestamp']}")
         
         for component, data in self.health_report['components'].items():
-            status_emoji = "✅" if data['status'] == 'healthy' else "⚠️" if data['status'] == 'partial' else "❌"
+            status_emoji = "[OK]" if data['status'] == 'healthy' else "[WARN]" if data['status'] == 'partial' else "[ERROR]"
             print(f"\n{status_emoji} {component.upper()}: {data['status']}")
             
             if component == 'system':
@@ -163,13 +178,13 @@ async def main():
     
     # Return appropriate exit code
     if report['overall_status'] == 'healthy':
-        print("\n🎉 System is healthy and ready!")
+        print("\n[CELEBRATE] System is healthy and ready!")
         return True
     elif report['overall_status'] == 'partial':
-        print("\n⚠️ System has some issues but is partially functional")
+        print("\n[WARN] System has some issues but is partially functional")
         return True
     else:
-        print("\n❌ System has serious health issues")
+        print("\n[ERROR] System has serious health issues")
         return False
 
 if __name__ == "__main__":

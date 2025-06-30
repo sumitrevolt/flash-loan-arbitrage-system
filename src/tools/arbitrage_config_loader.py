@@ -1,35 +1,50 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+import json
+import logging
+import os
 """
 Arbitrage configuration loader for flash loan system
 """
-import os
-import json
-import logging
-from pathlib import Path
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
-)
+
 logger = logging.getLogger(__name__)
 
 # Default configuration
-DEFAULT_CONFIG = {
+DEFAULT_CONFIG = {}
     'enable_flash_loan_arbitrage': True,
     'enable_direct_arbitrage': False,
     'enable_triangular_arbitrage': False,
     'flash_loan_provider': 'aave',
     'arbitrage_type': 'flash_loan_only'
-}
+
 
 def get_config_path():
     """Get the path to the arbitrage configuration file"""
     # Try to find the config directory
-    base_dirs = [
+    base_dirs = []
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),  # Project root
         os.path.dirname(os.path.dirname(os.path.dirname(__file__))),  # src directory
         os.getcwd()  # Current working directory
-    ]
+    
     
     for base_dir in base_dirs:
         config_dir = os.path.join(base_dir, 'config')
@@ -49,13 +64,13 @@ def load_arbitrage_config():
         try:
             with open(config_path, 'r') as f:
                 config = json.load(f)
-                logger.info(f"Loaded arbitrage configuration from {config_path}")
+                logger.info(str(f"Loaded arbitrage configuration from {config_path}")
                 
                 # Ensure all required keys are present
                 for key, value in DEFAULT_CONFIG.items():
                     if key not in config:
                         config[key] = value
-                        logger.warning(f"Missing key '{key}' in config, using default: {value}")
+                        logger.warning(str(f"Missing key '{key}' in config, using default: {value}")
                 
                 # Force flash loan arbitrage only
                 config['enable_flash_loan_arbitrage'] = True
@@ -67,11 +82,11 @@ def load_arbitrage_config():
                 # Save the updated config
                 with open(config_path, 'w') as f:
                     json.dump(config, f, indent=2)
-                    logger.info(f"Updated arbitrage configuration in {config_path}")
+                    logger.info(str(f"Updated arbitrage configuration in {config_path}")
                 
                 return config
         except Exception as e:
-            logger.error(f"Error loading arbitrage configuration: {e}")
+            logger.error(str(f"Error loading arbitrage configuration: {e}")
             logger.info("Using default configuration")
             return DEFAULT_CONFIG
     else:
@@ -79,10 +94,10 @@ def load_arbitrage_config():
         try:
             with open(config_path, 'w') as f:
                 json.dump(DEFAULT_CONFIG, f, indent=2)
-                logger.info(f"Created default arbitrage configuration in {config_path}")
+                logger.info(str(f"Created default arbitrage configuration in {config_path}")
             return DEFAULT_CONFIG
         except Exception as e:
-            logger.error(f"Error creating default arbitrage configuration: {e}")
+            logger.error(str(f"Error creating default arbitrage configuration: {e}")
             return DEFAULT_CONFIG
 
 def is_flash_loan_arbitrage_enabled():
@@ -114,7 +129,7 @@ def get_arbitrage_type():
 def init_arbitrage_config():
     """Initialize arbitrage configuration"""
     config = load_arbitrage_config()
-    logger.info(f"Arbitrage configuration initialized: {config}")
+    logger.info(str(f"Arbitrage configuration initialized: {config}")
     return config
 
 # Auto-initialize when imported
@@ -122,4 +137,4 @@ config = init_arbitrage_config()
 
 if __name__ == "__main__":
     # If run directly, print the configuration
-    print(json.dumps(config, indent=2))
+    print(json.dumps(config, indent=2, ensure_ascii=True, default=str))

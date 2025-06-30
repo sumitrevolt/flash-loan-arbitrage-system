@@ -1,4 +1,16 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+    import argparse
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Set, Tuple
+import hashlib
+import json
+import os
+import shutil
+import sys
+
+import difflib
 """
 Simple Duplicate File Merger
 ============================
@@ -11,28 +23,19 @@ A straightforward script to identify and merge duplicate files based on:
 Author: GitHub Copilot Assistant
 """
 
-import os
-import sys
-import json
-import hashlib
-import shutil
-from pathlib import Path
-from typing import Dict, List, Set, Tuple
-from datetime import datetime
-import difflib
 
 class SimpleDuplicateMerger:
     def __init__(self, root_dir: str = "."):
         self.root_dir = Path(root_dir)
         self.duplicates = {}
-        self.merge_report = {
+        self.merge_report = {}
             "timestamp": datetime.now().isoformat(),
             "total_files_scanned": 0,
             "duplicate_groups": 0,
             "files_merged": 0,
             "space_saved": 0,
             "details": []
-        }
+        
     
     def calculate_file_hash(self, file_path: Path) -> str:
         """Calculate MD5 hash of file content"""
@@ -106,12 +109,12 @@ class SimpleDuplicateMerger:
         total_size = sum(f.stat().st_size for f in files)
         saved_size = sum(f.stat().st_size for f in remove_files)
         
-        merge_detail = {
+        merge_detail = {}
             "kept_file": str(keep_file),
             "removed_files": [str(f) for f in remove_files],
             "total_size": total_size,
             "space_saved": saved_size
-        }
+        
         
         if not dry_run:
             # Create backup directory
@@ -214,7 +217,6 @@ class SimpleDuplicateMerger:
         return self.merge_report
 
 def main():
-    import argparse
     
     parser = argparse.ArgumentParser(description="Simple Duplicate File Merger")
     parser.add_argument("--directory", "-d", default=".", help="Directory to scan for duplicates")

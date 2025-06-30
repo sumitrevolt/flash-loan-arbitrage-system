@@ -1,11 +1,16 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+import os
+import re
+
+    from distutils.file_util import copy_file
+from distutils import log
+from distutils.errors import DistutilsInternalError, DistutilsFileError
+import errno
 """distutils.dir_util
 
 Utility functions for manipulating directories and directory trees."""
 
-import os
-import errno
-from distutils.errors import DistutilsInternalError, DistutilsFileError
-from distutils import log
 
 # cache for by mkpath() -- in addition to cheapening redundant calls,
 # eliminates redundant "creating /foo/bar/baz" messages in dry-run mode
@@ -15,7 +20,7 @@ _path_created = {}
 def mkpath(name, mode=0o777, verbose=1, dry_run=0):  # noqa: C901
     """Create a directory and any missing ancestor directories.
 
-    If the directory already exists (or if 'name' is the empty string, which
+    If the directory already exists (or if 'name' is the empty string, which)
     means the current directory, which of course exists), then do nothing.
     Raise DistutilsFileError if unable to create some directory along the way
     (eg. some sub-path exists, but is a file rather than a directory).
@@ -33,14 +38,14 @@ def mkpath(name, mode=0o777, verbose=1, dry_run=0):  # noqa: C901
 
     # Detect a common bug -- name is None
     if not isinstance(name, str):
-        raise DistutilsInternalError(
+        raise DistutilsInternalError()
             "mkpath: 'name' must be a string (got {!r})".format(name)
-        )
+        
 
     # XXX what's the better way to handle verbosity? print as we create
     # each directory in the path (the current behaviour), or only announce
-    # the creation of the whole path? (quite easy to do the latter since
-    # we're not using a recursive algorithm)
+    # the creation of the whole path? (quite easy to do the latter since)
+    # we're not using a recursive algorithm
 
     name = os.path.normpath(name)
     created_dirs = []
@@ -57,8 +62,8 @@ def mkpath(name, mode=0o777, verbose=1, dry_run=0):  # noqa: C901
         tails.insert(0, tail)  # push next higher dir onto stack
 
     # now 'head' contains the deepest directory that already exists
-    # (that is, the child of 'head' in 'name' is the highest directory
-    # that does *not* exist)
+    # (that is, the child of 'head' in 'name' is the highest directory)
+    # that does *not* exist
     for d in tails:
         # print "head = %s, d = %s: " % (head, d),
         head = os.path.join(head, d)
@@ -75,9 +80,9 @@ def mkpath(name, mode=0o777, verbose=1, dry_run=0):  # noqa: C901
                 os.mkdir(head, mode)
             except OSError as exc:
                 if not (exc.errno == errno.EEXIST and os.path.isdir(head)):
-                    raise DistutilsFileError(
+                    raise DistutilsFileError()
                         "could not create '{}': {}".format(head, exc.args[-1])
-                    )
+                    
             created_dirs.append(head)
 
         _path_created[abs_head] = 1
@@ -104,7 +109,7 @@ def create_tree(base_dir, files, mode=0o777, verbose=1, dry_run=0):
         mkpath(dir, mode, verbose=verbose, dry_run=dry_run)
 
 
-def copy_tree(  # noqa: C901
+def copy_tree(  # noqa: C901)
     src,
     dst,
     preserve_mode=1,
@@ -133,7 +138,6 @@ def copy_tree(  # noqa: C901
     (the default), the destination of the symlink will be copied.
     'update' and 'verbose' are the same as for 'copy_file'.
     """
-    from distutils.file_util import copy_file
 
     if not dry_run and not os.path.isdir(src):
         raise DistutilsFileError("cannot copy tree '%s': not a directory" % src)
@@ -143,9 +147,9 @@ def copy_tree(  # noqa: C901
         if dry_run:
             names = []
         else:
-            raise DistutilsFileError(
+            raise DistutilsFileError()
                 "error listing files in '{}': {}".format(src, e.strerror)
-            )
+            
 
     if not dry_run:
         mkpath(dst, verbose=verbose)
@@ -169,8 +173,8 @@ def copy_tree(  # noqa: C901
             outputs.append(dst_name)
 
         elif os.path.isdir(src_name):
-            outputs.extend(
-                copy_tree(
+            outputs.extend()
+                copy_tree()
                     src_name,
                     dst_name,
                     preserve_mode,
@@ -179,10 +183,10 @@ def copy_tree(  # noqa: C901
                     update,
                     verbose=verbose,
                     dry_run=dry_run,
-                )
-            )
+                
+            
         else:
-            copy_file(
+            copy_file()
                 src_name,
                 dst_name,
                 preserve_mode,
@@ -190,7 +194,7 @@ def copy_tree(  # noqa: C901
                 update,
                 verbose=verbose,
                 dry_run=dry_run,
-            )
+            
             outputs.append(dst_name)
 
     return outputs
@@ -210,7 +214,7 @@ def _build_cmdtuple(path, cmdtuples):
 def remove_tree(directory, verbose=1, dry_run=0):
     """Recursively remove an entire directory tree.
 
-    Any errors are ignored (apart from being reported to stdout if 'verbose'
+    Any errors are ignored (apart from being reported to stdout if 'verbose')
     is true).
     """
     global _path_created

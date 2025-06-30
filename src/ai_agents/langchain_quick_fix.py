@@ -1,4 +1,12 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+from typing import List, Tuple
+import asyncio
+import logging
+import sys
+
+                    from launch_enhanced_system import SystemLauncher
 """
 LangChain Quick Fix - Enhanced with Advanced Features
 ====================================================
@@ -9,71 +17,79 @@ This script now includes:
 4. Intelligent system recovery
 """
 
-import asyncio
-import logging
-import sys
-from typing import List, Tuple
-from pathlib import Path
 
 # Enhanced logging setup
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(),
         logging.FileHandler('langchain_quick_fix.log', encoding='utf-8')
-    ]
-)
+    
+
 logger = logging.getLogger(__name__)
 
 async def run_command(cmd: List[str]) -> Tuple[int, str, str]:
     """Run command and return result"""
     try:
-        logger.info(f"Running: {' '.join(cmd)}")
-        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative with safer alternative
+        logger.info(str(f"Running: {' '.join(cmd}")
+        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
+        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
+        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative)
+        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
+        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative)
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
+        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
+        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative)
         # WARNING: This is a security risk
-        process = await asyncio.create_subprocess_exec(
+        process = await asyncio.create_subprocess_exec()
             *cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
-        )
+        
         stdout, stderr = await process.communicate()
         return process.returncode or 0, stdout.decode(), stderr.decode()
     except Exception as e:
-        logger.error(f"Command failed: {e}")
+        logger.error(str(f"Command failed: {e}")
         return -1, "", str(e)
 
 async def fix_docker_networks():
     """Fix Docker network conflicts"""
-    logger.info("🔧 [FIX] Fixing Docker network conflicts...")
+    logger.info("[SETUP] [FIX] Fixing Docker network conflicts...")
     
     # Stop all containers first
-    logger.info("🛑 Stopping all containers...")
+    logger.info("[STOP] Stopping all containers...")
     await run_command(['docker', 'stop', '$(docker', 'ps', '-q)'])
     
     # Remove conflicting networks
@@ -83,14 +99,14 @@ async def fix_docker_networks():
     # Remove specific conflicting networks if they exist
     networks_to_remove = ['docker_mcpnet', 'flash_loan_mcpnet', 'mcpnet']
     for network in networks_to_remove:
-        logger.info(f"🗑️ Removing network: {network}")
+        logger.info(str(f"🗑️ Removing network: {network}")
         await run_command(['docker', 'network', 'rm', network])
     
-    logger.info("✅ Network cleanup completed")
+    logger.info("[OK] Network cleanup completed")
 
 async def start_simple_services():
     """Start essential services only"""
-    logger.info("🚀 Starting essential services...")
+    logger.info("[INIT] Starting essential services...")
     
     # Create a simple docker-compose for just the essentials
     simple_compose = """version: '3.8'
@@ -130,21 +146,21 @@ services:
         f.write(simple_compose)
     
     # Start essential services
-    logger.info("🚀 Starting Redis, PostgreSQL, and RabbitMQ...")
-    returncode, _, stderr = await run_command([
+    logger.info("[INIT] Starting Redis, PostgreSQL, and RabbitMQ...")
+    returncode, _, stderr = await run_command([)]
         'docker', 'compose', '-f', 'docker-compose.simple.yml', 'up', '-d'
-    ])
+    
     
     if returncode == 0:
-        logger.info("✅ Essential services started successfully!")
+        logger.info("[OK] Essential services started successfully!")
     else:
-        logger.error(f"❌ Failed to start services: {stderr}")
+        logger.error(str(f"[ERROR] Failed to start services: {stderr}")
     
     return returncode == 0
 
 async def check_services_status():
     """Check status of running services"""
-    logger.info("📊 Checking services status...")
+    logger.info("[METRICS] Checking services status...")
     
     returncode, stdout, stderr = await run_command(['docker', 'ps', '--format', 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'])
     
@@ -152,11 +168,11 @@ async def check_services_status():
         logger.info("Current running services:")
         print(stdout)
     else:
-        logger.error(f"Failed to check status: {stderr}")
+        logger.error(str(f"Failed to check status: {stderr}")
 
 async def main():
     """Main fix function with enhanced integration"""
-    print("🔧 Enhanced LangChain Quick Fix - Resolving Issues & Starting System")
+    print("[SETUP] Enhanced LangChain Quick Fix - Resolving Issues & Starting System")
     print("=" * 70)
     
     # Fix Docker networks
@@ -175,8 +191,8 @@ async def main():
         # Check status
         await check_services_status()
         
-        print("\n✅ Quick fix completed successfully!")
-        print("\n🌐 Service Access Points:")
+        print("\n[OK] Quick fix completed successfully!")
+        print("\n[NETWORK] Service Access Points:")
         print("- Redis: localhost:6379")
         print("- PostgreSQL: localhost:5432 (postgres/password)")
         print("- RabbitMQ: localhost:15672 (langchain/langchain123)")
@@ -190,23 +206,22 @@ async def main():
         try:
             choice = input("\n🤖 Would you like to launch the enhanced system now? (y/N): ").strip().lower()
             if choice in ['y', 'yes']:
-                print("\n🚀 Launching Enhanced LangChain MCP Integration System...")
+                print("\n[INIT] Launching Enhanced LangChain MCP Integration System...")
                 try:
                     # Try to import and run the enhanced system
-                    from launch_enhanced_system import SystemLauncher
                     launcher = SystemLauncher()
                     await launcher.run_checks_and_launch()
                 except ImportError:
-                    print("⚠️ Enhanced system components not found. Running basic coordinator...")
+                    print("[WARN] Enhanced system components not found. Running basic coordinator...")
                     # Fallback to basic operation
                 except Exception as e:
-                    print(f"❌ Failed to launch enhanced system: {e}")
-                    print("💡 You can manually run: python launch_enhanced_system.py")
+                    print(f"[ERROR] Failed to launch enhanced system: {e}")
+                    print("[INFO] You can manually run: python launch_enhanced_system.py")
         except KeyboardInterrupt:
             print("\n👋 Quick fix completed. You can launch the enhanced system later.")
     else:
-        print("❌ Quick fix failed. Please check Docker is running and try again.")
-        print("\n🔧 Troubleshooting steps:")
+        print("[ERROR] Quick fix failed. Please check Docker is running and try again.")
+        print("\n[SETUP] Troubleshooting steps:")
         print("1. Ensure Docker Desktop is running")
         print("2. Check for port conflicts (6379, 5432, 5672)")
         print("3. Verify sufficient system resources")

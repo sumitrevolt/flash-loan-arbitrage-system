@@ -1,4 +1,45 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Union, Callable
+import asyncio
+import json
+import logging
+import os
+import signal
+import subprocess
+import sys
+import threading
+import time
+import uuid
+
+                    from langchain.agents import create_structured_chat_agent, AgentExecutor
+                    from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from enum import Enum
+from langchain.agents import Tool, AgentExecutor, create_react_agent, initialize_agent, AgentType
+from langchain.callbacks.base import BaseCallbackHandler
+from langchain.chains import LLMChain
+from langchain.memory import ConversationBufferMemory, ConversationSummaryBufferMemory
+from langchain.prompts import PromptTemplate, ChatPromptTemplate
+from langchain.schema import AgentAction, AgentFinish
+from langchain.schema import BaseRetriever, Document
+from langchain.tools.base import BaseTool
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.llms import Ollama
+from langchain_community.vectorstores import FAISS
+from langchain_openai import ChatOpenAI
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker, Session
+import aiofiles
+import aiohttp
+import docker
+import psutil
+import queue
+import redis
+import requests
 """
 Multi-Agent Terminal Coordinator with GitHub Copilot Integration
 ===============================================================
@@ -10,57 +51,33 @@ Advanced LangChain system with multiple specialized agents for:
 - Project coordination and development assistance
 """
 
-import asyncio
-import logging
-import json
-import subprocess
-import sys
-import os
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Union, Callable
-from dataclasses import dataclass, field
-from enum import Enum
-import uuid
-import time
-import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import queue
-import signal
 
 # Enhanced imports
-import psutil
-import docker
-import redis
-import requests
-import aiohttp
-import aiofiles
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, Session
 
 # LangChain imports
-from langchain.chains import LLMChain
-from langchain.agents import Tool, AgentExecutor, create_react_agent, initialize_agent, AgentType
-from langchain.memory import ConversationBufferMemory, ConversationSummaryBufferMemory
-from langchain.schema import BaseRetriever, Document
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain.callbacks.base import BaseCallbackHandler
-from langchain.prompts import PromptTemplate, ChatPromptTemplate
-from langchain.tools.base import BaseTool
-from langchain.schema import AgentAction, AgentFinish
-from langchain_community.llms import Ollama
-from langchain_openai import ChatOpenAI
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(),
         logging.FileHandler('multi_agent_coordinator.log')
-    ]
-)
+    
+
 logger = logging.getLogger(__name__)
 
 class AgentType(Enum):
@@ -115,40 +132,40 @@ class TerminalExecutorTool(BaseTool):
     def _run(self, command: str, timeout: int = 60, shell: str = "powershell") -> Dict[str, Any]:
         """Execute terminal command"""
         try:
-            logger.info(f"Executing command: {command}")
+            logger.info(str(f"Executing command: {command}")
             
             if shell.lower() == "powershell":
                 cmd = ["powershell", "-Command", command]
             else:
                 cmd = command.split()
             
-            result = subprocess.run(
+            result = subprocess.run()
                 cmd,
                 capture_output=True,
                 text=True,
                 timeout=timeout,
                 shell=(shell.lower() != "powershell")
-            )
             
-            return {
+            
+            return {}
                 "success": result.returncode == 0,
                 "returncode": result.returncode,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
                 "command": command
-            }
+            
         except subprocess.TimeoutExpired:
-            return {
+            return {}
                 "success": False,
                 "error": f"Command timed out after {timeout} seconds",
                 "command": command
-            }
+            
         except Exception as e:
-            return {
+            return {}
                 "success": False,
                 "error": str(e),
                 "command": command
-            }
+            
 
 class MCPTrainerTool(BaseTool):
     """Tool for training and managing MCP servers"""
@@ -179,49 +196,49 @@ class MCPTrainerTool(BaseTool):
     
     def _start_training(self, server_name: str, training_data: Dict) -> Dict[str, Any]:
         """Start training process for MCP server"""
-        logger.info(f"🎓 Starting training for MCP server: {server_name}")
+        logger.info(str(f"🎓 Starting training for MCP server: {server_name}")
         
         # Implementation would start actual training process
         # For now, simulate training
-        return {
+        return {}
             "success": True,
             "message": f"Training started for {server_name}",
             "training_id": str(uuid.uuid4()),
             "estimated_duration": "30 minutes"
-        }
+        
     
     def _check_server_status(self, server_name: str) -> Dict[str, Any]:
         """Check MCP server status"""
-        logger.info(f"📊 Checking status of MCP server: {server_name}")
+        logger.info(str(f"[METRICS] Checking status of MCP server: {server_name}")
         
         # Implementation would check actual server status
-        return {
+        return {}
             "success": True,
             "server": server_name,
             "status": "running",
             "uptime": "2 hours",
             "memory_usage": "256MB",
             "request_count": 1245
-        }
+        
     
     def _update_model(self, server_name: str, model_data: Dict) -> Dict[str, Any]:
         """Update MCP server model"""
-        logger.info(f"🔄 Updating model for MCP server: {server_name}")
+        logger.info(str(f"[SYNC] Updating model for MCP server: {server_name}")
         
-        return {
+        return {}
             "success": True,
             "message": f"Model updated for {server_name}",
             "version": "v2.1.0"
-        }
+        
     
     def _restart_server(self, server_name: str) -> Dict[str, Any]:
         """Restart MCP server"""
-        logger.info(f"🔄 Restarting MCP server: {server_name}")
+        logger.info(str(f"[SYNC] Restarting MCP server: {server_name}")
         
-        return {
+        return {}
             "success": True,
             "message": f"Server {server_name} restarted successfully"
-        }
+        
 
 class GitHubCopilotTool(BaseTool):
     """Tool for GitHub Copilot integration"""
@@ -252,60 +269,60 @@ class GitHubCopilotTool(BaseTool):
     
     def _get_code_suggestions(self, context: str, file_path: str) -> Dict[str, Any]:
         """Get code suggestions from GitHub Copilot"""
-        logger.info(f"💡 Getting code suggestions for: {file_path}")
+        logger.info(str(f"[INFO] Getting code suggestions for: {file_path}")
         
         # In real implementation, this would interface with GitHub Copilot API
-        suggestions = [
+        suggestions = []
             "Consider using async/await for better performance",
             "Add error handling for network requests",
             "Implement caching to reduce API calls",
             "Use type hints for better code documentation"
-        ]
         
-        return {
+        
+        return {}
             "success": True,
             "suggestions": suggestions,
             "context": context[:100] + "..." if len(context) > 100 else context
-        }
+        
     
     def _explain_code(self, code: str) -> Dict[str, Any]:
         """Explain code functionality"""
         logger.info("📖 Explaining code functionality")
         
-        return {
+        return {}
             "success": True,
             "explanation": "This code appears to be a configuration setup for a multi-agent system with error handling and logging capabilities.",
             "complexity": "Medium",
             "suggestions": ["Consider adding docstrings", "Break down into smaller functions"]
-        }
+        
     
     def _generate_tests(self, code: str, file_path: str) -> Dict[str, Any]:
         """Generate test cases for code"""
-        logger.info(f"🧪 Generating tests for: {file_path}")
+        logger.info(str(f"🧪 Generating tests for: {file_path}")
         
-        return {
+        return {}
             "success": True,
             "test_file": file_path.replace(".py", "_test.py"),
-            "test_cases": [
+            "test_cases": []
                 "test_initialization",
                 "test_error_handling",
                 "test_configuration_loading"
-            ]
-        }
+            
+        
     
     def _optimize_code(self, code: str) -> Dict[str, Any]:
         """Optimize code performance"""
-        logger.info("⚡ Optimizing code performance")
+        logger.info("[FAST] Optimizing code performance")
         
-        return {
+        return {}
             "success": True,
-            "optimizations": [
+            "optimizations": []
                 "Use list comprehensions instead of loops",
                 "Cache frequently accessed data",
                 "Use generators for memory efficiency"
             ],
             "estimated_improvement": "25% performance boost"
-        }
+        
 
 class ProjectManagerTool(BaseTool):
     """Tool for project management tasks"""
@@ -336,14 +353,14 @@ class ProjectManagerTool(BaseTool):
     
     def _analyze_project_structure(self, project_path: str) -> Dict[str, Any]:
         """Analyze project structure"""
-        logger.info(f"📊 Analyzing project structure: {project_path}")
+        logger.info(str(f"[METRICS] Analyzing project structure: {project_path}")
         
-        structure = {
+        structure = {}
             "total_files": 0,
             "directories": [],
             "file_types": {},
             "recommendations": []
-        }
+        
         
         if os.path.exists(project_path):
             for root, dirs, files in os.walk(project_path):
@@ -354,67 +371,67 @@ class ProjectManagerTool(BaseTool):
                     ext = Path(file).suffix
                     structure["file_types"][ext] = structure["file_types"].get(ext, 0) + 1
         
-        structure["recommendations"] = [
+        structure["recommendations"] = []
             "Consider organizing scripts into separate directories",
             "Add proper documentation files",
             "Implement proper logging structure"
-        ]
+        
         
         return {"success": True, "structure": structure}
     
     def _check_dependencies(self, project_path: str) -> Dict[str, Any]:
         """Check project dependencies"""
-        logger.info(f"🔍 Checking dependencies for: {project_path}")
+        logger.info(str(f"[SEARCH] Checking dependencies for: {project_path}")
         
         requirements_file = Path(project_path) / "requirements.txt"
         package_json = Path(project_path) / "package.json"
         
-        dependencies = {
+        dependencies = {}
             "python": [],
             "node": [],
             "missing": [],
             "outdated": []
-        }
+        
         
         if requirements_file.exists():
             try:
                 with open(requirements_file, 'r') as f:
                     dependencies["python"] = [line.strip() for line in f.readlines() if line.strip()]
             except Exception as e:
-                logger.error(f"Error reading requirements.txt: {e}")
+                logger.error(str(f"Error reading requirements.txt: {e}")
         
         return {"success": True, "dependencies": dependencies}
     
     def _create_backup(self, project_path: str) -> Dict[str, Any]:
         """Create project backup"""
-        logger.info(f"💾 Creating backup for: {project_path}")
+        logger.info(str(f"💾 Creating backup for: {project_path}")
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_name = f"backup_{timestamp}"
         
-        return {
+        return {}
             "success": True,
             "backup_name": backup_name,
             "backup_path": f"{project_path}/backups/{backup_name}",
             "timestamp": timestamp
-        }
+        
     
     def _organize_files(self, project_path: str) -> Dict[str, Any]:
         """Organize project files"""
-        logger.info(f"📁 Organizing files in: {project_path}")
+        logger.info(str(f"📁 Organizing files in: {project_path}")
         
-        organized = {
+        organized = {}
             "moved_files": 0,
             "created_directories": 0,
             "actions": []
-        }
+        
         
         # Implementation would organize files based on type and purpose
-        organized["actions"] = [
+        organized["actions"] = []
             "Created /logs directory for log files",
             "Moved backup files to /backups",
             "Organized Python files by functionality"
-        ]
+        
         
         return {"success": True, "organized": organized}
 
@@ -437,12 +454,12 @@ class MultiAgentTerminalCoordinator:
         self._setup_agents()
         
         # System status
-        self.system_status = {
+        self.system_status = {}
             "initialized": False,
             "agents_active": 0,
             "tasks_completed": 0,
             "uptime_start": datetime.now()
-        }
+        
     
     def _initialize_llm(self):
         """Initialize Language Model"""
@@ -451,7 +468,7 @@ class MultiAgentTerminalCoordinator:
             self.llm = Ollama(model="llama2", temperature=0.1)
             logger.info("Initialized local Ollama LLM")
         except Exception as e:
-            logger.warning(f"Could not initialize local LLM: {e}")
+            logger.warning(str(f"Could not initialize local LLM: {e}")
             # Fallback to a simple mock for demonstration
             self.llm = None
     
@@ -460,44 +477,44 @@ class MultiAgentTerminalCoordinator:
         logger.info("Setting up specialized agents...")
         
         # Agent configurations
-        agent_configs = [
-            AgentConfig(
+        agent_configs = []
+            AgentConfig()
                 name="Terminal Executor",
                 agent_type=AgentType.TERMINAL_EXECUTOR,
                 description="Handles terminal commands and system operations",
                 tools=["terminal_executor"],
                 specialty_areas=["command_execution", "system_administration", "file_operations"]
             ),
-            AgentConfig(
+            AgentConfig()
                 name="MCP Trainer",
                 agent_type=AgentType.MCP_TRAINER,
                 description="Manages and trains MCP servers",
                 tools=["mcp_trainer"],
                 specialty_areas=["machine_learning", "server_management", "training_data"]
             ),
-            AgentConfig(
+            AgentConfig()
                 name="GitHub Copilot Assistant",
                 agent_type=AgentType.GITHUB_COPILOT,
                 description="Provides code assistance and GitHub Copilot integration",
                 tools=["github_copilot"],
                 specialty_areas=["code_generation", "code_review", "development_assistance"]
             ),
-            AgentConfig(
+            AgentConfig()
                 name="Project Manager",
                 agent_type=AgentType.PROJECT_MANAGER,
                 description="Manages project structure and development workflow",
                 tools=["project_manager"],
                 specialty_areas=["project_organization", "dependency_management", "workflow_optimization"]
-            )
-        ]
+            
+        
         
         # Initialize tools
-        self.tools = {
+        self.tools = {}
             "terminal_executor": TerminalExecutorTool(self),
             "mcp_trainer": MCPTrainerTool(self),
             "github_copilot": GitHubCopilotTool(self),
             "project_manager": ProjectManagerTool(self)
-        }
+        
         
         # Create agents
         for config in agent_configs:
@@ -507,70 +524,68 @@ class MultiAgentTerminalCoordinator:
                 if self.llm and agent_tools:
                     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
                       # Use modern agent creation instead of deprecated AgentType
-                    from langchain.agents import create_structured_chat_agent, AgentExecutor
-                    from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
                     
                     # Create a simple prompt template
-                    prompt = ChatPromptTemplate.from_messages([
+                    prompt = ChatPromptTemplate.from_messages([)]
                         ("system", f"You are {config.name}. {config.role}"),
                         MessagesPlaceholder(variable_name="chat_history"),
                         ("human", "{input}"),
                         MessagesPlaceholder(variable_name="agent_scratchpad")
-                    ])
+                    
                     
                     # Create the agent and executor
-                    agent = create_structured_chat_agent(
+                    agent = create_structured_chat_agent()
                         llm=self.llm,
                         tools=agent_tools,
                         prompt=prompt
-                    )
                     
-                    agent_executor = AgentExecutor(
+                    
+                    agent_executor = AgentExecutor()
                         agent=agent,
                         tools=agent_tools,
                         memory=memory,
                         verbose=True,
                         max_iterations=config.max_iterations,
                         handle_parsing_errors=True
-                    )
                     
-                    self.agents[config.agent_type] = {
+                    
+                    self.agents[config.agent_type] = {}
                         "agent": agent,
                         "config": config,
                         "status": "ready",
                         "tasks_completed": 0
-                    }
                     
-                    logger.info(f"✅ Agent '{config.name}' initialized successfully")
+                    
+                    logger.info(str(f"[OK] Agent '{config.name}' initialized successfully")
                 else:
                     # Create mock agent for demonstration
-                    self.agents[config.agent_type] = {
+                    self.agents[config.agent_type] = {}
                         "agent": None,
                         "config": config,
                         "status": "mock",
                         "tasks_completed": 0
-                    }
-                    logger.info(f"⚠️ Mock agent '{config.name}' created (LLM not available)")
+                    
+                    logger.info(str(f"[WARN] Mock agent '{config.name}' created (LLM not available")
                     
             except Exception as e:
-                logger.error(f"❌ Failed to initialize agent '{config.name}': {e}")
+                logger.error(str(f"[ERROR] Failed to initialize agent '{config.name}': {e}")
         
         self.system_status["agents_active"] = len(self.agents)
-        logger.info(f"🤖 Initialized {len(self.agents)} agents")
+        logger.info(str(f"🤖 Initialized {len(self.agents} agents")
     
     async def execute_task(self, task: TaskRequest) -> Dict[str, Any]:
         """Execute a task using the appropriate agent"""
-        logger.info(f"🎯 Executing task: {task.description}")
+        logger.info(str(f"[TASK] Executing task: {task.description}")
         
         # Select best agent for task
         selected_agent_type = self._select_agent_for_task(task)
         
         if selected_agent_type not in self.agents:
-            return {
+            return {}
                 "success": False,
                 "error": f"No agent available for task type: {task.task_type}",
                 "task_id": task.task_id
-            }
+            
         
         agent_info = self.agents[selected_agent_type]
         
@@ -585,21 +600,21 @@ class MultiAgentTerminalCoordinator:
             agent_info["tasks_completed"] += 1
             self.system_status["tasks_completed"] += 1
             
-            return {
+            return {}
                 "success": True,
                 "result": result,
                 "agent_used": selected_agent_type.value,
                 "task_id": task.task_id
-            }
+            
             
         except Exception as e:
-            logger.error(f"❌ Task execution failed: {e}")
-            return {
+            logger.error(str(f"[ERROR] Task execution failed: {e}")
+            return {}
                 "success": False,
                 "error": str(e),
                 "agent_used": selected_agent_type.value,
                 "task_id": task.task_id
-            }
+            
     
     def _select_agent_for_task(self, task: TaskRequest) -> AgentType:
         """Select the best agent for a given task"""
@@ -609,7 +624,7 @@ class MultiAgentTerminalCoordinator:
             return task.agent_preference
         
         # Select based on task type
-        task_type_mapping = {
+        task_type_mapping = {}
             "terminal": AgentType.TERMINAL_EXECUTOR,
             "command": AgentType.TERMINAL_EXECUTOR,
             "mcp": AgentType.MCP_TRAINER,
@@ -618,7 +633,7 @@ class MultiAgentTerminalCoordinator:
             "code": AgentType.GITHUB_COPILOT,
             "project": AgentType.PROJECT_MANAGER,
             "organize": AgentType.PROJECT_MANAGER
-        }
+        
         
         for keyword, agent_type in task_type_mapping.items():
             if keyword in task.task_type.lower() or keyword in task.description.lower():
@@ -633,7 +648,7 @@ class MultiAgentTerminalCoordinator:
         Task: {task.description}
         Type: {task.task_type}
         Priority: {task.priority}
-        Context: {json.dumps(task.context, indent=2)}
+        Context: {json.dumps(task.context, indent=2, ensure_ascii=True, default=str)}
         
         Please execute this task and provide a detailed response.
         """
@@ -642,40 +657,40 @@ class MultiAgentTerminalCoordinator:
     
     async def _execute_mock_task(self, agent_type: AgentType, task: TaskRequest) -> Dict[str, Any]:
         """Execute task with mock agent (when LLM is not available)"""
-        logger.info(f"🎭 Executing mock task with {agent_type.value}")
+        logger.info(str(f"[THEATER] Executing mock task with {agent_type.value}")
         
         # Simulate task execution based on agent type
         if agent_type == AgentType.TERMINAL_EXECUTOR:
-            return {
+            return {}
                 "action": "terminal_command_executed",
                 "command": task.context.get("command", "unknown"),
                 "status": "simulated_success"
-            }
+            
         elif agent_type == AgentType.MCP_TRAINER:
-            return {
+            return {}
                 "action": "mcp_training_started",
                 "server": task.context.get("server", "unknown"),
                 "status": "training_initiated"
-            }
+            
         elif agent_type == AgentType.GITHUB_COPILOT:
-            return {
+            return {}
                 "action": "code_assistance_provided",
                 "suggestions": ["Mock suggestion 1", "Mock suggestion 2"],
                 "status": "assistance_ready"
-            }
+            
         elif agent_type == AgentType.PROJECT_MANAGER:
-            return {
+            return {}
                 "action": "project_managed",
                 "changes": ["Mock change 1", "Mock change 2"],
                 "status": "project_updated"
-            }
+            
         
         return {"status": "mock_execution_completed"}
     
-    def create_task(self, task_type: str, description: str, priority: int = 1, 
+    def create_task(self, task_type: str, description: str, priority: int = 1, )
                    context: Dict = None, agent_preference: AgentType = None) -> TaskRequest:
         """Create a new task request"""
-        task = TaskRequest(
+        task = TaskRequest()
             task_id=str(uuid.uuid4()),
             requester="user",
             task_type=task_type,
@@ -683,51 +698,51 @@ class MultiAgentTerminalCoordinator:
             priority=priority,
             context=context or {},
             agent_preference=agent_preference
-        )
         
-        logger.info(f"📝 Created task: {task.task_id} - {description}")
+        
+        logger.info(str(f"[LOG] Created task: {task.task_id} - {description}")
         return task
     
     async def run_terminal_command(self, command: str, timeout: int = 60) -> Dict[str, Any]:
         """Run a terminal command using the terminal executor agent"""
-        task = self.create_task(
+        task = self.create_task()
             task_type="terminal",
             description=f"Execute terminal command: {command}",
             context={"command": command, "timeout": timeout}
-        )
+        
         
         return await self.execute_task(task)
     
     async def train_mcp_server(self, server_name: str, training_data: Dict = None) -> Dict[str, Any]:
         """Train an MCP server using the MCP trainer agent"""
-        task = self.create_task(
+        task = self.create_task()
             task_type="mcp_training",
             description=f"Train MCP server: {server_name}",
             context={"server_name": server_name, "training_data": training_data or {}},
             agent_preference=AgentType.MCP_TRAINER
-        )
+        
         
         return await self.execute_task(task)
     
     async def get_code_assistance(self, code_context: str, file_path: str = "") -> Dict[str, Any]:
         """Get code assistance using GitHub Copilot agent"""
-        task = self.create_task(
+        task = self.create_task()
             task_type="github_assistance",
             description="Provide code assistance and suggestions",
             context={"code_context": code_context, "file_path": file_path},
             agent_preference=AgentType.GITHUB_COPILOT
-        )
+        
         
         return await self.execute_task(task)
     
     async def manage_project(self, action: str, project_path: str = "") -> Dict[str, Any]:
         """Manage project using project manager agent"""
-        task = self.create_task(
+        task = self.create_task()
             task_type="project_management",
             description=f"Project management action: {action}",
             context={"action": action, "project_path": project_path or str(self.project_root)},
             agent_preference=AgentType.PROJECT_MANAGER
-        )
+        
         
         return await self.execute_task(task)
     
@@ -737,28 +752,28 @@ class MultiAgentTerminalCoordinator:
         
         agent_status = {}
         for agent_type, agent_info in self.agents.items():
-            agent_status[agent_type.value] = {
+            agent_status[agent_type.value] = {}
                 "status": agent_info["status"],
                 "tasks_completed": agent_info["tasks_completed"],
                 "name": agent_info["config"].name
-            }
+            
         
-        return {
+        return {}
             "system_initialized": self.system_status["initialized"],
             "agents_active": self.system_status["agents_active"],
             "total_tasks_completed": self.system_status["tasks_completed"],
             "uptime": str(uptime),
             "project_root": str(self.project_root),
             "agents": agent_status
-        }
+        
     
     async def start_interactive_session(self):
         """Start interactive session for user commands"""
-        logger.info("🎮 Starting interactive multi-agent session...")
+        logger.info("[GAME] Starting interactive multi-agent session...")
         logger.info("Available agents:")
         
         for agent_type, agent_info in self.agents.items():
-            logger.info(f"  - {agent_info['config'].name} ({agent_type.value})")
+            logger.info(str(f"  - {agent_info['config'].name} ({agent_type.value}")
         
         logger.info("\nCommands:")
         logger.info("  'terminal <command>' - Execute terminal command")
@@ -777,13 +792,13 @@ class MultiAgentTerminalCoordinator:
                 
                 if user_input.lower() == 'status':
                     status = self.get_system_status()
-                    print(json.dumps(status, indent=2, default=str))
+                    print(json.dumps(status, indent=2, default=str, ensure_ascii=True, default=str))
                     continue
                 
                 # Parse command
                 parts = user_input.split(' ', 1)
                 if len(parts) < 2:
-                    print("❌ Invalid command format")
+                    print("[ERROR] Invalid command format")
                     continue
                 
                 command, args = parts
@@ -797,22 +812,22 @@ class MultiAgentTerminalCoordinator:
                 elif command.lower() == 'project':
                     result = await self.manage_project(args)
                 else:
-                    print(f"❌ Unknown command: {command}")
+                    print(f"[ERROR] Unknown command: {command}")
                     continue
                 
-                print(f"✅ Result: {json.dumps(result, indent=2, default=str)}")
+                print(f"[OK] Result: {json.dumps(result, indent=2, default=str, ensure_ascii=True, default=str)}")
                 
             except KeyboardInterrupt:
                 break
             except Exception as e:
-                logger.error(f"❌ Error in interactive session: {e}")
+                logger.error(str(f"[ERROR] Error in interactive session: {e}")
         
         logger.info("👋 Interactive session ended")
     
     async def initialize(self) -> bool:
         """Initialize the coordinator system"""
         try:
-            logger.info("🚀 Initializing Multi-Agent Terminal Coordinator...")
+            logger.info("[INIT] Initializing Multi-Agent Terminal Coordinator...")
             
             # Ensure project structure
             (self.project_root / "logs").mkdir(exist_ok=True)
@@ -820,21 +835,21 @@ class MultiAgentTerminalCoordinator:
             (self.project_root / "training_data").mkdir(exist_ok=True)
             
             self.system_status["initialized"] = True
-            logger.info("✅ Multi-Agent Terminal Coordinator initialized successfully")
+            logger.info("[OK] Multi-Agent Terminal Coordinator initialized successfully")
             return True
             
         except Exception as e:
-            logger.error(f"❌ Failed to initialize coordinator: {e}")
+            logger.error(str(f"[ERROR] Failed to initialize coordinator: {e}")
             return False
     
     async def shutdown(self):
         """Shutdown the coordinator system"""
-        logger.info("🛑 Shutting down Multi-Agent Terminal Coordinator...")
+        logger.info("[STOP] Shutting down Multi-Agent Terminal Coordinator...")
         
         # Shutdown executor
         self.executor.shutdown(wait=True)
         
-        logger.info("✅ Shutdown completed")
+        logger.info("[OK] Shutdown completed")
 
 async def main():
     """Main execution function"""
@@ -843,16 +858,16 @@ async def main():
     try:
         # Initialize the coordinator
         if not await coordinator.initialize():
-            logger.error("❌ Failed to initialize coordinator")
+            logger.error("[ERROR] Failed to initialize coordinator")
             return
         
         # Start interactive session
         await coordinator.start_interactive_session()
         
     except KeyboardInterrupt:
-        logger.info("🛑 Received shutdown signal")
+        logger.info("[STOP] Received shutdown signal")
     except Exception as e:
-        logger.error(f"❌ Coordinator error: {e}")
+        logger.error(str(f"[ERROR] Coordinator error: {e}")
     finally:
         await coordinator.shutdown()
 

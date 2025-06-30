@@ -1,4 +1,13 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+import json
+import logging
+import os
+import subprocess
+
+from flask import Flask, render_template_string, request, jsonify, redirect, url_for
+import psutil
 """
 Admin Dashboard and Control Interface
 ====================================
@@ -7,15 +16,21 @@ Web-based admin interface for controlling the arbitrage system.
 Provides real-time monitoring and control capabilities.
 """
 
-from flask import Flask, render_template_string, request, jsonify, redirect, url_for
-from datetime import datetime, timedelta
-import json
-import os
-import subprocess
-import psutil
-import logging
 
 app = Flask(__name__)
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -55,7 +70,7 @@ DASHBOARD_HTML = """
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 24/7 Arbitrage System - Admin Dashboard</h1>
+            <h1>[INIT] 24/7 Arbitrage System - Admin Dashboard</h1>
             <p>Production monitoring and control interface</p>
         </div>
 
@@ -183,27 +198,27 @@ DASHBOARD_HTML = """
         refreshDashboard();
         refreshLogs();
         
-        function refreshDashboard() {
+        function refreshDashboard() {}
             fetch('/api/status')
                 .then(response => response.json())
-                .then(data => {
+                .then(data => {)}
                     updateMetrics(data);
                     updateOpportunities(data.opportunities || []);
                     updateServicesStatus(data.services || {});
-                })
+                
                 .catch(error => console.error('Error refreshing dashboard:', error));
-        }
         
-        function refreshLogs() {
+        
+        function refreshLogs() {}
             fetch('/api/logs')
                 .then(response => response.json())
-                .then(data => {
+                .then(data => {)}
                     document.getElementById('system-logs').innerHTML = data.logs.join('\\n');
-                })
+                
                 .catch(error => console.error('Error refreshing logs:', error));
-        }
         
-        function updateMetrics(data) {
+        
+        function updateMetrics(data) {}
             document.getElementById('system-status').textContent = data.system_status || 'Unknown';
             document.getElementById('uptime').textContent = data.uptime || '0s';
             document.getElementById('opportunities-found').textContent = data.opportunities_found || '0';
@@ -212,18 +227,18 @@ DASHBOARD_HTML = """
             document.getElementById('success-rate').textContent = (data.success_rate || 0).toFixed(1);
             document.getElementById('mcp-status').textContent = (data.mcp_servers_active || 0) + '/6';
             document.getElementById('ai-status').textContent = (data.ai_agents_active || 0) + '/4';
-        }
         
-        function updateOpportunities(opportunities) {
+        
+        function updateOpportunities(opportunities) {}
             const tbody = document.getElementById('opportunities-table-body');
             tbody.innerHTML = '';
             
-            if (opportunities.length === 0) {
+            if (opportunities.length === 0) {}
                 tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666;">No opportunities currently detected</td></tr>';
                 return;
-            }
             
-            opportunities.slice(0, 10).forEach(opp => {
+            
+            opportunities.slice(0, 10).forEach(opp => {)}
                 const row = tbody.insertRow();
                 row.innerHTML = `
                     <td>${opp.token_symbol || 'N/A'}</td>
@@ -232,51 +247,51 @@ DASHBOARD_HTML = """
                     <td>${(opp.price_diff_pct || 0).toFixed(2)}%</td>
                     <td>$${(opp.net_profit_usd || 0).toFixed(2)}</td>
                     <td>${((opp.confidence_score || 0) * 100).toFixed(0)}%</td>
-                    <td>${opp.execution_ready ? '✅ Ready' : '⏳ Pending'}</td>
+                    <td>${opp.execution_ready ? '[OK] Ready' : '⏳ Pending'}</td>
                 `;
             });
-        }
         
-        function updateServicesStatus(services) {
+        
+        function updateServicesStatus(services) {}
             const container = document.getElementById('services-detail');
             let html = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">';
             
             html += '<div><h4>MCP Servers</h4><ul>';
-            for (const [name, status] of Object.entries(services.mcp_servers || {})) {
-                html += `<li>${name}: ${status ? '✅ Active' : '❌ Inactive'}</li>`;
-            }
+            for (const [name, status] of Object.entries(services.mcp_servers || {})) {}
+                html += `<li>${name}: ${status ? '[OK] Active' : '[ERROR] Inactive'}</li>`;
+            
             html += '</ul></div>';
             
             html += '<div><h4>AI Agents</h4><ul>';
-            for (const [name, status] of Object.entries(services.ai_agents || {})) {
-                html += `<li>${name}: ${status ? '✅ Active' : '❌ Inactive'}</li>`;
-            }
+            for (const [name, status] of Object.entries(services.ai_agents || {})) {}
+                html += `<li>${name}: ${status ? '[OK] Active' : '[ERROR] Inactive'}</li>`;
+            
             html += '</ul></div></div>';
             
             container.innerHTML = html;
-        }
         
-        function controlSystem(action) {
-            fetch('/api/control', {
+        
+        function controlSystem(action) {}
+            fetch('/api/control', {)}
                 method: 'POST',
-                headers: {
+                headers: {}
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({action: action})
-            })
+            
             .then(response => response.json())
-            .then(data => {
+            .then(data => {)}
                 document.getElementById('control-status').innerHTML = 
                     `<div style="color: ${data.success ? 'green' : 'red'};">${data.message}</div>`;
-                if (data.success) {
+                if (data.success) {}
                     setTimeout(refreshDashboard, 1000);
-                }
-            })
-            .catch(error => {
+                
+            
+            .catch(error => {)}
                 document.getElementById('control-status').innerHTML = 
                     `<div style="color: red;">Error: ${error.message}</div>`;
             });
-        }
+        
     </script>
 </body>
 </html>
@@ -293,42 +308,42 @@ class SystemController:
             system_running = self._is_process_running('production_arbitrage_system.py')
             
             # Check MCP servers
-            mcp_servers = {
+            mcp_servers = {}
                 'real_time_price': self._is_port_in_use(8001),
                 'profit_optimizer': self._is_port_in_use(8002),
                 'aave_integration': self._is_port_in_use(8003),
                 'dex_aggregator': self._is_port_in_use(8004),
                 'risk_management': self._is_port_in_use(8005),
                 'monitoring': self._is_port_in_use(8006)
-            }
+            
             
             # Check AI agents
-            ai_agents = {
+            ai_agents = {}
                 'arbitrage_detector': self._is_port_in_use(9001),
                 'risk_manager': self._is_port_in_use(9002),
                 'route_optimizer': self._is_port_in_use(9003),
                 'market_analyzer': self._is_port_in_use(9004)
-            }
+            
             
             # Read system stats if available
             stats = self._read_system_stats()
             
-            return {
+            return {}
                 'system_status': 'Running' if system_running else 'Stopped',
                 'system_running': system_running,
                 'mcp_servers': mcp_servers,
                 'ai_agents': ai_agents,
                 'mcp_servers_active': sum(mcp_servers.values()),
                 'ai_agents_active': sum(ai_agents.values()),
-                'services': {
+                'services': {}
                     'mcp_servers': mcp_servers,
                     'ai_agents': ai_agents
                 },
                 **stats
-            }
+            
             
         except Exception as e:
-            logger.error(f"Error getting system status: {e}")
+            logger.error(str(f"Error getting system status: {e}")
             return {'error': str(e)}
             
     def _is_process_running(self, process_name):
@@ -360,14 +375,14 @@ class SystemController:
                     return json.load(f)
             else:
                 # Return default stats
-                return {
+                return {}
                     'uptime': '0s',
                     'opportunities_found': 0,
                     'opportunities_executed': 0,
                     'total_profit': 0.0,
                     'success_rate': 0.0,
                     'opportunities': []
-                }
+                
         except:
             return {}
             
@@ -376,9 +391,9 @@ class SystemController:
         try:
             if action == 'start':
                 if not self._is_process_running('production_arbitrage_system.py'):
-                    self.system_process = subprocess.Popen([
+                    self.system_process = subprocess.Popen([)]
                         'python', 'production_arbitrage_system.py'
-                    ])
+                    
                     return {'success': True, 'message': 'System started successfully'}
                 else:
                     return {'success': False, 'message': 'System is already running'}
@@ -419,7 +434,7 @@ def dashboard():
     """Main dashboard page"""
     status = controller.get_system_status()
     
-    return render_template_string(DASHBOARD_HTML,
+    return render_template_string(DASHBOARD_HTML,)
         system_status=status.get('system_status', 'Unknown'),
         uptime=status.get('uptime', '0s'),
         opportunities_found=status.get('opportunities_found', 0),
@@ -433,7 +448,7 @@ def dashboard():
         monitoring_interval=2,
         wallet_address=os.getenv('ARBITRAGE_WALLET_ADDRESS', 'Not configured')[:20] + '...',
         contract_address=os.getenv('CONTRACT_ADDRESS', 'Not configured')[:20] + '...'
-    )
+    
 
 @app.route('/api/status')
 def api_status():

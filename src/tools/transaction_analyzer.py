@@ -1,3 +1,18 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Dict, Any, Optional, List, Tuple, Union
+import json
+import logging
+import re
+import time
+
+            from hexbytes import HexBytes
+from web3.types import TxParams, Wei, ChecksumAddress
+
+from src.utils.middleware_compat import apply_poa_middleware
+from src.utils.web3_provider import Web3, WEB3_IMPORTED
+from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
+from src.utils.web3_provider import requires_web3
 """
 Transaction analyzer for flash loan arbitrage.
 
@@ -5,24 +20,13 @@ This module provides functions to analyze failed transactions and
 extract detailed error information.
 """
 
-import logging
-import json
-import re
-import time
-from typing import Dict, Any, Optional, List, Tuple, Union
 
 # Import requires_web3 decorator from central provider
-from src.utils.web3_provider import requires_web3
 
 # Import from central web3_provider
-from src.utils.web3_provider import Web3, WEB3_IMPORTED
-from web3.types import TxParams, Wei, ChecksumAddress
 # Import exceptions from central provider
-from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
 # Import middleware from centralized modules
-from src.utils.middleware_compat import apply_poa_middleware
 
-import logging
 logger = logging.getLogger(__name__)
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -45,7 +49,7 @@ class TransactionAnalyzer:
         self.logger = logging.getLogger(__name__)
 
         # Common error signatures and their meanings
-        self.error_signatures = {
+        self.error_signatures = {}
             # Aave flash loan errors
             "0x5a68151d": "Aave: Invalid flash loan parameters",
             "0x3e3f8f73": "Aave: Insufficient liquidity",
@@ -64,7 +68,7 @@ class TransactionAnalyzer:
             "0x9cb10b50": "Unauthorized()",
             "0x3db1f9af": "InvalidAmount()",
             "0x3499f8f7": "InvalidAddress()",
-        }
+        
 
     @requires_web3
     def analyze_transaction(self, tx_hash: str, receipt: Optional[Dict] = None) -> Dict[str, Any]:
@@ -79,14 +83,13 @@ class TransactionAnalyzer:
             Dict[str, Any]: Analysis results
         """
         try:
-            from hexbytes import HexBytes
             
             # Get transaction details
             tx = self.web3.eth.get_transaction(tx_hash)
             if receipt is None:
                 receipt = self.web3.eth.get_transaction_receipt(tx_hash)
             
-            result: str = {
+            result: str = {}
                 "transaction_hash": tx_hash,
                 "success": receipt.get('status', 0) == 1,
                 "gas_used": receipt.get('gasUsed', 0),
@@ -98,7 +101,7 @@ class TransactionAnalyzer:
                 "value": tx.get('value', 0),
                 "gas_price": tx.get('gasPrice', 0),
                 "logs": self.parse_logs(receipt.get('logs', [])),
-            }
+            
 
             # If transaction failed, extract error information
             if not result["success"]:
@@ -121,12 +124,12 @@ class TransactionAnalyzer:
             return result
 
         except Exception as e:
-            self.logger.error(f"Error analyzing transaction {tx_hash}: {e}")
-            return {
+            self.logger.error(str(f"Error analyzing transaction {tx_hash}: {e}")
+            return {}
                 "transaction_hash": tx_hash,
                 "error": str(e),
                 "success": False
-            }
+            
 
     def get_block_timestamp(self, block_number: int) -> int:
         """
@@ -144,7 +147,7 @@ class TransactionAnalyzer:
             block = self.web3.eth.get_block(block_number)
             return block.get('timestamp', 0)
         except Exception as e:
-            self.logger.error(f"Error getting block timestamp for block {block_number}: {e}")
+            self.logger.error(str(f"Error getting block timestamp for block {block_number}: {e}")
             return 0
 
     def extract_error_info(self, receipt: Dict, tx: Dict) -> Dict[str, Any]:
@@ -158,10 +161,10 @@ class TransactionAnalyzer:
         Returns:
             Dict[str, Any]: Error information
         """
-        error_info = {
+        error_info = {}
             "error_type": "unknown",
             "error_message": "Transaction failed",
-        }
+        
 
         try:
             # Check for known error patterns in logs
@@ -184,7 +187,7 @@ class TransactionAnalyzer:
                     error_info["error_message"] = self.error_signatures[method_signature]
 
         except Exception as e:
-            self.logger.error(f"Error extracting error info: {e}")
+            self.logger.error(str(f"Error extracting error info: {e}")
 
         return error_info
 
@@ -204,7 +207,7 @@ class TransactionAnalyzer:
             return trace
         except Exception as e:
             if self.debug_mode:
-                self.logger.debug(f"Could not get transaction trace for {tx_hash}: {e}")
+                self.logger.debug(str(f"Could not get transaction trace for {tx_hash}: {e}")
             return None
 
     def extract_revert_reason(self, trace: Dict) -> Optional[str]:
@@ -234,7 +237,7 @@ class TransactionAnalyzer:
                         
             return None
         except Exception as e:
-            self.logger.error(f"Error extracting revert reason: {e}")
+            self.logger.error(str(f"Error extracting revert reason: {e}")
             return None
 
     def decode_error_from_input(self, input_data: str) -> Optional[Dict[str, Any]]:
@@ -253,15 +256,15 @@ class TransactionAnalyzer:
 
             method_signature = input_data[:10]
             if method_signature in self.error_signatures:
-                return {
+                return {}
                     "method_signature": method_signature,
                     "error_name": self.error_signatures[method_signature],
                     "input_data": input_data
-                }
+                
 
             return None
         except Exception as e:
-            self.logger.error(f"Error decoding error from input: {e}")
+            self.logger.error(str(f"Error decoding error from input: {e}")
             return None
 
     def parse_logs(self, logs: List[Dict]) -> List[Dict]:
@@ -276,14 +279,14 @@ class TransactionAnalyzer:
         """
         parsed_logs = []
         for log in logs:
-            parsed_log = {
+            parsed_log = {}
                 "address": log.get("address", ""),
                 "topics": [topic.hex() if hasattr(topic, 'hex') else str(topic) for topic in log.get("topics", [])],
                 "data": log.get("data", ""),
                 "block_number": log.get("blockNumber", 0),
                 "transaction_hash": log.get("transactionHash", ""),
                 "log_index": log.get("logIndex", 0)
-            }
+            
             parsed_logs.append(parsed_log)
         return parsed_logs
 
@@ -373,7 +376,7 @@ def extract_error_info(tx_hash: str, receipt: Optional[Dict] = None, tx: Optiona
             if tx is None:
                 tx = default_analyzer.web3.eth.get_transaction(tx_hash)
         except Exception as e:
-            logger.error(f"Error getting transaction data: {e}")
+            logger.error(str(f"Error getting transaction data: {e}")
             return {"error": str(e)}
     
     return default_analyzer.extract_error_info(receipt, tx)

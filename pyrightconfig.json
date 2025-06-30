@@ -1,0 +1,8 @@
+{
+  "typeCheckingMode": "basic",
+  "reportUnusedImport": false,
+  "reportUnknownVariableType": false,
+  "reportUnknownArgumentType": false,
+  "reportUnknownMemberType": false,
+  "reportOperatorIssue": false
+} 

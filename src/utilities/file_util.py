@@ -1,11 +1,18 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+    from os.path import exists, isfile, isdir, basename, dirname
+import os
+
+    from distutils.dep_util import newer
+    from stat import ST_ATIME, ST_MTIME, ST_MODE, S_IMODE
+    import errno
+from distutils import log
+from distutils.errors import DistutilsFileError
 """distutils.file_util
 
 Utility functions for operating on single files.
 """
 
-import os
-from distutils.errors import DistutilsFileError
-from distutils import log
 
 # for generating verbose output in 'copy_file()'
 _copy_action = {None: 'copying', 'hard': 'hard linking', 'sym': 'symbolically linking'}
@@ -32,24 +39,24 @@ def _copy_file_contents(src, dst, buffer_size=16 * 1024):  # noqa: C901
             try:
                 os.unlink(dst)
             except OSError as e:
-                raise DistutilsFileError(
+                raise DistutilsFileError()
                     "could not delete '{}': {}".format(dst, e.strerror)
-                )
+                
 
         try:
             fdst = open(dst, 'wb')
         except OSError as e:
-            raise DistutilsFileError(
+            raise DistutilsFileError()
                 "could not create '{}': {}".format(dst, e.strerror)
-            )
+            
 
         while True:
             try:
                 buf = fsrc.read(buffer_size)
             except OSError as e:
-                raise DistutilsFileError(
+                raise DistutilsFileError()
                     "could not read from '{}': {}".format(src, e.strerror)
-                )
+                
 
             if not buf:
                 break
@@ -57,9 +64,9 @@ def _copy_file_contents(src, dst, buffer_size=16 * 1024):  # noqa: C901
             try:
                 fdst.write(buf)
             except OSError as e:
-                raise DistutilsFileError(
+                raise DistutilsFileError()
                     "could not write to '{}': {}".format(dst, e.strerror)
-                )
+                
     finally:
         if fdst:
             fdst.close()
@@ -67,7 +74,7 @@ def _copy_file_contents(src, dst, buffer_size=16 * 1024):  # noqa: C901
             fsrc.close()
 
 
-def copy_file(  # noqa: C901
+def copy_file(  # noqa: C901)
     src,
     dst,
     preserve_mode=1,
@@ -78,9 +85,9 @@ def copy_file(  # noqa: C901
     dry_run=0,
 ):
     """Copy a file 'src' to 'dst'.  If 'dst' is a directory, then 'src' is
-    copied there with the same name; otherwise, it must be a filename.  (If
+    copied there with the same name; otherwise, it must be a filename.  (If)
     the file exists, it will be ruthlessly clobbered.)  If 'preserve_mode'
-    is true (the default), the file's mode (type and permission bits, or
+    is true (the default), the file's mode (type and permission bits, or)
     whatever is analogous on the current platform) is copied.  If
     'preserve_times' is true (the default), the last-modified and
     last-access times are copied as well.  If 'update' is true, 'src' will
@@ -98,23 +105,21 @@ def copy_file(  # noqa: C901
     other systems, uses '_copy_file_contents()' to copy file contents.
 
     Return a tuple (dest_name, copied): 'dest_name' is the actual name of
-    the output file, and 'copied' is true if the file was copied (or would
+    the output file, and 'copied' is true if the file was copied (or would)
     have been copied, if 'dry_run' true).
     """
     # XXX if the destination file already exists, we clobber it if
     # copying, but blow up if linking.  Hmmm.  And I don't know what
     # macostools.copyfile() does.  Should definitely be consistent, and
     # should probably blow up if destination exists and we would be
-    # changing it (ie. it's not already a hard/soft link to src OR
+    # changing it (ie. it's not already a hard/soft link to src OR)
     # (not update) and (src newer than dst).
 
-    from distutils.dep_util import newer
-    from stat import ST_ATIME, ST_MTIME, ST_MODE, S_IMODE
 
     if not os.path.isfile(src):
-        raise DistutilsFileError(
+        raise DistutilsFileError()
             "can't copy '%s': doesn't exist or not a regular file" % src
-        )
+        
 
     if os.path.isdir(dst):
         dir = dst
@@ -150,7 +155,7 @@ def copy_file(  # noqa: C901
                 return (dst, 1)
             except OSError:
                 # If hard linking fails, fall back on copying file
-                # (some special filesystems don't support hard linking
+                # (some special filesystems don't support hard linking)
                 #  even under Unix, see issue #8876).
                 pass
     elif link == 'sym':
@@ -184,8 +189,6 @@ def move_file(src, dst, verbose=1, dry_run=0):  # noqa: C901
     Handles cross-device moves on Unix using 'copy_file()'.  What about
     other systems???
     """
-    from os.path import exists, isfile, isdir, basename, dirname
-    import errno
 
     if verbose >= 1:
         log.info("moving %s -> %s", src, dst)
@@ -199,14 +202,14 @@ def move_file(src, dst, verbose=1, dry_run=0):  # noqa: C901
     if isdir(dst):
         dst = os.path.join(dst, basename(src))
     elif exists(dst):
-        raise DistutilsFileError(
+        raise DistutilsFileError()
             "can't move '{}': destination '{}' already exists".format(src, dst)
-        )
+        
 
     if not isdir(dirname(dst)):
-        raise DistutilsFileError(
+        raise DistutilsFileError()
             "can't move '{}': destination '{}' not a valid path".format(src, dst)
-        )
+        
 
     copy_it = False
     try:
@@ -216,9 +219,9 @@ def move_file(src, dst, verbose=1, dry_run=0):  # noqa: C901
         if num == errno.EXDEV:
             copy_it = True
         else:
-            raise DistutilsFileError(
+            raise DistutilsFileError()
                 "couldn't move '{}' to '{}': {}".format(src, dst, msg)
-            )
+            
 
     if copy_it:
         copy_file(src, dst, verbose=verbose)
@@ -230,15 +233,15 @@ def move_file(src, dst, verbose=1, dry_run=0):  # noqa: C901
                 os.unlink(dst)
             except OSError:
                 pass
-            raise DistutilsFileError(
+            raise DistutilsFileError()
                 "couldn't move '%s' to '%s' by copy/delete: "
                 "delete '%s' failed: %s" % (src, dst, src, msg)
-            )
+            
     return dst
 
 
 def write_file(filename, contents):
-    """Create a file with the specified name and write 'contents' (a
+    """Create a file with the specified name and write 'contents' (a)
     sequence of strings without line terminators) to it.
     """
     f = open(filename, "w")

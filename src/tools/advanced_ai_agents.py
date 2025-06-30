@@ -1,4 +1,15 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Dict, List, Any, cast
+import asyncio
+import logging
+import pickle
+
+from dataclasses import dataclass
+from numpy.typing import NDArray
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import StandardScaler
+import numpy as np
 """
 ADVANCED AI AGENT IMPROVEMENTS
 ==============================
@@ -6,15 +17,6 @@ Enhance the multi-agent system with machine learning and advanced decision-makin
 Integrates with the existing multi-agent coordinator for seamless operation
 """
 
-import asyncio
-import numpy as np
-from typing import Dict, List, Any, cast
-from dataclasses import dataclass
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.preprocessing import StandardScaler
-import pickle
-import logging
-from numpy.typing import NDArray   # typed ndarray support
 
 @dataclass
 class MarketPrediction:
@@ -33,7 +35,7 @@ class MLArbitragePredictor:
         self.model = RandomForestRegressor(n_estimators=100, random_state=42)
         self.scaler = StandardScaler()
         self.is_trained = False
-        self.feature_columns = [
+        self.feature_columns = []
             'price_spread_percentage',
             'liquidity_ratio',
             'volume_24h_ratio',
@@ -42,7 +44,7 @@ class MLArbitragePredictor:
             'time_since_last_opportunity',
             'success_rate_last_10_trades',
             'network_congestion_score'
-        ]
+        
     
     def prepare_features(self, market_data: Dict[str, Any]) -> NDArray[np.float64]:
         """Prepare features for ML model"""
@@ -96,10 +98,10 @@ class MLArbitragePredictor:
         
         # Scale features
         # Cast because sklearn stubs return ndarray[Any, Any]
-        X_scaled: NDArray[np.float64] = cast(
+        X_scaled: NDArray[np.float64] = cast()
             NDArray[np.float64],
             self.scaler.fit_transform(X)  # type: ignore[reportUnknownMemberType]
-        )
+        
         
         # Train model
         self.model.fit(X_scaled, y)  # type: ignore[reportUnknownMemberType]
@@ -120,10 +122,10 @@ class MLArbitragePredictor:
         
         # Prepare features
         features = self.prepare_features(market_data)
-        features_scaled: NDArray[np.float64] = cast(
+        features_scaled: NDArray[np.float64] = cast()
             NDArray[np.float64],
             self.scaler.transform(features)  # type: ignore[reportUnknownMemberType]
-        )
+        
         
         # Make prediction
         predicted_profit = self.model.predict(features_scaled)[0]  # type: ignore[reportUnknownMemberType]
@@ -137,14 +139,14 @@ class MLArbitragePredictor:
         # Assess risk
         risk = self._assess_risk(predicted_profit, confidence, market_data)
         
-        return MarketPrediction(
+        return MarketPrediction()
             token_pair=market_data.get('token_pair', 'UNKNOWN'),
             predicted_profit=predicted_profit,
             confidence_score=confidence,
             recommended_action=action,
             risk_assessment=risk,
             time_horizon=30  # 30 seconds prediction horizon
-        )
+        
     
     def _calculate_confidence(self, features: NDArray[np.float64]) -> float:
         """Calculate confidence score based on model uncertainty"""
@@ -187,10 +189,10 @@ class MLArbitragePredictor:
             risk_score += 1
         
         # Low liquidity increases risk
-        min_liquidity = min(
+        min_liquidity = min()
             market_data.get('buy_liquidity', 0),
             market_data.get('sell_liquidity', 0)
-        )
+        
         if min_liquidity < 10000:
             risk_score += 2
         elif min_liquidity < 50000:
@@ -215,24 +217,24 @@ class MLArbitragePredictor:
         else:
             profit_percentage = 0
         
-        return MarketPrediction(
+        return MarketPrediction()
             token_pair=market_data.get('token_pair', 'UNKNOWN'),
             predicted_profit=profit_percentage,
             confidence_score=0.5,
             recommended_action="MONITOR_CLOSELY",
             risk_assessment="MEDIUM",
             time_horizon=30
-        )
+        
     
     def save_model(self):
         """Save trained model to disk"""
         try:
             with open('ml_arbitrage_model.pkl', 'wb') as f:
-                pickle.dump({
+                pickle.dump({)}
                     'model': self.model,
                     'scaler': self.scaler,
                     'feature_columns': self.feature_columns
-                }, f)
+                }, f
             logging.info("ML model saved successfully")
         except Exception as e:
             logging.error(f"Failed to save model: {e}")
@@ -258,12 +260,12 @@ class AdvancedRiskAgent:
     def __init__(self):
         self.predictor = MLArbitragePredictor()
         # Explicitly type the list to avoid “Unknown” diagnostics.
-        self.risk_limits: Dict[str, float | int] = {
+        self.risk_limits: Dict[str, float | int] = {}
             'max_position_size': 1000,
             'max_daily_loss': 100,
             'max_consecutive_losses': 3,
             'min_confidence_threshold': 0.6
-        }
+        
         self.daily_pnl: float = 0.0
         self.consecutive_losses: int = 0
     
@@ -279,49 +281,49 @@ class AdvancedRiskAgent:
         # Make final recommendation
         recommendation = self._make_recommendation(prediction, risk_assessment)
         
-        return {
+        return {}
             'ml_prediction': prediction,
             'risk_assessment': risk_assessment,
             'recommendation': recommendation,
             'confidence_score': prediction.confidence_score,
             'should_execute': recommendation['execute']
-        }
+        
     
-    async def _comprehensive_risk_check(self, opportunity: Dict[str, Any],
+    async def _comprehensive_risk_check(self, opportunity: Dict[str, Any],)
                                       prediction: MarketPrediction) -> Dict[str, Any]:
         """Perform comprehensive risk assessment"""
         
-        checks: Dict[str, bool] = {
+        checks: Dict[str, bool] = {}
             'position_size_ok': opportunity.get('position_size', 0) <= self.risk_limits['max_position_size'],
             'daily_loss_limit_ok': self.daily_pnl > -self.risk_limits['max_daily_loss'],
             'consecutive_loss_limit_ok': self.consecutive_losses < self.risk_limits['max_consecutive_losses'],
             'confidence_threshold_ok': prediction.confidence_score >= self.risk_limits['min_confidence_threshold'],
-            'liquidity_sufficient': min(
+            'liquidity_sufficient': min()
                 opportunity.get('buy_liquidity', 0),
                 opportunity.get('sell_liquidity', 0)
             ) > 10000,
             'gas_price_reasonable': opportunity.get('gas_price_gwei', 100) < 100
-        }
+        
         
         # Calculate overall risk score
         passed_checks: int = sum(checks.values())
         risk_score = passed_checks / len(checks)
         
-        return {
+        return {}
             'individual_checks': checks,
             'overall_risk_score': risk_score,
             'risk_level': 'LOW' if risk_score > 0.8 else 'MEDIUM' if risk_score > 0.6 else 'HIGH'
-        }
+        
     
-    def _make_recommendation(self, prediction: MarketPrediction, 
+    def _make_recommendation(self, prediction: MarketPrediction, )
                            risk_assessment: Dict[str, Any]) -> Dict[str, Any]:
         """Make final execution recommendation"""
         
-        execute = (
+        execute = ()
             prediction.recommended_action in ['EXECUTE_IMMEDIATELY', 'EXECUTE_WITH_CAUTION'] and
             risk_assessment['overall_risk_score'] > 0.6 and
             prediction.predicted_profit > 0.005  # Minimum 0.5% profit
-        )
+        
         
         if execute and prediction.recommended_action == 'EXECUTE_WITH_CAUTION':
             # Reduce position size for cautious execution
@@ -329,14 +331,14 @@ class AdvancedRiskAgent:
         else:
             position_multiplier = 1.0
         
-        return {
+        return {}
             'execute': execute,
             'position_multiplier': position_multiplier,
             'priority': 'HIGH' if prediction.confidence_score > 0.8 else 'MEDIUM',
             'reasoning': self._generate_reasoning(prediction, risk_assessment)
-        }
+        
     
-    def _generate_reasoning(self, prediction: MarketPrediction, 
+    def _generate_reasoning(self, prediction: MarketPrediction, )
                           risk_assessment: Dict[str, Any]) -> str:
         """Generate human-readable reasoning for the decision"""
         
@@ -369,7 +371,7 @@ async def test_advanced_ai_agent():
     risk_agent = AdvancedRiskAgent()
     
     # Example opportunity
-    test_opportunity: Dict[str, Any] = {
+    test_opportunity: Dict[str, Any] = {}
         'token_pair': 'USDC/ETH',
         'buy_price': 1000.50,
         'sell_price': 1005.25,
@@ -380,7 +382,7 @@ async def test_advanced_ai_agent():
         'market_volatility': 0.015,
         'buy_volume_24h': 1000000,
         'sell_volume_24h': 950000
-    }
+    
     
     # Evaluate opportunity
     evaluation = await risk_agent.evaluate_opportunity(test_opportunity)  # type: ignore[arg-type]
@@ -395,7 +397,20 @@ async def test_advanced_ai_agent():
 
 if __name__ == "__main__":
     # Set up logging
-    logging.basicConfig(level=logging.INFO)
+    
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(level=logging.INFO)
     
     # Run test
     asyncio.run(test_advanced_ai_agent())

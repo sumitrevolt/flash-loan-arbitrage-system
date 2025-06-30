@@ -1,0 +1,488 @@
+name: Flash Loan System CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Static Analysis and Code Quality
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install flake8 black mypy pytest-cov
+    
+    - name: Python code formatting check
+      run: black --check src/ tests/
+    
+    - name: Python linting
+      run: flake8 src/ tests/ --max-line-length=100
+    
+    - name: Python type checking
+      run: mypy src/ --ignore-missing-imports
+    
+    - name: Install Node.js dependencies
+      run: |
+        cd mcp_servers/taskmanager && npm ci
+        cd ../context7-mcp && npm ci
+    
+    - name: JavaScript/TypeScript linting
+      run: |
+        cd mcp_servers/taskmanager && npm run lint
+        cd ../context7-mcp && npm run lint
+    
+    - name: Security scan
+      uses: github/super-linter@v4
+      env:
+        DEFAULT_BRANCH: main
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VALIDATE_PYTHON_FLAKE8: true
+        VALIDATE_TYPESCRIPT_ES: true
+        VALIDATE_DOCKERFILE_HADOLINT: true
+
+  # Unit Tests
+  unit-tests:
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+      
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: flash_loan_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio pytest-cov
+    
+    - name: Run unit tests
+      env:
+        REDIS_URL: redis://localhost:6379
+        POSTGRES_URL: postgresql://postgres:test_password@localhost:5432/flash_loan_test
+        OPENAI_API_KEY: test_key
+      run: |
+        pytest tests/unit/ -v --cov=src --cov-report=xml --cov-report=html
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+
+  # Integration Tests
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build test images
+      run: |
+        docker build -t flash-loan/mcp-coordinator:test -f docker/Dockerfile.mcp-coordinator .
+        docker build -t flash-loan/langchain-orchestrator:test -f docker/Dockerfile.langchain-orchestrator .
+        docker build -t flash-loan/autogen-coordinator:test -f docker/Dockerfile.autogen-coordinator .
+    
+    - name: Run integration tests
+      env:
+        POSTGRES_PASSWORD: test_password
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        docker-compose -f docker/docker-compose.test.yml up -d
+        sleep 60  # Wait for services to start
+        
+        python -m pytest tests/integration/ -v --maxfail=5
+        
+        docker-compose -f docker/docker-compose.test.yml down
+
+  # End-to-End Tests
+  e2e-tests:
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Deploy test environment
+      env:
+        POSTGRES_PASSWORD: test_password
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ETHEREUM_RPC_URL: ${{ secrets.ETHEREUM_TESTNET_RPC }}
+      run: |
+        python scripts/deploy_system.py --environment test --method docker-compose
+    
+    - name: Run E2E tests
+      run: |
+        python -m pytest tests/e2e/ -v --maxfail=3
+    
+    - name: Cleanup test environment
+      if: always()
+      run: |
+        docker-compose -f docker/docker-compose.test.yml down -v
+
+  # Performance Tests
+  performance-tests:
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run performance benchmarks
+      env:
+        POSTGRES_PASSWORD: test_password
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        python tests/performance/benchmark_system.py --mode benchmark --duration 60
+    
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-results
+        path: tests/performance/results/
+
+  # Security Scans
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run Snyk security scan
+      uses: snyk/actions/python@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
+    
+    - name: Run Docker security scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # Build and Push Images
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, security-scan]
+    if: github.event_name == 'push' || github.event_name == 'release'
+    
+    permissions:
+      contents: read
+      packages: write
+    
+    strategy:
+      matrix:
+        component: [mcp-coordinator, langchain-orchestrator, autogen-coordinator]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.component }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha,prefix={{branch}}-
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./docker/Dockerfile.${{ matrix.component }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # Deploy to Staging
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [build-and-push, e2e-tests]
+    if: github.ref == 'refs/heads/develop'
+    # IMPORTANT: Create 'staging' environment in GitHub repo Settings > Environments before enabling
+    # environment:
+    #   name: staging
+    #   url: ${{ steps.deploy.outputs.url }}  # Optional: Add staging environment URL
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v3
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBE_CONFIG_STAGING }}
+    
+    - name: Deploy to staging
+      run: |
+        # Update image tags in Kubernetes manifests
+        sed -i "s|image: flash-loan/mcp-coordinator:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/mcp-coordinator:develop|g" deployment/kubernetes/deployments.yaml
+        sed -i "s|image: flash-loan/langchain-orchestrator:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/langchain-orchestrator:develop|g" deployment/kubernetes/deployments.yaml
+        sed -i "s|image: flash-loan/autogen-coordinator:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/autogen-coordinator:develop|g" deployment/kubernetes/deployments.yaml
+        
+        # Apply Kubernetes manifests
+        kubectl apply -f deployment/kubernetes/namespace.yaml
+        kubectl apply -f deployment/kubernetes/configmaps.yaml
+        kubectl apply -f deployment/kubernetes/secrets.yaml
+        kubectl apply -f deployment/kubernetes/deployments.yaml
+        kubectl apply -f deployment/kubernetes/services.yaml
+        
+        # Wait for rollout to complete
+        kubectl rollout status deployment/mcp-coordinator -n flash-loan-system --timeout=300s
+        kubectl rollout status deployment/langchain-orchestrator -n flash-loan-system --timeout=300s
+        kubectl rollout status deployment/autogen-coordinator -n flash-loan-system --timeout=300s
+    
+    - name: Run smoke tests
+      run: |
+        # Wait for services to be ready
+        sleep 120
+        
+        # Run basic health checks
+        kubectl exec -n flash-loan-system deployment/mcp-coordinator -- curl -f http://localhost:8080/health
+        kubectl exec -n flash-loan-system deployment/langchain-orchestrator -- curl -f http://localhost:8002/health
+        kubectl exec -n flash-loan-system deployment/autogen-coordinator -- curl -f http://localhost:8001/health
+
+  # Deploy to Production
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [build-and-push, deploy-staging]
+    if: github.event_name == 'release'
+    # IMPORTANT: Create 'production' environment in GitHub repo Settings > Environments before enabling
+    # environment:
+    #   name: production
+    #   url: ${{ steps.deploy.outputs.url }}  # Optional: Add production environment URL
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v3
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBE_CONFIG_PRODUCTION }}
+    
+    - name: Deploy to production
+      run: |
+        # Extract version from release tag
+        VERSION=${GITHUB_REF#refs/tags/}
+        
+        # Update image tags with release version
+        sed -i "s|image: flash-loan/mcp-coordinator:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/mcp-coordinator:${VERSION}|g" deployment/kubernetes/deployments.yaml
+        sed -i "s|image: flash-loan/langchain-orchestrator:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/langchain-orchestrator:${VERSION}|g" deployment/kubernetes/deployments.yaml
+        sed -i "s|image: flash-loan/autogen-coordinator:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/autogen-coordinator:${VERSION}|g" deployment/kubernetes/deployments.yaml
+        
+        # Apply production manifests
+        kubectl apply -f deployment/kubernetes/
+        
+        # Wait for rollout with longer timeout for production
+        kubectl rollout status deployment/mcp-coordinator -n flash-loan-system --timeout=600s
+        kubectl rollout status deployment/langchain-orchestrator -n flash-loan-system --timeout=600s
+        kubectl rollout status deployment/autogen-coordinator -n flash-loan-system --timeout=600s
+    
+    - name: Run production smoke tests
+      run: |
+        # Wait for services to stabilize
+        sleep 180
+        
+        # Comprehensive health checks
+        python scripts/production_health_check.py --environment production
+    
+    - name: Notify deployment success
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        text: 'Production deployment successful for version ${{ github.ref }}'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # Rollback on Failure
+  rollback-on-failure:
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: failure() && github.event_name == 'release'
+    # IMPORTANT: Create 'production' environment in GitHub repo Settings > Environments before enabling
+    # environment:
+    #   name: production
+    #   url: ${{ steps.deploy.outputs.url }}  # Optional: Add production environment URL
+    
+    steps:
+    # Requires KUBE_CONFIG_PRODUCTION secret for rollback operations
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v3
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBE_CONFIG_PRODUCTION }}
+    
+    - name: Rollback deployment
+      run: |
+        kubectl rollout undo deployment/mcp-coordinator -n flash-loan-system
+        kubectl rollout undo deployment/langchain-orchestrator -n flash-loan-system
+        kubectl rollout undo deployment/autogen-coordinator -n flash-loan-system
+        
+        # Wait for rollback to complete
+        kubectl rollout status deployment/mcp-coordinator -n flash-loan-system --timeout=300s
+        kubectl rollout status deployment/langchain-orchestrator -n flash-loan-system --timeout=300s
+        kubectl rollout status deployment/autogen-coordinator -n flash-loan-system --timeout=300s
+    
+    # Requires SLACK_WEBHOOK_URL secret for rollback notifications
+    - name: Notify rollback
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        text: 'Production deployment failed and was rolled back for version ${{ github.ref }}'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # Cleanup
+  cleanup:
+    runs-on: ubuntu-latest
+    needs: [deploy-production, rollback-on-failure]
+    if: always()
+    
+    steps:
+    - name: Clean up old images
+      run: |
+        # This would clean up old container images to save space
+        echo "Cleanup completed"
+
+# ================================================================================================
+# SETUP INSTRUCTIONS TO ENABLE DEPLOYMENTS:
+# ================================================================================================
+#
+# 1. CREATE GITHUB ENVIRONMENTS:
+#    Go to your repository Settings > Environments and create:
+#    - Environment name: "staging"
+#      * Optionally add protection rules (required reviewers, deployment branches: develop)
+#      * Optionally add environment URL for staging deployment tracking
+#    - Environment name: "production"
+#      * Recommended: Add protection rules (required reviewers, deployment branches: main)
+#      * Optionally add environment URL for production deployment tracking
+#
+# 2. CONFIGURE REQUIRED SECRETS:
+#    Go to your repository Settings > Secrets and variables > Actions and add:
+#    - CODECOV_TOKEN: Your Codecov token for coverage reporting
+#    - OPENAI_API_KEY: OpenAI API key for AI service integration
+#    - ETHEREUM_TESTNET_RPC: RPC URL for Ethereum testnet connectivity
+#    - SNYK_TOKEN: Snyk token for security vulnerability scanning
+#    - KUBE_CONFIG_STAGING: Base64 encoded kubeconfig for staging Kubernetes cluster
+#    - KUBE_CONFIG_PRODUCTION: Base64 encoded kubeconfig for production Kubernetes cluster
+#    - SLACK_WEBHOOK_URL: Slack webhook URL for deployment notifications
+#
+# 3. RE-ENABLE ENVIRONMENT BLOCKS:
+#    Once environments are created, uncomment the environment blocks in:
+#    - deploy-staging job (around line 304)
+#    - deploy-production job (around line 352)
+#    - rollback-on-failure job (around line 405)
+#
+#    Change from:
+#      # environment:
+#      #   name: staging
+#    To:
+#      environment:
+#        name: staging
+#
+# 4. VERIFY WORKFLOW:
+#    After setup, test the workflow with a pull request to ensure all steps work correctly.
+#
+# ================================================================================================

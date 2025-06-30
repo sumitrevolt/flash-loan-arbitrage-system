@@ -1,13 +1,15 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Dict, List, Any, Optional
+import json
+import logging
+import os
 """
 Execution Result Manager for the Flash Loan Arbitrage System.
 Handles saving and loading execution results.
 """
 
-import os
-import json
-import logging
-from datetime import datetime
-from typing import Dict, List, Any, Optional
 
 logger = logging.getLogger("ExecutionResultManager")
 
@@ -46,28 +48,28 @@ class ExecutionResultManager:
                 if "trades" not in results:
                     results["trades"] = []
                 elif not isinstance(results["trades"], list):
-                    logger.warning(f"'trades' in {self.results_file_path} is not a list. Resetting to empty list.")
+                    logger.warning(str(f"'trades' in {self.results_file_path} is not a list. Resetting to empty list.")
                     results["trades"] = []
                     
                 return results
             else:
                 # Create default results structure
-                return {
+                return {}
                     "total_profit_usd": 0,
                     "total_trades": 0,
                     "successful_trades": 0,
                     "failed_trades": 0,
                     "trades": []
-                }
+                
         except Exception as e:
-            logger.error(f"Error loading execution results: {e}")
-            return {
+            logger.error(str(f"Error loading execution results: {e}")
+            return {}
                 "total_profit_usd": 0,
                 "total_trades": 0,
                 "successful_trades": 0,
                 "failed_trades": 0,
                 "trades": []
-            }
+            
     
     def save_execution_result(self, result: Dict[str, Any]) -> bool:
         """
@@ -100,10 +102,10 @@ class ExecutionResultManager:
             with open(self.results_file_path, "w") as f:
                 json.dump(self.results, f, indent=2)
             
-            logger.info(f"Saved execution result: {result}")
+            logger.info(str(f"Saved execution result: {result}")
             return True
         except Exception as e:
-            logger.error(f"Error saving execution result: {e}")
+            logger.error(str(f"Error saving execution result: {e}")
             return False
     
     def get_execution_results(self) -> Dict[str, Any]:
@@ -134,12 +136,12 @@ class ExecutionResultManager:
         Returns:
             Dict[str, Any]: Profit summary.
         """
-        return {
+        return {}
             "total_profit_usd": self.results.get("total_profit_usd", 0),
             "total_trades": self.results.get("total_trades", 0),
             "successful_trades": self.results.get("successful_trades", 0),
             "failed_trades": self.results.get("failed_trades", 0)
-        }
+        
 
 # Create a singleton instance
 execution_result_manager = ExecutionResultManager()

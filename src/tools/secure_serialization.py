@@ -1,17 +1,24 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+            import io
+            import pickle
+from typing import Any, Dict, Optional, Union, List, Tuple
+import json
+import logging
+import os
+
+            from restricted_unpickler import RestrictedUnpickler
+            import builtins
+            import yaml
 """
 Secure serialization and deserialization utilities.
 Provides safe alternatives to pickle and other insecure serialization methods.
 """
 
-import json
-import logging
-import os
-from typing import Any, Dict, Optional, Union, List, Tuple
 
 logger = logging.getLogger("SecureSerialization")
 
-def safe_deserialize(data: Union[str, bytes], 
+def safe_deserialize(data: Union[str, bytes], )
                      format_type: str = 'json', 
                      trusted_source: bool = False,
                      allowed_classes: Optional[List[type]] = None) -> Any:
@@ -40,11 +47,10 @@ def safe_deserialize(data: Union[str, bytes],
                 data = data.decode('utf-8')
             return json.loads(data)
         except json.JSONDecodeError as e:
-            logger.error(f"Error deserializing JSON data: {e}")
+            logger.error(str(f"Error deserializing JSON data: {e}")
             raise ValueError(f"Invalid JSON data: {e}")
     elif format_type.lower() == 'yaml':
         try:
-            import yaml
             # Use safe_load to prevent arbitrary code execution
             if isinstance(data, bytes):
                 data = data.decode('utf-8')
@@ -53,7 +59,7 @@ def safe_deserialize(data: Union[str, bytes],
             logger.error("YAML support requires PyYAML package")
             raise ValueError("YAML support requires PyYAML package")
         except yaml.YAMLError as e:
-            logger.error(f"Error deserializing YAML data: {e}")
+            logger.error(str(f"Error deserializing YAML data: {e}")
             raise ValueError(f"Invalid YAML data: {e}")
     elif format_type.lower() == 'pickle' and trusted_source:
         # Only use pickle if explicitly trusted and allowed_classes is provided
@@ -63,9 +69,6 @@ def safe_deserialize(data: Union[str, bytes],
             raise SecurityError("Pickle deserialization requires a list of allowed classes")
             
         try:
-            import pickle
-            import io
-            from restricted_unpickler import RestrictedUnpickler
             
             if isinstance(data, str):
                 data = data.encode('utf-8')
@@ -77,7 +80,7 @@ def safe_deserialize(data: Union[str, bytes],
             logger.error("RestrictedUnpickler not available")
             raise ValueError("RestrictedUnpickler not available")
         except Exception as e:
-            logger.error(f"Error deserializing pickle data: {e}")
+            logger.error(str(f"Error deserializing pickle data: {e}")
             raise ValueError(f"Invalid pickle data: {e}")
     else:
         raise ValueError(f"Unsupported format: {format_type}")
@@ -98,19 +101,18 @@ def safe_serialize(data: Any, format_type: str = 'json') -> Union[str, bytes]:
     """
     if format_type.lower() == 'json':
         try:
-            return json.dumps(data, default=_json_serializer)
+            return json.dumps(data, default=_json_serializer, ensure_ascii=True, default=str)
         except TypeError as e:
-            logger.error(f"Error serializing to JSON: {e}")
+            logger.error(str(f"Error serializing to JSON: {e}")
             raise ValueError(f"Cannot serialize to JSON: {e}")
     elif format_type.lower() == 'yaml':
         try:
-            import yaml
             return yaml.safe_dump(data)
         except ImportError:
             logger.error("YAML support requires PyYAML package")
             raise ValueError("YAML support requires PyYAML package")
         except yaml.YAMLError as e:
-            logger.error(f"Error serializing to YAML: {e}")
+            logger.error(str(f"Error serializing to YAML: {e}")
             raise ValueError(f"Cannot serialize to YAML: {e}")
     else:
         raise ValueError(f"Unsupported format: {format_type}")
@@ -154,7 +156,6 @@ class RestrictedUnpickler:
             io_bytes: The bytes-like object to unpickle from
             allowed_classes: List of allowed classes for deserialization
         """
-        import pickle
         self.unpickler = pickle.Unpickler(io_bytes)
         self.allowed_classes = allowed_classes or []
         self.unpickler.find_class = self.find_class
@@ -180,7 +181,6 @@ class RestrictedUnpickler:
                 
         # Allow safe builtins
         if module == 'builtins' and name in ('int', 'float', 'bool', 'str', 'list', 'tuple', 'dict', 'set'):
-            import builtins
             return getattr(builtins, name)
             
         # Deny everything else

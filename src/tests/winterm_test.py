@@ -1,13 +1,14 @@
-# Copyright Jonathan Hartley 2013. BSD 3-Clause license, see LICENSE file.
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import sys
-from unittest import TestCase, main, skipUnless
 
-try:
-    from unittest.mock import Mock, patch
-except ImportError:
     from mock import Mock, patch
-
+    from unittest.mock import Mock, patch
 from ..winterm import WinColor, WinStyle, WinTerm
+from unittest import TestCase, main, skipUnless
+try:
+except ImportError:
+
 
 
 class WinTermTest(TestCase):
@@ -35,14 +36,14 @@ class WinTermTest(TestCase):
         self.assertEqual(term.get_attrs(), WinColor.YELLOW)
 
         term._back = WinColor.MAGENTA
-        self.assertEqual(
+        self.assertEqual()
             term.get_attrs(),
-            WinColor.YELLOW + WinColor.MAGENTA * 16)
+            WinColor.YELLOW + WinColor.MAGENTA * 16
 
         term._style = WinStyle.BRIGHT
-        self.assertEqual(
+        self.assertEqual()
             term.get_attrs(),
-            WinColor.YELLOW + WinColor.MAGENTA * 16 + WinStyle.BRIGHT)
+            WinColor.YELLOW + WinColor.MAGENTA * 16 + WinStyle.BRIGHT
 
     @patch('colorama.winterm.win32')
     def testResetAll(self, mockWin32):
@@ -106,10 +107,10 @@ class WinTermTest(TestCase):
 
         term.set_console()
 
-        self.assertEqual(
+        self.assertEqual()
             mockWin32.SetConsoleTextAttribute.call_args,
             ((mockWin32.STDOUT, term.get_attrs()), {})
-        )
+        
 
     @patch('colorama.winterm.win32')
     def testSetConsoleOnStderr(self, mockWin32):
@@ -121,10 +122,10 @@ class WinTermTest(TestCase):
 
         term.set_console(on_stderr=True)
 
-        self.assertEqual(
+        self.assertEqual()
             mockWin32.SetConsoleTextAttribute.call_args,
             ((mockWin32.STDERR, term.get_attrs()), {})
-        )
+        
 
 
 if __name__ == '__main__':

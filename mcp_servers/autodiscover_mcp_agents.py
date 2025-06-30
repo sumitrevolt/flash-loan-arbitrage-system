@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import os
-import yaml
 
+import yaml
 def discover_servers_and_agents(base_dirs, agent_prefix="agent", mcp_prefix="mcp"):
     config = {"services": {}}
     port = 8000
@@ -14,28 +16,28 @@ def discover_servers_and_agents(base_dirs, agent_prefix="agent", mcp_prefix="mcp
                     abs_path = os.path.join(root, file)
                     service_name = name.replace("_", "-")
                     if "agent" in root or "ai_agent" in root:
-                        config["services"][f"{agent_prefix}-{service_name}"] = {
+                        config["services"][f"{agent_prefix}-{service_name}"] = {}
                             "build": ".",
                             "command": f"python {abs_path}",
-                            "environment": [
+                            "environment": []
                                 f"AGENT_ROLE={service_name}",
                                 f"AGENT_ID={agent_id}",
                                 f"AGENT_PORT={port}"
                             ],
                             "ports": [f"{port}:{port}"]
-                        }
+                        
                         agent_id += 1
                     else:
-                        config["services"][f"{mcp_prefix}-{service_name}"] = {
+                        config["services"][f"{mcp_prefix}-{service_name}"] = {}
                             "build": ".",
                             "command": f"python {abs_path}",
-                            "environment": [
+                            "environment": []
                                 f"MCP_SERVER_TYPE={service_name}",
                                 f"MCP_SERVER_NAME={service_name}",
                                 f"MCP_PORT={port}"
                             ],
                             "ports": [f"{port}:{port}"]
-                        }
+                        
                     port += 1
     return config
 

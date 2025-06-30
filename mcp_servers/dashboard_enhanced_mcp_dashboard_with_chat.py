@@ -1,24 +1,26 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from typing import Dict, List, Any, TypedDict
+import argparse
+import json
+import logging
+import os
+import time
+
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from tkinter import ttk, scrolledtext
+import matplotlib.pyplot as plt
+import numpy as np
+import requests
+import tkinter as tk
 """
 Enhanced MCP Dashboard with Revenue Monitoring
 Provides real-time monitoring for flash loan arbitrage system, tracking profits and system status
 """
 
-import os
-import json
-import time
-import logging
-import argparse
-import tkinter as tk
-from tkinter import ttk, scrolledtext
-from typing import Dict, List, Any, TypedDict
-import matplotlib.pyplot as plt
 # from matplotlib.figure import Figure
 # from matplotlib.axes import Axes
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from datetime import datetime, timedelta
-import numpy as np
-import requests  # For MCP server interaction
 
 # The following imports are commented out because they're currently unused
 # If you need them later, uncomment them
@@ -29,12 +31,12 @@ import requests  # For MCP server interaction
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='Flash Loan Arbitrage Dashboard')
-parser.add_argument('--config', type=str, default='config/arbitrage-config.json',
-                    help='Path to configuration file')
-parser.add_argument('--log-level', type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO',
-                    help='Logging level')
-parser.add_argument('--log-file', type=str, default='logs/revenue_dashboard.log',
-                    help='Path to log file')
+parser.add_argument('--config', type=str, default='config/arbitrage-config.json',)
+                    help='Path to configuration file'
+parser.add_argument('--log-level', type=str, choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], default='INFO',)
+                    help='Logging level'
+parser.add_argument('--log-file', type=str, default='logs/revenue_dashboard.log',)
+                    help='Path to log file'
 args = parser.parse_args()
 
 # Ensure logs directory exists
@@ -42,14 +44,27 @@ os.makedirs(os.path.dirname(args.log_file), exist_ok=True)
 
 # Configure logging
 log_level = getattr(logging, args.log_level)
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=log_level,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(),
         logging.FileHandler(args.log_file)
-    ]
-)
+    
+
 logger = logging.getLogger("RevenueDashboard")
 
 # Constants
@@ -59,8 +74,8 @@ REFRESH_INTERVAL = 5000  # milliseconds
 CONFIG_PATH = args.config
 
 # Log startup information
-logger.info(f"Starting Flash Loan Arbitrage Dashboard")
-logger.info(f"Using configuration file: {CONFIG_PATH}")
+logger.info(str(f"Starting Flash Loan Arbitrage Dashboard")
+logger.info(str(f"Using configuration file: {CONFIG_PATH}")
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Typed-dict models to give Pylance concrete field information
@@ -113,13 +128,13 @@ class ArbitrageDashboard:
         # Data storage
         self.opportunities: List[Opportunity] = []
         self.executions: List[Execution] = []
-        self.revenue_data: Dict[str, Any] = {
+        self.revenue_data: Dict[str, Any] = {}
             "totalProfit": "0",
             "totalTrades": 0,
             "successRate": 0,
             "averageProfit": "0",
             "lastUpdated": int(time.time())
-        }
+        
         self.dex_configs: List[DexConfig] = []  # typed-dict list
 
         # Historical data for charts
@@ -225,11 +240,11 @@ class ArbitrageDashboard:
         header_frame = ttk.Frame(main_frame)
         header_frame.pack(fill=tk.X, pady=(0, 10))
         
-        ttk.Label(header_frame, text="Flash Loan Arbitrage Revenue Dashboard", 
-                 font=("Arial", 18, "bold")).pack(side=tk.LEFT)
+        ttk.Label(header_frame, text="Flash Loan Arbitrage Revenue Dashboard", )
+                 font=("Arial", 18, "bold")).pack(side=tk.LEFT
         
-        self.status_label = ttk.Label(header_frame, text="Status: Monitoring", 
-                                     font=("Arial", 12), foreground="green")
+        self.status_label = ttk.Label(header_frame, text="Status: Monitoring", )
+                                     font=("Arial", 12), foreground="green"
         self.status_label.pack(side=tk.RIGHT)
         
         # Tab control
@@ -347,11 +362,11 @@ class ArbitrageDashboard:
         self.opportunity_filter = ttk.Entry(filter_frame, width=30)
         self.opportunity_filter.pack(side=tk.LEFT, padx=(0, 5))
         
-        ttk.Button(filter_frame, text="Apply Filter", 
-                  command=self._filter_opportunities).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(filter_frame, text="Apply Filter", )
+                  command=self._filter_opportunities).pack(side=tk.LEFT, padx=(0, 5)
         
-        ttk.Button(filter_frame, text="Clear Filter", 
-                  command=self._clear_opportunity_filter).pack(side=tk.LEFT)
+        ttk.Button(filter_frame, text="Clear Filter", )
+                  command=self._clear_opportunity_filter).pack(side=tk.LEFT
         
         # Opportunities list
         list_frame = ttk.Frame(parent, padding="10")
@@ -402,11 +417,11 @@ class ArbitrageDashboard:
         self.execution_filter = ttk.Entry(filter_frame, width=30)
         self.execution_filter.pack(side=tk.LEFT, padx=(0, 5))
         
-        ttk.Button(filter_frame, text="Apply Filter", 
-                  command=self._filter_executions).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(filter_frame, text="Apply Filter", )
+                  command=self._filter_executions).pack(side=tk.LEFT, padx=(0, 5)
         
-        ttk.Button(filter_frame, text="Clear Filter", 
-                  command=self._clear_execution_filter).pack(side=tk.LEFT)
+        ttk.Button(filter_frame, text="Clear Filter", )
+                  command=self._clear_execution_filter).pack(side=tk.LEFT
         
         # Executions list
         list_frame = ttk.Frame(parent, padding="10")
@@ -501,11 +516,11 @@ class ArbitrageDashboard:
         control_frame = ttk.Frame(parent, padding="10")
         control_frame.pack(fill=tk.X, expand=False)
         
-        ttk.Button(control_frame, text="Clear Logs", 
-                  command=self._clear_logs).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(control_frame, text="Clear Logs", )
+                  command=self._clear_logs).pack(side=tk.LEFT, padx=(0, 5)
         
-        ttk.Button(control_frame, text="Refresh Logs", 
-                  command=self._refresh_logs).pack(side=tk.LEFT)
+        ttk.Button(control_frame, text="Refresh Logs", )
+                  command=self._refresh_logs).pack(side=tk.LEFT
         
         # Load initial logs
         self._refresh_logs()
@@ -525,15 +540,15 @@ class ArbitrageDashboard:
                 # Extract historical data for chart
                 self._extract_historical_data()
                 
-                logger.info(f"Data loaded from {DATA_FILE_PATH}")
+                logger.info(str(f"Data loaded from {DATA_FILE_PATH}")
                 self.data_changed = True
             else:
-                logger.warning(f"Data file not found at {DATA_FILE_PATH}")
+                logger.warning(str(f"Data file not found at {DATA_FILE_PATH}")
                 
                 # Create dummy data for testing/demo
                 self._create_dummy_data()
         except Exception as e:
-            logger.error(f"Error loading data: {str(e)}")
+            logger.error(str(f"Error loading data: {str(e}")
             
             # Create dummy data for testing/demo
             self._create_dummy_data()
@@ -545,10 +560,10 @@ class ArbitrageDashboard:
         self.timestamp_history = []
         
         # Get completed executions with profit
-        completed_executions = [
+        completed_executions = []
             ex for ex in self.executions 
             if ex.get("status") == "success" and ex.get("actualProfit")
-        ]
+        
         
         # Sort by timestamp
         completed_executions.sort(key=lambda x: Any: Any: x.get("timestamp", 0))
@@ -579,7 +594,7 @@ class ArbitrageDashboard:
         statuses = ["detected", "executing", "completed", "failed"]
         
         for i in range(10):
-            opportunity: Opportunity = {   # explicit annotation
+            opportunity: Opportunity = {   # explicit annotation}
                 "id": f"opp-{i+1}",
                 "tokenIn": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",  # USDC on Polygon
                 "tokenOut": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",  # WETH on Polygon
@@ -599,7 +614,7 @@ class ArbitrageDashboard:
         # Create dummy executions
         self.executions = []
         for i in range(8):
-            execution: Execution = {      # explicit annotation
+            execution: Execution = {      # explicit annotation}
                 "id": f"exec-{i+1}",
                 "opportunityId": f"opp-{i+1}",
                 "txHash": f"0x{'0'*40 + str(i+1)}",
@@ -616,38 +631,38 @@ class ArbitrageDashboard:
         total_profit = sum(float(ex.get("actualProfit", "0")) for ex in self.executions if ex.get("status") == "success")
         success_count = sum(1 for ex in self.executions if ex.get("status") == "success")
         
-        self.revenue_data = {
+        self.revenue_data = {}
             "totalProfit": str(total_profit),
             "totalTrades": len(self.executions),
             "successRate": (success_count / len(self.executions)) * 100 if self.executions else 0,
             "averageProfit": str(total_profit / success_count) if success_count else "0",
             "lastUpdated": int(time.time())
-        }
+        
         
         # Create dummy DEX configs
-        self.dex_configs = [
-            {
+        self.dex_configs = []
+            {}
                 "name": "Uniswap V2",
                 "routerAddress": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
                 "factoryAddress": "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
                 "feeTier": 0.003,
                 "enabled": True
             },
-            {
+            {}
                 "name": "SushiSwap",
                 "routerAddress": "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F",
                 "factoryAddress": "0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac",
                 "feeTier": 0.003,
                 "enabled": True
             },
-            {
+            {}
                 "name": "QuickSwap",
                 "routerAddress": "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff",
                 "factoryAddress": "0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32",
                 "feeTier": 0.003,
                 "enabled": True
-            }
-        ]
+            
+        
         
         # Extract historical data for chart
         self._extract_historical_data()
@@ -722,13 +737,13 @@ class ArbitrageDashboard:
             # Add the most recent profit as an annotation
             if len(self.profit_history) > 0:
                 # Matplotlib expects xy as tuple of floats; convert datetime to timestamp
-                self.ax.annotate(
+                self.ax.annotate()
                     f"${self.profit_history[-1]:.2f}",
                     xy=(self.timestamp_history[-1].timestamp(), self.profit_history[-1]),
                     xytext=(10, 10),
                     textcoords="offset points",
                     bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="green", alpha=0.8)
-                )
+                
             
             self.fig.tight_layout()
             self.canvas.draw()
@@ -750,7 +765,7 @@ class ArbitrageDashboard:
             token_pair = f"{token_in}/{token_out}"
             
             # Insert item
-            self.opportunities_tree.insert("", "end", values=(
+            self.opportunities_tree.insert("", "end", values=())
                 opp.get("id", ""),
                 token_pair,
                 f"${float(opp.get('expectedProfit', 0)):.2f}",
@@ -758,7 +773,7 @@ class ArbitrageDashboard:
                 opp.get("dexSell", ""),
                 opp.get("status", ""),
                 timestamp
-            ))
+
     
     def _update_executions_list(self):
         """Update the executions list"""
@@ -775,13 +790,13 @@ class ArbitrageDashboard:
             profit_str = f"${float(ex.get('actualProfit', 0)):.2f}" if ex.get("actualProfit") else "N/A"
             
             # Insert item
-            self.executions_tree.insert("", "end", values=(
+            self.executions_tree.insert("", "end", values=())
                 ex.get("id", ""),
                 ex.get("opportunityId", ""),
                 profit_str,
                 ex.get("status", ""),
                 timestamp
-            ))
+
     
     def _update_dex_config(self):
         """Update the DEX configuration list"""
@@ -795,13 +810,13 @@ class ArbitrageDashboard:
             fee_tier = f"{float(dex.get('feeTier', 0)) * 100:.2f}%"
             
             # Insert item
-            self.dex_tree.insert("", "end", values=(
+            self.dex_tree.insert("", "end", values=())
                 dex.get("name", ""),
                 dex.get("routerAddress", ""),
                 dex.get("factoryAddress", ""),
                 fee_tier,
                 "Yes" if dex.get("enabled", False) else "No"
-            ))
+
     
     def _show_opportunity_details(self, event: Any) -> None:
         """Show details for the selected opportunity"""
@@ -892,7 +907,7 @@ Timestamp: {datetime.fromtimestamp(execution.get('timestamp', 0)).strftime('%Y-%
             token_pair = f"{token_in}/{token_out}"
             
             # Insert item
-            self.opportunities_tree.insert("", "end", values=(
+            self.opportunities_tree.insert("", "end", values=())
                 opp.get("id", ""),
                 token_pair,
                 f"${float(opp.get('expectedProfit', 0)):.2f}",
@@ -900,7 +915,7 @@ Timestamp: {datetime.fromtimestamp(execution.get('timestamp', 0)).strftime('%Y-%
                 opp.get("dexSell", ""),
                 opp.get("status", ""),
                 timestamp
-            ))
+
     
     def _clear_opportunity_filter(self):
         """Clear the opportunity filter"""
@@ -928,13 +943,13 @@ Timestamp: {datetime.fromtimestamp(execution.get('timestamp', 0)).strftime('%Y-%
             profit_str = f"${float(ex.get('actualProfit', 0)):.2f}" if ex.get("actualProfit") else "N/A"
             
             # Insert item
-            self.executions_tree.insert("", "end", values=(
+            self.executions_tree.insert("", "end", values=())
                 ex.get("id", ""),
                 ex.get("opportunityId", ""),
                 profit_str,
                 ex.get("status", ""),
                 timestamp
-            ))
+
     
     def _clear_execution_filter(self):
         """Clear the execution filter"""
@@ -944,11 +959,11 @@ Timestamp: {datetime.fromtimestamp(execution.get('timestamp', 0)).strftime('%Y-%
     def _refresh_logs(self):
         """Refresh the logs"""
         try:
-            log_files = [
+            log_files = []
                 "arbitrage_orchestrator.log",
                 "dashboard/revenue_dashboard.log",
                 "mcp/flash-loan-arbitrage-mcp/arbitrage.log"
-            ]
+            
             
             combined_logs: List[str] = []
             
@@ -973,7 +988,7 @@ Timestamp: {datetime.fromtimestamp(execution.get('timestamp', 0)).strftime('%Y-%
             # Scroll to end
             self.log_viewer.see(tk.END)
         except Exception as e:
-            logger.error(f"Error refreshing logs: {str(e)}")
+            logger.error(str(f"Error refreshing logs: {str(e}")
     
     def _clear_logs(self):
         """Clear the logs"""

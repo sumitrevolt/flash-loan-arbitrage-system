@@ -1,0 +1,393 @@
+# Prometheus Configuration for Flash Loan LangChain AutoGen MCP Integration System
+# Complete monitoring setup for production deployment
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'flash-loan-system'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+      scheme: http
+      timeout: 10s
+      api_version: v2
+
+# Rules files
+rule_files:
+  - "/etc/prometheus/rules/flash_loan_system.yml"
+  - "/etc/prometheus/rules/infrastructure.yml"
+  - "/etc/prometheus/rules/mcp_servers.yml"
+
+# Scrape configurations
+scrape_configs:
+  # ===== CORE SYSTEM SERVICES =====
+  
+  # MCP Coordinator - Central coordination service
+  - job_name: 'mcp-coordinator'
+    static_configs:
+      - targets: ['mcp-coordinator:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    honor_labels: true
+    params:
+      format: ['prometheus']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: mcp-coordinator:8000
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'mcp_coordinator_.*'
+        target_label: service
+        replacement: 'mcp-coordinator'
+
+  # LangChain Master Orchestrator
+  - job_name: 'langchain-orchestrator'
+    static_configs:
+      - targets: ['langchain-orchestrator:8002']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    honor_labels: true
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'langchain_.*'
+        target_label: service
+        replacement: 'langchain-orchestrator'
+
+  # AutoGen Multi-Agent Coordinator
+  - job_name: 'autogen-coordinator'
+    static_configs:
+      - targets: ['autogen-coordinator:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    honor_labels: true
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'autogen_.*'
+        target_label: service
+        replacement: 'autogen-coordinator'
+
+  # ===== CRITICAL MCP SERVERS (Tier 1) =====
+  
+  # Filesystem MCP Server
+  - job_name: 'mcp-filesystem'
+    static_configs:
+      - targets: ['mcp-filesystem:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    params:
+      tier: ['critical']
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'mcp_filesystem_.*'
+        target_label: mcp_tier
+        replacement: 'critical'
+
+  # Context7 MCP Server
+  - job_name: 'mcp-context7'
+    static_configs:
+      - targets: ['mcp-context7:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    params:
+      tier: ['critical']
+
+  # Supermemory MCP Server
+  - job_name: 'mcp-supermemory'
+    static_configs:
+      - targets: ['mcp-supermemory:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    params:
+      tier: ['critical']
+
+  # TaskManager MCP Server
+  - job_name: 'mcp-taskmanager'
+    static_configs:
+      - targets: ['mcp-taskmanager:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    params:
+      tier: ['critical']
+
+  # ===== SPECIALIZED MCP SERVERS (Tier 3) =====
+  
+  # Aave Flash Loan Server
+  - job_name: 'mcp-aave-flash-loan'
+    static_configs:
+      - targets: ['mcp-aave-flash-loan:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s  # More frequent for flash loan operations
+    scrape_timeout: 10s
+    params:
+      tier: ['specialized']
+      category: ['flash-loan']
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'flash_loan_.*'
+        target_label: operation_type
+        replacement: 'flash_loan'
+
+  # Arbitrage Detector Server
+  - job_name: 'mcp-arbitrage-detector'
+    static_configs:
+      - targets: ['mcp-arbitrage-detector:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    params:
+      tier: ['specialized']
+      category: ['arbitrage']
+
+  # Risk Analyzer Server
+  - job_name: 'mcp-risk-analyzer'
+    static_configs:
+      - targets: ['mcp-risk-analyzer:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 20s
+    scrape_timeout: 10s
+    params:
+      tier: ['specialized']
+      category: ['risk-management']
+
+  # ===== INFRASTRUCTURE SERVICES =====
+  
+  # Redis Exporter
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'redis_.*'
+        target_label: service_type
+        replacement: 'cache'
+
+  # PostgreSQL Exporter
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'pg_.*'
+        target_label: service_type
+        replacement: 'database'
+
+  # Node Exporter (System metrics)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # Nginx Exporter (Load balancer)
+  - job_name: 'nginx-exporter'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # ===== KUBERNETES MONITORING (if deployed on K8s) =====
+  
+  # Kubernetes API Server
+  - job_name: 'kubernetes-apiservers'
+    kubernetes_sd_configs:
+      - role: endpoints
+    scheme: https
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      insecure_skip_verify: true
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: default;kubernetes;https
+      - target_label: __address__
+        replacement: kubernetes.default.svc:443
+
+  # Kubernetes Nodes
+  - job_name: 'kubernetes-nodes'
+    kubernetes_sd_configs:
+      - role: node
+    scheme: https
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      insecure_skip_verify: true
+    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    relabel_configs:
+      - action: labelmap
+        regex: __meta_kubernetes_node_label_(.+)
+      - target_label: __address__
+        replacement: kubernetes.default.svc:443
+      - source_labels: [__meta_kubernetes_node_name]
+        regex: (.+)
+        target_label: __metrics_path__
+        replacement: /api/v1/nodes/${1}/proxy/metrics
+
+  # Kubernetes Pods (with annotations)
+  - job_name: 'kubernetes-pods'
+    kubernetes_sd_configs:
+      - role: pod
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - action: labelmap
+        regex: __meta_kubernetes_pod_label_(.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: kubernetes_pod_name
+      - source_labels: [__meta_kubernetes_pod_container_name]
+        action: replace
+        target_label: kubernetes_container_name
+
+  # Kubernetes Services
+  - job_name: 'kubernetes-services'
+    kubernetes_sd_configs:
+      - role: service
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scheme]
+        action: replace
+        target_label: __scheme__
+        regex: (https?)
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+        action: replace
+        target_label: __address__
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+      - action: labelmap
+        regex: __meta_kubernetes_service_label_(.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_service_name]
+        action: replace
+        target_label: kubernetes_name
+
+  # ===== BLACKBOX MONITORING =====
+  
+  # External endpoint monitoring
+  - job_name: 'blackbox-http'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - http://localhost:8080/health  # Dashboard health
+        - http://localhost:8002/health  # LangChain health
+        - http://localhost:8001/health  # AutoGen health
+        - http://localhost:8000/health  # MCP Coordinator health
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # SSL certificate monitoring
+  - job_name: 'blackbox-ssl'
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+        - localhost:443
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # ===== BUSINESS METRICS =====
+  
+  # Flash Loan Metrics (custom endpoint)
+  - job_name: 'flash-loan-metrics'
+    static_configs:
+      - targets: ['mcp-coordinator:8000']
+    metrics_path: '/business-metrics'
+    scrape_interval: 30s
+    scrape_timeout: 15s
+    params:
+      format: ['prometheus']
+      include: ['arbitrage', 'profit', 'volume', 'success_rate']
+
+  # Performance Metrics
+  - job_name: 'performance-metrics'
+    static_configs:
+      - targets: 
+        - 'mcp-coordinator:8000'
+        - 'langchain-orchestrator:8002'
+        - 'autogen-coordinator:8001'
+    metrics_path: '/performance-metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+# Remote write configuration (for long-term storage)
+remote_write:
+  - url: "http://prometheus-remote-storage:9201/write"
+    queue_config:
+      max_samples_per_send: 1000
+      max_shards: 200
+      capacity: 2500
+    write_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'flash_loan_.*|arbitrage_.*|mcp_.*'
+        action: keep
+
+# Remote read configuration
+remote_read:
+  - url: "http://prometheus-remote-storage:9201/read"
+    read_recent: true
+
+# Storage configuration
+storage:
+  tsdb:
+    path: /prometheus/data
+    retention.time: 15d
+    retention.size: 10GB
+    wal-compression: true

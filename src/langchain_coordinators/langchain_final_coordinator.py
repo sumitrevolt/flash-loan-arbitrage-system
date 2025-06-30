@@ -1,19 +1,34 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import List, Optional, Any, Tuple, Dict
+import asyncio
+import json
+import logging
+
+from docker.errors import DockerException, APIError
+import docker
 """
 LangChain Final Coordination - Complete System Orchestration
 ===========================================================
 Fixed version with proper type annotations and error handling
 """
 
-import asyncio
-import logging
-import json
-from datetime import datetime
-from typing import List, Optional, Any, Tuple, Dict
-import docker
-from docker.errors import DockerException, APIError
 
 # Setup logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -25,19 +40,19 @@ class LangChainFinalCoordinator:
         self.infrastructure_ready = False
         
         # Services to coordinate
-        self.essential_infrastructure = [
+        self.essential_infrastructure = []
             'langchain-redis', 'langchain-postgres', 'langchain-rabbitmq'
-        ]
         
-        self.mcp_servers = [
+        
+        self.mcp_servers = []
             'context7-mcp', 'enhanced-copilot-mcp', 'blockchain-mcp', 
             'price-oracle-mcp', 'dex-services-mcp', 'flash-loan-mcp'
-        ]
         
-        self.ai_agents = [
+        
+        self.ai_agents = []
             'aave-executor', 'arbitrage-detector', 'code-indexer-1', 
             'code-indexer-2', 'builder-agent', 'coordinator-agent'
-        ]
+        
 
     async def initialize(self) -> bool:
         """Initialize Docker client"""
@@ -51,74 +66,74 @@ class LangChainFinalCoordinator:
             if isinstance(ping_result, dict) and 'APIVersion' in ping_result:
                 api_version = str(ping_result['APIVersion'])
             
-            logger.info(f"✅ Docker client connected successfully: {api_version}")
+            logger.info(str(f"[OK] Docker client connected successfully: {api_version}")
             return True
             
         except APIError as e:
-            logger.error(f"❌ Docker API error: {e}")
+            logger.error(str(f"[ERROR] Docker API error: {e}")
             self.docker_client = None
             return False
         except DockerException as e:
-            logger.error(f"❌ Docker connection failed: {e}")
+            logger.error(str(f"[ERROR] Docker connection failed: {e}")
             self.docker_client = None
             return False
         except Exception as e:
-            logger.error(f"❌ Unexpected error during Docker initialization: {e}")
+            logger.error(str(f"[ERROR] Unexpected error during Docker initialization: {e}")
             self.docker_client = None
             return False
 
     async def run_command(self, cmd: List[str]) -> Tuple[Optional[int], str, str]:
         """Execute command safely"""
         try:
-            logger.info(f"⚡ Executing: {' '.join(cmd)}")
-        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative with safer alternative
+            logger.info(str(f"[FAST] Executing: {' '.join(cmd}")
+        # TODO: Replace # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
+        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative
+        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative)
+        # TODO: Replace # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
+        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative)
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
+        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
+        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative)
         # WARNING: This is a security risk
-            process = await asyncio.create_subprocess_exec(
+            process = await asyncio.create_subprocess_exec()
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
-            )
+            
             stdout_bytes, stderr_bytes = await process.communicate()
             return process.returncode, stdout_bytes.decode(), stderr_bytes.decode()
         except Exception as e:
-            logger.error(f"❌ Command failed: {e}")
+            logger.error(str(f"[ERROR] Command failed: {e}")
             return -1, "", str(e)
 
     async def verify_infrastructure(self) -> bool:
         """Verify essential infrastructure is running"""
-        logger.info("🔍 Verifying infrastructure services...")
+        logger.info("[SEARCH] Verifying infrastructure services...")
         
         if not self.docker_client:
             if not await self.initialize():
                 return False
         
         if not self.docker_client:
-            logger.error("❌ Docker client is not available.")
+            logger.error("[ERROR] Docker client is not available.")
             return False
         
         try:
@@ -137,27 +152,27 @@ class LangChainFinalCoordinator:
             infrastructure_status: Dict[str, str] = {}
             for service_name in self.essential_infrastructure:
                 if service_name in running_services:
-                    infrastructure_status[service_name] = "✅ Running"
+                    infrastructure_status[service_name] = "[OK] Running"
                 else:
-                    infrastructure_status[service_name] = "❌ Not Running"
+                    infrastructure_status[service_name] = "[ERROR] Not Running"
             
             logger.info("Infrastructure Status:")
             for service_name, status_val in infrastructure_status.items():
-                logger.info(f"  {service_name}: {status_val}")
+                logger.info(str(f"  {service_name}: {status_val}")
             
-            self.infrastructure_ready = all("✅" in status_val for status_val in infrastructure_status.values())
+            self.infrastructure_ready = all("[OK]" in status_val for status_val in infrastructure_status.values())
             return self.infrastructure_ready
             
         except DockerException as e:
-            logger.error(f"❌ Docker error while verifying infrastructure: {e}")
+            logger.error(str(f"[ERROR] Docker error while verifying infrastructure: {e}")
             return False
         except Exception as e:
-            logger.error(f"❌ Failed to verify infrastructure: {e}")
+            logger.error(str(f"[ERROR] Failed to verify infrastructure: {e}")
             return False
 
     async def create_mcp_server_compose(self) -> None:
         """Create a simplified MCP server compose file"""
-        logger.info("📝 Creating MCP server configuration...")
+        logger.info("[LOG] Creating MCP server configuration...")
         
         mcp_compose = """version: '3.8'
 
@@ -221,11 +236,11 @@ services:
         with open('docker-compose.mcp-servers.yml', 'w') as f:
             f.write(mcp_compose)
         
-        logger.info("✅ MCP server configuration created")
+        logger.info("[OK] MCP server configuration created")
 
     async def create_ai_agents_compose(self) -> None:
         """Create AI agents compose file"""
-        logger.info("📝 Creating AI agents configuration...")
+        logger.info("[LOG] Creating AI agents configuration...")
         
         agents_compose = """version: '3.8'
 
@@ -285,101 +300,101 @@ services:
         
         with open('docker-compose.ai-agents.yml', 'w') as f:
             f.write(agents_compose)        
-        logger.info("✅ AI agents configuration created")
+        logger.info("[OK] AI agents configuration created")
 
     async def start_mcp_servers(self) -> bool:
         """Start MCP servers"""
-        logger.info("🚀 Starting MCP servers...")
+        logger.info("[INIT] Starting MCP servers...")
         
-        returncode, _, stderr = await self.run_command([
+        returncode, _, stderr = await self.run_command([)]
             'docker', 'compose', '-f', 'docker-compose.mcp-simple.yml', 'up', '-d'
-        ])
+        
         
         if returncode == 0:
-            logger.info("✅ MCP servers started successfully!")
+            logger.info("[OK] MCP servers started successfully!")
             await asyncio.sleep(15)  # Wait for services to initialize
             return True
         else:
-            logger.error(f"❌ Failed to start MCP servers: {stderr}")
+            logger.error(str(f"[ERROR] Failed to start MCP servers: {stderr}")
             return False
 
     async def start_ai_agents(self) -> bool:
         """Start AI agents"""
-        logger.info("🚀 Starting AI agents...")
+        logger.info("[INIT] Starting AI agents...")
         
-        returncode, _, stderr = await self.run_command([
+        returncode, _, stderr = await self.run_command([)]
             'docker', 'compose', '-f', 'docker-compose.agents-simple.yml', 'up', '-d'
-        ])
+        
         
         if returncode == 0:
-            logger.info("✅ AI agents started successfully!")
+            logger.info("[OK] AI agents started successfully!")
             await asyncio.sleep(15)  # Wait for agents to initialize
             return True
         else:
-            logger.error(f"❌ Failed to start AI agents: {stderr}")
+            logger.error(str(f"[ERROR] Failed to start AI agents: {stderr}")
             return False
 
     async def test_service_connectivity(self) -> Dict[str, str]:
         """Test connectivity to all services"""
         logger.info("🔗 Testing service connectivity...")
         
-        test_endpoints = [
+        test_endpoints = []
             ('Context7 MCP', 'http://localhost:4001/health'),
             ('Enhanced Copilot MCP', 'http://localhost:4002/health'),
             ('Price Oracle MCP', 'http://localhost:4007/health'),
             ('AAVE Executor', 'http://localhost:5001/health'),
             ('Arbitrage Detector', 'http://localhost:5002/health'),
             ('Code Indexer', 'http://localhost:5101/health')
-        ]
+        
         
         connectivity_results: Dict[str, str] = {}
         for service_name, endpoint in test_endpoints:
-            returncode, _, _ = await self.run_command([
+            returncode, _, _ = await self.run_command([)]
                 'curl', '-f', '-s', endpoint
-            ])
+            
             
             if returncode == 0:
-                connectivity_results[service_name] = "✅ Connected"
-                logger.info(f"✅ {service_name} is responding")
+                connectivity_results[service_name] = "[OK] Connected"
+                logger.info(str(f"[OK] {service_name} is responding")
             else:
-                connectivity_results[service_name] = "❌ No Response"
-                logger.warning(f"⚠️ {service_name} is not responding")
+                connectivity_results[service_name] = "[ERROR] No Response"
+                logger.warning(str(f"[WARN] {service_name} is not responding")
         
         return connectivity_results
 
     async def generate_final_report(self) -> None:
         """Generate final coordination report"""
-        logger.info("📊 Generating final coordination report...")
+        logger.info("[METRICS] Generating final coordination report...")
 
         if not self.docker_client:
             if not await self.initialize():
-                logger.error("❌ Docker client could not be initialized for generating report.")
+                logger.error("[ERROR] Docker client could not be initialized for generating report.")
                 return
         
         if not self.docker_client:
-            logger.error("❌ Docker client is not available for generating report.")
+            logger.error("[ERROR] Docker client is not available for generating report.")
             return
         
         try:
             # Get current container status
             containers_list = self.docker_client.containers.list(all=True)  # type: ignore
             
-            report: Dict[str, Any] = {
+            report: Dict[str, Any] = {}
                 'timestamp': datetime.now().isoformat(),
                 'coordination_status': 'COMPLETED',
-                'infrastructure': {
+                'infrastructure': {}
                     'redis': 'Running',
                     'postgres': 'Running',
                     'rabbitmq': 'Running'
                 },
                 'services': {},
-                'summary': {
+                'summary': {}
                     'total_containers': len(containers_list),
                     'running_containers': len([c for c in containers_list if getattr(c, 'status', '') == 'running']),
                     'mcp_servers': 0,
                     'ai_agents': 0
-                }
-            }
+                
+            
             
             # Count services by type
             for container_item in containers_list:
@@ -407,10 +422,10 @@ services:
                 except Exception:
                     pass  # Keep default 'unknown'
                 
-                report['services'][str(container_name)] = {
+                report['services'][str(container_name)] = {}
                     'status': str(container_status),
                     'image': str(image_tag)
-                }
+                
             
             # Save report
             with open('langchain_coordination_report.json', 'w') as f:
@@ -418,17 +433,17 @@ services:
             
             # Print summary
             print("\n" + "="*80)
-            print("🎉 LANGCHAIN MASTER COORDINATION - FINAL REPORT")
+            print("[CELEBRATE] LANGCHAIN MASTER COORDINATION - FINAL REPORT")
             print("="*80)
             print(f"📅 Coordination Completed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
             print()
-            print("📊 SYSTEM SUMMARY:")
+            print("[METRICS] SYSTEM SUMMARY:")
             print(f"  • Total Containers: {report['summary']['total_containers']}")
             print(f"  • Running Containers: {report['summary']['running_containers']}")
             print(f"  • MCP Servers: {report['summary']['mcp_servers']}")
             print(f"  • AI Agents: {report['summary']['ai_agents']}")
             print()
-            print("🌐 SERVICE ACCESS POINTS:")
+            print("[NETWORK] SERVICE ACCESS POINTS:")
             print("  • Infrastructure:")
             print("    - Redis: localhost:6379")
             print("    - PostgreSQL: localhost:5432")
@@ -442,26 +457,26 @@ services:
             print("    - Arbitrage Detector: http://localhost:5002")
             print("    - Code Indexer: http://localhost:5101")
             print("="*80)
-            print("✅ LANGCHAIN COORDINATION COMPLETED SUCCESSFULLY!")
+            print("[OK] LANGCHAIN COORDINATION COMPLETED SUCCESSFULLY!")
             print("="*80)
 
         except DockerException as e:
-            logger.error(f"❌ Docker error while generating report: {e}")
+            logger.error(str(f"[ERROR] Docker error while generating report: {e}")
         except Exception as e:
-            logger.error(f"❌ Failed to generate report: {e}")
+            logger.error(str(f"[ERROR] Failed to generate report: {e}")
 
     async def execute_final_coordination(self) -> bool:
         """Execute the final coordination sequence"""
-        logger.info("🎯 Starting LangChain Final Coordination...")
+        logger.info("[TASK] Starting LangChain Final Coordination...")
         
         # Initialize
         if not await self.initialize():
-            logger.error("❌ Failed to initialize")
+            logger.error("[ERROR] Failed to initialize")
             return False
         
         # Verify infrastructure
         if not await self.verify_infrastructure():
-            logger.error("❌ Infrastructure not ready")
+            logger.error("[ERROR] Infrastructure not ready")
             return False
         
         # Create configurations
@@ -479,10 +494,10 @@ services:
             # Generate final report
             await self.generate_final_report()
             
-            logger.info("🎉 Final coordination completed successfully!")
+            logger.info("[CELEBRATE] Final coordination completed successfully!")
             return True
         else:
-            logger.error("❌ Some services failed to start")
+            logger.error("[ERROR] Some services failed to start")
             return False
 
 async def main() -> None:
@@ -491,10 +506,10 @@ async def main() -> None:
     success = await coordinator.execute_final_coordination()
     
     if success:
-        print("\n🎉 LangChain Master Coordination completed successfully!")
+        print("\n[CELEBRATE] LangChain Master Coordination completed successfully!")
         print("All MCP servers and AI agents are now running with proper coordination.")
     else:
-        print("\n❌ Coordination failed. Check logs for details.")
+        print("\n[ERROR] Coordination failed. Check logs for details.")
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,11 +1,13 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+import os
+
+from fastapi import FastAPI
+import uvicorn
 """
 Entrypoint script for AI Agent containers
 """
 
-import os
-import uvicorn
-from fastapi import FastAPI
 
 app = FastAPI(title="AI Agent")
 

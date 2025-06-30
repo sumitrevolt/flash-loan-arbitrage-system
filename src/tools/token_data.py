@@ -1,14 +1,17 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Dict, List, Any, Optional
+import json
+import logging
+import os
+
+from src.data import TOKEN_DATA_PATH, load_json_data, save_json_data
 """
 Token data module for the Flash Loan Arbitrage System.
 Provides access to token data and utilities.
 """
 
-import os
-import json
-import logging
-from typing import Dict, List, Any, Optional
 
-from src.data import TOKEN_DATA_PATH, load_json_data, save_json_data
 
 logger = logging.getLogger(__name__)
 
@@ -50,11 +53,11 @@ class TokenData:
     def add_token(self, symbol: str, address: str, decimals: int = 18, name: str = None) -> bool:
         """Add a token to the token data."""
         symbol = symbol.upper()
-        self.tokens[symbol] = {
+        self.tokens[symbol] = {}
             "address": address,
             "decimals": decimals,
             "name": name or symbol
-        }
+        
         return self.save_token_data()
     
     def remove_token(self, symbol: str) -> bool:

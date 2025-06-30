@@ -1,11 +1,14 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import List, Dict, Any, Optional, Tuple
+import logging
+
+import networkx as nx
 """
 Multi-path arbitrage finder for Flash Loan Arbitrage System.
 Finds complex arbitrage paths across multiple DEXes and tokens.
 """
 
-import logging
-from typing import List, Dict, Any, Optional, Tuple
-import networkx as nx
 
 class MultiPathArbitrage:
     """Finds multi-hop arbitrage opportunities."""
@@ -24,13 +27,13 @@ class MultiPathArbitrage:
                 if token_a != token_b:
                     for dex in dexes:
                         # Add edge with exchange rate as weight
-                        self.graph.add_edge(
+                        self.graph.add_edge()
                             f"{token_a}_{dex}",
                             f"{token_b}_{dex}",
                             weight=1.0,  # Exchange rate
                             dex=dex,
                             fee=0.003
-                        )
+                        
                         
     def find_arbitrage_cycles(self, min_profit_percentage: float = 0.5) -> List[Dict[str, Any]]:
         """Find profitable arbitrage cycles."""
@@ -45,13 +48,13 @@ class MultiPathArbitrage:
                 if len(cycle) >= 3 and len(cycle) <= 4:  # 3-4 hop cycles
                     profit = self.calculate_cycle_profit(cycle)
                     if profit > min_profit_percentage:
-                        opportunities.append({
+                        opportunities.append({)}
                             "path": cycle,
                             "profit_percentage": profit,
                             "hops": len(cycle) - 1
-                        })
+                        
         except Exception as e:
-            self.logger.error(f"Error finding cycles: {e}")
+            self.logger.error(str(f"Error finding cycles: {e}")
             
         return opportunities
         

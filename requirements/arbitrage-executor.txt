@@ -1,0 +1,14 @@
+web3==6.15.1
+fastapi==0.111.0
+uvicorn==0.30.1
+redis==5.0.6
+psycopg2-binary==2.9.9
+python-dotenv==1.0.1
+aiohttp==3.9.5
+websockets==12.0
+pydantic==2.7.4
+numpy==1.26.4
+pandas==2.2.2
+asyncio-mqtt==0.16.2
+prometheus-client==0.20.0
+loguru==0.7.2 

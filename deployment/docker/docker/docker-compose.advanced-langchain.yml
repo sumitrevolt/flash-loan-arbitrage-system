@@ -1,10 +1,6 @@
-version: '3.8'
-
 networks:
   flashloan_net:
-    driver: overlay
-    driver_opts:
-      encrypted: "true"
+    driver: bridge
     ipam:
       config:
         - subnet: 172.30.0.0/16
@@ -23,20 +19,19 @@ volumes:
   github_workspace:
   vector_store:
   agent_memory:
+  blockchain_data:
+  arbitrage_logs:
 
 services:
   # ============================================
   # INFRASTRUCTURE LAYER
   # ============================================
   
-  redis-cluster:
+  redis:
     image: redis:7-alpine
-    container_name: redis-cluster
+    container_name: redis
     command: >
       redis-server
-      --cluster-enabled yes
-      --cluster-config-file nodes.conf
-      --cluster-node-timeout 5000
       --maxmemory 2gb
       --maxmemory-policy allkeys-lru
       --appendonly yes
@@ -48,7 +43,6 @@ services:
     networks:
       - flashloan_net
     deploy:
-      replicas: 3
       restart_policy:
         condition: any
         delay: 5s
@@ -177,20 +171,128 @@ services:
       - flashloan_net
 
   # ============================================
+  # WEB3 BLOCKCHAIN NODE
+  # ============================================
+
+  web3-node:
+    image: ethereum/client-go:latest
+    container_name: web3-node
+    command: >
+      geth
+      --dev
+      --dev.period 1
+      --http
+      --http.addr 0.0.0.0
+      --http.port 8545
+      --http.corsdomain "*"
+      --http.api eth,net,web3,debug,txpool
+      --ws
+      --ws.addr 0.0.0.0
+      --ws.port 8546
+      --ws.origins "*"
+      --ws.api eth,net,web3,debug,txpool
+      --datadir /data
+      --verbosity 3
+    ports:
+      - "8545:8545"  # HTTP RPC
+      - "8546:8546"  # WebSocket
+      - "30303:30303"  # P2P
+    volumes:
+      - ./blockchain_data:/data
+    networks:
+      - flashloan_net
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8545"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================
+  # BLOCKCHAIN MONITOR & ARBITRAGE DETECTOR
+  # ============================================
+
+  blockchain-monitor:
+    build:
+      context: .
+      dockerfile: deployment/docker/docker/Dockerfile.blockchain-monitor
+    container_name: blockchain-monitor
+    environment:
+      - SERVICE_NAME=blockchain-monitor
+      - WEB3_RPC_URL=http://web3-node:8545
+      - WEB3_WS_URL=ws://web3-node:8546
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://flashloan_user:${POSTGRES_PASSWORD}@postgres-master:5432/flashloan_db
+      - ORCHESTRATOR_URL=http://langchain-orchestrator:8000
+      - MIN_PROFIT_THRESHOLD=0.001
+      - MAX_GAS_PRICE=200
+      - MONITORING_INTERVAL=1
+    volumes:
+      - ./src/blockchain:/app/blockchain
+      - ./abi:/app/abi
+    ports:
+      - "8070:8070"
+    networks:
+      - flashloan_net
+    depends_on:
+      - web3-node
+      - redis
+      - postgres-master
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+
+  arbitrage-executor:
+    build:
+      context: .
+      dockerfile: deployment/docker/docker/Dockerfile.arbitrage-executor
+    container_name: arbitrage-executor
+    environment:
+      - SERVICE_NAME=arbitrage-executor
+      - WEB3_RPC_URL=http://web3-node:8545
+      - REDIS_URL=redis://redis:6379
+      - ORCHESTRATOR_URL=http://langchain-orchestrator:8000
+      - PRIVATE_KEY=${PRIVATE_KEY}
+      - CONTRACT_ADDRESS=${FLASH_LOAN_CONTRACT}
+      - MAX_SLIPPAGE=0.005
+      - EXECUTE_TRADES=false  # Set to true for live trading
+    volumes:
+      - ./src/execution:/app/execution
+      - ./artifacts:/app/artifacts
+    ports:
+      - "8071:8071"
+    networks:
+      - flashloan_net
+    depends_on:
+      - blockchain-monitor
+      - web3-node
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+
+  # ============================================
   # ENHANCED LANGCHAIN ORCHESTRATOR
   # ============================================
 
   langchain-orchestrator:
     build:
       context: .
-      dockerfile: docker/Dockerfile.enhanced
+      dockerfile: deployment/docker/docker/Dockerfile.langchain
     container_name: langchain-orchestrator
     environment:
       - ORCHESTRATOR_MODE=MASTER
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
-      - REDIS_URL=redis://redis-cluster:6379
+      - REDIS_URL=redis://redis:6379
       - POSTGRES_URL=postgresql://flashloan_user:${POSTGRES_PASSWORD}@postgres-master:5432/flashloan_db
       - RABBITMQ_URL=amqp://flashloan:${RABBITMQ_PASSWORD}@rabbitmq:5672/flashloan_vhost
       - ETCD_ENDPOINTS=http://etcd:2379
@@ -201,7 +303,7 @@ services:
       - ENABLE_GPU=true
       - CUDA_VISIBLE_DEVICES=0,1
     volumes:
-      - ./enhanced_langchain_orchestrator.py:/app/orchestrator.py
+      - ./deployment/docker/docker/enhanced_langchain_orchestrator.py:/app/orchestrator.py
       - ./src:/app/src
       - ./configs:/app/configs
       - model_checkpoints:/app/models
@@ -213,7 +315,7 @@ services:
     networks:
       - flashloan_net
     depends_on:
-      - redis-cluster
+      - redis
       - postgres-master
       - rabbitmq
       - etcd
@@ -242,10 +344,9 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.quantum
-    container_name: quantum-decision-engine
     environment:
       - SERVICE_NAME=quantum-decision-engine
-      - REDIS_URL=redis://redis-cluster:6379
+      - REDIS_URL=redis://redis:6379
       - QUANTUM_BACKEND=qiskit
       - OPTIMIZATION_LEVEL=3
       - PARALLEL_EXPERIMENTS=10
@@ -257,7 +358,6 @@ services:
     networks:
       - flashloan_net
     deploy:
-      replicas: 3
       resources:
         limits:
           cpus: '4'
@@ -277,7 +377,7 @@ services:
       - SWARM_SIZE=50
       - CONVERGENCE_THRESHOLD=0.95
       - EXPLORATION_RATE=0.2
-      - REDIS_URL=redis://redis-cluster:6379
+      - REDIS_URL=redis://redis:6379
       - ETCD_ENDPOINTS=http://etcd:2379
     volumes:
       - swarm_data:/app/swarm_data
@@ -287,7 +387,7 @@ services:
     networks:
       - flashloan_net
     depends_on:
-      - redis-cluster
+      - redis
       - etcd
 
   swarm-agent:
@@ -296,14 +396,13 @@ services:
       dockerfile: docker/Dockerfile.swarm-agent
     environment:
       - COORDINATOR_URL=http://swarm-coordinator:8020
-      - REDIS_URL=redis://redis-cluster:6379
+      - REDIS_URL=redis://redis:6379
       - AGENT_SPECIALIZATION=${AGENT_SPECIALIZATION:-general}
     volumes:
       - ./src/swarm:/app/swarm
     networks:
       - flashloan_net
     deploy:
-      replicas: 50
       restart_policy:
         condition: any
         delay: 10s
@@ -329,7 +428,7 @@ services:
       - MASTER_ADDR=ml-training-master
       - MASTER_PORT=29500
       - CUDA_VISIBLE_DEVICES=0
-      - REDIS_URL=redis://redis-cluster:6379
+      - REDIS_URL=redis://redis:6379
     volumes:
       - model_checkpoints:/app/models
       - ml_training_data:/app/data
@@ -360,7 +459,7 @@ services:
       - WORLD_SIZE=4
       - MASTER_ADDR=ml-training-master
       - MASTER_PORT=29500
-      - REDIS_URL=redis://redis-cluster:6379
+      - REDIS_URL=redis://redis:6379
     volumes:
       - model_checkpoints:/app/models
       - ml_training_data:/app/data
@@ -368,7 +467,6 @@ services:
     networks:
       - flashloan_net
     deploy:
-      replicas: 3
       placement:
         constraints:
           - node.labels.gpu == true
@@ -396,7 +494,7 @@ services:
       - N_LAYERS=6
       - PREDICTION_HORIZON=100
       - CUDA_VISIBLE_DEVICES=0
-      - REDIS_URL=redis://redis-cluster:6379
+      - REDIS_URL=redis://redis:6379
     volumes:
       - model_checkpoints:/app/models
       - ./src/transformers:/app/transformers
@@ -426,7 +524,7 @@ services:
       - VAR_CONFIDENCE=0.99
       - TAIL_RISK_THRESHOLD=0.05
       - ANOMALY_CONTAMINATION=0.1
-      - REDIS_URL=redis://redis-cluster:6379
+      - REDIS_URL=redis://redis:6379
       - POSTGRES_URL=postgresql://flashloan_user:${POSTGRES_PASSWORD}@postgres-master:5432/flashloan_db
     volumes:
       - ./src/risk:/app/risk
@@ -454,13 +552,12 @@ services:
       - MAX_GAS_PRICE=${MAX_GAS_PRICE:-500}
       - SLIPPAGE_TOLERANCE=0.005
       - MEV_PROTECTION=flashbots
-      - REDIS_URL=redis://redis-cluster:6379
+      - REDIS_URL=redis://redis:6379
     volumes:
       - ./src/execution:/app/execution
     networks:
       - flashloan_net
     deploy:
-      replicas: 10
       update_config:
         parallelism: 2
         delay: 10s
@@ -487,7 +584,7 @@ services:
       - SERVICE_NAME=github-coordinator
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - REDIS_URL=redis://redis-cluster:6379
+      - REDIS_URL=redis://redis:6379
       - POSTGRES_URL=postgresql://flashloan_user:${POSTGRES_PASSWORD}@postgres-master:5432/flashloan_db
     volumes:
       - github_workspace:/app/workspace
@@ -507,7 +604,7 @@ services:
       - AGENT_TYPE=code_generation
       - COORDINATOR_URL=http://github-coordinator:8060
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - REDIS_URL=redis://redis-cluster:6379
+      - REDIS_URL=redis://redis:6379
     volumes:
       - github_workspace:/app/workspace
       - ./src/github:/app/github
@@ -532,7 +629,7 @@ services:
       - AGENT_NAME=market-intelligence-director
       - AGENT_ROLE=strategic
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - REDIS_URL=redis://redis-cluster:6379
+      - REDIS_URL=redis://redis:6379
       - ORCHESTRATOR_URL=http://langchain-orchestrator:8000
     volumes:
       - agent_memory:/app/memory
@@ -551,7 +648,7 @@ services:
       - AGENT_NAME=risk-management-chief
       - AGENT_ROLE=strategic
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - REDIS_URL=redis://redis-cluster:6379
+      - REDIS_URL=redis://redis:6379
       - ORCHESTRATOR_URL=http://langchain-orchestrator:8000
     volumes:
       - agent_memory:/app/memory
@@ -572,7 +669,7 @@ services:
       - AGENT_ROLE=tactical
       - SPECIALIZATION=uniswap_v3
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - REDIS_URL=redis://redis-cluster:6379
+      - REDIS_URL=redis://redis:6379
       - ORCHESTRATOR_URL=http://langchain-orchestrator:8000
     volumes:
       - agent_memory:/app/memory
@@ -580,7 +677,10 @@ services:
     networks:
       - flashloan_net
     deploy:
-      replicas: 5
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
 
   # MEV Protection Unit
   mev-protection-agent:
@@ -593,7 +693,7 @@ services:
       - AGENT_ROLE=tactical
       - SPECIALIZATION=flashbots
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - REDIS_URL=redis://redis-cluster:6379
+      - REDIS_URL=redis://redis:6379
       - ORCHESTRATOR_URL=http://langchain-orchestrator:8000
     volumes:
       - agent_memory:/app/memory
@@ -601,7 +701,42 @@ services:
     networks:
       - flashloan_net
     deploy:
-      replicas: 3
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+
+  # ============================================
+  # ARBITRAGE MONITORING DASHBOARD
+  # ============================================
+
+  arbitrage-dashboard:
+    build:
+      context: .
+      dockerfile: deployment/docker/docker/Dockerfile.dashboard
+    container_name: arbitrage-dashboard
+    environment:
+      - SERVICE_NAME=arbitrage-dashboard
+      - REDIS_URL=redis://redis:6379
+      - ORCHESTRATOR_URL=http://langchain-orchestrator:8000
+      - BLOCKCHAIN_MONITOR_URL=http://blockchain-monitor:8070
+      - ARBITRAGE_EXECUTOR_URL=http://arbitrage-executor:8071
+    volumes:
+      - ./dashboard:/app/dashboard
+      - arbitrage_logs:/app/logs
+    ports:
+      - "3001:3001"
+    networks:
+      - flashloan_net
+    depends_on:
+      - langchain-orchestrator
+      - blockchain-monitor
+      - arbitrage-executor
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
 
   # ============================================
   # LOAD BALANCER
@@ -624,28 +759,9 @@ services:
       - swarm-coordinator
 
 # ============================================
-# HEALTHCHECK DEFINITIONS
+# HEALTHCHECK DEFINITIONS (moved to individual services)
 # ============================================
-
-healthcheck:
-  langchain-orchestrator:
-    test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-    interval: 30s
-    timeout: 10s
-    retries: 3
-    start_period: 40s
-
-  redis-cluster:
-    test: ["CMD", "redis-cli", "ping"]
-    interval: 10s
-    timeout: 5s
-    retries: 5
-
-  postgres-master:
-    test: ["CMD-SHELL", "pg_isready -U flashloan_user"]
-    interval: 10s
-    timeout: 5s
-    retries: 5
+# Healthchecks are now defined within each service definition above
 
 # ============================================
 # DEPLOYMENT CONFIGURATION

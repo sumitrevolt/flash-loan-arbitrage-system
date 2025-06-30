@@ -1,4 +1,12 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from pathlib import Path
+from typing import Dict, List, Any, Optional
+import json
+import os
+import re
+
+import yaml
 """
 Docker Compose Generator - Consolidated Version
 ===============================================
@@ -13,61 +21,56 @@ Generates complete Docker Compose configuration for MCP agents with
 full orchestration system and organized architecture.
 """
 
-import json
-import os
-import yaml
-from typing import Dict, List, Any, Optional
-from pathlib import Path
 
 class DockerComposeGenerator:
     """Generate comprehensive Docker Compose configurations for the MCP system"""
     
     def __init__(self):
         # Agent role definitions matching organized MCP server structure
-        self.agent_roles: Dict[str, Dict[str, Any]] = {
-            "code_indexers": {
+        self.agent_roles: Dict[str, Dict[str, Any]] = {}
+            "code_indexers": {}
                 "count": 8,
                 "port_start": 3101,
                 "description": "Full repo understanding and code analysis",
-                "mcp_paths": [
+                "mcp_paths": []
                     "/app/infrastructure/mcp_servers/coordination",
                     "/app/infrastructure/mcp_servers/task_management",
                     "/app/utilities/scripts",
                     "/app/core/ai_agents",
                     "/app/integrations/dex",
                     "/app/infrastructure/monitoring"
-                ]
+                
             },
-            "builders": {
+            "builders": {}
                 "count": 10,
                 "port_start": 3121,
                 "description": "Project scaffolding and build agents",
-                "mcp_paths": [
+                "mcp_paths": []
                     "/app/infrastructure/mcp_servers/production",
                     "/app/infrastructure/mcp_servers/foundry_integration",
                     "/app/infrastructure/mcp_servers/blockchain_integration",
                     "/app/infrastructure/mcp_servers/execution",
                     "/app/utilities/tools",
                     "/app/core/coordinators"
-                ]
+                
             },
-            "test_writers": {
+            "test_writers": {}
                 "count": 10,
                 "port_start": 3141,
                 "description": "Unit and integration test creation",
-                "mcp_paths": [
+                "mcp_paths": []
                     "/app/infrastructure/mcp_servers/quality",
                     "/app/infrastructure/monitoring",
                     "/app/infrastructure/mcp_servers/execution",
                     "/app/tests",
                     "/app/core"
-                ]
+                
             },
-            "executors": {
+            "executors": {}
                 "count": 15,
                 "port_start": 3161,
                 "description": "Trading execution and verification agents",
-                "mcp_paths": [
+                "mcp_paths": []
                     "/app/infrastructure/mcp_servers/execution",
                     "/app/integrations/blockchain",
                     "/app/infrastructure/mcp_servers/foundry_integration",
@@ -77,119 +80,119 @@ class DockerComposeGenerator:
                     "/app/core/coordinators",
                     "/app/infrastructure/mcp_servers/risk_management",
                     "/app/infrastructure/monitoring"
-                ]
+                
             },
-            "coordinators": {
+            "coordinators": {}
                 "count": 10,
                 "port_start": 3181,
                 "description": "Middle-layer routing and coordination",
-                "mcp_paths": [
+                "mcp_paths": []
                     "/app/core/coordinators",
                     "/app/infrastructure/mcp_servers/orchestration",
                     "/app/infrastructure/mcp_servers/task_management",
                     "/app/infrastructure/monitoring",
                     "/app/utilities/tools",
                     "/app/core/ai_agents"
-                ]
+                
             },
-            "planners": {
+            "planners": {}
                 "count": 5,
                 "port_start": 3201,
                 "description": "Long-term project strategy and planning",
-                "mcp_paths": [
+                "mcp_paths": []
                     "/app/infrastructure/mcp_servers/orchestration",
                     "/app/core/coordinators",
                     "/app/core/ai_agents",
                     "/app/infrastructure/mcp_servers/production"
-                ]
+                
             },
-            "fixers": {
+            "fixers": {}
                 "count": 10,
                 "port_start": 3211,
                 "description": "Self-healing and error fixing",
-                "mcp_paths": [
+                "mcp_paths": []
                     "/app/infrastructure/mcp_servers/recovery",
                     "/app/infrastructure/monitoring",
                     "/app/utilities/tools",
                     "/app/infrastructure/mcp_servers/risk_management"
-                ]
+                
             },
-            "ui_coders": {
+            "ui_coders": {}
                 "count": 10,
                 "port_start": 3231,
                 "description": "Frontend and design implementation",
-                "mcp_paths": [
+                "mcp_paths": []
                     "/app/interfaces/web",
                     "/app/interfaces/api",
                     "/app/infrastructure/monitoring",
                     "/app/core/coordinators"
-                ]
+                
             },
-            "reviewers": {
+            "reviewers": {}
                 "count": 15,
                 "port_start": 3251,
                 "description": "Code review and quality assurance",
-                "mcp_paths": [
+                "mcp_paths": []
                     "/app/infrastructure/mcp_servers/quality",
                     "/app/infrastructure/monitoring",
                     "/app/tests",
                     "/app/utilities/tools"
-                ]
+                
             },
-            "admins": {
+            "admins": {}
                 "count": 1,
                 "port_start": 3301,
                 "description": "Top level control and administration",
-                "mcp_paths": [
+                "mcp_paths": []
                     "/app/infrastructure/mcp_servers/orchestration",
                     "/app/core/coordinators",
                     "/app/infrastructure/monitoring"
-                ]
-            }
-        }
+                
+            
+        
         
         # Infrastructure services configuration
-        self.infrastructure_services = {
-            "redis": {
+        self.infrastructure_services = {}
+            "redis": {}
                 "image": "redis:7-alpine",
                 "ports": ["6379:6379"],
                 "volumes": ["redis_data:/data"],
-                "healthcheck": {
+                "healthcheck": {}
                     "test": ["CMD", "redis-cli", "ping"],
                     "interval": "10s",
                     "timeout": "5s",
                     "retries": 3
-                }
+                
             },
-            "prometheus": {
+            "prometheus": {}
                 "image": "prom/prometheus:latest",
                 "ports": ["9090:9090"],
-                "volumes": [
+                "volumes": []
                     "./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml",
                     "prometheus_data:/prometheus"
                 ],
-                "command": [
+                "command": []
                     "--config.file=/etc/prometheus/prometheus.yml",
                     "--storage.tsdb.path=/prometheus",
                     "--web.console.libraries=/etc/prometheus/console_libraries",
                     "--web.console.templates=/etc/prometheus/consoles"
-                ]
+                
             },
-            "grafana": {
+            "grafana": {}
                 "image": "grafana/grafana:latest",
                 "ports": ["3000:3000"],
-                "environment": [
+                "environment": []
                     "GF_SECURITY_ADMIN_PASSWORD=admin"
                 ],
-                "volumes": [
+                "volumes": []
                     "grafana_data:/var/lib/grafana",
                     "./infrastructure/monitoring/grafana:/etc/grafana/provisioning"
-                ]
+                
             },
-            "etcd": {
+            "etcd": {}
                 "image": "quay.io/coreos/etcd:v3.5.0",
                 "ports": ["2379:2379", "2380:2380"],
-                "environment": [
+                "environment": []
                     "ETCD_NAME=etcd0",
                     "ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379",
                     "ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379",
@@ -198,8 +201,8 @@ class DockerComposeGenerator:
                     "ETCD_INITIAL_CLUSTER=etcd0=http://etcd:2380"
                 ],
                 "volumes": ["etcd_data:/etcd-data"]
-            }
-        }
+            
+        
     
     def generate_agent_service(self, role: str, instance_id: int, config: Dict[str, Any]) -> Dict[str, Any]:
         """Generate Docker Compose service configuration for an agent"""
@@ -213,17 +216,17 @@ class DockerComposeGenerator:
             volumes.append(f"{local_path}:{mcp_path}:ro")
         
         # Add common volumes
-        volumes.extend([
+        volumes.extend([)]
             "./logs:/app/logs",
             "./data:/app/data",
             "./models:/app/models"
-        ])
         
-        return {
+        
+        return {}
             "image": "flash-loan-mcp-agent:latest",
             "container_name": service_name,
             "ports": [f"{port}:{port}"],
-            "environment": [
+            "environment": []
                 f"AGENT_ROLE={role}",
                 f"AGENT_ID={instance_id:02d}",
                 f"AGENT_PORT={port}",
@@ -236,20 +239,20 @@ class DockerComposeGenerator:
             "depends_on": ["redis", "etcd", "prometheus"],
             "networks": ["mcp-network"],
             "restart": "unless-stopped",
-            "healthcheck": {
+            "healthcheck": {}
                 "test": [f"curl -f http://localhost:{port}/health || exit 1"],
                 "interval": "30s",
                 "timeout": "10s",
                 "retries": 3,
                 "start_period": "40s"
             },
-            "labels": [
+            "labels": []
                 f"mcp.agent.role={role}",
                 f"mcp.agent.instance={instance_id}",
                 f"mcp.agent.port={port}",
                 "mcp.component=agent"
-            ]
-        }
+            
+        
     
     def generate_mcp_server_service(self, server_name: str, config: Dict[str, Any]) -> Dict[str, Any]:
         """Generate Docker Compose service for MCP server"""
@@ -264,17 +267,17 @@ class DockerComposeGenerator:
         else:
             command = f"/app/infrastructure/mcp_servers/{script_path}"
         
-        return {
+        return {}
             "image": "flash-loan-mcp-server:latest",
             "container_name": f"mcp-{server_name}",
             "ports": [f"{port}:{port}"],
-            "environment": [
+            "environment": []
                 f"MCP_SERVER_NAME={server_name}",
                 f"MCP_SERVER_PORT={port}",
                 "REDIS_URL=redis://redis:6379",
                 "ETCD_URL=http://etcd:2379"
             ],
-            "volumes": [
+            "volumes": []
                 "./infrastructure/mcp_servers:/app/infrastructure/mcp_servers:ro",
                 "./logs:/app/logs",
                 "./data:/app/data"
@@ -283,32 +286,32 @@ class DockerComposeGenerator:
             "networks": ["mcp-network"],
             "restart": "unless-stopped",
             "command": command,
-            "healthcheck": {
+            "healthcheck": {}
                 "test": [f"curl -f http://localhost:{port}/health || exit 1"],
                 "interval": "30s",
                 "timeout": "10s",
                 "retries": 3
             },
-            "labels": [
+            "labels": []
                 f"mcp.server.name={server_name}",
                 f"mcp.server.port={port}",
                 "mcp.component=server"
-            ]
-        }
+            
+        
     
     def generate_coordinator_service(self) -> Dict[str, Any]:
         """Generate the master coordinator service"""
-        return {
+        return {}
             "image": "flash-loan-coordinator:latest",
             "container_name": "mcp-master-coordinator",
             "ports": ["4000:4000"],
-            "environment": [
+            "environment": []
                 "SERVER_PORT=4000",
                 "REDIS_URL=redis://redis:6379",
                 "ETCD_URL=http://etcd:2379",
                 "LOG_LEVEL=INFO"
             ],
-            "volumes": [
+            "volumes": []
                 "./core:/app/core:ro",
                 "./infrastructure:/app/infrastructure:ro",
                 "./logs:/app/logs",
@@ -318,30 +321,30 @@ class DockerComposeGenerator:
             "networks": ["mcp-network"],
             "restart": "unless-stopped",
             "command": "python /app/core/coordinators/complete_ai_system.py",
-            "healthcheck": {
+            "healthcheck": {}
                 "test": ["curl -f http://localhost:4000/health || exit 1"],
                 "interval": "30s",
                 "timeout": "10s",
                 "retries": 3
             },
-            "labels": [
+            "labels": []
                 "mcp.component=coordinator",
                 "mcp.role=master"
-            ]
-        }
+            
+        
     
     def generate_dashboard_service(self) -> Dict[str, Any]:
         """Generate the web dashboard service"""
-        return {
+        return {}
             "image": "flash-loan-dashboard:latest",
             "container_name": "mcp-dashboard",
             "ports": ["8080:8080"],
-            "environment": [
+            "environment": []
                 "DASHBOARD_PORT=8080",
                 "COORDINATOR_URL=http://mcp-master-coordinator:4000",
                 "REDIS_URL=redis://redis:6379"
             ],
-            "volumes": [
+            "volumes": []
                 "./interfaces/web:/app/interfaces/web:ro",
                 "./logs:/app/logs"
             ],
@@ -349,42 +352,42 @@ class DockerComposeGenerator:
             "networks": ["mcp-network"],
             "restart": "unless-stopped",
             "command": "python /app/interfaces/web/mcp_dashboard.py",
-            "healthcheck": {
+            "healthcheck": {}
                 "test": ["curl -f http://localhost:8080/health || exit 1"],
                 "interval": "30s",
                 "timeout": "10s",
                 "retries": 3
             },
-            "labels": [
+            "labels": []
                 "mcp.component=dashboard",
                 "mcp.interface=web"
-            ]
-        }
+            
+        
     
-    def generate_complete_docker_compose(self, 
+    def generate_complete_docker_compose(self, )
                                        include_agents: bool = True,
                                        include_servers: bool = True,
                                        include_monitoring: bool = True) -> Dict[str, Any]:
         """Generate complete Docker Compose configuration"""
         
-        compose_config = {
+        compose_config = {}
             "version": "3.8",
             "services": {},
-            "networks": {
-                "mcp-network": {
+            "networks": {}
+                "mcp-network": {}
                     "driver": "bridge",
-                    "ipam": {
+                    "ipam": {}
                         "config": [{"subnet": "172.20.0.0/16"}]
-                    }
-                }
+                    
+                
             },
-            "volumes": {
+            "volumes": {}
                 "redis_data": {},
                 "prometheus_data": {},
                 "grafana_data": {},
                 "etcd_data": {}
-            }
-        }
+            
+        
         
         # Add infrastructure services
         compose_config["services"].update(self.infrastructure_services)
@@ -397,7 +400,7 @@ class DockerComposeGenerator:
         
         # Add MCP servers if requested
         if include_servers:
-            mcp_servers = {
+            mcp_servers = {}
                 'ai-integration': {'port': 4001, 'script': 'ai_integration/enhanced_ai_server.py'},
                 'blockchain-integration': {'port': 4002, 'script': 'blockchain_integration/blockchain_mcp_server.py'},
                 'coordination': {'port': 4003, 'script': 'coordination/mcp_server_coordinator.py'},
@@ -406,7 +409,7 @@ class DockerComposeGenerator:
                 'monitoring': {'port': 4009, 'script': 'monitoring/system_monitor.py'},
                 'risk-management': {'port': 4014, 'script': 'risk_management/risk_manager.py'},
                 'task-management': {'port': 4015, 'script': 'task_management/mcp-taskmanager/index.js'},
-            }
+            
             
             for server_name, config in mcp_servers.items():
                 compose_config["services"][f"mcp-{server_name}"] = self.generate_mcp_server_service(server_name, config)
@@ -552,12 +555,12 @@ CMD ["python", "interfaces/web/mcp_dashboard.py"]
 """
         
         # Save Dockerfiles
-        dockerfiles = {
+        dockerfiles = {}
             "Dockerfile.agent": agent_dockerfile,
             "Dockerfile.server": server_dockerfile,
             "Dockerfile.coordinator": coordinator_dockerfile,
             "Dockerfile.dashboard": dashboard_dockerfile
-        }
+        
         
         for filename, content in dockerfiles.items():
             with open(filename, 'w') as f:
@@ -613,23 +616,23 @@ def main():
     generator = DockerComposeGenerator()
     
     # Generate different configurations
-    configurations = {
-        "docker-compose.yml": {
+    configurations = {}
+        "docker-compose.yml": {}
             "include_agents": True,
             "include_servers": True,
             "include_monitoring": True
         },
-        "docker-compose.minimal.yml": {
+        "docker-compose.minimal.yml": {}
             "include_agents": False,
             "include_servers": True,
             "include_monitoring": False
         },
-        "docker-compose.agents-only.yml": {
+        "docker-compose.agents-only.yml": {}
             "include_agents": True,
             "include_servers": False,
             "include_monitoring": False
-        }
-    }
+        
+    
     
     for filename, options in configurations.items():
         config = generator.generate_complete_docker_compose(**options)
@@ -640,7 +643,7 @@ def main():
     generator.generate_dockerfiles()
     generator.generate_build_script()
     
-    print(f"""
+    print(f""")
 Docker Compose Generation Complete!
 
 Generated files:
@@ -654,7 +657,7 @@ To get started:
 1. Run: ./build_docker_images.sh
 2. Run: docker-compose up -d
 3. Access dashboard at: http://localhost:8080
-""")
+"""
 
 if __name__ == "__main__":
     main()

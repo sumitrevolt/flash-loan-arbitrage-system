@@ -1,3 +1,14 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Dict, Optional, List
+import asyncio
+import logging
+import os
+import platform
+
+from cryptography.fernet import Fernet
+from dataclasses import dataclass
+
 """
 CONFIGURATION FILE FOR OPTIMIZED ARBITRAGE BOT
 ==============================================
@@ -5,33 +16,22 @@ CONFIGURATION FILE FOR OPTIMIZED ARBITRAGE BOT
 Set up your API keys and endpoints here for production use.
 
 DEVELOPMENT NOTES:
-- Follow COPILOT_AGENT_RULES.md for development guidelines
-- Extend this file for new configuration options rather than creating new config files
-- Maintain consistency with existing patterns and naming conventions
+- Follow COPILOT_AGENT guidelines for secure and maintainable configuration management.
 """
-
-import os
-import platform
-import asyncio
-import logging
-from dataclasses import dataclass
-from typing import Dict, Optional, List
-from cryptography.fernet import Fernet
 
 # Windows-specific asyncio event loop fix for aiodns compatibility
 if platform.system() == 'Windows':
     try:
         # Set the event loop policy to WindowsProactorEventLoopPolicy to avoid aiodns issues
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
-        print("✅ Set Windows ProactorEventLoopPolicy for aiodns compatibility")
+        print("[OK] Set Windows ProactorEventLoopPolicy for aiodns compatibility")
     except AttributeError:
         # Fallback for older Python versions
         try:
-            import asyncio.windows_events
             asyncio.set_event_loop_policy(asyncio.windows_events.WindowsProactorEventLoopPolicy())
-            print("✅ Set Windows ProactorEventLoopPolicy (fallback)")
+            print("[OK] Set Windows ProactorEventLoopPolicy (fallback)")
         except ImportError:
-            print("⚠️ Unable to set Windows event loop policy, may encounter aiodns issues")
+            print("[WARN] Unable to set Windows event loop policy, may encounter aiodns issues")
 
 # Enhanced Security Configuration
 @dataclass
@@ -130,7 +130,8 @@ class ProductionAPIConfig:
             'oneinch_api': self.ONEINCH_API_KEY is not None,
             'etherscan_api': self.ETHERSCAN_API_KEY is not None,
             'moralis_api': self.MORALIS_API_KEY is not None
-        }
+
+        
         return validation_results
 
 # Enhanced MCP Configuration with Windows Fixes
@@ -152,7 +153,7 @@ class MCPConfigEnhanced:
         'copilot_mcp': 8003,
         'production_mcp': 8004,
         'taskmanager_mcp': 8007
-    }
+
     
     # Connection settings
     MCP_REQUEST_TIMEOUT: int = int(os.getenv('MCP_REQUEST_TIMEOUT', '30'))
@@ -170,7 +171,8 @@ class MCPConfigEnhanced:
             'foundry': self.FOUNDRY_MCP_URL,
             'copilot': self.COPILOT_MCP_URL,
             'production': self.PRODUCTION_MCP_URL
-        }
+
+        
         base_url = base_urls.get(server_name, self.TASK_MANAGER_URL)
         return f"{base_url}/health"
 
@@ -236,7 +238,7 @@ class DatabaseConfig:
     
     # Redis for caching
     REDIS_URL: str = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-    REDIS_TTL_SECONDS: int = 300  # 5 minutes
+    REDIS_TLL_SECONDS: int = 300  # 5 minutes
     
     # PostgreSQL for persistent storage
     DATABASE_URL: str = os.getenv('DATABASE_URL', 'postgresql://localhost/arbitrage_bot')
@@ -310,8 +312,8 @@ TOKEN_ADDRESSES = {
     'LINK': '0x514910771AF9Ca656af840dff83E8264EcF986CA',
     'UNI': '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984',
     'AAVE': '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9',
-    'COMP': '0xc00e94Cb662C3520282E6f5717214004A7f26888',
-}
+    'COMP': '0xc00e94Cb662C3520282E6f5717214004A7f26888'
+
 
 # High-priority token pairs for arbitrage
 PRIORITY_PAIRS = [
@@ -320,16 +322,16 @@ PRIORITY_PAIRS = [
     ('WBTC', 'ETH'),
     ('ETH', 'DAI'),
     ('LINK', 'ETH'),
-    ('UNI', 'ETH'),
-]
+    ('UNI', 'ETH')
+
 
 # DEX router addresses for direct integration
 DEX_ROUTERS = {
     'uniswap_v3': '0xE592427A0AEce92De3Edee1F18E0157C05861564',
     'uniswap_v2': '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
     'sushiswap': '0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F',
-    'balancer': '0xBA12222222228d8Ba445958a75a0704d566BF2C8',
-}
+    'balancer': '0xBA12222222228d8Ba445958a75a0704d566BF2C8'
+
 
 def validate_config() -> List[str]:
     """Validate configuration settings"""
@@ -406,7 +408,6 @@ LOG_LEVEL=INFO
    pip install python-dotenv
 
 3. Add this to the beginning of your bot script:
-   from dotenv import load_dotenv
    load_dotenv()
 
 4. Get API keys from:
@@ -423,12 +424,12 @@ if __name__ == "__main__":
     errors: List[str] = validate_config()
     
     if errors:
-        print("❌ Configuration Errors:")
+        print("[ERROR] Configuration Errors:")
         for error in errors:
             print(f"  - {error}")
         print("\n" + get_environment_setup_instructions())
     else:
-        print("✅ Configuration validation passed!")
+        print("[OK] Configuration validation passed!")
         print(f"Environment: {bot_config.ENVIRONMENT}")
         print(f"Web3 Provider: {dex_config.WEB3_PROVIDER_URL[:50]}...")
         print(f"Private Key Set: {'Yes' if dex_config.PRIVATE_KEY else 'No'}")

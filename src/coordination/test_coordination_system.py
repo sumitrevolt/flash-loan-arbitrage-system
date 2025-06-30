@@ -1,4 +1,13 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Dict, List, Any
+import asyncio
+import json
+import logging
+import time
+
+import aiohttp
 """
 Coordination System Test Suite
 ==============================
@@ -6,40 +15,46 @@ Coordination System Test Suite
 Test the coordination between MCP servers, AI agents, LangChain, and AutoGen.
 """
 
-import asyncio
-import aiohttp
-import json
-import logging
-import time
-from datetime import datetime
-from typing import Dict, List, Any
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+
 logger = logging.getLogger(__name__)
 
 class CoordinationSystemTester:
     """Test suite for the coordination system"""
     
     def __init__(self):
-        self.base_urls = {
+        self.base_urls = {}
             'orchestrator': 'http://localhost:8000',
             'langchain': 'http://localhost:8001',
             'autogen': 'http://localhost:8002',
             'dashboard': 'http://localhost:8080'
-        }
         
-        self.mcp_servers = {
+        
+        self.mcp_servers = {}
             'price_feed': 'http://localhost:8100',
             'flash_loan': 'http://localhost:8101',
             'dex_aggregator': 'http://localhost:8102',
             'evm_interaction': 'http://localhost:8103'
-        }
         
-        self.ai_agents = {
+        
+        self.ai_agents = {}
             'arbitrage_detector': 'http://localhost:9001',
             'risk_manager': 'http://localhost:9002',
             'flash_loan_optimizer': 'http://localhost:9003',
@@ -50,7 +65,7 @@ class CoordinationSystemTester:
             'liquidity_monitor': 'http://localhost:9008',
             'security_analyst': 'http://localhost:9009',
             'compliance_checker': 'http://localhost:9010'
-        }
+        
         
         self.test_results = []
         
@@ -61,139 +76,139 @@ class CoordinationSystemTester:
                 async with session.get(f"{url}/health", timeout=5) as response:
                     if response.status == 200:
                         result = await response.json()
-                        return {
+                        return {}
                             'service': name,
                             'status': 'healthy',
                             'url': url,
                             'response': result
-                        }
+                        
                     else:
-                        return {
+                        return {}
                             'service': name,
                             'status': 'unhealthy',
                             'url': url,
                             'http_status': response.status
-                        }
+                        
         except Exception as e:
-            return {
+            return {}
                 'service': name,
                 'status': 'error',
                 'url': url,
                 'error': str(e)
-            }
+            
             
     async def test_coordination_task(self, task_description: str) -> Dict[str, Any]:
         """Test coordination task execution"""
         try:
-            task_data = {
+            task_data = {}
                 'description': task_description,
                 'timestamp': datetime.now().isoformat(),
                 'test_mode': True
-            }
+            
             
             async with aiohttp.ClientSession() as session:
-                async with session.post(
+                async with session.post()
                     f"{self.base_urls['orchestrator']}/coordinate",
                     json=task_data,
                     timeout=30
                 ) as response:
                     if response.status == 200:
                         result = await response.json()
-                        return {
+                        return {}
                             'task': task_description,
                             'status': 'success',
                             'result': result
-                        }
+                        
                     else:
-                        return {
+                        return {}
                             'task': task_description,
                             'status': 'failed',
                             'http_status': response.status,
                             'error': await response.text()
-                        }
+                        
         except Exception as e:
-            return {
+            return {}
                 'task': task_description,
                 'status': 'error',
                 'error': str(e)
-            }
+            
             
     async def test_langchain_coordination(self) -> Dict[str, Any]:
         """Test LangChain coordinator"""
         try:
-            task_data = {
+            task_data = {}
                 'input': 'Test LangChain coordination with MCP servers',
                 'test_mode': True
-            }
+            
             
             async with aiohttp.ClientSession() as session:
-                async with session.post(
+                async with session.post()
                     f"{self.base_urls['langchain']}/coordinate",
                     json=task_data,
                     timeout=20
                 ) as response:
                     if response.status == 200:
                         result = await response.json()
-                        return {
+                        return {}
                             'service': 'langchain_coordinator',
                             'status': 'success',
                             'result': result
-                        }
+                        
                     else:
-                        return {
+                        return {}
                             'service': 'langchain_coordinator',
                             'status': 'failed',
                             'http_status': response.status
-                        }
+                        
         except Exception as e:
-            return {
+            return {}
                 'service': 'langchain_coordinator',
                 'status': 'error',
                 'error': str(e)
-            }
+            
             
     async def test_autogen_system(self) -> Dict[str, Any]:
         """Test AutoGen multi-agent system"""
         try:
-            task_data = {
+            task_data = {}
                 'description': 'Test AutoGen multi-agent conversation',
                 'agents': ['coordinator', 'analyzer', 'executor'],
                 'test_mode': True
-            }
+            
             
             async with aiohttp.ClientSession() as session:
-                async with session.post(
+                async with session.post()
                     f"{self.base_urls['autogen']}/coordinate",
                     json=task_data,
                     timeout=20
                 ) as response:
                     if response.status == 200:
                         result = await response.json()
-                        return {
+                        return {}
                             'service': 'autogen_system',
                             'status': 'success',
                             'result': result
-                        }
+                        
                     else:
-                        return {
+                        return {}
                             'service': 'autogen_system',
                             'status': 'failed',
                             'http_status': response.status
-                        }
+                        
         except Exception as e:
-            return {
+            return {}
                 'service': 'autogen_system',
                 'status': 'error',
                 'error': str(e)
-            }
+            
             
     async def test_mcp_server_interaction(self, server_name: str, url: str) -> Dict[str, Any]:
         """Test MCP server interaction"""
         try:
-            test_query = {
+            test_query = {}
                 'query': f'Test query for {server_name}',
                 'test_mode': True
-            }
+            
             
             async with aiohttp.ClientSession() as session:
                 # Try both /query and /test endpoints
@@ -201,69 +216,69 @@ class CoordinationSystemTester:
                 
                 for endpoint in endpoints:
                     try:
-                        async with session.post(
+                        async with session.post()
                             f"{url}{endpoint}",
                             json=test_query,
                             timeout=10
                         ) as response:
                             if response.status == 200:
                                 result = await response.json()
-                                return {
+                                return {}
                                     'server': server_name,
                                     'status': 'success',
                                     'endpoint': endpoint,
                                     'result': result
-                                }
+                                
                     except:
                         continue
                         
-                return {
+                return {}
                     'server': server_name,
                     'status': 'no_valid_endpoint',
                     'url': url
-                }
+                
                 
         except Exception as e:
-            return {
+            return {}
                 'server': server_name,
                 'status': 'error',
                 'error': str(e)
-            }
+            
             
     async def test_agent_coordination(self, agent_name: str, url: str) -> Dict[str, Any]:
         """Test AI agent coordination"""
         try:
-            task_data = {
+            task_data = {}
                 'task': f'Test coordination for {agent_name}',
                 'type': 'test',
                 'description': f'Testing {agent_name} agent functionality'
-            }
+            
             
             async with aiohttp.ClientSession() as session:
-                async with session.post(
+                async with session.post()
                     f"{url}/coordinate",
                     json=task_data,
                     timeout=10
                 ) as response:
                     if response.status == 200:
                         result = await response.json()
-                        return {
+                        return {}
                             'agent': agent_name,
                             'status': 'success',
                             'result': result
-                        }
+                        
                     else:
-                        return {
+                        return {}
                             'agent': agent_name,
                             'status': 'failed',
                             'http_status': response.status
-                        }
+                        
         except Exception as e:
-            return {
+            return {}
                 'agent': agent_name,
                 'status': 'error',
                 'error': str(e)
-            }
+            
             
     async def run_comprehensive_tests(self):
         """Run comprehensive test suite"""
@@ -289,13 +304,13 @@ class CoordinationSystemTester:
         self.test_results.extend(health_results)
         
         # Test 2: Coordination tasks
-        logger.info("🎯 Testing coordination tasks...")
-        coordination_tasks = [
+        logger.info("[TASK] Testing coordination tasks...")
+        coordination_tasks = []
             "Analyze arbitrage opportunities between QuickSwap and SushiSwap",
             "Optimize flash loan parameters for USDC-WETH arbitrage",
             "Assess risk factors for $5000 flash loan on Polygon",
             "Monitor liquidity changes in major DEX pools"
-        ]
+        
         
         coordination_tests = []
         for task in coordination_tasks:
@@ -315,7 +330,7 @@ class CoordinationSystemTester:
         self.test_results.append(autogen_result)
         
         # Test 5: MCP server interactions
-        logger.info("🔧 Testing MCP server interactions...")
+        logger.info("[SETUP] Testing MCP server interactions...")
         mcp_tests = []
         for name, url in self.mcp_servers.items():
             mcp_tests.append(self.test_mcp_server_interaction(name, url))
@@ -324,7 +339,7 @@ class CoordinationSystemTester:
         self.test_results.extend(mcp_results)
         
         # Test 6: Agent coordination
-        logger.info("🎭 Testing AI agent coordination...")
+        logger.info("[THEATER] Testing AI agent coordination...")
         agent_tests = []
         for name, url in self.ai_agents.items():
             agent_tests.append(self.test_agent_coordination(name, url))
@@ -332,7 +347,7 @@ class CoordinationSystemTester:
         agent_results = await asyncio.gather(*agent_tests, return_exceptions=True)
         self.test_results.extend(agent_results)
         
-        logger.info("✅ All tests completed!")
+        logger.info("[OK] All tests completed!")
         
     def generate_test_report(self) -> Dict[str, Any]:
         """Generate comprehensive test report"""
@@ -343,14 +358,14 @@ class CoordinationSystemTester:
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
         
         # Categorize results
-        categorized_results = {
+        categorized_results = {}
             'health_checks': [],
             'coordination_tasks': [],
             'langchain_tests': [],
             'autogen_tests': [],
             'mcp_server_tests': [],
             'agent_tests': []
-        }
+        
         
         for result in self.test_results:
             if isinstance(result, dict):
@@ -370,8 +385,8 @@ class CoordinationSystemTester:
                 else:
                     categorized_results['health_checks'].append(result)
                     
-        report = {
-            'test_summary': {
+        report = {}
+            'test_summary': {}
                 'total_tests': total_tests,
                 'successful_tests': successful_tests,
                 'failed_tests': failed_tests,
@@ -380,7 +395,7 @@ class CoordinationSystemTester:
             },
             'categorized_results': categorized_results,
             'recommendations': self._generate_recommendations(categorized_results)
-        }
+        
         
         return report
         
@@ -409,7 +424,7 @@ class CoordinationSystemTester:
             recommendations.append("AutoGen system has issues. Verify API keys and service configuration.")
             
         if not recommendations:
-            recommendations.append("All systems are functioning properly! 🎉")
+            recommendations.append("All systems are functioning properly! [CELEBRATE]")
             
         return recommendations
         
@@ -422,33 +437,33 @@ class CoordinationSystemTester:
         print("="*80)
         
         summary = report['test_summary']
-        print(f"\n📊 TEST SUMMARY:")
+        print(f"\n[METRICS] TEST SUMMARY:")
         print(f"   Total Tests: {summary['total_tests']}")
-        print(f"   Successful: {summary['successful_tests']} ✅")
-        print(f"   Failed: {summary['failed_tests']} ❌")
+        print(f"   Successful: {summary['successful_tests']} [OK]")
+        print(f"   Failed: {summary['failed_tests']} [ERROR]")
         print(f"   Success Rate: {summary['success_rate']}")
         print(f"   Timestamp: {summary['timestamp']}")
         
         # Print category results
-        categories = {
+        categories = {}
             'health_checks': '🏥 Health Checks',
-            'coordination_tasks': '🎯 Coordination Tasks',
+            'coordination_tasks': '[TASK] Coordination Tasks',
             'langchain_tests': '🧠 LangChain Tests',
             'autogen_tests': '🤖 AutoGen Tests',
-            'mcp_server_tests': '🔧 MCP Server Tests',
-            'agent_tests': '🎭 Agent Tests'
-        }
+            'mcp_server_tests': '[SETUP] MCP Server Tests',
+            'agent_tests': '[THEATER] Agent Tests'
+        
         
         for category, title in categories.items():
             results = report['categorized_results'][category]
             if results:
                 print(f"\n{title}:")
                 for result in results:
-                    status_icon = "✅" if result.get('status') in ['success', 'healthy'] else "❌"
+                    status_icon = "[OK]" if result.get('status') in ['success', 'healthy'] else "[ERROR]"
                     name = result.get('service', result.get('agent', result.get('server', result.get('task', 'Unknown'))))
                     print(f"   {status_icon} {name}")
                     
-        print(f"\n💡 RECOMMENDATIONS:")
+        print(f"\n[INFO] RECOMMENDATIONS:")
         for rec in report['recommendations']:
             print(f"   • {rec}")
             
@@ -470,7 +485,7 @@ async def main():
     except KeyboardInterrupt:
         logger.info("Tests interrupted by user")
     except Exception as e:
-        logger.error(f"Error running tests: {e}")
+        logger.error(str(f"Error running tests: {e}")
 
 if __name__ == "__main__":
     print("🧪 Docker Coordination System Test Suite")

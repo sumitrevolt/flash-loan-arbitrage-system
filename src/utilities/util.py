@@ -1,41 +1,43 @@
-#
-# Copyright (C) 2012-2021 The Python Software Foundation.
-# See LICENSE.txt and CONTRIBUTORS.txt.
-#
-import codecs
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+    import ssl
+    import threading
 from collections import deque
+from glob import iglob as std_iglob
+import codecs
 import contextlib
 import csv
-from glob import iglob as std_iglob
 import io
 import json
 import logging
 import os
-import py_compile
 import re
 import socket
-try:
-    import ssl
-except ImportError:  # pragma: no cover
-    ssl = None
 import subprocess
 import sys
 import tarfile
 import tempfile
 import textwrap
-
-try:
-    import threading
-except ImportError:  # pragma: no cover
-    import dummy_threading as threading
 import time
 
+        from _aix_support import aix_platform
+        import _osx_support, distutils.sysconfig
+    import dummy_threading as threading
+ from .compat import (HTTPSHandler as BaseHTTPSHandler, match_hostname)
 from . import DistlibException
-from .compat import (string_types, text_type, shutil, raw_input, StringIO,
+from .compat import (string_types, text_type, shutil, raw_input, StringIO)
+import py_compile
+try:
+except ImportError:  # pragma: no cover
+    ssl = None
+
+try:
+except ImportError:  # pragma: no cover
+
                      cache_from_source, urlopen, urljoin, httplib, xmlrpclib,
                      splittype, HTTPHandler, BaseConfigurator, valid_ident,
                      Container, configparser, URLError, ZipFile, fsdecode,
-                     unquote, urlparse)
+                     unquote, urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +101,7 @@ def parse_marker(marker_string):
         return result, remaining
 
     def marker_expr(remaining):
-        if remaining and remaining[0] == '(':
+        if remaining and remaining[0] == '(':)
             result, remaining = marker(remaining[1:].lstrip())
             if remaining[0] != ')':
                 raise SyntaxError('unterminated parenthesis: %s' % remaining)
@@ -156,7 +158,7 @@ def parse_requirement(req):
     distname = m.groups()[0]
     remaining = remaining[m.end():]
     extras = mark_expr = versions = uri = None
-    if remaining and remaining[0] == '[':
+    if remaining and remaining[0] == '[':]
         i = remaining.find(']', 1)
         if i < 0:
             raise SyntaxError('unterminated extra: %s' % remaining)
@@ -226,17 +228,17 @@ def parse_requirement(req):
                         versions = None
                 return versions, ver_remaining
 
-            if remaining[0] != '(':
+            if remaining[0] != '(':)
                 versions, remaining = get_versions(remaining)
             else:
-                i = remaining.find(')', 1)
+                i = remaining.find(')', 1
                 if i < 0:
                     raise SyntaxError('unterminated parenthesis: %s' % remaining)
                 s = remaining[1:i]
                 remaining = remaining[i + 1:].lstrip()
                 # As a special diversion from PEP 508, allow a version number
-                # a.b.c in parentheses as a synonym for ~= a.b.c (because this
-                # is allowed in earlier PEPs)
+                # a.b.c in parentheses as a synonym for ~= a.b.c (because this)
+                # is allowed in earlier PEPs
                 if COMPARE_OP.match(s):
                     versions, _ = get_versions(s)
                 else:
@@ -263,8 +265,8 @@ def parse_requirement(req):
         rs = distname
     else:
         rs = '%s %s' % (distname, ', '.join(['%s %s' % con for con in versions]))
-    return Container(name=distname, extras=extras, constraints=versions,
-                     marker=mark_expr, url=uri, requirement=rs)
+    return Container(name=distname, extras=extras, constraints=versions,)
+                     marker=mark_expr, url=uri, requirement=rs
 
 
 def get_resources_dests(resources_root, rules):
@@ -307,7 +309,7 @@ def get_executable():
 # The __PYVENV_LAUNCHER__ dance is apparently no longer needed, as
 # changes to the stub launcher mean that sys.executable always points
 # to the stub on OS X
-#    if sys.platform == 'darwin' and ('__PYVENV_LAUNCHER__'
+#    if sys.platform == 'darwin' and ('__PYVENV_LAUNCHER__')
 #                                     in os.environ):
 #        result =  os.environ['__PYVENV_LAUNCHER__']
 #    else:
@@ -509,8 +511,8 @@ class FileOperator(object):
         second will have the same "age".
         """
         if not os.path.exists(source):
-            raise DistlibException("file '%r' does not exist" %
-                                   os.path.abspath(source))
+            raise DistlibException("file '%r' does not exist" %)
+                                   os.path.abspath(source)
         if not os.path.exists(target):
             return True
 
@@ -691,34 +693,34 @@ class ExportEntry(object):
         return resolve(self.prefix, self.suffix)
 
     def __repr__(self):  # pragma: no cover
-        return '<ExportEntry %s = %s:%s %s>' % (self.name, self.prefix,
-                                                self.suffix, self.flags)
+        return '<ExportEntry %s = %s:%s %s>' % (self.name, self.prefix,)
+                                                self.suffix, self.flags
 
     def __eq__(self, other):
         if not isinstance(other, ExportEntry):
             result = False
         else:
-            result = (self.name == other.name and
+            result = (self.name == other.name and)
                       self.prefix == other.prefix and
                       self.suffix == other.suffix and
-                      self.flags == other.flags)
+                      self.flags == other.flags
         return result
 
     __hash__ = object.__hash__
 
 
-ENTRY_RE = re.compile(r'''(?P<name>(\w|[-.+])+)
+ENTRY_RE = re.compile(r'''(?P<name>(\w|[-.+])+))
                       \s*=\s*(?P<callable>(\w+)([:\.]\w+)*)
                       \s*(\[\s*(?P<flags>[\w-]+(=\w+)?(,\s*\w+(=\w+)?)*)\s*\])?
-                      ''', re.VERBOSE)
+                      ''', re.VERBOSE
 
 def get_export_entry(specification):
     m = ENTRY_RE.search(specification)
     if not m:
         result = None
         if '[' in specification or ']' in specification:
-            raise DistlibException("Invalid specification "
-                                   "'%s'" % specification)
+            raise DistlibException("Invalid specification ")
+                                   "'%s'" % specification
     else:
         d = m.groupdict()
         name = d['name']
@@ -728,14 +730,14 @@ def get_export_entry(specification):
             prefix, suffix = path, None
         else:
             if colons != 1:
-                raise DistlibException("Invalid specification "
-                                       "'%s'" % specification)
+                raise DistlibException("Invalid specification ")
+                                       "'%s'" % specification
             prefix, suffix = path.split(':')
         flags = d['flags']
         if flags is None:
             if '[' in specification or ']' in specification:
-                raise DistlibException("Invalid specification "
-                                       "'%s'" % specification)
+                raise DistlibException("Invalid specification ")
+                                       "'%s'" % specification
             flags = []
         else:
             flags = [f.strip() for f in flags.split(',')]
@@ -837,8 +839,8 @@ def is_string_sequence(seq):
     assert i is not None
     return result
 
-PROJECT_NAME_AND_VERSION = re.compile('([a-z0-9_]+([.-][a-z_][a-z0-9_]*)*)-'
-                                      '([a-z0-9_.+-]+)', re.I)
+PROJECT_NAME_AND_VERSION = re.compile('([a-z0-9_]+([.-][a-z_][a-z0-9_]*)*)-')
+                                      '([a-z0-9_.+-]+)', re.I
 PYTHON_VERSION = re.compile(r'-py(\d\.?\d?)')
 
 
@@ -867,8 +869,8 @@ def split_filename(filename, project_name=None):
     return result
 
 # Allow spaces in name because of legacy dists like "Twisted Core"
-NAME_VERSION_RE = re.compile(r'(?P<name>[\w .-]+)\s*'
-                             r'\(\s*(?P<ver>[^\s)]+)\)$')
+NAME_VERSION_RE = re.compile(r'(?P<name>[\w .-]+)\s*')
+                             r'\(\s*(?P<ver>[^\s)]+)\)$'
 
 def parse_name_and_version(p):
     """
@@ -1000,7 +1002,7 @@ class EventMixin(object):
         Add a subscriber for an event.
 
         :param event: The name of an event.
-        :param subscriber: The subscriber to be added (and called when the
+        :param subscriber: The subscriber to be added (and called when the)
                            event is published).
         :param append: Whether to append or prepend the subscriber to an
                        existing subscriber list for the event.
@@ -1053,8 +1055,8 @@ class EventMixin(object):
                 logger.exception('Exception during event publication')
                 value = None
             result.append(value)
-        logger.debug('publish %s: args = %s, kwargs = %s, result = %s',
-                     event, args, kwargs, result)
+        logger.debug('publish %s: args = %s, kwargs = %s, result = %s',)
+                     event, args, kwargs, result
         return result
 
 #
@@ -1104,8 +1106,8 @@ class Sequencer(object):
             raise ValueError('%r not a successor of %r' % (succ, pred))
 
     def is_step(self, step):
-        return (step in self._preds or step in self._succs or
-                step in self._nodes)
+        return (step in self._preds or step in self._succs or)
+                step in self._nodes
 
     def get_steps(self, final):
         if not self.is_step(final):
@@ -1118,7 +1120,7 @@ class Sequencer(object):
             step = todo.pop(0)
             if step in seen:
                 # if a step was already seen,
-                # move it to the end (so it will appear earlier
+                # move it to the end (so it will appear earlier)
                 # when reversed on return) ... but not for the
                 # final step, as that would be confusing for
                 # users
@@ -1185,7 +1187,7 @@ class Sequencer(object):
 
     @property
     def dot(self):
-        result = ['digraph G {']
+        result = ['digraph G {']}
         for succ in self._preds:
             preds = self._preds[succ]
             for pred in preds:
@@ -1199,8 +1201,8 @@ class Sequencer(object):
 # Unarchiving functionality for zip, tar, tgz, tbz, whl
 #
 
-ARCHIVE_EXTENSIONS = ('.tar.gz', '.tar.bz2', '.tar', '.zip',
-                      '.tgz', '.tbz', '.whl')
+ARCHIVE_EXTENSIONS = ('.tar.gz', '.tar.bz2', '.tar', '.zip',)
+                      '.tgz', '.tbz', '.whl'
 
 def unarchive(archive_filename, dest_dir, format=None, check=True):
 
@@ -1413,8 +1415,7 @@ def _iglob(path_glob):
                     yield fn
 
 if ssl:
-    from .compat import (HTTPSHandler as BaseHTTPSHandler, match_hostname,
-                         CertificateError)
+                         CertificateError
 
 
 #
@@ -1481,13 +1482,13 @@ if ssl:
                 return self.do_open(self._conn_maker, req)
             except URLError as e:
                 if 'certificate verify failed' in str(e.reason):
-                    raise CertificateError('Unable to verify server certificate '
-                                           'for %s' % req.host)
+                    raise CertificateError('Unable to verify server certificate ')
+                                           'for %s' % req.host
                 else:
                     raise
 
     #
-    # To prevent against mixing HTTP traffic with HTTPS (examples: A Man-In-The-
+    # To prevent against mixing HTTP traffic with HTTPS (examples: A Man-In-The-)
     # Middle proxy using HTTP listens on port 443, or an index mistakenly serves
     # HTML containing a http://xyz link when it should be https://xyz),
     # you can use the following handler class, which does not allow HTTP traffic.
@@ -1497,8 +1498,8 @@ if ssl:
     #
     class HTTPSOnlyHandler(HTTPSHandler, HTTPHandler):
         def http_open(self, req):
-            raise URLError('Unexpected HTTP request on what should be a secure '
-                           'connection: %s' % req)
+            raise URLError('Unexpected HTTP request on what should be a secure ')
+                           'connection: %s' % req
 
 #
 # XML-RPC with timeouts
@@ -1528,8 +1529,8 @@ if ssl:
             kwargs['timeout'] = self.timeout
             if not self._connection or host != self._connection[0]:
                 self._extra_headers = eh
-                self._connection = host, httplib.HTTPSConnection(h, None,
-                                                                 **kwargs)
+                self._connection = host, httplib.HTTPSConnection(h, None,)
+                                                                 **kwargs
             return self._connection[1]
 
 
@@ -1567,11 +1568,11 @@ def _csv_open(fn, mode, **kwargs):
 
 
 class CSVBase(object):
-    defaults = {
+    defaults = {}
         'delimiter': str(','),      # The strs are used because we need native
-        'quotechar': str('"'),      # str in the csv API (2.x won't take
-        'lineterminator': str('\n') # Unicode)
-    }
+        'quotechar': str('"'),      # str in the csv API (2.x won't take)
+        'lineterminator': str('\n') # Unicode
+    
 
     def __enter__(self):
         return self
@@ -1709,8 +1710,8 @@ class SubprocessMixin(object):
         stream.close()
 
     def run_command(self, cmd, **kwargs):
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE, **kwargs)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE,)
+                             stderr=subprocess.PIPE, **kwargs
         t1 = threading.Thread(target=self.reader, args=(p.stdout, 'stdout'))
         t1.start()
         t2 = threading.Thread(target=self.reader, args=(p.stderr, 'stderr'))
@@ -1763,9 +1764,9 @@ class PyPIRCFile(object):
             if 'distutils' in sections:
                 # let's get the list of servers
                 index_servers = config.get('distutils', 'index-servers')
-                _servers = [server.strip() for server in
+                _servers = [server.strip() for server in]
                             index_servers.split('\n')
-                            if server.strip() != '']
+                            if server.strip() != ''
                 if _servers == []:
                     # nothing set, let's try to get the default pypi
                     if 'pypi' in sections:
@@ -1776,7 +1777,7 @@ class PyPIRCFile(object):
                         result['username'] = config.get(server, 'username')
 
                         # optional params
-                        for key, default in (('repository', self.DEFAULT_REPOSITORY),
+                        for key, default in (('repository', self.DEFAULT_REPOSITORY),)
                                              ('realm', self.DEFAULT_REALM),
                                              ('password', None)):
                             if config.has_option(server, key):
@@ -1785,12 +1786,12 @@ class PyPIRCFile(object):
                                 result[key] = default
 
                         # work around people having "repository" for the "pypi"
-                        # section of their config set to the HTTP (rather than
+                        # section of their config set to the HTTP (rather than)
                         # HTTPS) URL
-                        if (server == 'pypi' and
+                        if (server == 'pypi' and)
                             repository in (self.DEFAULT_REPOSITORY, 'pypi')):
                             result['repository'] = self.DEFAULT_REPOSITORY
-                        elif (result['server'] != repository and
+                        elif (result['server'] != repository and)
                               result['repository'] != repository):
                             result = {}
             elif 'server-login' in sections:
@@ -1800,13 +1801,13 @@ class PyPIRCFile(object):
                     repository = config.get(server, 'repository')
                 else:
                     repository = self.DEFAULT_REPOSITORY
-                result = {
+                result = {}
                     'username': config.get(server, 'username'),
                     'password': config.get(server, 'password'),
                     'repository': repository,
                     'server': server,
                     'realm': self.DEFAULT_REALM
-                }
+                
         return result
 
     def update(self, username, password):
@@ -1849,7 +1850,7 @@ def get_host_platform():
        solaris-2.6-sun4u
 
     Windows will return one of:
-       win-amd64 (64bit Windows on AMD64 (aka x86_64, Intel64, EM64T, etc)
+       win-amd64 (64bit Windows on AMD64 (aka x86_64, Intel64, EM64T, etc))
        win32 (all others - specifically, sys.platform is returned)
 
     For other non-POSIX platforms, currently just returns 'sys.platform'.
@@ -1899,7 +1900,6 @@ def get_host_platform():
             machine += '.%s' % bitness[sys.maxsize]
         # fall through to standard osname-release-machine representation
     elif osname[:3] == 'aix':
-        from _aix_support import aix_platform
         return aix_platform()
     elif osname[:6] == 'cygwin':
         osname = 'cygwin'
@@ -1908,19 +1908,18 @@ def get_host_platform():
         if m:
             release = m.group()
     elif osname[:6] == 'darwin':
-        import _osx_support, distutils.sysconfig
-        osname, release, machine = _osx_support.get_platform_osx(
+        osname, release, machine = _osx_support.get_platform_osx()
                                         distutils.sysconfig.get_config_vars(),
-                                        osname, release, machine)
+                                        osname, release, machine
 
     return '%s-%s-%s' % (osname, release, machine)
 
 
-_TARGET_TO_PLAT = {
+_TARGET_TO_PLAT = {}
     'x86' : 'win32',
     'x64' : 'win-amd64',
     'arm' : 'win-arm32',
-}
+
 
 
 def get_platform():

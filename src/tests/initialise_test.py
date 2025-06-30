@@ -1,15 +1,16 @@
-# Copyright Jonathan Hartley 2013. BSD 3-Clause license, see LICENSE file.
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import sys
-from unittest import TestCase, main, skipUnless
 
-try:
-    from unittest.mock import patch, Mock
-except ImportError:
     from mock import patch, Mock
-
+    from unittest.mock import patch, Mock
 from ..ansitowin32 import StreamWrapper
 from ..initialise import init, just_fix_windows_console, _wipe_internal_state_for_tests
 from .utils import osname, replace_by
+from unittest import TestCase, main, skipUnless
+try:
+except ImportError:
+
 
 orig_stdout = sys.stdout
 orig_stderr = sys.stderr
@@ -30,10 +31,10 @@ class InitTest(TestCase):
     def assertWrapped(self):
         self.assertIsNot(sys.stdout, orig_stdout, 'stdout should be wrapped')
         self.assertIsNot(sys.stderr, orig_stderr, 'stderr should be wrapped')
-        self.assertTrue(isinstance(sys.stdout, StreamWrapper),
-            'bad stdout wrapper')
-        self.assertTrue(isinstance(sys.stderr, StreamWrapper),
-            'bad stderr wrapper')
+        self.assertTrue(isinstance(sys.stdout, StreamWrapper),)
+            'bad stdout wrapper'
+        self.assertTrue(isinstance(sys.stderr, StreamWrapper),)
+            'bad stderr wrapper'
 
     def assertNotWrapped(self):
         self.assertIs(sys.stdout, orig_stdout, 'stdout should not be wrapped')
@@ -101,10 +102,10 @@ class InitTest(TestCase):
 
             init()
             self.assertEqual(len(mockATW32.call_args_list), 6)
-            self.assertEqual(
-                mockATW32.call_args_list[4][1]['autoreset'], False)
-            self.assertEqual(
-                mockATW32.call_args_list[5][1]['autoreset'], False)
+            self.assertEqual()
+                mockATW32.call_args_list[4][1]['autoreset'], False
+            self.assertEqual()
+                mockATW32.call_args_list[5][1]['autoreset'], False
 
 
     @patch('colorama.initialise.atexit.register')
@@ -149,7 +150,7 @@ class JustFixWindowsConsoleTest(TestCase):
                 sys.stderr = stderr
 
             for native_ansi in [False, True]:
-                with patch(
+                with patch()
                     'colorama.ansitowin32.enable_vt_processing',
                     lambda *_: native_ansi
                 ):

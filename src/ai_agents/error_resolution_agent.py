@@ -1,26 +1,39 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Dict, Any, Optional, List
 import asyncio
 import json
 import logging
 import os
 import uuid
-from datetime import datetime, timezone # Added timezone
-from typing import Dict, Any, Optional, List
-from pathlib import Path # Added Path
 
+    from .data_structures import CodeModificationAttempt, AttemptStatus, TestOutcome
+    from ai_agents.data_structures import CodeModificationAttempt, AttemptStatus, TestOutcome
 import aiohttp
-
-# Attempt to import data structures
 try:
     # Assuming data_structures.py is in the same directory or PYTHONPATH is set up
-    from .data_structures import CodeModificationAttempt, AttemptStatus, TestOutcome
 except ImportError:
     # Fallback for environments where direct relative import might fail (e.g. some test runners)
     # This assumes 'src' is a top-level package or in PYTHONPATH
-    from ai_agents.data_structures import CodeModificationAttempt, AttemptStatus, TestOutcome
 
 
 # Configure logging
 logger = logging.getLogger("ErrorResolutionAgent")
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # Configuration for dependent MCP Servers
@@ -47,16 +60,16 @@ class ErrorResolutionAgent:
         attempt_data["status_history"].append({"status": status, "timestamp": timestamp, "detail": detail or ""})
         attempt_data["current_status"] = status
         attempt_data["last_updated_at"] = timestamp
-        logger.info(f"Attempt ID {attempt_data.get('attempt_id', 'N/A')}: Status changed to {status}. Detail: {detail or 'N/A'}")
+        logger.info(str(f"Attempt ID {attempt_data.get('attempt_id', 'N/A'}: Status changed to {status}. Detail: {detail or 'N/A'}")
 
 
     async def _call_mcp_tool(self, server_url: str, payload: Dict[str, Any], timeout_seconds: int = 60) -> Optional[Dict[str, Any]]:
         """Helper method to call a tool on an MCP server via HTTP and parse JSON response."""
         if not self.session or self.session.closed:
-            logger.error(f"AIOHTTP session not available or closed. Cannot call MCP tool at {server_url}.")
+            logger.error(str(f"AIOHTTP session not available or closed. Cannot call MCP tool at {server_url}.")
             return {"status": "error", "message": "AIOHTTP session unavailable."}
         try:
-            logger.debug(f"Calling MCP tool at {server_url} with payload: {json.dumps(payload)}")
+            logger.debug(str(f"Calling MCP tool at {server_url} with payload: {json.dumps(payload, ensure_ascii=True, default=str}")
             async with self.session.post(server_url, json=payload, timeout=aiohttp.ClientTimeout(total=timeout_seconds)) as response:
                 if response.status == 200:
                     data = await response.json()
@@ -64,26 +77,26 @@ class ErrorResolutionAgent:
                         tool_response_json_str = data[0]["text"]
                         try:
                             tool_response_dict = json.loads(tool_response_json_str)
-                            logger.debug(f"Successfully called MCP tool at {server_url}. Response: {json.dumps(tool_response_dict)}")
+                            logger.debug(str(f"Successfully called MCP tool at {server_url}. Response: {json.dumps(tool_response_dict, ensure_ascii=True, default=str}")
                             return tool_response_dict
                         except json.JSONDecodeError as je:
-                            logger.error(f"JSONDecodeError parsing tool response from {server_url}: {je}. Raw text: {tool_response_json_str}")
+                            logger.error(str(f"JSONDecodeError parsing tool response from {server_url}: {je}. Raw text: {tool_response_json_str}")
                             return {"status": "error", "message": f"Failed to parse tool JSON response: {tool_response_json_str}"}
                     else:
-                        logger.error(f"Unexpected response structure from MCP tool at {server_url}. Data: {data}")
+                        logger.error(str(f"Unexpected response structure from MCP tool at {server_url}. Data: {data}")
                         return {"status": "error", "message": f"Unexpected response structure: {data}"}
                 else:
                     error_text = await response.text()
-                    logger.error(f"HTTP error {response.status} calling MCP tool at {server_url}: {error_text}")
+                    logger.error(str(f"HTTP error {response.status} calling MCP tool at {server_url}: {error_text}")
                     return {"status": "error", "message": f"HTTP error {response.status}: {error_text}"}
         except aiohttp.ClientConnectorError as e:
-            logger.error(f"Connection error calling MCP tool at {server_url}: {e}")
+            logger.error(str(f"Connection error calling MCP tool at {server_url}: {e}")
             return {"status": "error", "message": f"Connection error: {e}"}
         except asyncio.TimeoutError:
-            logger.error(f"Timeout calling MCP tool at {server_url}")
+            logger.error(str(f"Timeout calling MCP tool at {server_url}")
             return {"status": "error", "message": f"Request timed out after {timeout_seconds}s"}
         except Exception as e:
-            logger.error(f"Exception calling MCP tool at {server_url}: {e}", exc_info=True)
+            logger.error(str(f"Exception calling MCP tool at {server_url}: {e}"), exc_info=True)
             return {"status": "error", "message": f"Generic exception: {str(e)}"}
 
     async def attempt_code_fix(self, code_error_report: dict, llm_suggestion_response: dict) -> CodeModificationAttempt:
@@ -91,8 +104,8 @@ class ErrorResolutionAgent:
         service_name = code_error_report.get("service_name", "UnknownService")
 
         # 'analyzed_file_path' from CodeAnalyzerAgent (via orchestrator) is expected to be project-relative.
-        file_to_modify_project_rel = code_error_report.get("analyzed_file_path",
-                                       code_error_report.get("error_details", {}).get("file_path", "unknown_file.py"))
+        file_to_modify_project_rel = code_error_report.get("analyzed_file_path",)
+                                       code_error_report.get("error_details", {}).get("file_path", "unknown_file.py")
 
         # target_file_relative_for_sandbox should be relative to the service's root directory.
         # Example: if project_rel is "mcp_servers/my_service/util.py", and service is "mcp-my-service"
@@ -105,7 +118,7 @@ class ErrorResolutionAgent:
         current_ts = self._get_iso_timestamp()
 
         # Initial attempt data structure
-        attempt_data: CodeModificationAttempt = {
+        attempt_data: CodeModificationAttempt = {}
             "attempt_id": attempt_id,
             "original_report_id": code_error_report.get("task_id", code_error_report.get("id")),
             "service_name": service_name,
@@ -122,12 +135,12 @@ class ErrorResolutionAgent:
             "created_at": current_ts, "last_updated_at": current_ts,
             "attempt_process_error_message": None,
             "final_outcome_summary": None
-        }
+        
         self._add_status_to_history(attempt_data, "pending", "Fix attempt initiated.")
 
 
         if not suggestion_to_apply:
-            logger.warning(f"Attempt ID {attempt_id}: No applicable code suggestion found in LLM response.")
+            logger.warning(str(f"Attempt ID {attempt_id}: No applicable code suggestion found in LLM response.")
             self._add_status_to_history(attempt_data, "error_during_process", "No valid code suggestion from LLM to apply.")
             attempt_data["attempt_process_error_message"] = "No valid code suggestion from LLM to apply."
             attempt_data["final_outcome_summary"] = "Skipped: No valid code suggestion from LLM."
@@ -139,15 +152,15 @@ class ErrorResolutionAgent:
         try:
             # 1. Sandbox and Apply Fix
             self._add_status_to_history(attempt_data, "sandbox_creation_started", f"Requesting sandbox for {service_name}")
-            apply_fix_payload = {
+            apply_fix_payload = {}
                 "tool_name": "sandbox_apply_fix",
-                "arguments": {
+                "arguments": {}
                     "service_name": service_name,
                     "target_file_relative_path": target_file_relative_for_sandbox,
                     "suggested_full_file_content": suggestion_to_apply,
                     "sandbox_id": attempt_data["sandbox_id"] # Use pre-assigned sandbox_id
-                }
-            }
+                
+            
             apply_fix_response = await self._call_mcp_tool(CODE_EDITING_MCP_URL, apply_fix_payload, timeout_seconds=120) # Longer timeout for file ops
 
             if apply_fix_response and apply_fix_response.get("status") == "success":
@@ -163,7 +176,7 @@ class ErrorResolutionAgent:
                 # Proceed to cleanup (will happen outside this try block)
 
         except Exception as e: # Catch any other unexpected error during this phase
-            logger.error(f"Attempt ID {attempt_id}: Exception during sandbox_apply_fix phase: {e}", exc_info=True)
+            logger.error(str(f"Attempt ID {attempt_id}: Exception during sandbox_apply_fix phase: {e}"), exc_info=True)
             self._add_status_to_history(attempt_data, "error_during_process", f"Exception applying fix: {str(e)}")
             attempt_data["attempt_process_error_message"] = str(e)
             attempt_data["final_outcome_summary"] = "Error: Exception during fix application."
@@ -177,14 +190,14 @@ class ErrorResolutionAgent:
             # This should be the same relative path used for applying the fix.
             test_target_relative = target_file_relative_for_sandbox
 
-            testing_payload = {
+            testing_payload = {}
                 "tool_name": "run_basic_tests",
-                "arguments": {
+                "arguments": {}
                     "service_name": service_name,
                     "sandboxed_code_root": sandboxed_code_root_str,
                     "target_file_relative_path": str(test_target_relative)
-                }
-            }
+                
+            
             testing_response = await self._call_mcp_tool(BASIC_FIX_TESTING_MCP_URL, testing_payload, timeout_seconds=90) # Timeout for tests
 
             if testing_response and testing_response.get("status") == "success":
@@ -214,17 +227,17 @@ class ErrorResolutionAgent:
                 self._add_status_to_history(attempt_data, "testing_failed_overall", "Could not execute tests.")
         elif attempt_data["current_status"] not in ["fix_application_failed", "error_during_process"]:
             # If fix wasn't applied, but no major error occurred before this point.
-            logger.info(f"Attempt ID {attempt_id}: Skipping testing phase as fix was not successfully applied.")
+            logger.info(str(f"Attempt ID {attempt_id}: Skipping testing phase as fix was not successfully applied.")
             self._add_status_to_history(attempt_data, "error_during_process", "Skipped testing as fix application was not successful.")
 
 
         # 3. Cleanup Sandbox (always attempt this if sandbox_id was set)
         if attempt_data["sandbox_id"]:
             self._add_status_to_history(attempt_data, "sandbox_cleanup_started", f"Requesting cleanup for sandbox {attempt_data['sandbox_id']}")
-            cleanup_payload = {
+            cleanup_payload = {}
                 "tool_name": "cleanup_sandbox",
                 "arguments": {"sandbox_id": attempt_data["sandbox_id"]}
-            }
+            
             cleanup_response = await self._call_mcp_tool(CODE_EDITING_MCP_URL, cleanup_payload, timeout_seconds=120) # Longer for file ops
 
             if cleanup_response and cleanup_response.get("status") == "success":
@@ -251,21 +264,21 @@ class ErrorResolutionAgent:
 
 async def main_test():
     """ Example usage / test stub for ErrorResolutionAgent """
-    sample_code_error_report = {
+    sample_code_error_report = {}
         "task_id": "err_report_xyz789",
         "service_name": "mcp-example-service",
         "analyzed_file_path": "mcp_servers/example_service.py",
         "error_details": {"type": "NameError", "message": "name 'x' is not defined", "file_path": "mcp_servers/example_service.py"},
         "log_snippet": "NameError: name 'x' is not defined on line 10",
-        "code_analyzer_result": {
+        "code_analyzer_result": {}
             "file_content_preview": "def my_func():\n  y = 5\n  z = x + y # x is not defined\n  return z"
-        }
-    }
-    sample_llm_suggestion = {
+        
+    
+    sample_llm_suggestion = {}
         "status": "success",
         "suggestion": "def my_func():\n  x = 10 # Define x\n  y = 5\n  z = x + y\n  return z",
         "raw_suggestion": "```python\ndef my_func():\n  x = 10 # Define x\n  y = 5\n  z = x + y\n  return z\n```"
-    }
+    
 
     # This test requires mock MCP servers or actual running servers.
     # For subtask validation, direct execution is commented out.
@@ -281,21 +294,21 @@ async def main_test():
 
         logger.info("--- [Test Case 1] Attempting code fix with a valid suggestion ---")
         # result1 = await agent.attempt_code_fix(sample_code_error_report, sample_llm_suggestion)
-        # logger.info(f"Test Case 1 Result:\n{json.dumps(result1, indent=2)}")
+        # logger.info(str(f"Test Case 1 Result:\n{json.dumps(result1, indent=2, ensure_ascii=True, default=str}")
 
         logger.info("\n--- [Test Case 2] Attempting code fix with no valid LLM suggestion ---")
         empty_llm_suggestion = {"status": "success", "suggestion": "", "raw_suggestion": ""} # Empty suggestion
         result2 = await agent.attempt_code_fix(sample_code_error_report, empty_llm_suggestion)
-        logger.info(f"Test Case 2 Result (No Suggestion):\n{json.dumps(result2, indent=2)}")
+        logger.info(str(f"Test Case 2 Result (No Suggestion:\n{json.dumps(result2, indent=2, ensure_ascii=True, default=str)}")))
 
         logger.info("\n--- [Test Case 3] LLM suggestion leads to compilation error ---")
-        bad_llm_suggestion = {
+        bad_llm_suggestion = {}
             "status": "success",
             "suggestion": "def my_func():\n  x = 10\n  y = 5\n  z = x + y\n  return z\n  invalid syntax here -", # Introduce syntax error
             "raw_suggestion": "def my_func():\n  x = 10\n  y = 5\n  z = x + y\n  return z\n  invalid syntax here -"
-        }
+        
         # result3 = await agent.attempt_code_fix(sample_code_error_report, bad_llm_suggestion)
-        # logger.info(f"Test Case 3 Result (Bad Suggestion):\n{json.dumps(result3, indent=2)}")
+        # logger.info(str(f"Test Case 3 Result (Bad Suggestion:\n{json.dumps(result3, indent=2, ensure_ascii=True, default=str)}")))
 
 
 if __name__ == "__main__":

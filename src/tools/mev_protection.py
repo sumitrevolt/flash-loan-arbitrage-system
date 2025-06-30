@@ -1,24 +1,21 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Dict, Any
+import logging
+
+from src.utils.web3_provider import Web3
 """
 MEV Protection for Flash Loan Arbitrage System.
 Protects transactions from front-running and sandwich attacks.
 """
 # Import requires_web3 decorator from central provider
-from src.utils.web3_provider import requires_web3
 
 
-import logging
-from typing import Dict, Any, Optional
 # Import from central web3_provider
-from src.utils.web3_provider import Web3, WEB3_IMPORTED
-from web3.types import TxParams, Wei, ChecksumAddress
 # Import exceptions from central provider
-from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
 # Import middleware from centralized modules
-from src.utils.middleware_compat import apply_poa_middleware
 
-import logging
 logger = logging.getLogger(__name__)
-import time
 
 class MEVProtection:
     """Provides MEV protection for transactions."""

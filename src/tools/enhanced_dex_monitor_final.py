@@ -1,22 +1,37 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from typing import Dict, List, Tuple, Optional
+import json
+import logging
+import math
+import threading
+import time
+
+from flask import Flask, jsonify
+from flask_cors import CORS
+import requests
 """
 Enhanced DEX Monitor with Real-time Advanced Calculations
 Real-time DEX price monitoring with sophisticated arbitrage analysis
 Port 8006 - Enhanced DEX Monitor with Advanced Calculations
 """
 
-import time
-import json
-import requests
-from datetime import datetime, timedelta
-from flask import Flask, jsonify
-from flask_cors import CORS
-import logging
-import threading
-from typing import Dict, List, Tuple, Optional
-import math
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -41,7 +56,7 @@ class EnhancedDEXCalculator:
         impact_factor = min(trade_size / liquidity, 0.20)  # Cap at 20%
         return round(impact_factor, 4)
     
-    def calculate_confidence_score(self, price_spread: float, liquidity_ratio: float, 
+    def calculate_confidence_score(self, price_spread: float, liquidity_ratio: float, )
                                  volatility: float, data_age: float) -> float:
         """Calculate confidence score (0-1) for arbitrage opportunity"""
         # Base confidence from spread size
@@ -57,10 +72,10 @@ class EnhancedDEXCalculator:
         freshness = max(0, 1.0 - (data_age / 60.0))  # Penalty after 60 seconds
         
         # Combined confidence score
-        confidence = (spread_confidence * 0.4 + 
+        confidence = (spread_confidence * 0.4 + )
                      liquidity_confidence * 0.3 + 
                      volatility_penalty * 0.2 + 
-                     freshness * 0.1)
+                     freshness * 0.1
         
         return round(max(0, min(1, confidence)), 3)
     
@@ -76,7 +91,7 @@ class EnhancedDEXCalculator:
         
         return round(gas_cost_usd, 4)
     
-    def calculate_optimal_trade_size(self, price_diff: float, liquidity_a: float, 
+    def calculate_optimal_trade_size(self, price_diff: float, liquidity_a: float, )
                                    liquidity_b: float, max_trade_usd: float = 50000) -> float:
         """Calculate optimal trade size considering liquidity and price impact"""
         # Use minimum liquidity as constraint
@@ -93,7 +108,7 @@ class EnhancedDEXCalculator:
         
         return round(max(1000, optimal_size), 2)  # Minimum $1000 trade
     
-    def calculate_roi_metrics(self, gross_profit: float, trade_size: float, 
+    def calculate_roi_metrics(self, gross_profit: float, trade_size: float, )
                             hold_time_minutes: float = 5) -> Dict[str, float]:
         """Calculate comprehensive ROI metrics"""
         if trade_size <= 0:
@@ -110,13 +125,13 @@ class EnhancedDEXCalculator:
         # Profit margin
         profit_margin = (gross_profit / (trade_size + gross_profit)) * 100
         
-        return {
+        return {}
             'roi': round(roi, 2),
             'annualized_roi': round(min(annualized_roi, 10000), 2),  # Cap at 10,000%
             'profit_margin': round(profit_margin, 2)
-        }
+        
     
-    def assess_risk_level(self, confidence: float, price_impact: float, 
+    def assess_risk_level(self, confidence: float, price_impact: float, )
                          liquidity_ratio: float) -> str:
         """Assess overall risk level for the arbitrage opportunity"""
         risk_score = 0
@@ -174,7 +189,7 @@ def fetch_dex_prices():
     
     for token in tokens:
         token_prices = {}
-        base_price = {
+        base_price = {}
             'WETH': 2450.0,
             'USDC': 1.0,
             'WBTC': 67800.0,
@@ -188,12 +203,12 @@ def fetch_dex_prices():
             price = base_price * (1 + variation)
             liquidity = 500000 + (hash(f"liq{token}{dex}") % 2000000)  # $500K-$2.5M
             
-            token_prices[dex] = {
+            token_prices[dex] = {}
                 'price': round(price, 6),
                 'liquidity': liquidity,
                 'volume_24h': liquidity * 0.3,  # 30% turnover
                 'timestamp': time.time()
-            }
+            
         
         new_prices[token] = token_prices
         
@@ -216,9 +231,9 @@ def fetch_dex_prices():
                         liquidity_b = token_prices[dex_b]['liquidity']
                         avg_liquidity = (liquidity_a + liquidity_b) / 2
                         
-                        trade_size = calculator.calculate_optimal_trade_size(
+                        trade_size = calculator.calculate_optimal_trade_size()
                             spread_percent, liquidity_a, liquidity_b
-                        )
+                        
                         
                         price_impact = calculator.calculate_price_impact(trade_size, avg_liquidity)
                         
@@ -232,18 +247,18 @@ def fetch_dex_prices():
                         # Calculate confidence and risk
                         volatility = spread_percent  # Simplified volatility measure
                         data_age = 0  # Fresh data
-                        confidence = calculator.calculate_confidence_score(
+                        confidence = calculator.calculate_confidence_score()
                             spread_percent, avg_liquidity, volatility, data_age
-                        )
                         
-                        risk_level = calculator.assess_risk_level(
+                        
+                        risk_level = calculator.assess_risk_level()
                             confidence, price_impact, avg_liquidity
-                        )
+                        
                         
                         roi_metrics = calculator.calculate_roi_metrics(gross_profit, trade_size)
                         
                         if net_profit > 0:
-                            opportunity = {
+                            opportunity = {}
                                 'token': token,
                                 'dex_a': dex_a,
                                 'dex_b': dex_b,
@@ -264,7 +279,7 @@ def fetch_dex_prices():
                                 'liquidity_a': liquidity_a,
                                 'liquidity_b': liquidity_b,
                                 'timestamp': datetime.now().isoformat()
-                            }
+                            
                             opportunities.append(opportunity)
     
     # Sort opportunities by net profit
@@ -280,7 +295,7 @@ def fetch_dex_prices():
     avg_spread = sum([op['spread_percent'] for op in opportunities]) / max(len(opportunities), 1)
     best_profit = opportunities[0]['net_profit'] if opportunities else 0
     
-    market_metrics = {
+    market_metrics = {}
         'total_opportunities': total_opportunities,
         'profitable_opportunities': profitable_opportunities,
         'success_rate': round((profitable_opportunities / max(total_opportunities, 1)) * 100, 1),
@@ -288,7 +303,7 @@ def fetch_dex_prices():
         'best_profit': round(best_profit, 2),
         'market_efficiency': round(max(0, 100 - avg_spread * 10), 1),
         'last_update': datetime.now().isoformat()
-    }
+    
 
 @app.route('/')
 def index():
@@ -301,15 +316,15 @@ def index():
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { 
+        body { }
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             margin: 0; 
             padding: 20px; 
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #333;
-        }
+        
         .container { max-width: 1400px; margin: 0 auto; }
-        .header { 
+        .header { }
             background: rgba(255,255,255,0.95); 
             color: #333; 
             padding: 30px; 
@@ -317,24 +332,24 @@ def index():
             margin-bottom: 20px; 
             text-align: center;
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        }
+        
         .header h1 { margin: 0; font-size: 2.5em; color: #4a5568; }
         .header p { margin: 10px 0 0 0; color: #718096; font-size: 1.1em; }
         
-        .metrics-grid { 
+        .metrics-grid { }
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
             gap: 20px; 
             margin-bottom: 30px; 
-        }
-        .metric-card { 
+        
+        .metric-card { }
             background: rgba(255,255,255,0.95); 
             padding: 25px; 
             border-radius: 15px; 
             text-align: center;
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             transition: transform 0.3s ease;
-        }
+        
         .metric-card:hover { transform: translateY(-5px); }
         .metric-value { font-size: 2.2em; font-weight: bold; color: #4a5568; margin-bottom: 5px; }
         .metric-label { color: #718096; font-weight: 500; }
@@ -342,95 +357,95 @@ def index():
         .metric-warning { color: #ed8936; }
         .metric-info { color: #4299e1; }
         
-        .opportunities-section { 
+        .opportunities-section { }
             background: rgba(255,255,255,0.95); 
             padding: 30px; 
             border-radius: 15px; 
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        }
-        .section-title { 
+        
+        .section-title { }
             font-size: 1.8em; 
             color: #4a5568; 
             margin-bottom: 25px; 
             display: flex;
             align-items: center;
             gap: 10px;
-        }
         
-        .opportunity { 
+        
+        .opportunity { }
             border: 2px solid #e2e8f0; 
             border-radius: 12px; 
             padding: 20px; 
             margin: 15px 0; 
             transition: all 0.3s ease;
-        }
+        
         .opportunity:hover { transform: translateX(5px); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
         .opportunity.high-profit { border-color: #48bb78; background: rgba(72, 187, 120, 0.05); }
         .opportunity.medium-profit { border-color: #ed8936; background: rgba(237, 137, 54, 0.05); }
         .opportunity.low-profit { border-color: #a0aec0; background: rgba(160, 174, 192, 0.05); }
         
-        .opportunity-header { 
+        .opportunity-header { }
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
             margin-bottom: 15px; 
-        }
+        
         .token-pair { font-size: 1.3em; font-weight: bold; color: #4a5568; }
-        .profit-badge { 
+        .profit-badge { }
             background: #48bb78; 
             color: white; 
             padding: 8px 16px; 
             border-radius: 20px; 
             font-weight: bold; 
             font-size: 0.9em;
-        }
         
-        .calculation-grid { 
+        
+        .calculation-grid { }
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
             gap: 20px; 
             margin-top: 15px;
-        }
-        .calc-section { 
+        
+        .calc-section { }
             background: #f7fafc; 
             padding: 15px; 
             border-radius: 8px; 
-        }
+        
         .calc-title { font-weight: bold; color: #4a5568; margin-bottom: 10px; }
-        .calc-row { 
+        .calc-row { }
             display: flex; 
             justify-content: space-between; 
             margin: 5px 0; 
             padding: 2px 0;
-        }
+        
         .calc-label { color: #718096; }
         .calc-value { font-weight: 500; color: #4a5568; }
         
-        .risk-indicator { 
+        .risk-indicator { }
             padding: 4px 12px; 
             border-radius: 15px; 
             font-size: 0.8em; 
             font-weight: bold; 
-        }
+        
         .risk-low { background: #c6f6d5; color: #22543d; }
         .risk-medium { background: #feebc8; color: #7b341e; }
         .risk-high { background: #fed7d7; color: #742a2a; }
         
-        .confidence-bar { 
+        .confidence-bar { }
             width: 100%; 
             height: 6px; 
             background: #e2e8f0; 
             border-radius: 3px; 
             overflow: hidden;
             margin: 5px 0;
-        }
-        .confidence-fill { 
+        
+        .confidence-fill { }
             height: 100%; 
             background: linear-gradient(90deg, #48bb78, #38a169); 
             transition: width 0.3s ease;
-        }
         
-        .status-bar { 
+        
+        .status-bar { }
             background: rgba(72, 187, 120, 0.1); 
             border: 1px solid #48bb78; 
             color: #22543d; 
@@ -439,10 +454,10 @@ def index():
             margin-bottom: 20px; 
             text-align: center;
             font-weight: 500;
-        }
+        
         
         .loading { text-align: center; padding: 40px; color: #718096; }
-        .refresh-btn { 
+        .refresh-btn { }
             background: #4299e1; 
             color: white; 
             border: none; 
@@ -451,20 +466,20 @@ def index():
             cursor: pointer; 
             font-weight: 500;
             transition: background 0.3s ease;
-        }
+        
         .refresh-btn:hover { background: #3182ce; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 Enhanced DEX Monitor</h1>
+            <h1>[INIT] Enhanced DEX Monitor</h1>
             <p>Real-time DEX Price Monitoring with Advanced Arbitrage Calculations</p>
         </div>
         
         <div class="status-bar">
-            ✅ Enhanced Monitoring Active - Real-time calculations with advanced risk analysis
-            <button class="refresh-btn" onclick="refreshData()" style="margin-left: 20px;">🔄 Refresh</button>
+            [OK] Enhanced Monitoring Active - Real-time calculations with advanced risk analysis
+            <button class="refresh-btn" onclick="refreshData()" style="margin-left: 20px;">[SYNC] Refresh</button>
         </div>
         
         <div class="metrics-grid" id="metrics">
@@ -483,15 +498,15 @@ def index():
     </div>
 
     <script>
-        function refreshData() {
+        function refreshData() {}
             loadMetrics();
             loadOpportunities();
-        }
+        
 
-        function loadMetrics() {
+        function loadMetrics() {}
             fetch('/api/metrics')
                 .then(response => response.json())
-                .then(data => {
+                .then(data => {)}
                     const metricsHtml = `
                         <div class="metric-card">
                             <div class="metric-value metric-success">${data.profitable_opportunities}</div>
@@ -515,23 +530,23 @@ def index():
                         </div>
                     `;
                     document.getElementById('metrics').innerHTML = metricsHtml;
-                })
-                .catch(error => {
+                
+                .catch(error => {)}
                     console.error('Error loading metrics:', error);
                 });
-        }
+        
 
-        function loadOpportunities() {
+        function loadOpportunities() {}
             fetch('/api/opportunities')
                 .then(response => response.json())
-                .then(data => {
-                    if (data.length === 0) {
+                .then(data => {)}
+                    if (data.length === 0) {}
                         document.getElementById('opportunities').innerHTML = 
                             '<div class="loading">No profitable arbitrage opportunities found at the moment.</div>';
                         return;
-                    }
+                    
 
-                    const opportunitiesHtml = data.map(op => {
+                    const opportunitiesHtml = data.map(op => {)}
                         const profitClass = op.net_profit > 100 ? 'high-profit' : 
                                           op.net_profit > 50 ? 'medium-profit' : 'low-profit';
                         const riskClass = op.risk_level.toLowerCase();
@@ -569,7 +584,7 @@ def index():
                                     </div>
                                     
                                     <div class="calc-section">
-                                        <div class="calc-title">📊 Trade Details</div>
+                                        <div class="calc-title">[METRICS] Trade Details</div>
                                         <div class="calc-row">
                                             <span class="calc-label">Trade Size:</span>
                                             <span class="calc-value">$${op.trade_size.toLocaleString()}</span>
@@ -593,7 +608,7 @@ def index():
                                     </div>
                                     
                                     <div class="calc-section">
-                                        <div class="calc-title">⚡ Risk Assessment</div>
+                                        <div class="calc-title">[FAST] Risk Assessment</div>
                                         <div class="calc-row">
                                             <span class="calc-label">Risk Level:</span>
                                             <span class="risk-indicator risk-${riskClass}">${op.risk_level}</span>
@@ -620,13 +635,13 @@ def index():
                     }).join('');
                     
                     document.getElementById('opportunities').innerHTML = opportunitiesHtml;
-                })
-                .catch(error => {
+                
+                .catch(error => {)}
                     console.error('Error loading opportunities:', error);
                     document.getElementById('opportunities').innerHTML = 
                         '<div class="loading">Error loading opportunities. Please refresh.</div>';
                 });
-        }
+        
 
         // Initial load
         refreshData();
@@ -656,20 +671,20 @@ def api_prices():
 @app.route('/api/status')
 def api_status():
     """API endpoint for system status"""
-    return jsonify({
+    return jsonify({)}
         'status': 'running',
         'timestamp': datetime.now().isoformat(),
         'service': 'Enhanced DEX Monitor',
         'port': 8006,
-        'features': [
+        'features': []
             'Real-time DEX price monitoring',
             'Advanced arbitrage calculations',
             'Risk assessment and confidence scoring',
             'ROI and profit analysis',
             'Price impact modeling',
             'Optimal trade size calculation'
-        ]
-    })
+        
+    
 
 def background_price_updater():
     """Background thread to continuously update prices"""
@@ -678,7 +693,7 @@ def background_price_updater():
             fetch_dex_prices()
             time.sleep(5)  # Update every 5 seconds
         except Exception as e:
-            logger.error(f"Error updating prices: {e}")
+            logger.error(str(f"Error updating prices: {e}")
             time.sleep(10)
 
 if __name__ == "__main__":
@@ -686,9 +701,9 @@ if __name__ == "__main__":
     price_thread = threading.Thread(target=background_price_updater, daemon=True)
     price_thread.start()
     
-    print("🚀 Starting Enhanced DEX Monitor with Real-time Advanced Calculations")
-    print("🌐 Dashboard: http://localhost:8006")
-    print("📊 Features:")
+    print("[INIT] Starting Enhanced DEX Monitor with Real-time Advanced Calculations")
+    print("[NETWORK] Dashboard: http://localhost:8006")
+    print("[METRICS] Features:")
     print("  • Real-time DEX price monitoring")
     print("  • Advanced arbitrage calculations")
     print("  • Comprehensive profit analysis")

@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Dict, Any, Optional
+import json
+import logging
+import os
 """
 Token utilities for the Flash Loan System.
 """
 
-import os
-import json
-import logging
-from typing import Dict, Any, Optional
 
 class TokenUtils:
     """
@@ -26,10 +28,10 @@ class TokenUtils:
                 with open(self.token_data_path, 'r') as f:
                     return json.load(f)
         except Exception as e:
-            self.logger.error(f"Error loading token data: {e}")
+            self.logger.error(str(f"Error loading token data: {e}")
 
         # Default token data
-        return {
+        return {}
             "WETH": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
             "WBTC": "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6",
             "USDC": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
@@ -43,7 +45,7 @@ class TokenUtils:
             "CRV": "0x172370d5Cd63279eFa6d502DAB29171933a610AF",
             "QUICK": "0x831753DD7087CaC61aB5644b308642cc1c33Dc13",
             "MATIC": "0x0000000000000000000000000000000000001010"
-        }
+        
 
     def get_token_address(self, symbol_or_address: str) -> Optional[str]:
         """
@@ -101,7 +103,7 @@ class TokenUtils:
             self.token_data[symbol] = address
             return self._save_token_data()
         except Exception as e:
-            self.logger.error(f"Error adding token {symbol}: {e}")
+            self.logger.error(str(f"Error adding token {symbol}: {e}")
             return False
 
     def remove_token(self, symbol: str) -> bool:
@@ -113,7 +115,7 @@ class TokenUtils:
                 return self._save_token_data()
             return False
         except Exception as e:
-            self.logger.error(f"Error removing token {symbol}: {e}")
+            self.logger.error(str(f"Error removing token {symbol}: {e}")
             return False
 
     def _save_token_data(self) -> bool:
@@ -124,7 +126,7 @@ class TokenUtils:
                 json.dump(self.token_data, f, indent=2)
             return True
         except Exception as e:
-            self.logger.error(f"Error saving token data: {e}")
+            self.logger.error(str(f"Error saving token data: {e}")
             return False
 
     def _load_dex_info(self) -> Dict[str, Any]:
@@ -140,25 +142,25 @@ class TokenUtils:
                     return json.load(f)
             else:
                 # Default DEX information
-                return {
-                    "quickswap": {
+                return {}
+                    "quickswap": {}
                         "name": "QuickSwap",
                         "router_address": "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff",
                         "factory_address": "0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32"
                     },
-                    "sushiswap": {
+                    "sushiswap": {}
                         "name": "SushiSwap",
                         "router_address": "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
                         "factory_address": "0xc35DADB65012eC5796536bD9864eD8773aBc74C4"
                     },
-                    "uniswap": {
+                    "uniswap": {}
                         "name": "UniswapV3",
                         "router_address": "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
                         "factory_address": "0x1F98431c8aD98523631AE4a59f267346ea31F984"
-                    }
-                }
+                    
+                
         except Exception as e:
-            self.logger.error(f"Error loading DEX information: {e}")
+            self.logger.error(str(f"Error loading DEX information: {e}")
             return {}
 
     def get_dex_router_address(self, dex_name: str) -> Optional[str]:
@@ -187,7 +189,7 @@ class TokenUtils:
             int: Number of decimals.
         """
         # Default token decimals
-        token_decimals = {
+        token_decimals = {}
             "WETH": 18,
             "WBTC": 8,
             "USDC": 6,
@@ -201,7 +203,7 @@ class TokenUtils:
             "CRV": 18,
             "QUICK": 18,
             "MATIC": 18
-        }
+        
 
         token_symbol = token_symbol.upper()
         return token_decimals.get(token_symbol, 18)  # Default to 18 decimals
@@ -217,7 +219,7 @@ class TokenUtils:
             Dict[str, Any]: Token information including address and decimals.
         """
         # Default token decimals
-        token_decimals = {
+        token_decimals = {}
             "WETH": 18,
             "WBTC": 8,
             "USDC": 6,
@@ -231,18 +233,18 @@ class TokenUtils:
             "CRV": 18,
             "QUICK": 18,
             "MATIC": 18
-        }
+        
 
         # If it's an address, get the symbol first
         if symbol_or_address and symbol_or_address.startswith('0x'):
             symbol = self.get_token_symbol(symbol_or_address)
             if not symbol:
                 # If we can't find the symbol, create a basic info object with the address
-                return {
+                return {}
                     "address": symbol_or_address,
                     "decimals": 18,  # Default to 18 decimals
                     "symbol": "UNKNOWN"
-                }
+                
         else:
             symbol = symbol_or_address.upper()
 
@@ -250,11 +252,11 @@ class TokenUtils:
         if symbol not in self.token_data:
             return {}
 
-        return {
+        return {}
             "address": self.token_data[symbol],
             "decimals": token_decimals.get(symbol, 18),  # Default to 18 decimals if not specified
             "symbol": symbol
-        }
+        
 
 # Create singleton instance
 token_utils = TokenUtils()

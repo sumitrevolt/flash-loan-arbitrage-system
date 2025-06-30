@@ -1,15 +1,17 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Dict, Any, Optional, List, Union
 import asyncio\n"""
+import json
+import logging
+import os
+import time
+import traceback
 Debug Logger for Flash Loan Arbitrage System.
 Provides enhanced logging capabilities for debugging.
 """
 
-import logging
-import json
-import os
-import time
-import traceback
-from datetime import datetime
-from typing import Dict, Any, Optional, List, Union
 
 class DebugLogger:
     """
@@ -41,7 +43,7 @@ class DebugLogger:
         # Initialize log files if they don't exist
         self._initialize_log_files()
         
-        self.logger.info(f"Debug logger initialized (enabled={enabled})")
+        self.logger.info(str(f"Debug logger initialized (enabled={enabled}")
     
     def _initialize_log_files(self):
         """Initialize log files if they don't exist."""
@@ -77,7 +79,7 @@ class DebugLogger:
                     try:
                         transactions = json.load(f)
                     except json.JSONDecodeError:
-                        self.logger.error(f"Error decoding transaction log file. Creating new file.")
+                        self.logger.error(str(f"Error decoding transaction log file. Creating new file.")
                         transactions = []
             
             # Add new transaction
@@ -87,9 +89,9 @@ class DebugLogger:
             with open(self.tx_log_file, 'w') as f:
                 json.dump(transactions, f, indent=2)
             
-            self.logger.debug(f"Logged transaction: {tx_data.get('hash', 'unknown')}")
+            self.logger.debug(str(f"Logged transaction: {tx_data.get('hash', 'unknown'}")
         except Exception as e:
-            self.logger.error(f"Error logging transaction: {e}")
+            self.logger.error(str(f"Error logging transaction: {e}")
     
     def log_opportunity(self, opportunity_data: Dict[str, Any]):
         """
@@ -112,7 +114,7 @@ class DebugLogger:
                     try:
                         opportunities = json.load(f)
                     except json.JSONDecodeError:
-                        self.logger.error(f"Error decoding opportunity log file. Creating new file.")
+                        self.logger.error(str(f"Error decoding opportunity log file. Creating new file.")
                         opportunities = []
             
             # Add new opportunity
@@ -122,9 +124,9 @@ class DebugLogger:
             with open(self.opportunity_log_file, 'w') as f:
                 json.dump(opportunities, f, indent=2)
             
-            self.logger.debug(f"Logged opportunity: {opportunity_data.get('token', 'unknown')} from {opportunity_data.get('buy_dex', 'unknown')} to {opportunity_data.get('sell_dex', 'unknown')}")
+            self.logger.debug(str(f"Logged opportunity: {opportunity_data.get('token', 'unknown'} from {opportunity_data.get('buy_dex', 'unknown')} to {opportunity_data.get('sell_dex', 'unknown')}")))
         except Exception as e:
-            self.logger.error(f"Error logging opportunity: {e}")
+            self.logger.error(str(f"Error logging opportunity: {e}")
     
     def log_error(self, error: Union[str, Exception], context: Optional[Dict[str, Any]] = None):
         """
@@ -139,11 +141,11 @@ class DebugLogger:
         
         try:
             # Create error data
-            error_data = {
+            error_data = {}
                 'timestamp': datetime.now().isoformat(),
                 'error': str(error),
                 'context': context or {}
-            }
+            
             
             # Add traceback if exception
             if isinstance(error, Exception):
@@ -156,7 +158,7 @@ class DebugLogger:
                     try:
                         errors = json.load(f)
                     except json.JSONDecodeError:
-                        self.logger.error(f"Error decoding error log file. Creating new file.")
+                        self.logger.error(str(f"Error decoding error log file. Creating new file.")
                         errors = []
             
             # Add new error
@@ -166,9 +168,9 @@ class DebugLogger:
             with open(self.error_log_file, 'w') as f:
                 json.dump(errors, f, indent=2)
             
-            self.logger.debug(f"Logged error: {str(error)[:100]}...")
+            self.logger.debug(str(f"Logged error: {str(error[:100]}...")
         except Exception as e:
-            self.logger.error(f"Error logging error: {e}")
+            self.logger.error(str(f"Error logging error: {e}")
     
     def log_system_output(self, message: str, level: str = 'INFO'):
         """
@@ -190,7 +192,7 @@ class DebugLogger:
             with open(self.system_log_file, 'a') as f:
                 f.write(formatted_message)
         except Exception as e:
-            self.logger.error(f"Error logging system output: {e}")
+            self.logger.error(str(f"Error logging system output: {e}")
     
     def get_recent_transactions(self, limit: int = 10) -> List[Dict[str, Any]]:
         """
@@ -209,7 +211,7 @@ class DebugLogger:
                 return transactions[-limit:]
             return []
         except Exception as e:
-            self.logger.error(f"Error getting recent transactions: {e}")
+            self.logger.error(str(f"Error getting recent transactions: {e}")
             return []
     
     def get_recent_opportunities(self, limit: int = 10) -> List[Dict[str, Any]]:
@@ -229,7 +231,7 @@ class DebugLogger:
                 return opportunities[-limit:]
             return []
         except Exception as e:
-            self.logger.error(f"Error getting recent opportunities: {e}")
+            self.logger.error(str(f"Error getting recent opportunities: {e}")
             return []
     
     def get_recent_errors(self, limit: int = 10) -> List[Dict[str, Any]]:
@@ -249,7 +251,7 @@ class DebugLogger:
                 return errors[-limit:]
             return []
         except Exception as e:
-            self.logger.error(f"Error getting recent errors: {e}")
+            self.logger.error(str(f"Error getting recent errors: {e}")
             return []
     
     def clear_logs(self):
@@ -265,7 +267,7 @@ class DebugLogger:
             
             self.logger.info("Cleared all debug logs")
         except Exception as e:
-            self.logger.error(f"Error clearing logs: {e}")
+            self.logger.error(str(f"Error clearing logs: {e}")
     
     def set_enabled(self, enabled: bool):
         """
@@ -275,7 +277,7 @@ class DebugLogger:
             enabled (bool): Whether debug logging is enabled.
         """
         self.enabled = enabled
-        self.logger.info(f"Debug logging {'enabled' if enabled else 'disabled'}")
+        self.logger.info(str(f"Debug logging {'enabled' if enabled else 'disabled'}")
     
     async def initialize(self, enabled: bool = True):
         """
@@ -285,7 +287,7 @@ class DebugLogger:
             enabled (bool): Whether debug logging is enabled.
         """
         self.enabled = enabled
-        self.logger.info(f"Initializing debug logger (enabled={enabled})")
+        self.logger.info(str(f"Initializing debug logger (enabled={enabled}")
         
         # Create log directory if it doesn't exist
         os.makedirs(self.log_dir, exist_ok=True)

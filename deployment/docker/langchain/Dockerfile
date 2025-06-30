@@ -1,64 +1,32 @@
 # LangChain Multi-Agent Flash Loan System
 # Optimized for multi-agent coordination, RAG, tool use, and code interpretation
+# Enhanced with NVIDIA Inference support for MCP server agents
 FROM python:3.11-slim
 
 LABEL maintainer="Flash Loan Team"
 LABEL description="LangChain Multi-Agent System for Flash Loan Arbitrage"
 LABEL version="1.0.0"
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    DEBIAN_FRONTEND=noninteractive
-
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    wget \
     curl \
-    git \
-    build-essential \
-    libpq-dev \
-    libssl-dev \
-    libffi-dev \
-    nodejs \
-    npm \
-    redis-tools \
-    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Create working directory
+# Set the working directory
 WORKDIR /app
 
-# Copy requirements first for better Docker layer caching
-COPY requirements.txt .
+# Copy requirements files
+COPY requirements-basic.txt .
 
 # Install Python dependencies
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements-basic.txt
 
-# Copy application code
+# Copy the rest of the application
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p /app/logs \
-    /app/data \
-    /app/models \
-    /app/vector_store \
-    /app/agent_memory \
-    /app/tools \
-    /app/configs
+# Expose the port the app runs on
+EXPOSE 8000
 
-# Set permissions
-RUN chmod +x /app/entrypoint.sh
-
-# Expose ports
-EXPOSE 8000 8001 8002 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
-
-# Set entrypoint
-ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["python", "main.py"]
+# Command to run the application
+CMD ["uvicorn", "main_simple:app", "--host", "0.0.0.0", "--port", "8000"]

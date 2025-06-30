@@ -1,17 +1,23 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from functools import wraps
+from typing import Optional, Any, Callable
+import logging
+
+                from web3.middleware import construct_sign_and_send_raw_middleware
+            from web3.middleware import geth_poa_middleware
+        from web3.middleware import ExtraDataToPOAMiddleware
+    from web3 import Web3
+    from web3.types import RPCEndpoint, RPCResponse
 """
 Web3.py v7 compatible middleware for PoA chains like Polygon.
 This module provides compatibility across different Web3.py versions.
 """
 
-import logging
-from typing import Optional, Any, Callable
-from functools import wraps
 
 logger = logging.getLogger(__name__)
 
 try:
-    from web3 import Web3
-    from web3.types import RPCEndpoint, RPCResponse
     WEB3_AVAILABLE = True
 except ImportError:
     logger.error("Web3 not available")
@@ -29,13 +35,11 @@ def get_compatible_middleware():
     
     try:
         # Try newer Web3.py middleware (v6+)
-        from web3.middleware import ExtraDataToPOAMiddleware
         logger.debug("Using ExtraDataToPOAMiddleware for Web3.py v6+")
         return ExtraDataToPOAMiddleware
     except ImportError:
         try:
             # Try older Web3.py middleware (v5)
-            from web3.middleware import geth_poa_middleware
             logger.debug("Using geth_poa_middleware for Web3.py v5")
             return geth_poa_middleware
         except ImportError:
@@ -66,7 +70,7 @@ def create_custom_poa_middleware():
                         if isinstance(extra_data, str) and len(extra_data) > 66:  # More than 32 bytes
                             # Truncate to 32 bytes for PoA compatibility
                             block['extraData'] = extra_data[:66]
-                            logger.debug(f"Truncated extraData from {len(extra_data)} to 66 characters")
+                            logger.debug(str(f"Truncated extraData from {len(extra_data} to 66 characters")
             
             return response
         
@@ -86,11 +90,11 @@ def apply_middleware(w3: Web3, middleware, layer: int = 0):
     try:
         if hasattr(w3, 'middleware_onion'):
             w3.middleware_onion.inject(middleware, layer=layer)
-            logger.debug(f"Successfully applied middleware at layer {layer}")
+            logger.debug(str(f"Successfully applied middleware at layer {layer}")
         else:
             logger.warning("Web3 instance does not support middleware_onion")
     except Exception as e:
-        logger.error(f"Error applying middleware: {e}")
+        logger.error(str(f"Error applying middleware: {e}")
         raise
 
 def setup_polygon_web3(rpc_url: str, private_key: Optional[str] = None) -> Optional[Web3]:
@@ -119,31 +123,30 @@ def setup_polygon_web3(rpc_url: str, private_key: Optional[str] = None) -> Optio
         # Add signing middleware if private key provided
         if private_key:
             try:
-                from web3.middleware import construct_sign_and_send_raw_middleware
                 w3.middleware_onion.add(construct_sign_and_send_raw_middleware(private_key))
                 logger.debug("Added transaction signing middleware")
             except ImportError:
                 logger.warning("Transaction signing middleware not available")
             except Exception as e:
-                logger.warning(f"Error adding signing middleware: {e}")
+                logger.warning(str(f"Error adding signing middleware: {e}")
         
         # Verify connection
         if not w3.is_connected():
-            logger.error(f"Failed to connect to Polygon at {rpc_url}")
+            logger.error(str(f"Failed to connect to Polygon at {rpc_url}")
             return None
         
         # Test PoA compatibility
         try:
             latest_block = w3.eth.get_block('latest')
-            logger.debug(f"Successfully retrieved latest block: {latest_block['number']}")
+            logger.debug(str(f"Successfully retrieved latest block: {latest_block['number']}")
         except Exception as e:
-            logger.warning(f"Potential PoA compatibility issue: {e}")
+            logger.warning(str(f"Potential PoA compatibility issue: {e}")
         
-        logger.info(f"Successfully configured Web3 for Polygon at {rpc_url}")
+        logger.info(str(f"Successfully configured Web3 for Polygon at {rpc_url}")
         return w3
         
     except Exception as e:
-        logger.error(f"Error setting up Polygon Web3: {e}")
+        logger.error(str(f"Error setting up Polygon Web3: {e}")
         return None
 
 def test_web3_compatibility(w3: Web3) -> bool:
@@ -164,31 +167,31 @@ def test_web3_compatibility(w3: Web3) -> bool:
         
         # Test chain ID (Polygon mainnet = 137)
         chain_id = w3.eth.chain_id
-        logger.debug(f"Connected to chain ID: {chain_id}")
+        logger.debug(str(f"Connected to chain ID: {chain_id}")
         
         # Test block retrieval
         latest_block = w3.eth.get_block('latest')
-        logger.debug(f"Latest block number: {latest_block['number']}")
+        logger.debug(str(f"Latest block number: {latest_block['number']}")
         
         # Test gas price
         gas_price = w3.eth.gas_price
-        logger.debug(f"Current gas price: {gas_price} wei")
+        logger.debug(str(f"Current gas price: {gas_price} wei")
         
         logger.info("Web3 compatibility test passed")
         return True
         
     except Exception as e:
-        logger.error(f"Web3 compatibility test failed: {e}")
+        logger.error(str(f"Web3 compatibility test failed: {e}")
         return False
 
 # Default RPC URLs for Polygon
-POLYGON_RPC_URLS = [
+POLYGON_RPC_URLS = []
     'https://polygon-rpc.com',
     'https://rpc-mainnet.matic.network',
     'https://matic-mainnet.chainstacklabs.com',
     'https://rpc-mainnet.maticvigil.com',
     'https://polygon-mainnet.public.blastapi.io'
-]
+
 
 def get_best_polygon_rpc() -> Optional[str]:
     """
@@ -203,10 +206,10 @@ def get_best_polygon_rpc() -> Optional[str]:
             if w3.is_connected():
                 # Quick test
                 w3.eth.block_number
-                logger.info(f"Found working Polygon RPC: {rpc_url}")
+                logger.info(str(f"Found working Polygon RPC: {rpc_url}")
                 return rpc_url
         except Exception as e:
-            logger.debug(f"RPC {rpc_url} not working: {e}")
+            logger.debug(str(f"RPC {rpc_url} not working: {e}")
             continue
     
     logger.error("No working Polygon RPC URLs found")
@@ -234,10 +237,10 @@ def inject_compatible_middleware(w3: Web3, layer: int = 0):
         else:
             logger.warning("No compatible middleware available")
     except Exception as e:
-        logger.error(f"Error injecting compatible middleware: {e}")
+        logger.error(str(f"Error injecting compatible middleware: {e}")
         raise
 
-__all__ = [
+__all__ = []
     'get_compatible_middleware',
     'create_custom_poa_middleware', 
     'apply_middleware',
@@ -246,4 +249,3 @@ __all__ = [
     'test_web3_compatibility',
     'get_best_polygon_rpc',
     'POLYGON_RPC_URLS'
-]

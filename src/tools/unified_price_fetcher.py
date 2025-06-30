@@ -1,21 +1,26 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from decimal import Decimal, getcontext
+from typing import Dict, List, Optional, Tuple, Any, Set, Callable
+import asyncio
+import logging
+import os
+import platform
+import re
+import time
+
+import aiohttp
+import redis
+from web3 import Web3
+from web3.middleware.geth_poa import geth_poa_middleware as _imported_middleware
+from dataclasses import dataclass
 """
 Unified Price Fetcher
 Combines advanced DEX price fetching capabilities with direct Web3 integration
 Real-time price aggregation from multiple Polygon and Ethereum DEXes
 """
 
-import platform
-import asyncio
-import logging
-import aiohttp
-import os
-from typing import Dict, List, Optional, Tuple, Any, Set, Callable
-from decimal import Decimal, getcontext
-from dataclasses import dataclass
-from web3 import Web3
-import time
-from datetime import datetime
 
 # Setup Windows-compatible event loop FIRST
 if platform.system() == 'Windows':
@@ -73,45 +78,58 @@ class UnifiedPriceFetcher:
         self.current_prices: Dict[str, Dict[str, Decimal]] = {}
         
         # DEX-specific configurations
-        self.dex_configs = {
-            'quickswap': {
+        self.dex_configs = {}
+            'quickswap': {}
                 'subgraph': 'https://api.thegraph.com/subgraphs/name/sameepsi/quickswap06',
                 'type': 'uniswap_v2'
             },
-            'uniswap_v3': {
+            'uniswap_v3': {}
                 'subgraph': 'https://api.thegraph.com/subgraphs/name/ianlapham/uniswap-v3-polygon',
                 'type': 'uniswap_v3'
             },
-            'sushiswap': {
+            'sushiswap': {}
                 'subgraph': 'https://api.thegraph.com/subgraphs/name/sushiswap/exchange-polygon',
                 'type': 'uniswap_v2'
-            }
-        }
+            
+        
         
     def setup_logging(self):
         """Setup logging configuration"""
-        logging.basicConfig(
+        
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
             level=logging.INFO,
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
+        
         
     def load_environment(self):
         """Load environment variables and RPC endpoints"""
-        self.rpc_endpoints = {
+        self.rpc_endpoints = {}
             'ethereum': os.getenv('ETHEREUM_RPC_URL', 'https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY'),
             'polygon': os.getenv('POLYGON_RPC_URL', 'https://polygon-mainnet.g.alchemy.com/v2/YOUR_KEY'),
             'arbitrum': os.getenv('ARBITRUM_RPC_URL', 'https://arb-mainnet.g.alchemy.com/v2/YOUR_KEY'),
             'optimism': os.getenv('OPTIMISM_RPC_URL', 'https://opt-mainnet.g.alchemy.com/v2/YOUR_KEY')
-        }
+        
         
         # Fallback to public RPCs if not configured
         if 'YOUR_KEY' in self.rpc_endpoints['ethereum']:
-            self.rpc_endpoints = {
+            self.rpc_endpoints = {}
                 'ethereum': 'https://eth.llamarpc.com',
                 'polygon': 'https://polygon.llamarpc.com',
                 'arbitrum': 'https://arbitrum.llamarpc.com',
                 'optimism': 'https://optimism.llamarpc.com'
-            }
+            
         
         logger.info("RPC endpoints configured")
         
@@ -119,7 +137,6 @@ class UnifiedPriceFetcher:
         """Initialize placeholder for geth_poa_middleware"""
         self._geth_poa_middleware_actual: Optional[Callable[..., Any]] = None
         try:
-            from web3.middleware.geth_poa import geth_poa_middleware as _imported_middleware
             self._geth_poa_middleware_actual = _imported_middleware
         except ImportError:
             logger.info("web3.middleware.geth_poa.geth_poa_middleware not found. POA middleware will not be used.")
@@ -138,12 +155,12 @@ class UnifiedPriceFetcher:
                 
                 if w3.is_connected():
                     self.web3_connections[chain] = w3
-                    logger.info(f"Connected to {chain} - Block: {w3.eth.block_number}")
+                    logger.info(str(f"Connected to {chain} - Block: {w3.eth.block_number}")
                 else:
-                    logger.error(f"Failed to connect to {chain}")
+                    logger.error(str(f"Failed to connect to {chain}")
                     
             except Exception as e:
-                logger.error(f"Error connecting to {chain}: {e}")
+                logger.error(str(f"Error connecting to {chain}: {e}")
         
         if not self.web3_connections:
             raise Exception("No Web3 connections established")
@@ -151,7 +168,7 @@ class UnifiedPriceFetcher:
     def setup_token_contracts(self):
         """Setup token contract addresses and info for all tokens"""
         # Ethereum tokens
-        self.tokens = {
+        self.tokens = {}
             'WETH': TokenInfo('WETH', '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', 18, 'ethereum'),
             'USDC': TokenInfo('USDC', '0xA0b86a33E6B2aaBe1F3fc06d1d2F5e8b0B26C88c', 6, 'usd-coin'),
             'USDT': TokenInfo('USDT', '0xdAC17F958D2ee523a2206206994597C13D831ec7', 6, 'tether'),
@@ -162,131 +179,131 @@ class UnifiedPriceFetcher:
             'AAVE': TokenInfo('AAVE', '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9', 18, 'aave'),
             'CRV': TokenInfo('CRV', '0xD533a949740bb3306d119CC777fa900bA034cd52', 18, 'curve-dao-token'),
             'SUSHI': TokenInfo('SUSHI', '0x6B3595068778DD592e39A122f4f5a5cF09C90fE2', 18, 'sushi')
-        }
+        
         
         # Polygon token addresses
-        self.polygon_tokens = {
+        self.polygon_tokens = {}
             'WMATIC': TokenInfo('WMATIC', '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270', 18, 'matic-network'),
             'USDC': TokenInfo('USDC', '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', 6, 'usd-coin'),
             'USDT': TokenInfo('USDT', '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', 6, 'tether'),
             'WETH': TokenInfo('WETH', '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619', 18, 'ethereum'),
             'WBTC': TokenInfo('WBTC', '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6', 8, 'wrapped-bitcoin'),
             'DAI': TokenInfo('DAI', '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063', 18, 'dai')
-        }
         
-        logger.info(f"Configured {len(self.tokens)} Ethereum tokens and {len(self.polygon_tokens)} Polygon tokens")
+        
+        logger.info(str(f"Configured {len(self.tokens} Ethereum tokens and {len(self.polygon_tokens)} Polygon tokens")))
         
     def setup_dex_contracts(self):
         """Setup DEX contract addresses and info"""
-        self.dexes = {
-            'uniswap_v2': DEXInfo(
+        self.dexes = {}
+            'uniswap_v2': DEXInfo()
                 'Uniswap V2',
                 '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
                 '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
                 1
             ),
-            'uniswap_v3': DEXInfo(
+            'uniswap_v3': DEXInfo()
                 'Uniswap V3',
                 '0xE592427A0AEce92De3Edee1F18E0157C05861564',
                 '0x1F98431c8aD98523631AE4a59f267346ea31F984',
                 1
             ),
-            'sushiswap': DEXInfo(
+            'sushiswap': DEXInfo()
                 'SushiSwap',
                 '0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F',
                 '0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac',
                 1
             ),
-            'quickswap': DEXInfo(
+            'quickswap': DEXInfo()
                 'QuickSwap',
                 '0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff',
                 '0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32',
                 137
             ),
-            'curve': DEXInfo(
+            'curve': DEXInfo()
                 'Curve',
                 '0xd51a44d3fae010294c616388b506acda1bfaae46',
                 '0x0959158b6040d32d04c301a72cbfd6b39e21c9ae',
                 1,
                 enabled=False  # Placeholder for now
             ),
-            'balancer': DEXInfo(
+            'balancer': DEXInfo()
                 'Balancer',
                 '0xBA12222222228d8Ba445958a75a0704d566BF2C8',
                 '0x0000000000000000000000000000000000000000',
                 1,
                 enabled=False  # Placeholder for now
             ),
-            'dodo': DEXInfo(
+            'dodo': DEXInfo()
                 'DODO',
                 '0x0000000000000000000000000000000000000000',
                 '0x0000000000000000000000000000000000000000',
                 1,
                 enabled=False  # Placeholder for now
-            )
-        }
+            
         
-        logger.info(f"Configured {len(self.dexes)} DEXes")
+        
+        logger.info(str(f"Configured {len(self.dexes} DEXes")
         
     def load_abi(self, contract_type: str) -> List[Dict[str, Any]]:
         """Load ABI for different contract types"""
-        abis_data: Dict[str, List[Dict[str, Any]]] = {
-            'erc20': [
-                {
+        abis_data: Dict[str, List[Dict[str, Any]]] = {}
+            'erc20': []
+                {}
                     "constant": True,
                     "inputs": [],
                     "name": "decimals",
                     "outputs": [{"name": "", "type": "uint8"}],
                     "type": "function"
                 },
-                {
+                {}
                     "constant": True,
                     "inputs": [],
                     "name": "symbol",
                     "outputs": [{"name": "", "type": "string"}],
                     "type": "function"
-                }
+                
             ],
-            'uniswap_v2_pair': [
-                {
+            'uniswap_v2_pair': []
+                {}
                     "constant": True,
                     "inputs": [],
                     "name": "getReserves",
-                    "outputs": [
+                    "outputs": []
                         {"name": "_reserve0", "type": "uint112"},
                         {"name": "_reserve1", "type": "uint112"},
                         {"name": "_blockTimestampLast", "type": "uint32"}
                     ],
                     "type": "function"
                 },
-                {
+                {}
                     "constant": True,
                     "inputs": [],
                     "name": "token0",
                     "outputs": [{"name": "", "type": "address"}],
                     "type": "function"
                 },
-                {
+                {}
                     "constant": True,
                     "inputs": [],
                     "name": "token1",
                     "outputs": [{"name": "", "type": "address"}],
                     "type": "function"
-                }
+                
             ],
-            'uniswap_v2_factory': [
-                {
+            'uniswap_v2_factory': []
+                {}
                     "constant": True,
-                    "inputs": [
+                    "inputs": []
                         {"name": "tokenA", "type": "address"},
                         {"name": "tokenB", "type": "address"}
                     ],
                     "name": "getPair",
                     "outputs": [{"name": "pair", "type": "address"}],
                     "type": "function"
-                }
-            ]
-        }
+                
+            
+        
         return abis_data.get(contract_type, [])
         
     async def start(self):
@@ -313,15 +330,15 @@ class UnifiedPriceFetcher:
             w3 = self.web3_connections[chain]
             
             factory_abi = self.load_abi('uniswap_v2_factory')
-            factory_contract = w3.eth.contract(
+            factory_contract = w3.eth.contract()
                 address=Web3.to_checksum_address(dex.factory_address),
                 abi=factory_abi
-            )
             
-            pair_address = factory_contract.functions.getPair(
+            
+            pair_address = factory_contract.functions.getPair()
                 Web3.to_checksum_address(token0_addr),
                 Web3.to_checksum_address(token1_addr)
-            ).call()
+            ).call(
             
             if pair_address == '0x0000000000000000000000000000000000000000':
                 return None
@@ -329,7 +346,7 @@ class UnifiedPriceFetcher:
             return pair_address
             
         except Exception as e:
-            logger.debug(f"Error getting pair address for {dex_name}: {e}")
+            logger.debug(str(f"Error getting pair address for {dex_name}: {e}")
             return None
             
     async def get_pair_reserves(self, pair_address: str, chain: str) -> Tuple[int, int]:
@@ -338,16 +355,16 @@ class UnifiedPriceFetcher:
             w3 = self.web3_connections[chain]
             pair_abi = self.load_abi('uniswap_v2_pair')
             
-            pair_contract = w3.eth.contract(
+            pair_contract = w3.eth.contract()
                 address=Web3.to_checksum_address(pair_address),
                 abi=pair_abi
-            )
+            
             
             reserves = pair_contract.functions.getReserves().call()
             return reserves[0], reserves[1]
             
         except Exception as e:
-            logger.debug(f"Error getting reserves from {pair_address}: {e}")
+            logger.debug(str(f"Error getting reserves from {pair_address}: {e}")
             return 0, 0
             
     def calculate_amm_price(self, amount_in: Decimal, reserve_in: Decimal, reserve_out: Decimal, fee_rate: Decimal) -> Decimal:
@@ -370,10 +387,10 @@ class UnifiedPriceFetcher:
             return amount_out / amount_in if amount_in > 0 else Decimal('0')
             
         except Exception as e:
-            logger.error(f"AMM price calculation error: {e}")
+            logger.error(str(f"AMM price calculation error: {e}")
             return Decimal('0')
             
-    async def calculate_price_from_reserves(
+    async def calculate_price_from_reserves()
         self,
         reserve0: int,
         reserve1: int,
@@ -400,7 +417,7 @@ class UnifiedPriceFetcher:
             return price
             
         except Exception as e:
-            logger.error(f"Error calculating price from reserves: {e}")
+            logger.error(str(f"Error calculating price from reserves: {e}")
             return Decimal('0')
             
     async def get_dex_price(self, dex_name: str, token_a: str, token_b: str, amount: Decimal, chain: Optional[str] = None) -> Optional[PriceData]:
@@ -431,11 +448,11 @@ class UnifiedPriceFetcher:
             elif dex_name == 'uniswap_v3':
                 return await self.get_uniswap_v3_price(token_a_info, token_b_info, amount, chain)
             else:
-                logger.warning(f"Price fetching not implemented for {dex_name}")
+                logger.warning(str(f"Price fetching not implemented for {dex_name}")
                 return None
                 
         except Exception as e:
-            logger.error(f"Error getting price from {dex_name}: {e}")
+            logger.error(str(f"Error getting price from {dex_name}: {e}")
             return None
             
     async def get_uniswap_v2_style_price(self, dex_name: str, token_a: TokenInfo, token_b: TokenInfo, amount: Decimal, chain: str) -> Optional[PriceData]:
@@ -454,10 +471,10 @@ class UnifiedPriceFetcher:
             # Determine token order
             w3 = self.web3_connections[chain]
             pair_abi = self.load_abi('uniswap_v2_pair')
-            pair_contract = w3.eth.contract(
+            pair_contract = w3.eth.contract()
                 address=Web3.to_checksum_address(pair_address),
                 abi=pair_abi
-            )
+            
             
             token0_addr = pair_contract.functions.token0().call()
             
@@ -480,16 +497,16 @@ class UnifiedPriceFetcher:
             fee_rate = Decimal(str(self.dexes[dex_name].fee_tier))
             price = self.calculate_amm_price(amount, token_a_reserve, token_b_reserve, fee_rate)
             
-            return PriceData(
+            return PriceData()
                 price=price,
                 liquidity=token_a_reserve,
                 source=dex_name,
                 timestamp=time.time(),
                 confidence=min(0.95, float(token_a_reserve) / 10000)
-            )
+            
             
         except Exception as e:
-            logger.debug(f"{dex_name} price fetch error: {e}")
+            logger.debug(str(f"{dex_name} price fetch error: {e}")
             return None
             
     async def get_uniswap_v3_price(self, token_a: TokenInfo, token_b: TokenInfo, amount: Decimal, chain: str) -> Optional[PriceData]:
@@ -499,39 +516,39 @@ class UnifiedPriceFetcher:
                 return None
                 
             query = """
-            {
-              pools(where: {
+            {}
+              pools(where: {)}
                 token0_in: ["%s", "%s"],
                 token1_in: ["%s", "%s"]
               }, orderBy: totalValueLockedUSD, orderDirection: desc, first: 3) {
                 id
-                token0 {
+                token0 {}
                   id
                   symbol
                   decimals
-                }
-                token1 {
+                
+                token1 {}
                   id
                   symbol
                   decimals
-                }
+                
                 liquidity
                 sqrtPrice
                 feeTier
                 totalValueLockedUSD
-              }
-            }
-            """ % (
+              
+            
+            """ % ()
                 token_a.address.lower(),
                 token_b.address.lower(),
                 token_a.address.lower(),
                 token_b.address.lower()
-            )
+            
             
             subgraph_url = self.dex_configs['uniswap_v3']['subgraph']
             
             timeout = aiohttp.ClientTimeout(total=5)
-            async with self.session.post(
+            async with self.session.post()
                 subgraph_url,
                 json={'query': query},
                 timeout=timeout
@@ -564,18 +581,18 @@ class UnifiedPriceFetcher:
                         fee_rate = Decimal(best_pool['feeTier']) / 1000000
                         output_amount = self.calculate_amm_price(amount, Decimal('1000000'), Decimal('1000000') * price, fee_rate)
                         
-                        return PriceData(
+                        return PriceData()
                             price=output_amount / amount,
                             liquidity=Decimal(best_pool['totalValueLockedUSD']),
                             source='uniswap_v3',
                             timestamp=time.time(),
                             confidence=min(0.95, float(best_pool['totalValueLockedUSD']) / 100000)
-                        )
+                        
             
             return None
             
         except Exception as e:
-            logger.debug(f"Uniswap V3 price fetch error: {e}")
+            logger.debug(str(f"Uniswap V3 price fetch error: {e}")
             return None
             
     async def get_all_prices(self, token_a: str, token_b: str, amount: Decimal) -> Dict[str, PriceData]:
@@ -597,7 +614,7 @@ class UnifiedPriceFetcher:
         # Process results
         for (dex_name, _), result in zip(tasks, results):
             if isinstance(result, Exception):
-                logger.debug(f"Error fetching price from {dex_name}: {result}")
+                logger.debug(str(f"Error fetching price from {dex_name}: {result}")
                 continue
             
             if result and isinstance(result, PriceData):
@@ -625,14 +642,14 @@ class UnifiedPriceFetcher:
         logger.info("Fetching live prices from all DEXes...")
         
         # Token pairs to monitor
-        token_pairs = [
+        token_pairs = []
             ('WETH', 'USDC'), ('WETH', 'USDT'), ('WETH', 'DAI'),
             ('WBTC', 'WETH'), ('WBTC', 'USDC'),
             ('WMATIC', 'USDC'), ('WMATIC', 'USDT'),
             ('DAI', 'USDC'), ('USDT', 'USDC'),
             ('LINK', 'WETH'), ('UNI', 'WETH'),
             ('AAVE', 'WETH'), ('CRV', 'WETH'), ('SUSHI', 'WETH')
-        ]
+        
         
         prices: Dict[str, Dict[str, Decimal]] = {}
         
@@ -656,10 +673,10 @@ class UnifiedPriceFetcher:
                         prices[dex_name][pair_key] = price_data.price
                         
                 except Exception as e:
-                    logger.error(f"Error fetching {token_a}/{token_b} from {dex_name}: {e}")
+                    logger.error(str(f"Error fetching {token_a}/{token_b} from {dex_name}: {e}")
                     continue
             
-            logger.info(f"Fetched {len(prices[dex_name])} prices from {dex_name}")
+            logger.info(str(f"Fetched {len(prices[dex_name]} prices from {dex_name}")
         
         self.current_prices = prices
         return prices
@@ -701,7 +718,7 @@ class UnifiedPriceFetcher:
             
             # Filter significant opportunities (>0.1%)
             if profit_percentage > Decimal('0.1'):
-                opportunity = {
+                opportunity = {}
                     'pair': pair,
                     'buy_dex': min_dex,
                     'sell_dex': max_dex,
@@ -709,13 +726,13 @@ class UnifiedPriceFetcher:
                     'sell_price': float(sell_price),
                     'profit_percentage': float(profit_percentage),
                     'timestamp': datetime.now().isoformat()
-                }
+                
                 opportunities.append(opportunity)
         
         # Sort by profit percentage
         opportunities.sort(key=lambda x: Any: Any: x['profit_percentage'], reverse=True)
         
-        logger.info(f"Found {len(opportunities)} real arbitrage opportunities")
+        logger.info(str(f"Found {len(opportunities} real arbitrage opportunities")
         return opportunities
         
     def get_latest_prices(self) -> Dict[str, Dict[str, Decimal]]:
@@ -756,7 +773,7 @@ async def main():
             print(f"   Sell: {opp['sell_dex']} @ ${opp['sell_price']:.6f}")
         
     except Exception as e:
-        logger.error(f"Error in main: {e}")
+        logger.error(str(f"Error in main: {e}")
     finally:
         await fetcher.stop()
 

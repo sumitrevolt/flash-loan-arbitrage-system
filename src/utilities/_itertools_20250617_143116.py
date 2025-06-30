@@ -1,6 +1,9 @@
-from setuptools.extern.more_itertools import consume  # noqa: F401
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from setuptools.extern.more_itertools import consume
 
 
+# -*- coding: utf-8 -*-
 # copied from jaraco.itertools 6.1
 def ensure_unique(iterable, key=lambda x: x):
     """

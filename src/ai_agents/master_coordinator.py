@@ -1,4 +1,31 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Union, Callable
+import asyncio
+import json
+import logging
+import os
+import sys
+import threading
+import time
+
+    from langchain.agents import initialize_agent, AgentType, Tool
+    from langchain.chains import LLMChain
+    from langchain.memory import ConversationBufferMemory
+    from langchain.prompts import PromptTemplate
+    from langchain.schema import AgentAction, AgentFinish
+    from langchain_openai import ChatOpenAI
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
+from enum import Enum
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from queue import Queue, Empty
+import aiohttp
+import requests
 """
 AI Agents Master Coordinator
 ============================
@@ -14,56 +41,60 @@ Author: GitHub Copilot Assistant
 Date: June 17, 2025
 """
 
-import asyncio
-import json
-import logging
-import os
-import sys
-import time
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Union, Callable
-from dataclasses import dataclass, field
-from enum import Enum
-import threading
-from concurrent.futures import ThreadPoolExecutor
-import requests
-import aiohttp
-from queue import Queue, Empty
 
 # Configure logging first
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.FileHandler('ai_coordinator.log'),
         logging.StreamHandler()
-    ]
-)
+    
+
 logger = logging.getLogger(__name__)
 
 # LangChain imports (with fallback)
 try:
-    from langchain_openai import ChatOpenAI
-    from langchain.agents import initialize_agent, AgentType, Tool
-    from langchain.memory import ConversationBufferMemory
-    from langchain.chains import LLMChain
-    from langchain.prompts import PromptTemplate
-    from langchain.schema import AgentAction, AgentFinish
     langchain_available = True
 except ImportError:
     logger.warning("LangChain not available, using basic coordination")
     langchain_available = False
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.FileHandler('ai_coordinator.log'),
         logging.StreamHandler()
-    ]
-)
+    
+
 logger = logging.getLogger(__name__)
 
 class AgentStatus(Enum):
@@ -153,12 +184,12 @@ class AIAgentsMasterCoordinator:
         self.task_analyzer = None
         
         # Performance tracking
-        self.performance_metrics = {
+        self.performance_metrics = {}
             "tasks_processed": 0,
             "tasks_failed": 0,
             "average_response_time": 0.0,
             "system_efficiency": 1.0
-        }
+        
         
         # Load configuration
         self._load_configuration()
@@ -170,7 +201,7 @@ class AIAgentsMasterCoordinator:
         """Load AI agents configuration"""
         try:
             if not self.config_path.exists():
-                logger.warning(f"Configuration file not found: {self.config_path}")
+                logger.warning(str(f"Configuration file not found: {self.config_path}")
                 self._create_default_configuration()
                 return
             
@@ -181,7 +212,7 @@ class AIAgentsMasterCoordinator:
             agents_config = config_data.get('agents', {})
             for agent_name, agent_data in agents_config.items():
                 try:
-                    config = AgentConfig(
+                    config = AgentConfig()
                         name=agent_data['name'],
                         role=agent_data.get('role', 'general'),
                         capabilities=agent_data.get('capabilities', []),
@@ -190,36 +221,36 @@ class AIAgentsMasterCoordinator:
                         max_concurrent_tasks=agent_data.get('max_concurrent_tasks', 3),
                         specializations=agent_data.get('specializations', []),
                         performance_weight=agent_data.get('performance_weight', 1.0)
-                    )
+                    
                     
                     self.agent_configs[agent_name] = config
-                    self.agents[agent_name] = AgentInstance(
+                    self.agents[agent_name] = AgentInstance()
                         config=config,
                         health_check_url=f"http://localhost:{config.port}/health"
-                    )
+                    
                     
                 except Exception as e:
-                    logger.error(f"Failed to load config for agent {agent_name}: {e}")
+                    logger.error(str(f"Failed to load config for agent {agent_name}: {e}")
             
-            logger.info(f"Loaded configuration for {len(self.agent_configs)} AI agents")
+            logger.info(str(f"Loaded configuration for {len(self.agent_configs} AI agents")
             
         except Exception as e:
-            logger.error(f"Failed to load configuration: {e}")
+            logger.error(str(f"Failed to load configuration: {e}")
             self._create_default_configuration()
     
     def _create_default_configuration(self):
         """Create default AI agents configuration"""
         logger.info("Creating default AI agents configuration...")
         
-        default_config = {
-            "coordination": {
+        default_config = {}
+            "coordination": {}
                 "master_coordinator": "src/ai_agents/master_coordinator.py",
                 "communication_protocol": "http",
                 "task_distribution": "intelligent",
                 "load_balancing": True
             },
-            "agents": {
-                "arbitrage_analyzer": {
+            "agents": {}
+                "arbitrage_analyzer": {}
                     "name": "Arbitrage Analyzer",
                     "role": "analysis",
                     "capabilities": ["arbitrage_detection", "market_analysis", "profit_calculation"],
@@ -229,7 +260,7 @@ class AIAgentsMasterCoordinator:
                     "max_concurrent_tasks": 5,
                     "performance_weight": 1.2
                 },
-                "risk_assessor": {
+                "risk_assessor": {}
                     "name": "Risk Assessor",
                     "role": "risk_management",
                     "capabilities": ["risk_analysis", "portfolio_assessment", "compliance_check"],
@@ -239,7 +270,7 @@ class AIAgentsMasterCoordinator:
                     "max_concurrent_tasks": 3,
                     "performance_weight": 1.5
                 },
-                "execution_coordinator": {
+                "execution_coordinator": {}
                     "name": "Execution Coordinator",
                     "role": "execution",
                     "capabilities": ["trade_execution", "transaction_monitoring", "order_management"],
@@ -249,7 +280,7 @@ class AIAgentsMasterCoordinator:
                     "max_concurrent_tasks": 2,
                     "performance_weight": 2.0
                 },
-                "market_monitor": {
+                "market_monitor": {}
                     "name": "Market Monitor",
                     "role": "monitoring",
                     "capabilities": ["price_monitoring", "liquidity_tracking", "alert_management"],
@@ -259,7 +290,7 @@ class AIAgentsMasterCoordinator:
                     "max_concurrent_tasks": 10,
                     "performance_weight": 0.8
                 },
-                "strategy_planner": {
+                "strategy_planner": {}
                     "name": "Strategy Planner",
                     "role": "planning",
                     "capabilities": ["strategy_development", "optimization", "scenario_analysis"],
@@ -268,9 +299,9 @@ class AIAgentsMasterCoordinator:
                     "file": "src/ai_agents/strategy_planner.py",
                     "max_concurrent_tasks": 2,
                     "performance_weight": 1.3
-                }
-            }
-        }
+                
+            
+        
         
         # Ensure config directory exists
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -278,7 +309,7 @@ class AIAgentsMasterCoordinator:
         with open(self.config_path, 'w') as f:
             json.dump(default_config, f, indent=2)
         
-        logger.info(f"Default configuration saved to {self.config_path}")
+        logger.info(str(f"Default configuration saved to {self.config_path}")
         
         # Create agent scripts
         self._create_agent_scripts(default_config['agents'])
@@ -301,17 +332,21 @@ Role: {agent_data['role']}
 Port: {agent_data['port']}
 """
 
-import os
-import json
-import time
-import logging
-from datetime import datetime
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-import threading
-import requests
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -323,10 +358,10 @@ CORS(app)
 AGENT_NAME = "{agent_data['name']}"
 AGENT_PORT = {agent_data['port']}
 AGENT_ROLE = "{agent_data['role']}"
-CAPABILITIES = {json.dumps(agent_data['capabilities'])}
+CAPABILITIES = {json.dumps(agent_data['capabilities'], ensure_ascii=True, default=str)}
 
 # Agent state
-agent_status = {{
+agent_status = {{}}
     "agent": AGENT_NAME,
     "port": AGENT_PORT,
     "role": AGENT_ROLE,
@@ -335,7 +370,7 @@ agent_status = {{
     "tasks_completed": 0,
     "active_tasks": 0,
     "capabilities": CAPABILITIES
-}}
+
 
 start_time = time.time()
 tasks_completed = 0
@@ -359,15 +394,15 @@ def health_check():
 def status():
     """Detailed status endpoint"""
     update_agent_status()
-    return jsonify({{
+    return jsonify({{)}}
         **agent_status,
         "capabilities": CAPABILITIES,
-        "performance": {{
+        "performance": {{}}
             "success_rate": 0.95,
             "average_response_time": 1.2,
             "load": active_tasks / {agent_data.get('max_concurrent_tasks', 3)}
-        }}
-    }})
+
+
 
 @app.route('/task', methods=['POST'])
 def handle_task():
@@ -379,7 +414,7 @@ def handle_task():
         task_id = task_data.get('id', 'unknown')
         task_type = task_data.get('type', 'unknown')
         
-        logger.info(f"Received task {{task_id}}: {{task_type}}")
+        logger.info(str(f"Received task {{task_id}}: {{task_type}}")
         
         active_tasks += 1
         
@@ -392,17 +427,17 @@ def handle_task():
         active_tasks -= 1
         tasks_completed += 1
         
-        return jsonify({{
+        return jsonify({{)}}
             "status": "completed",
             "task_id": task_id,
             "result": result,
             "agent": AGENT_NAME
-        }})
+
         
     except Exception as e:
         active_tasks = max(0, active_tasks - 1)
-        logger.error(f"Task processing error: {{e}}")
-        return jsonify({{
+        logger.error(str(f"Task processing error: {{e}}")
+        return jsonify({{)}}
             "status": "error",
             "error": str(e),
             "agent": AGENT_NAME
@@ -413,43 +448,43 @@ def process_task(task_data):
     task_type = task_data.get('type', '')
     
     if AGENT_ROLE == 'analysis' and 'arbitrage' in task_type:
-        return {{
+        return {{}}
             "opportunities_found": 3,
             "estimated_profit": 0.05,
             "confidence": 0.85,
             "analysis_time": 1.2
-        }}
+
     elif AGENT_ROLE == 'risk_management':
-        return {{
+        return {{}}
             "risk_score": 0.3,
             "max_position_size": 1000,
             "recommendations": ["limit_exposure", "diversify_trades"],
             "compliance_status": "approved"
-        }}
+
     elif AGENT_ROLE == 'execution':
-        return {{
+        return {{}}
             "execution_plan": ["approve_tokens", "execute_flash_loan", "swap_tokens"],
             "estimated_gas": 350000,
             "execution_time": 15,
             "status": "ready"
-        }}
+
     elif AGENT_ROLE == 'monitoring':
-        return {{
+        return {{}}
             "price_updates": 25,
             "liquidity_changes": 3,
             "alerts_generated": 1,
             "monitoring_active": True
-        }}
+
     else:
-        return {{
+        return {{}}
             "processed": True,
             "result": "task_completed",
             "agent_role": AGENT_ROLE
-        }}
+
 
 def main():
     """Main agent function"""
-    logger.info(f"Starting {{AGENT_NAME}} on port {{AGENT_PORT}}")
+    logger.info(str(f"Starting {{AGENT_NAME}} on port {{AGENT_PORT}}")
     app.run(host='localhost', port=AGENT_PORT, debug=False)
 
 if __name__ == "__main__":
@@ -459,7 +494,7 @@ if __name__ == "__main__":
                 with open(script_path, 'w') as f:
                     f.write(template)
                 
-                logger.info(f"Created agent script: {script_path}")
+                logger.info(str(f"Created agent script: {script_path}")
     
     def _initialize_langchain(self):
         """Initialize LangChain components for intelligent coordination"""
@@ -467,55 +502,55 @@ if __name__ == "__main__":
             # Initialize LLM
             api_key = os.getenv('OPENAI_API_KEY') or os.getenv('GITHUB_TOKEN')
             if api_key:
-                self.llm = ChatOpenAI(
+                self.llm = ChatOpenAI()
                     api_key=api_key,
                     model="gpt-3.5-turbo",
                     temperature=0.7
-                )
+                
                 
                 # Create coordination tools
                 coordination_tools = self._create_coordination_tools()
                 
                 # Initialize coordination agent
-                self.coordination_agent = initialize_agent(
+                self.coordination_agent = initialize_agent()
                     coordination_tools,
                     self.llm,
                     agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
                     memory=ConversationBufferMemory(memory_key="chat_history", return_messages=True),
                     verbose=True
-                )
                 
-                logger.info("✅ LangChain coordination agent initialized")
+                
+                logger.info("[OK] LangChain coordination agent initialized")
             else:
                 logger.warning("No API key found, using basic coordination")
                 
         except Exception as e:
-            logger.error(f"Failed to initialize LangChain: {e}")
+            logger.error(str(f"Failed to initialize LangChain: {e}")
     
     def _create_coordination_tools(self) -> List[Tool]:
         """Create tools for the coordination agent"""
-        tools = [
-            Tool(
+        tools = []
+            Tool()
                 name="assign_task",
                 description="Assign a task to the most suitable agent",
                 func=self._tool_assign_task
             ),
-            Tool(
+            Tool()
                 name="get_agent_status",
                 description="Get current status of all agents",
                 func=self._tool_get_agent_status
             ),
-            Tool(
+            Tool()
                 name="analyze_performance",
                 description="Analyze system performance and suggest optimizations",
                 func=self._tool_analyze_performance
             ),
-            Tool(
+            Tool()
                 name="balance_load",
                 description="Balance task load across agents",
                 func=self._tool_balance_load
-            )
-        ]
+            
+        
         return tools
     
     def _tool_assign_task(self, task_description: str) -> str:
@@ -565,7 +600,7 @@ if __name__ == "__main__":
         # Start performance monitoring
         asyncio.create_task(self._monitor_performance())
         
-        logger.info("✅ AI agents coordination system active")
+        logger.info("[OK] AI agents coordination system active")
     
     async def _monitor_agents(self):
         """Monitor agent health and status"""
@@ -577,7 +612,7 @@ if __name__ == "__main__":
                 await asyncio.sleep(30)  # Check every 30 seconds
                 
             except Exception as e:
-                logger.error(f"Agent monitoring error: {e}")
+                logger.error(str(f"Agent monitoring error: {e}")
                 await asyncio.sleep(5)
     
     async def _check_agent_health(self, agent_name: str):
@@ -599,13 +634,13 @@ if __name__ == "__main__":
                         if 'tasks_completed' in data:
                             agent.completed_tasks = data['tasks_completed']
                         
-                        logger.debug(f"✅ Agent {agent_name} health check passed")
+                        logger.debug(str(f"[OK] Agent {agent_name} health check passed")
                     else:
-                        logger.warning(f"⚠️  Agent {agent_name} health check failed: HTTP {response.status}")
+                        logger.warning(str(f"[WARN]  Agent {agent_name} health check failed: HTTP {response.status}")
                         agent.status = AgentStatus.ERROR
                         
         except Exception as e:
-            logger.warning(f"⚠️  Agent {agent_name} health check failed: {e}")
+            logger.warning(str(f"[WARN]  Agent {agent_name} health check failed: {e}")
             agent.status = AgentStatus.ERROR
     
     async def _process_task_queue(self):
@@ -626,7 +661,7 @@ if __name__ == "__main__":
                 await asyncio.sleep(1)
                 
             except Exception as e:
-                logger.error(f"Task processing error: {e}")
+                logger.error(str(f"Task processing error: {e}")
                 await asyncio.sleep(5)
     
     async def _assign_and_execute_task(self, task: Task):
@@ -636,7 +671,7 @@ if __name__ == "__main__":
             best_agent_name = self._select_best_agent_for_task(task.description, task.type)
             
             if not best_agent_name:
-                logger.error(f"No suitable agent found for task {task.id}")
+                logger.error(str(f"No suitable agent found for task {task.id}")
                 task.status = TaskStatus.FAILED
                 task.error_message = "No suitable agent available"
                 return
@@ -655,13 +690,13 @@ if __name__ == "__main__":
             agent.current_tasks.append(task.id)
             self.active_tasks[task.id] = task
             
-            logger.info(f"📋 Assigned task {task.id} to {best_agent_name}")
+            logger.info(str(f"📋 Assigned task {task.id} to {best_agent_name}")
             
             # Execute task
             await self._execute_task_on_agent(task, agent)
             
         except Exception as e:
-            logger.error(f"Task assignment error: {e}")
+            logger.error(str(f"Task assignment error: {e}")
             task.status = TaskStatus.FAILED
             task.error_message = str(e)
     
@@ -679,7 +714,7 @@ if __name__ == "__main__":
                     if agent_name in response.lower():
                         return agent_name
             except Exception as e:
-                logger.warning(f"AI agent selection failed: {e}")
+                logger.warning(str(f"AI agent selection failed: {e}")
         
         # Fallback to rule-based selection
         candidates = []
@@ -727,13 +762,13 @@ if __name__ == "__main__":
             task.status = TaskStatus.IN_PROGRESS
             
             # Prepare task data
-            task_payload = {
+            task_payload = {}
                 "id": task.id,
                 "type": task.type,
                 "description": task.description,
                 "data": task.data,
                 "priority": task.priority.value
-            }
+            
             
             # Send task to agent
             url = f"http://localhost:{agent.config.port}/task"
@@ -747,7 +782,7 @@ if __name__ == "__main__":
                         task.status = TaskStatus.COMPLETED
                         task.completed_at = datetime.now()
                         
-                        logger.info(f"✅ Task {task.id} completed by {agent.config.name}")
+                        logger.info(str(f"[OK] Task {task.id} completed by {agent.config.name}")
                         
                         # Update agent statistics
                         agent.completed_tasks += 1
@@ -758,19 +793,19 @@ if __name__ == "__main__":
                         task.error_message = error_msg
                         agent.failed_tasks += 1
                         
-                        logger.error(f"❌ Task {task.id} failed: {error_msg}")
+                        logger.error(str(f"[ERROR] Task {task.id} failed: {error_msg}")
         
         except asyncio.TimeoutError:
             task.status = TaskStatus.FAILED
             task.error_message = "Task timeout"
             agent.failed_tasks += 1
-            logger.error(f"❌ Task {task.id} timed out")
+            logger.error(str(f"[ERROR] Task {task.id} timed out")
             
         except Exception as e:
             task.status = TaskStatus.FAILED
             task.error_message = str(e)
             agent.failed_tasks += 1
-            logger.error(f"❌ Task {task.id} execution error: {e}")
+            logger.error(str(f"[ERROR] Task {task.id} execution error: {e}")
         
         finally:
             # Remove task from agent's current tasks
@@ -786,7 +821,7 @@ if __name__ == "__main__":
         """Check and clean up completed tasks"""
         # Clean up old completed tasks (keep last 1000)
         if len(self.completed_tasks) > 1000:
-            oldest_tasks = sorted(
+            oldest_tasks = sorted()
                 self.completed_tasks.items(),
                 key=lambda x: x[1].completed_at or datetime.min
             )[:100]
@@ -810,44 +845,44 @@ if __name__ == "__main__":
                     self.performance_metrics["system_efficiency"] = success_rate
                 
                 # Log performance summary every 5 minutes
-                logger.info(f"📊 Performance: {total_completed} tasks completed, "
-                           f"{total_failed} failed, {len(self.active_tasks)} active")
+                logger.info(str(f"[METRICS] Performance: {total_completed} tasks completed, ")
+                           f"{total_failed} failed, {len(self.active_tasks)} active"
                 
                 await asyncio.sleep(300)  # 5 minutes
                 
             except Exception as e:
-                logger.error(f"Performance monitoring error: {e}")
+                logger.error(str(f"Performance monitoring error: {e}")
                 await asyncio.sleep(60)
     
-    def submit_task(self, task_type: str, description: str, data: Dict[str, Any] = None, 
+    def submit_task(self, task_type: str, description: str, data: Dict[str, Any] = None, )
                    priority: TaskPriority = TaskPriority.NORMAL) -> str:
         """Submit a new task to the system"""
         task_id = f"task_{int(time.time())}_{len(self.active_tasks)}"
         
-        task = Task(
+        task = Task()
             id=task_id,
             type=task_type,
             description=description,
             data=data or {},
             priority=priority
-        )
+        
         
         self.task_queue.put(task)
-        logger.info(f"📝 Submitted task {task_id}: {description}")
+        logger.info(str(f"[LOG] Submitted task {task_id}: {description}")
         
         return task_id
     
     def get_system_status(self) -> Dict[str, Any]:
         """Get comprehensive system status"""
-        return {
-            "coordinator": {
+        return {}
+            "coordinator": {}
                 "running": self.running,
                 "total_agents": len(self.agents),
                 "active_agents": sum(1 for agent in self.agents.values() if agent.status == AgentStatus.ACTIVE),
                 "langchain_enabled": langchain_available and self.coordination_agent is not None
             },
-            "agents": {
-                name: {
+            "agents": {}
+                name: {}
                     "name": agent.config.name,
                     "role": agent.config.role,
                     "status": agent.status.value,
@@ -857,20 +892,20 @@ if __name__ == "__main__":
                     "failed_tasks": agent.failed_tasks,
                     "performance_score": agent.performance_score,
                     "capabilities": agent.config.capabilities
-                }
+                
                 for name, agent in self.agents.items()
             },
-            "tasks": {
+            "tasks": {}
                 "queue_size": self.task_queue.qsize(),
                 "active_tasks": len(self.active_tasks),
                 "completed_tasks": len(self.completed_tasks)
             },
             "performance": self.performance_metrics
-        }
+        
     
     async def stop_all_agents(self):
         """Stop the coordination system"""
-        logger.info("🛑 Stopping AI agents coordination system...")
+        logger.info("[STOP] Stopping AI agents coordination system...")
         
         self.running = False
         
@@ -888,7 +923,7 @@ if __name__ == "__main__":
         # Shutdown executor
         self.executor.shutdown(wait=True)
         
-        logger.info("✅ AI agents coordination system stopped")
+        logger.info("[OK] AI agents coordination system stopped")
 
 
 async def main():
@@ -899,19 +934,19 @@ async def main():
         await coordinator.start_all_agents()
         
         # Example: Submit some test tasks
-        coordinator.submit_task(
+        coordinator.submit_task()
             "arbitrage_analysis",
             "Analyze arbitrage opportunities between Uniswap and SushiSwap",
             {"token_pair": "USDC/WETH", "amount": 1000},
             TaskPriority.HIGH
-        )
         
-        coordinator.submit_task(
+        
+        coordinator.submit_task()
             "risk_assessment",
             "Assess risk for flash loan strategy",
             {"strategy": "triangle_arbitrage", "capital": 50000},
             TaskPriority.NORMAL
-        )
+        
         
         # Keep running
         while coordinator.running:
@@ -920,7 +955,7 @@ async def main():
     except KeyboardInterrupt:
         logger.info("Received keyboard interrupt")
     except Exception as e:
-        logger.error(f"Coordinator error: {e}")
+        logger.error(str(f"Coordinator error: {e}")
     finally:
         await coordinator.stop_all_agents()
 

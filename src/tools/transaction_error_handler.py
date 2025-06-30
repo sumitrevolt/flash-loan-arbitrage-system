@@ -1,7 +1,21 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+                import re
+from typing import Dict, Any, Optional, Tuple, List, Union
+import logging
+import os
+import time
+
+                from hexbytes import HexBytes
+from web3.types import TxParams, Wei, ChecksumAddress
+
+from src.utils.middleware_compat import apply_poa_middleware
+from src.utils.web3_provider import Web3, WEB3_IMPORTED
+from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
+from src.utils.web3_provider import requires_web3
 """
 Transaction Error Handler for Flash Loan Arbitrage System
 # Import requires_web3 decorator from central provider
-from src.utils.web3_provider import requires_web3
 
 
 This module provides enhanced error handling for blockchain transactions,
@@ -15,25 +29,16 @@ It includes:
 - Detailed error logging and diagnostics
 """
 
-import time
-import logging
-from typing import Dict, Any, Optional, Tuple, List, Union
 # Import from central web3_provider
-from src.utils.web3_provider import Web3, WEB3_IMPORTED
-from web3.types import TxParams, Wei, ChecksumAddress
 # Import exceptions from central provider
-from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
 # Import middleware from centralized modules
-from src.utils.middleware_compat import apply_poa_middleware
 
-import logging
 logger = logging.getLogger(__name__)
 # Configure logging
 logger = logging.getLogger("TransactionErrorHandler")
 tx_logger = logging.getLogger("TransactionLogger")
 
 # File handler for transaction logs
-import os
 if not os.path.exists("logs"):
     os.makedirs("logs")
 tx_handler = logging.FileHandler("logs/transactions.log")
@@ -65,30 +70,30 @@ class TransactionErrorHandler:
         self.last_used_nonce = {}
 
         # Error classification
-        self.gas_related_errors = [
+        self.gas_related_errors = []
             "gas required exceeds allowance",
             "insufficient funds for gas",
             "gas limit reached",
             "intrinsic gas too low",
             "out of gas",
             "exceeds block gas limit"
-        ]
+        
 
-        self.nonce_related_errors = [
+        self.nonce_related_errors = []
             "nonce too low",
             "replacement transaction underpriced",
             "already known",
             "transaction with same nonce in the queue"
-        ]
+        
 
-        self.contract_related_errors = [
+        self.contract_related_errors = []
             "execution reverted",
             "revert",
             "invalid opcode",
             "invalid jump destination"
-        ]
+        
 
-        self.rpc_related_errors = [
+        self.rpc_related_errors = []
             "connection failed",
             "timeout",
             "request failed",
@@ -96,7 +101,7 @@ class TransactionErrorHandler:
             "rate limit",
             "internal error",
             "service unavailable"
-        ]
+        
 
     def classify_error(self, error: Exception) -> str:
         """
@@ -156,7 +161,6 @@ class TransactionErrorHandler:
         if "0x" in error_str:
             try:
                 # Find hex string in the error
-                import re
                 hex_match = re.search(r'0x[0-9a-fA-F]+', error_str)
                 if hex_match:
                     hex_data = hex_match.group(0)
@@ -202,7 +206,7 @@ class TransactionErrorHandler:
             # Use the higher of the two
             base_gas_price = max(base_gas_price, current_gas_price)
         except Exception as e:
-            self.logger.warning(f"Failed to get current gas price: {e}")
+            self.logger.warning(str(f"Failed to get current gas price: {e}")
 
         # Apply multiplier
         new_gas_price = int(base_gas_price * multiplier)
@@ -240,12 +244,12 @@ class TransactionErrorHandler:
 
             return safe_nonce
         except Exception as e:
-            self.logger.error(f"Error getting safe nonce: {e}")
+            self.logger.error(str(f"Error getting safe nonce: {e}")
             # Fallback to just getting the transaction count
             checksum_address = self.web3.to_checksum_address(address)
             return self.web3.eth.get_transaction_count(checksum_address)
 
-    def execute_transaction_with_retry(
+    def execute_transaction_with_retry()
         self,
         tx_params: Dict[str, Any],
         private_key: str,
@@ -281,14 +285,14 @@ class TransactionErrorHandler:
 
                     # Adjust gas price based on retry count
                     if 'gasPrice' in tx_params:
-                        tx_params['gasPrice'] = self.get_optimal_gas_price(
+                        tx_params['gasPrice'] = self.get_optimal_gas_price()
                             tx_params['gasPrice'],
                             retry_count
-                        )
+                        
 
                 # Log transaction attempt
-                self.logger.info(f"Sending transaction (attempt {retry_count + 1}/{self.max_retries + 1})")
-                self.tx_logger.info(f"Transaction params: {tx_params}")
+                self.logger.info(str(f"Sending transaction (attempt {retry_count + 1}/{self.max_retries + 1}")
+                self.tx_logger.info(str(f"Transaction params: {tx_params}")
 
                 # Sign transaction
                 signed_tx = self.web3.eth.account.sign_transaction(tx_params, private_key)
@@ -297,20 +301,20 @@ class TransactionErrorHandler:
                 tx_hash = self.web3.eth.send_raw_transaction(signed_tx.rawTransaction)
                 tx_hash_hex = tx_hash.hex()
 
-                self.logger.info(f"Transaction sent with hash: {tx_hash_hex}")
-                self.tx_logger.info(f"Transaction sent with hash: {tx_hash_hex}")
+                self.logger.info(str(f"Transaction sent with hash: {tx_hash_hex}")
+                self.tx_logger.info(str(f"Transaction sent with hash: {tx_hash_hex}")
 
                 # Wait for receipt
-                self.logger.info(f"Waiting for transaction receipt (timeout: {max_confirmations_wait}s)...")
-                receipt = self.web3.eth.wait_for_transaction_receipt(
+                self.logger.info(str(f"Waiting for transaction receipt (timeout: {max_confirmations_wait}s...")
+                receipt = self.web3.eth.wait_for_transaction_receipt()
                     tx_hash,
                     timeout=max_confirmations_wait
-                )
+                
 
                 # Check transaction status
                 if receipt['status'] == 1:
-                    self.logger.info(f"Transaction successful: {tx_hash_hex}")
-                    self.tx_logger.info(f"Transaction successful: {tx_hash_hex}")
+                    self.logger.info(str(f"Transaction successful: {tx_hash_hex}")
+                    self.tx_logger.info(str(f"Transaction successful: {tx_hash_hex}")
                     return True, tx_hash_hex
                 else:
                     error_msg = f"Transaction failed with status: {receipt['status']}"
@@ -322,11 +326,11 @@ class TransactionErrorHandler:
                         # Try to get transaction trace or revert reason
                         trace_info = self._get_transaction_trace(tx_hash_hex)
                         if trace_info:
-                            self.logger.error(f"Transaction trace: {trace_info}")
-                            self.tx_logger.error(f"Transaction trace: {trace_info}")
+                            self.logger.error(str(f"Transaction trace: {trace_info}")
+                            self.tx_logger.error(str(f"Transaction trace: {trace_info}")
                             return False, {"status": "failed", "hash": tx_hash_hex, "trace": trace_info}
                     except Exception as trace_error:
-                        self.logger.warning(f"Failed to get transaction trace: {trace_error}")
+                        self.logger.warning(str(f"Failed to get transaction trace: {trace_error}")
 
                     return False, {"status": "failed", "hash": tx_hash_hex, "receipt": dict(receipt)}
 
@@ -347,7 +351,7 @@ class TransactionErrorHandler:
                     retry_count += 1
                     if retry_count <= self.max_retries:
                         delay = self.retry_delay * (2 ** (retry_count - 1))  # Exponential backoff
-                        self.logger.info(f"Retrying in {delay} seconds... (attempt {retry_count + 1}/{self.max_retries + 1})")
+                        self.logger.info(str(f"Retrying in {delay} seconds... (attempt {retry_count + 1}/{self.max_retries + 1}")
                         time.sleep(delay)
                         continue
                     else:
@@ -377,10 +381,10 @@ class TransactionErrorHandler:
                     # Using a more generic approach to avoid type issues
                     
                     method = RPCEndpoint("debug_traceTransaction")
-                    response = self.web3.provider.make_request(
+                    response = self.web3.provider.make_request()
                         method,
                         [tx_hash]
-                    )
+                    
                     if response and 'result' in response:
                         return response['result']
                 except Exception:
@@ -390,7 +394,7 @@ class TransactionErrorHandler:
             # This would require additional setup and API keys
             return None
         except Exception as e:
-            self.logger.debug(f"Failed to get transaction trace: {e}")
+            self.logger.debug(str(f"Failed to get transaction trace: {e}")
             return None
 
     def decode_transaction_input(self, tx_hash: str, contract_abi: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
@@ -408,7 +412,6 @@ class TransactionErrorHandler:
             # Convert tx_hash to proper format
             try:
                 # Try to convert to HexBytes
-                from hexbytes import HexBytes
                 if isinstance(tx_hash, str):
                     if not tx_hash.startswith('0x'):
                         tx_hash = f"0x{tx_hash}"
@@ -419,7 +422,7 @@ class TransactionErrorHandler:
                 # Get transaction
                 tx = self.web3.eth.get_transaction(tx_hash_hex)
             except Exception as e:
-                self.logger.error(f"Error converting transaction hash: {e}")
+                self.logger.error(str(f"Error converting transaction hash: {e}")
                 return None
             if not tx:
                 return None
@@ -437,10 +440,10 @@ class TransactionErrorHandler:
             # Decode function input
             func_obj, func_params = contract.decode_function_input(input_data)
 
-            return {
+            return {}
                 "function": func_obj.fn_name,
                 "params": func_params
-            }
+            
         except Exception as e:
-            self.logger.error(f"Failed to decode transaction input: {e}")
+            self.logger.error(str(f"Failed to decode transaction input: {e}")
             return None

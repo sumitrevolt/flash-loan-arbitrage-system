@@ -1,12 +1,14 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+import os
+
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+import uvicorn
 """
 Entrypoint script for Coordination Dashboard container
 """
 
-import os
-import uvicorn
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
 
 app = FastAPI(title="Coordination Dashboard")
 

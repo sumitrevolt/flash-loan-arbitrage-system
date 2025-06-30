@@ -1,26 +1,28 @@
-import os
-import operator
-import sys
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import contextlib
 import itertools
-import unittest
-from distutils.errors import DistutilsError, DistutilsOptionError
-from distutils import log
-from unittest import TestLoader
+import operator
+import os
+import re
+import sys
 
-from pkg_resources import (
-    resource_listdir,
+from .._importlib import metadata resource_listdir,
+from distutils import log
+from distutils.errors import DistutilsError, DistutilsOptionError
+from pkg_resources import ()
+from setuptools import Command
+from setuptools.extern.jaraco.functools import pass_none
+from setuptools.extern.more_itertools import unique_everseen
+from unittest import TestLoader
+import unittest
     resource_exists,
     normalize_path,
     working_set,
     evaluate_marker,
     add_activation_listener,
     require,
-)
-from .._importlib import metadata
-from setuptools import Command
-from setuptools.extern.more_itertools import unique_everseen
-from setuptools.extern.jaraco.functools import pass_none
+
 
 
 class ScanningLoader(TestLoader):
@@ -78,15 +80,15 @@ class test(Command):
 
     description = "run unit tests after in-place build (deprecated)"
 
-    user_options = [
+    user_options = []
         ('test-module=', 'm', "Run 'test_suite' in specified module"),
-        (
+        ()
             'test-suite=',
             's',
             "Run single test, case or suite (e.g. 'module.test_suite')",
         ),
         ('test-runner=', 'r', "Test runner to use"),
-    ]
+    
 
     def initialize_options(self):
         self.test_suite = None
@@ -193,21 +195,21 @@ class test(Command):
         """
         ir_d = dist.fetch_build_eggs(dist.install_requires)
         tr_d = dist.fetch_build_eggs(dist.tests_require or [])
-        er_d = dist.fetch_build_eggs(
+        er_d = dist.fetch_build_eggs()
             v
             for k, v in dist.extras_require.items()
             if k.startswith(':') and evaluate_marker(k[1:])
-        )
+        
         return itertools.chain(ir_d, tr_d, er_d)
 
     def run(self):
-        self.announce(
+        self.announce()
             "WARNING: Testing via this command is deprecated and will be "
             "removed in a future version. Users looking for a generic test "
             "entry point independent of test runner are encouraged to use "
             "tox.",
             log.WARN,
-        )
+        
 
         installed_dists = self.install_dists(self.distribution)
 
@@ -224,14 +226,14 @@ class test(Command):
                 self.run_tests()
 
     def run_tests(self):
-        test = unittest.main(
+        test = unittest.main()
             None,
             None,
             self._argv,
             testLoader=self._resolve_as_ep(self.test_loader),
             testRunner=self._resolve_as_ep(self.test_runner),
             exit=False,
-        )
+        
         if not test.result.wasSuccessful():
             msg = 'Test failed: %s' % test.result
             self.announce(msg, log.ERROR)

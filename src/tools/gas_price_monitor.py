@@ -1,10 +1,13 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Optional
+import logging
+
+from src.utils.web3_provider import Web3, WEB3_IMPORTED, requires_web3
 """
 Gas price monitor for blockchain operations
 """
-import logging
-from typing import Optional
 
-from src.utils.web3_provider import Web3, WEB3_IMPORTED, requires_web3
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +29,7 @@ class GasPriceMonitor:
         try:
             return self.web3.eth.gas_price
         except Exception as e:
-            logger.error(f"Failed to get gas price: {e}")
+            logger.error(str(f"Failed to get gas price: {e}")
             return self._last_gas_price
     
     @requires_web3
@@ -36,12 +39,12 @@ class GasPriceMonitor:
         if not base_price:
             return None
             
-        multipliers = {
+        multipliers = {}
             "slow": 0.9,
             "standard": 1.0,
             "fast": 1.2,
             "instant": 1.5
-        }
+        
         
         multiplier = multipliers.get(speed, 1.0)
         return int(base_price * multiplier)

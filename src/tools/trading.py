@@ -1,10 +1,13 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from decimal import Decimal
+from typing import List
+
+from dataclasses import dataclass
 """
 Trading models for flash loan arbitrage system
 """
 
-from dataclasses import dataclass
-from typing import List, Dict, Any
-from decimal import Decimal
 
 @dataclass
 class ArbitrageOpportunity:

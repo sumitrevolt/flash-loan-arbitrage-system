@@ -1,44 +1,69 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+                    import traceback
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, Any, List, Union
+import argparse
+import asyncio
+import json
+import logging
+import os
+import subprocess
+import sys
+import time
+
+from web3.types import TxParams, Wei, ChecksumAddress
+
+                    from core.auto_executor import auto_executor
+                    from core.web3_utils import is_connected
+                from src.flash_loan.agents.auto_executor import auto_executor
+                from src.flash_loan.core import dex_integration_singleton as dex_integration
+                from src.flash_loan.core.arbitrage_strategy import arbitrage_strategy
+                from src.flash_loan.core.message_bus import message_bus
+                from src.flash_loan.core.transaction_executor import transaction_executor
+                from src.flash_loan.core.workflow import workflow_manager
+            from core.database import db
+from src.utils.middleware_compat import apply_poa_middleware
+from src.utils.web3_provider import Web3, WEB3_IMPORTED
+from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
+from src.utils.web3_provider import requires_web3
 """
 Comprehensive Monitoring Script for Flash Loan Arbitrage System
 # Import requires_web3 decorator from central provider
-from src.utils.web3_provider import requires_web3
 
 
 This script monitors the flash loan arbitrage system and restarts components if needed.
 It also provides detailed status information and can be run as a standalone process.
 """
 
-import os
-import sys
-import time
-import json
-import asyncio
-import logging
-import argparse
-import subprocess
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, Any, List, Union
 # Import from central web3_provider
-from src.utils.web3_provider import Web3, WEB3_IMPORTED
-from web3.types import TxParams, Wei, ChecksumAddress
 # Import exceptions from central provider
-from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
 # Import middleware from centralized modules
-from src.utils.middleware_compat import apply_poa_middleware
 
-import logging
 logger = logging.getLogger(__name__)
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
+    handlers=[]
         logging.FileHandler("logs/system_monitor.log"),
         logging.StreamHandler()
-    ]
-)
+    
+
 logger = logging.getLogger("system_monitor")
 
 # Ensure we're in the project root directory
@@ -61,42 +86,38 @@ class SystemMonitor:
         self.restart_attempts = {}
         self.max_restart_attempts = 3
         self.restart_cooldown = 300  # seconds
-        self.components = [
+        self.components = []
             "dex_integration",
             "arbitrage_strategy",
             "auto_executor",
             "transaction_executor",
             "workflow_manager",
             "message_bus"
-        ]
+        
 
     async def initialize(self):
         """Initialize the system monitor"""
         try:
             # Import components with proper error handling
             try:
-                from src.flash_loan.core import dex_integration_singleton as dex_integration
                 self.dex_integration = dex_integration
             except ImportError:
                 logger.warning("DEX integration module not found, skipping DEX integration checks")
                 self.dex_integration = None
 
             try:
-                from src.flash_loan.core.arbitrage_strategy import arbitrage_strategy
                 self.arbitrage_strategy = arbitrage_strategy
             except ImportError:
                 logger.warning("Arbitrage strategy module not found, skipping arbitrage strategy checks")
                 self.arbitrage_strategy = None
 
             try:
-                from src.flash_loan.agents.auto_executor import auto_executor
                 self.auto_executor = auto_executor
             except ImportError:
                 logger.warning("Auto executor module not found, skipping auto executor checks")
                 self.auto_executor = None
 
             try:
-                from src.flash_loan.core.transaction_executor import transaction_executor
                 self.transaction_executor = transaction_executor
             except ImportError:
                 logger.warning("Transaction executor module not found, skipping transaction executor checks")
@@ -104,7 +125,6 @@ class SystemMonitor:
 
             # Check if message_bus module exists
             try:
-                from src.flash_loan.core.message_bus import message_bus
                 self.message_bus = message_bus
                 self.has_message_bus = True
             except ImportError:
@@ -114,7 +134,6 @@ class SystemMonitor:
 
             # Check if workflow module exists
             try:
-                from src.flash_loan.core.workflow import workflow_manager
                 self.workflow_manager = workflow_manager
                 self.has_workflow = True
             except ImportError:
@@ -132,22 +151,21 @@ class SystemMonitor:
             logger.info("System monitor initialized")
             return True
         except Exception as e:
-            logger.error(f"Error initializing system monitor: {e}")
-            import traceback
+            logger.error(str(f"Error initializing system monitor: {e}")
             traceback.print_exc()
             return False
 
     async def check_system_status(self) -> Dict[str, Any]:
         """Check the status of all system components"""
         try:
-            status = {
+            status = {}
                 "timestamp": time.time(),
                 "components": {},
                 "processes": {},
                 "opportunities": [],
                 "executions": [],
                 "overall_status": "unknown"
-            }
+            
 
             # Check DEX integration
             dex_status = await self._check_dex_integration()
@@ -183,10 +201,10 @@ class SystemMonitor:
             status["executions"] = await self._check_recent_executions()
 
             # Determine overall status
-            component_statuses = [
+            component_statuses = []
                 comp.get("status", "unknown")
                 for comp in status["components"].values()
-            ]
+            
 
             if all(s == "ok" for s in component_statuses):
                 status["overall_status"] = "ok"
@@ -204,26 +222,25 @@ class SystemMonitor:
 
             return status
         except Exception as e:
-            logger.error(f"Error checking system status: {e}")
-            import traceback
+            logger.error(str(f"Error checking system status: {e}")
             traceback.print_exc()
-            return {
+            return {}
                 "timestamp": time.time(),
                 "error": str(e),
                 "overall_status": "error"
-            }
+            
 
     async def _check_dex_integration(self) -> Dict[str, Any]:
         """Check DEX integration status"""
         try:
             self.last_check["dex_integration"] = time.time()
 
-            status = {
+            status = {}
                 "initialized": getattr(self.dex_integration, 'initialized', False),
                 "connected": False,
                 "status": "unknown",
                 "details": {}
-            }
+            
 
             # Check if initialized
             if not status["initialized"]:
@@ -235,7 +252,6 @@ class SystemMonitor:
             if hasattr(self.dex_integration, 'w3'):
                 w3_instance = getattr(self.dex_integration, 'w3', None)
                 if w3_instance:
-                    from core.web3_utils import is_connected
                     if is_connected(w3_instance.provider):
                         status["connected"] = True
                         status["details"]["chain_id"] = w3_instance.eth.chain_id
@@ -252,24 +268,24 @@ class SystemMonitor:
 
             return status
         except Exception as e:
-            logger.error(f"Error checking DEX integration: {e}")
-            return {
+            logger.error(str(f"Error checking DEX integration: {e}")
+            return {}
                 "initialized": False,
                 "connected": False,
                 "status": "error",
                 "message": str(e)
-            }
+            
 
     async def _check_arbitrage_strategy(self) -> Dict[str, Any]:
         """Check arbitrage strategy status"""
         try:
             self.last_check["arbitrage_strategy"] = time.time()
 
-            status = {
+            status = {}
                 "initialized": getattr(self.arbitrage_strategy, 'initialized', False),
                 "status": "unknown",
                 "details": {}
-            }
+            
 
             # Check if initialized
             if not status["initialized"]:
@@ -288,12 +304,12 @@ class SystemMonitor:
 
             return status
         except Exception as e:
-            logger.error(f"Error checking arbitrage strategy: {e}")
-            return {
+            logger.error(str(f"Error checking arbitrage strategy: {e}")
+            return {}
                 "initialized": False,
                 "status": "error",
                 "message": str(e)
-            }
+            
 
     async def _check_auto_executor(self) -> Dict[str, Any]:
         """Check auto executor status"""
@@ -301,12 +317,12 @@ class SystemMonitor:
             self.last_check["auto_executor"] = time.time()
 
             # Create a default status dictionary
-            status_dict = {
+            status_dict = {}
                 "enabled": False,
                 "running": False,
                 "status": "unknown",
                 "details": {}
-            }
+            
 
             # Check if auto_executor exists and has the necessary attributes
             if self.auto_executor is not None:
@@ -323,7 +339,7 @@ class SystemMonitor:
                             status_dict["enabled"] = getattr(executor_status, "enabled", False)
                             status_dict["running"] = getattr(executor_status, "running", False)
                     except Exception as status_error:
-                        logger.error(f"Error getting auto executor status: {status_error}")
+                        logger.error(str(f"Error getting auto executor status: {status_error}")
                 else:
                     # Fallback if get_status method doesn't exist
                     config = getattr(self.auto_executor, 'config', {})
@@ -345,24 +361,24 @@ class SystemMonitor:
 
             return status_dict
         except Exception as e:
-            logger.error(f"Error checking auto executor: {e}")
-            return {
+            logger.error(str(f"Error checking auto executor: {e}")
+            return {}
                 "enabled": False,
                 "running": False,
                 "status": "error",
                 "message": str(e)
-            }
+            
 
     async def _check_transaction_executor(self) -> Dict[str, Any]:
         """Check transaction executor status"""
         try:
             self.last_check["transaction_executor"] = time.time()
 
-            status = {
+            status = {}
                 "initialized": getattr(self.transaction_executor, '_initialized', False),
                 "status": "unknown",
                 "details": {}
-            }
+            
 
             # Check if initialized
             if not status["initialized"]:
@@ -374,7 +390,6 @@ class SystemMonitor:
             if hasattr(self.transaction_executor, 'w3'):
                 w3_instance = getattr(self.transaction_executor, 'w3', None)
                 if w3_instance:
-                    from core.web3_utils import is_connected
                     if is_connected(w3_instance.provider):
                         status["details"]["connected"] = True
                         status["details"]["provider"] = str(w3_instance.provider)
@@ -394,12 +409,12 @@ class SystemMonitor:
 
             return status
         except Exception as e:
-            logger.error(f"Error checking transaction executor: {e}")
-            return {
+            logger.error(str(f"Error checking transaction executor: {e}")
+            return {}
                 "initialized": False,
                 "status": "error",
                 "message": str(e)
-            }
+            
 
     async def _check_workflow_manager(self) -> Dict[str, Any]:
         """Check workflow manager status"""
@@ -408,19 +423,19 @@ class SystemMonitor:
 
             # Skip if workflow manager is not available
             if not self.has_workflow or self.workflow_manager is None:
-                return {
+                return {}
                     "available": False,
                     "status": "warning",
                     "message": "Workflow manager not available",
                     "details": {}
-                }
+                
 
-            status = {
+            status = {}
                 "available": True,
                 "running": getattr(self.workflow_manager, 'running', False),
                 "status": "unknown",
                 "details": {}
-            }
+            
 
             # Check if running
             if not status["running"]:
@@ -439,13 +454,13 @@ class SystemMonitor:
 
             return status
         except Exception as e:
-            logger.error(f"Error checking workflow manager: {e}")
-            return {
+            logger.error(str(f"Error checking workflow manager: {e}")
+            return {}
                 "available": True,
                 "running": False,
                 "status": "error",
                 "message": str(e)
-            }
+            
 
     async def _check_message_bus(self) -> Dict[str, Any]:
         """Check message bus status"""
@@ -454,19 +469,19 @@ class SystemMonitor:
 
             # Skip if message bus is not available
             if not self.has_message_bus or self.message_bus is None:
-                return {
+                return {}
                     "available": False,
                     "status": "warning",
                     "message": "Message bus not available",
                     "details": {}
-                }
+                
 
-            status = {
+            status = {}
                 "available": True,
                 "initialized": getattr(self.message_bus, 'initialized', False),
                 "status": "unknown",
                 "details": {}
-            }
+            
 
             # Check if initialized
             if not status["initialized"]:
@@ -485,13 +500,13 @@ class SystemMonitor:
 
             return status
         except Exception as e:
-            logger.error(f"Error checking message bus: {e}")
-            return {
+            logger.error(str(f"Error checking message bus: {e}")
+            return {}
                 "available": True,
                 "initialized": False,
                 "status": "error",
                 "message": str(e)
-            }
+            
 
     def _check_processes(self) -> Dict[str, Any]:
         """Check running processes"""
@@ -504,17 +519,17 @@ class SystemMonitor:
 
             return processes
         except Exception as e:
-            logger.error(f"Error checking processes: {e}")
+            logger.error(str(f"Error checking processes: {e}")
             return {"error": str(e)}
 
     def _get_python_processes(self) -> List[Dict[str, Any]]:
         """Get running Python processes"""
         try:
-            result: str = subprocess.run(
+            result: str = subprocess.run()
                 ["tasklist", "/FI", "IMAGENAME eq python.exe", "/FO", "CSV"],
                 capture_output=True,
                 text=True
-            )
+            
 
             processes = []
             lines = result.stdout.strip().split("\n")[1:]  # Skip header
@@ -525,16 +540,16 @@ class SystemMonitor:
 
                 parts = line.strip('"').split('","')
                 if len(parts) >= 5:
-                    processes.append({
+                    processes.append({)}
                         "name": parts[0],
                         "pid": int(parts[1]),
                         "session": parts[2],
                         "memory": parts[4].strip('"')
-                    })
+                    
 
             return processes
         except Exception as e:
-            logger.error(f"Error getting Python processes: {e}")
+            logger.error(str(f"Error getting Python processes: {e}")
             return []
 
     async def _check_recent_opportunities(self) -> List[Dict[str, Any]]:
@@ -561,7 +576,7 @@ class SystemMonitor:
                     elif isinstance(opportunities, list):
                         return opportunities
                     else:
-                        logger.warning(f"get_recent_opportunities returned non-list: {type(opportunities)}")
+                        logger.warning(str(f"get_recent_opportunities returned non-list: {type(opportunities}")
                         return []
                 else:
                     logger.warning("get_recent_opportunities is not callable")
@@ -570,13 +585,12 @@ class SystemMonitor:
                 logger.warning("Arbitrage strategy does not have 'get_recent_opportunities' method.")
                 return []
         except Exception as e:
-            logger.error(f"Error checking recent opportunities: {e}")
+            logger.error(str(f"Error checking recent opportunities: {e}")
             return []
 
     async def _check_recent_executions(self) -> List[Dict[str, Any]]:
         """Check recent executions"""
         try:
-            from core.database import db
 
             # Check if get_recent_executions method exists
             if hasattr(db, 'get_recent_executions'):
@@ -594,7 +608,7 @@ class SystemMonitor:
                             executions.append(dict(row))
                         return executions
                 except Exception as inner_e:
-                    logger.error(f"Error querying executions table: {inner_e}")
+                    logger.error(str(f"Error querying executions table: {inner_e}")
 
                 # Check execution log files as fallback
                 execution_logs = list(Path("logs/debug").glob("execution_*.json"))
@@ -606,11 +620,11 @@ class SystemMonitor:
                             execution_data = json.load(f)
                             executions.append(execution_data)
                     except Exception as file_e:
-                        logger.error(f"Error reading execution log file {log_file}: {file_e}")
+                        logger.error(str(f"Error reading execution log file {log_file}: {file_e}")
 
                 return executions
         except Exception as e:
-            logger.error(f"Error checking recent executions: {e}")
+            logger.error(str(f"Error checking recent executions: {e}")
             return []
 
     async def restart_component(self, component: str) -> bool:
@@ -622,13 +636,13 @@ class SystemMonitor:
                 if self.restart_attempts[component] >= self.max_restart_attempts:
                     last_attempt = self.last_check.get(component, 0)
                     if current_time - last_attempt < self.restart_cooldown:
-                        logger.warning(f"Too many restart attempts for {component}, cooling down")
+                        logger.warning(str(f"Too many restart attempts for {component}, cooling down")
                         return False
                     else:
                         # Reset counter after cooldown
                         self.restart_attempts[component] = 0
 
-            logger.info(f"Restarting component: {component}")
+            logger.info(str(f"Restarting component: {component}")
 
             if component == "dex_integration":
                 # Check if dex_integration exists and has initialize method
@@ -642,10 +656,10 @@ class SystemMonitor:
                             init_method()
                         logger.info("DEX integration restarted")
                     except Exception as e:
-                        logger.error(f"Error initializing DEX integration: {e}")
+                        logger.error(str(f"Error initializing DEX integration: {e}")
                         return False
                 else:
-                    logger.info("DEX integration restarted (no initialization needed)")
+                    logger.info("DEX integration restarted (no initialization needed")
 
             elif component == "arbitrage_strategy":
                 # Check if arbitrage_strategy exists and has initialize method
@@ -659,7 +673,7 @@ class SystemMonitor:
                             init_method()
                         logger.info("Arbitrage strategy restarted")
                     except Exception as e:
-                        logger.error(f"Error initializing arbitrage strategy: {e}")
+                        logger.error(str(f"Error initializing arbitrage strategy: {e}")
                         return False
                 else:
                     logger.warning("Arbitrage strategy not available or has no initialize method")
@@ -668,7 +682,6 @@ class SystemMonitor:
             elif component == "auto_executor":
                 try:
                     # Import auto_executor directly
-                    from core.auto_executor import auto_executor
 
                     # Enable auto_executor if it has an enable method
                     if hasattr(auto_executor, 'enable') and callable(getattr(auto_executor, 'enable')):
@@ -685,7 +698,7 @@ class SystemMonitor:
 
                     logger.info("Auto executor restarted")
                 except Exception as auto_ex:
-                    logger.error(f"Error restarting auto executor: {auto_ex}")
+                    logger.error(str(f"Error restarting auto executor: {auto_ex}")
                     return False
 
             elif component == "transaction_executor":
@@ -708,10 +721,10 @@ class SystemMonitor:
 
                         logger.info("Transaction executor restarted")
                     except Exception as e:
-                        logger.error(f"Error initializing transaction executor: {e}")
+                        logger.error(str(f"Error initializing transaction executor: {e}")
                         return False
                 else:
-                    logger.info("Transaction executor restarted (no initialization needed)")
+                    logger.info("Transaction executor restarted (no initialization needed")
 
             elif component == "workflow_manager":
                 if not self.has_workflow or self.workflow_manager is None:
@@ -732,7 +745,7 @@ class SystemMonitor:
 
                         logger.info("Workflow manager restarted")
                     except Exception as e:
-                        logger.error(f"Error starting workflow manager: {e}")
+                        logger.error(str(f"Error starting workflow manager: {e}")
                         return False
                 else:
                     logger.warning("Workflow manager has no start method")
@@ -757,14 +770,14 @@ class SystemMonitor:
 
                         logger.info("Message bus restarted")
                     except Exception as e:
-                        logger.error(f"Error initializing message bus: {e}")
+                        logger.error(str(f"Error initializing message bus: {e}")
                         return False
                 else:
                     logger.warning("Message bus has no initialize method")
                     return False
 
             else:
-                logger.warning(f"Unknown component: {component}")
+                logger.warning(str(f"Unknown component: {component}")
                 return False
 
             # Update restart attempts
@@ -773,8 +786,7 @@ class SystemMonitor:
 
             return True
         except Exception as e:
-            logger.error(f"Error restarting component {component}: {e}")
-            import traceback
+            logger.error(str(f"Error restarting component {component}: {e}")
             traceback.print_exc()
             return False
 
@@ -800,7 +812,7 @@ class SystemMonitor:
                     else:
                         logger.warning("Workflow manager does not have a 'stop' method.")
                 except Exception as e:
-                    logger.error(f"Error stopping workflow manager: {e}")
+                    logger.error(str(f"Error stopping workflow manager: {e}")
             else:
                 logger.info("Workflow manager not available, skipping stop")
 
@@ -820,19 +832,19 @@ class SystemMonitor:
                     else:
                         logger.warning("Message bus does not have a 'shutdown' method.")
                 except Exception as e:
-                    logger.error(f"Error stopping message bus: {e}")
+                    logger.error(str(f"Error stopping message bus: {e}")
             else:
                 logger.info("Message bus not available, skipping shutdown")
 
             # Restart all components
-            components_to_restart = [
+            components_to_restart = []
                 "dex_integration",
                 "arbitrage_strategy",
                 "transaction_executor",
                 "message_bus",
                 "workflow_manager",
                 "auto_executor"
-            ]
+            
 
             for component in components_to_restart:
                 await self.restart_component(component)
@@ -840,8 +852,7 @@ class SystemMonitor:
             logger.info("System restart complete")
             return True
         except Exception as e:
-            logger.error(f"Error restarting system: {e}")
-            import traceback
+            logger.error(str(f"Error restarting system: {e}")
             traceback.print_exc()
             return False
 
@@ -856,27 +867,25 @@ class SystemMonitor:
                     status = await self.check_system_status()
 
                     # Log status summary
-                    logger.info(f"System status: {status['overall_status']}")
+                    logger.info(str(f"System status: {status['overall_status']}")
 
                     # Check if any components need to be restarted
                     for component, comp_status in status["components"].items():
                         if comp_status["status"] == "error":
-                            logger.warning(f"Component {component} has errors, attempting to restart")
+                            logger.warning(str(f"Component {component} has errors, attempting to restart")
                             await self.restart_component(component)
 
                     # Save status to file
                     self._save_status_to_file(status)
 
                 except Exception as e:
-                    logger.error(f"Error in monitoring loop: {e}")
-                    import traceback
+                    logger.error(str(f"Error in monitoring loop: {e}")
                     traceback.print_exc()
 
                 # Wait for next check
                 await asyncio.sleep(self.check_interval)
         except Exception as e:
-            logger.error(f"Monitoring loop failed: {e}")
-            import traceback
+            logger.error(str(f"Monitoring loop failed: {e}")
             traceback.print_exc()
 
     def _save_status_to_file(self, status: Dict[str, Any]):
@@ -894,7 +903,7 @@ class SystemMonitor:
             with open(data_dir / "status_history.json", "w") as f:
                 json.dump(self.status_history, f, indent=2, default=str)
         except Exception as e:
-            logger.error(f"Error saving status to file: {e}")
+            logger.error(str(f"Error saving status to file: {e}")
 
 async def main():
     """Main entry point"""
@@ -918,7 +927,7 @@ async def main():
     if args.check:
         # Check system status
         status = await monitor.check_system_status()
-        print(json.dumps(status, indent=2, default=str))
+        print(json.dumps(status, indent=2, default=str, ensure_ascii=True, default=str))
     elif args.restart:
         # Restart the entire system
         success = await monitor.restart_system()
@@ -931,16 +940,16 @@ async def main():
         component = args.restart_component
         success = await monitor.restart_component(component)
         if success:
-            logger.info(f"Component {component} restart successful")
+            logger.info(str(f"Component {component} restart successful")
         else:
-            logger.error(f"Component {component} restart failed")
+            logger.error(str(f"Component {component} restart failed")
     elif args.monitor:
         # Start monitoring loop
         await monitor.monitor_loop()
     else:
         # Default: check status and start monitoring
         status = await monitor.check_system_status()
-        print(json.dumps(status, indent=2, default=str))
+        print(json.dumps(status, indent=2, default=str, ensure_ascii=True, default=str))
         await monitor.monitor_loop()
 
     return 0
@@ -953,7 +962,6 @@ if __name__ == "__main__":
         logger.info("Monitoring stopped by user")
         sys.exit(0)
     except Exception as e:
-        logger.error(f"Unhandled exception: {e}")
-        import traceback
+        logger.error(str(f"Unhandled exception: {e}")
         traceback.print_exc()
         sys.exit(1)

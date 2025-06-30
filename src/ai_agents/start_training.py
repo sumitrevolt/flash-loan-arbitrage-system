@@ -1,23 +1,25 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+import asyncio
+import json
+import os
+import sys
+import time
+
+from src.training.mcp_training_coordinator import MCPTrainingCoordinator
 """
 MCP Training Starter Script
 Coordinates training across all MCP servers
 """
 
-import asyncio
-import sys
-import os
-import json
-import time
-from datetime import datetime
 
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.training.mcp_training_coordinator import MCPTrainingCoordinator
 
 async def main():
-    print("🚀 Starting MCP Training System")
+    print("[INIT] Starting MCP Training System")
     print("=" * 50)
     
     try:
@@ -27,41 +29,41 @@ async def main():
         # Step 1: Discover servers
         print("\n📡 Discovering MCP servers...")
         servers = await coordinator.discover_mcp_servers()
-        print(f"✅ Found {len(servers)} servers:")
+        print(f"[OK] Found {len(servers)} servers:")
         for server in servers:
             print(f"   - {server.name} ({server.host}:{server.port}) - {', '.join(server.capabilities)}")
         
         if not servers:
-            print("❌ No MCP servers found. Please start your MCP servers first.")
+            print("[ERROR] No MCP servers found. Please start your MCP servers first.")
             return
         
         # Step 2: Collect training data
-        print("\n📊 Collecting training data...")
+        print("\n[METRICS] Collecting training data...")
         training_data = await coordinator.collect_training_data(["arbitrage", "revenue", "risk"])
-        print(f"✅ Collected {len(training_data)} training samples")
+        print(f"[OK] Collected {len(training_data)} training samples")
         
         if len(training_data) < 10:
-            print("⚠️ Warning: Limited training data available. Using synthetic data for demonstration.")
+            print("[WARN] Warning: Limited training data available. Using synthetic data for demonstration.")
         
         # Step 3: Train models
         print("\n🤖 Training ML models...")
         print("   Training models: arbitrage_predictor, risk_classifier, neural_network")
         
         start_time = time.time()
-        results = await coordinator.train_models([
+        results = await coordinator.train_models([)]
             "arbitrage_predictor", 
             "risk_classifier", 
             "neural_network"
-        ])
+        
         training_time = time.time() - start_time
         
         # Step 4: Display results
-        print(f"\n📈 Training completed in {training_time:.2f} seconds")
+        print(f"\n[GROWTH] Training completed in {training_time:.2f} seconds")
         print(f"Session ID: {results.get('session_id')}")
         
         for model_type, model_results in results.get("results", {}).items():
             if "error" not in model_results:
-                print(f"\n✅ {model_type}:")
+                print(f"\n[OK] {model_type}:")
                 if "train_mse" in model_results:
                     print(f"   Train MSE: {model_results['train_mse']:.4f}")
                     print(f"   Test MSE: {model_results['test_mse']:.4f}")
@@ -74,13 +76,13 @@ async def main():
                     for feature, score in sorted(importance.items(), key=lambda x: Any: Any: x[1], reverse=True)[:3]:
                         print(f"     - {feature}: {score:.4f}")
             else:
-                print(f"❌ {model_type}: {model_results['error']}")
+                print(f"[ERROR] {model_type}: {model_results['error']}")
         
         # Step 5: Deploy models (if training was successful)
         if results.get("results") and all("error" not in r for r in results["results"].values()):
-            print("\n🚀 Deploying models to servers...")
+            print("\n[INIT] Deploying models to servers...")
             deployment = await coordinator.deploy_models_to_servers(results["session_id"])
-            print(f"✅ Deployed to {deployment.get('deployed_servers', 0)} servers")
+            print(f"[OK] Deployed to {deployment.get('deployed_servers', 0)} servers")
         
         # Step 6: Show final status
         print("\n📋 Training Summary:")
@@ -89,7 +91,7 @@ async def main():
         print(f"   Training data: {results.get('training_data_size')} samples")
         print(f"   Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
-        print("\n🎉 MCP Training completed successfully!")
+        print("\n[CELEBRATE] MCP Training completed successfully!")
         print("\nNext steps:")
         print("1. Start the training MCP server: python mcp_servers/training_mcp_server.py")
         print("2. Use trained models in your arbitrage strategies")
@@ -98,7 +100,7 @@ async def main():
         return True
         
     except Exception as e:
-        print(f"\n❌ Training failed: {e}")
+        print(f"\n[ERROR] Training failed: {e}")
         return False
 
 if __name__ == "__main__":
@@ -109,5 +111,5 @@ if __name__ == "__main__":
         print("\n⏹️ Training interrupted by user")
         sys.exit(1)
     except Exception as e:
-        print(f"\n❌ Training failed: {e}")
+        print(f"\n[ERROR] Training failed: {e}")
         sys.exit(1)

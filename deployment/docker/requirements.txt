@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pydantic
+redis
+pika
+psycopg2-binary
+aiohttp
+websockets
+docker
+psutil
+requests

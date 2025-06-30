@@ -1,4 +1,16 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+        import hashlib
+from datetime import datetime
+from typing import Dict, List, Any
+import asyncio
+import json
+import logging
+import os
+import sys
+import time
+
+import requests
 """
 EVM MCP Server
 Provides Ethereum Virtual Machine blockchain integration for the flash loan system
@@ -10,25 +22,29 @@ Key capabilities:
 - Multi-chain support for EVM compatible networks
 """
 
-import asyncio
-import json
-import sys
-import logging
-import os
-import time
-import requests
-from typing import Dict, List, Any
-from datetime import datetime
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(sys.stderr),
         logging.FileHandler(os.path.join("logs", "evm_mcp_server.log"))
-    ]
-)
+    
+
 logger = logging.getLogger("evm-mcp-server")
 
 class EVMMCPServer:
@@ -43,44 +59,44 @@ class EVMMCPServer:
         self.request_history = []
         self.coordinator_url = os.getenv("MCP_COORDINATOR_URL", "http://localhost:9000")
         self.status = "operational"
-        self.networks = {
-            "ethereum": {
+        self.networks = {}
+            "ethereum": {}
                 "rpc_url": os.getenv("ETHEREUM_RPC_URL", "https://mainnet.infura.io/v3/your-api-key"),
                 "chain_id": 1,
                 "name": "Ethereum Mainnet"
             },
-            "polygon": {
+            "polygon": {}
                 "rpc_url": os.getenv("POLYGON_RPC_URL", "https://polygon-rpc.com"),
                 "chain_id": 137,
                 "name": "Polygon Mainnet"
             },
-            "arbitrum": {
+            "arbitrum": {}
                 "rpc_url": os.getenv("ARBITRUM_RPC_URL", "https://arb1.arbitrum.io/rpc"),
                 "chain_id": 42161,
                 "name": "Arbitrum One"
-            }
-        }
+            
+        
         self._setup_tools()
         
     def _setup_tools(self):
         """Setup available tools for the EVM server"""
-        self.tools = [
-            {
+        self.tools = []
+            {}
                 "name": "get_network_status",
                 "description": "Get status of supported EVM networks",
-                "inputSchema": {
+                "inputSchema": {}
                     "type": "object",
-                    "properties": {
+                    "properties": {}
                         "network": {"type": "string", "description": "Network name (ethereum, polygon, etc.)"}
-                    }
-                }
+                    
+                
             },
-            {
+            {}
                 "name": "estimate_gas",
                 "description": "Estimate gas for a transaction",
-                "inputSchema": {
+                "inputSchema": {}
                     "type": "object",
-                    "properties": {
+                    "properties": {}
                         "network": {"type": "string", "description": "Network name"},
                         "from_address": {"type": "string", "description": "Sender address"},
                         "to_address": {"type": "string", "description": "Recipient address"},
@@ -88,25 +104,25 @@ class EVMMCPServer:
                         "value": {"type": "string", "description": "Value in wei"}
                     },
                     "required": ["network", "to_address"]
-                }
+                
             },
-            {
+            {}
                 "name": "get_gas_price",
                 "description": "Get current gas price on specified network",
-                "inputSchema": {
+                "inputSchema": {}
                     "type": "object",
-                    "properties": {
+                    "properties": {}
                         "network": {"type": "string", "description": "Network name"}
                     },
                     "required": ["network"]
-                }
+                
             },
-            {
+            {}
                 "name": "send_transaction",
                 "description": "Send a transaction to the blockchain",
-                "inputSchema": {
+                "inputSchema": {}
                     "type": "object",
-                    "properties": {
+                    "properties": {}
                         "network": {"type": "string", "description": "Network name"},
                         "private_key": {"type": "string", "description": "Private key for signing"},
                         "to_address": {"type": "string", "description": "Recipient address"},
@@ -116,26 +132,26 @@ class EVMMCPServer:
                         "gas_price": {"type": "string", "description": "Gas price in wei"}
                     },
                     "required": ["network", "to_address"]
-                }
+                
             },
-            {
+            {}
                 "name": "get_transaction_receipt",
                 "description": "Get receipt for a transaction",
-                "inputSchema": {
+                "inputSchema": {}
                     "type": "object",
-                    "properties": {
+                    "properties": {}
                         "network": {"type": "string", "description": "Network name"},
                         "tx_hash": {"type": "string", "description": "Transaction hash"}
                     },
                     "required": ["network", "tx_hash"]
-                }
+                
             },
-            {
+            {}
                 "name": "call_contract",
                 "description": "Call a contract method (read-only)",
-                "inputSchema": {
+                "inputSchema": {}
                     "type": "object",
-                    "properties": {
+                    "properties": {}
                         "network": {"type": "string", "description": "Network name"},
                         "contract_address": {"type": "string", "description": "Contract address"},
                         "abi": {"type": "object", "description": "Contract ABI"},
@@ -143,28 +159,28 @@ class EVMMCPServer:
                         "function_params": {"type": "array", "description": "Function parameters"}
                     },
                     "required": ["network", "contract_address", "function_name"]
-                }
+                
             },
-            {
+            {}
                 "name": "health_check",
                 "description": "Check the health of the EVM server",
-                "inputSchema": {
+                "inputSchema": {}
                     "type": "object",
                     "properties": {}
-                }
+                
             },
-            {
+            {}
                 "name": "register_with_coordinator",
                 "description": "Register this server with the MCP coordinator",
-                "inputSchema": {
+                "inputSchema": {}
                     "type": "object",
-                    "properties": {
+                    "properties": {}
                         "coordinator_url": {"type": "string", "description": "URL of the coordinator"},
                         "capabilities": {"type": "array", "items": {"type": "string"}, "description": "Server capabilities"}
-                    }
-                }
-            }
-        ]
+                    
+                
+            
+        
     
     async def handle_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """Handle incoming MCP JSON-RPC messages"""
@@ -173,29 +189,29 @@ class EVMMCPServer:
         id_val = message.get("id")
         
         if method == "initialize":
-            return {
+            return {}
                 "jsonrpc": "2.0",
                 "id": id_val,
-                "result": {
+                "result": {}
                     "protocolVersion": "2024-11-05",
-                    "capabilities": {
+                    "capabilities": {}
                         "tools": {}
                     },
-                    "serverInfo": {
+                    "serverInfo": {}
                         "name": self.name,
                         "version": self.version
-                    }
-                }
-            }
+                    
+                
+            
         
         elif method == "tools/list":
-            return {
+            return {}
                 "jsonrpc": "2.0", 
                 "id": id_val,
-                "result": {
+                "result": {}
                     "tools": self.tools
-                }
-            }
+                
+            
         
         elif method == "tools/call":
             tool_name = params.get("name")
@@ -203,18 +219,18 @@ class EVMMCPServer:
             
             result: str = await self.call_tool(tool_name, tool_args)
             
-            return {
+            return {}
                 "jsonrpc": "2.0",
                 "id": id_val,
-                "result": {
-                    "content": [
-                        {
+                "result": {}
+                    "content": []
+                        {}
                             "type": "text",
                             "text": result
-                        }
-                    ]
-                }
-            }
+                        
+                    
+                
+            
         
         # Handle HTTP-style requests for backward compatibility
         elif method == "POST" and "path" in params:
@@ -245,18 +261,18 @@ class EVMMCPServer:
                 result: str = await self.call_tool("register_with_coordinator", body)
                 return {"jsonrpc": "2.0", "id": id_val, "result": json.loads(result)}
         
-        return {
+        return {}
             "jsonrpc": "2.0",
             "id": id_val,
-            "error": {
+            "error": {}
                 "code": -32601,
                 "message": f"Method not found: {method}"
-            }
-        }
+            
+        
     
     async def call_tool(self, name: str, args: Dict[str, Any]) -> str:
         """Handle tool calls for the EVM server"""
-        logger.info(f"Tool call: {name} with args {args}")
+        logger.info(str(f"Tool call: {name} with args {args}")
         
         if name == "get_network_status":
             return await self._get_network_status(args)
@@ -282,10 +298,10 @@ class EVMMCPServer:
         elif name == "register_with_coordinator":
             return await self._register_with_coordinator(args)
         
-        return json.dumps({
+        return json.dumps({)}
             "error": f"Unknown tool: {name}",
-            "timestamp": datetime.now().isoformat()
-        })
+            "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+        
     
     async def _get_network_status(self, args: Dict[str, Any]) -> str:
         """Get status of supported EVM networks"""
@@ -293,29 +309,29 @@ class EVMMCPServer:
         
         if network and network in self.networks:
             # Simulate network status check for specific network
-            return json.dumps({
+            return json.dumps({)}
                 "success": True,
                 "network": network,
                 "status": "connected",
                 "chain_id": self.networks[network]["chain_id"],
                 "latest_block": 12345678,  # Simulated block number
-                "timestamp": datetime.now().isoformat()
-            })
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+            
         else:
             # Return status for all networks
             statuses = {}
             for net_name, net_info in self.networks.items():
-                statuses[net_name] = {
+                statuses[net_name] = {}
                     "status": "connected",
                     "chain_id": net_info["chain_id"],
                     "latest_block": 12345678  # Simulated block number
-                }
+                
             
-            return json.dumps({
+            return json.dumps({)}
                 "success": True,
                 "networks": statuses,
-                "timestamp": datetime.now().isoformat()
-            })
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+            
     
     async def _estimate_gas(self, args: Dict[str, Any]) -> str:
         """Estimate gas for a transaction"""
@@ -323,66 +339,66 @@ class EVMMCPServer:
         to_address = args.get("to_address")
         
         if not network or network not in self.networks:
-            return json.dumps({
+            return json.dumps({)}
                 "success": False,
                 "error": "Invalid or missing network",
-                "timestamp": datetime.now().isoformat()
-            })
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+            
         
         if not to_address:
-            return json.dumps({
+            return json.dumps({)}
                 "success": False,
                 "error": "Missing to_address",
-                "timestamp": datetime.now().isoformat()
-            })
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+            
         
         # Simulate gas estimation
         estimated_gas = 50000 + (hash(to_address) % 10000)  # Simulated gas amount
         
-        return json.dumps({
+        return json.dumps({)}
             "success": True,
             "network": network,
             "estimated_gas": estimated_gas,
-            "timestamp": datetime.now().isoformat()
-        })
+            "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+        
     
     async def _get_gas_price(self, args: Dict[str, Any]) -> str:
         """Get current gas price on specified network"""
         network = args.get("network")
         
         if not network or network not in self.networks:
-            return json.dumps({
+            return json.dumps({)}
                 "success": False,
                 "error": "Invalid or missing network",
-                "timestamp": datetime.now().isoformat()
-            })
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+            
         
         # Simulate gas price information
-        base_prices = {
+        base_prices = {}
             "ethereum": 30,
             "polygon": 80,
             "arbitrum": 0.1
-        }
+        
         
         # Simulate EIP-1559 prices where applicable
         if network in ["ethereum", "polygon"]:
-            return json.dumps({
+            return json.dumps({)}
                 "success": True,
                 "network": network,
-                "gas_price_wei": str(int(base_prices[network] * 1e9)),  # Convert Gwei to Wei
+                "gas_price_wei": str(int(base_prices[network] * 1e9, ensure_ascii=True, default=str)),  # Convert Gwei to Wei
                 "max_fee_per_gas_wei": str(int(base_prices[network] * 1.2 * 1e9)),
                 "max_priority_fee_per_gas_wei": str(int(2 * 1e9)),  # 2 Gwei
                 "eip1559_supported": True,
                 "timestamp": datetime.now().isoformat()
-            })
+            
         else:
-            return json.dumps({
+            return json.dumps({)}
                 "success": True,
                 "network": network,
-                "gas_price_wei": str(int(base_prices[network] * 1e9)),  # Convert Gwei to Wei
+                "gas_price_wei": str(int(base_prices[network] * 1e9, ensure_ascii=True, default=str)),  # Convert Gwei to Wei
                 "eip1559_supported": False,
                 "timestamp": datetime.now().isoformat()
-            })
+            
     
     async def _send_transaction(self, args: Dict[str, Any]) -> str:
         """Send a transaction to the blockchain"""
@@ -390,31 +406,30 @@ class EVMMCPServer:
         to_address = args.get("to_address")
         
         if not network or network not in self.networks:
-            return json.dumps({
+            return json.dumps({)}
                 "success": False,
                 "error": "Invalid or missing network",
-                "timestamp": datetime.now().isoformat()
-            })
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+            
         
         if not to_address:
-            return json.dumps({
+            return json.dumps({)}
                 "success": False,
                 "error": "Missing to_address",
-                "timestamp": datetime.now().isoformat()
-            })
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+            
         
         # Simulate transaction submission
         # Generate a fake transaction hash
-        import hashlib
         fake_tx_hash = "0x" + hashlib.sha256(f"{network}:{to_address}:{time.time()}".encode()).hexdigest()
         
-        return json.dumps({
+        return json.dumps({)}
             "success": True,
             "network": network,
             "transaction_hash": fake_tx_hash,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat(),
             "message": "Transaction submitted, check receipt for confirmation"
-        })
+        
     
     async def _get_transaction_receipt(self, args: Dict[str, Any]) -> str:
         """Get receipt for a transaction"""
@@ -422,21 +437,21 @@ class EVMMCPServer:
         tx_hash = args.get("tx_hash")
         
         if not network or network not in self.networks:
-            return json.dumps({
+            return json.dumps({)}
                 "success": False,
                 "error": "Invalid or missing network",
-                "timestamp": datetime.now().isoformat()
-            })
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+            
         
         if not tx_hash:
-            return json.dumps({
+            return json.dumps({)}
                 "success": False,
                 "error": "Missing transaction hash",
-                "timestamp": datetime.now().isoformat()
-            })
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+            
         
         # Simulate transaction receipt
-        receipt = {
+        receipt = {}
             "transaction_hash": tx_hash,
             "block_number": 12345678,
             "block_hash": "0x" + "0" * 64,
@@ -446,14 +461,14 @@ class EVMMCPServer:
             "effective_gas_price": int(30 * 1e9),  # 30 Gwei in Wei
             "status": 1,  # 1 = success
             "logs": []
-        }
         
-        return json.dumps({
+        
+        return json.dumps({)}
             "success": True,
             "network": network,
             "receipt": receipt,
-            "timestamp": datetime.now().isoformat()
-        })
+            "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+        
     
     async def _call_contract(self, args: Dict[str, Any]) -> str:
         """Call a contract method (read-only)"""
@@ -462,25 +477,25 @@ class EVMMCPServer:
         function_name = args.get("function_name")
         
         if not network or network not in self.networks:
-            return json.dumps({
+            return json.dumps({)}
                 "success": False,
                 "error": "Invalid or missing network",
-                "timestamp": datetime.now().isoformat()
-            })
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+            
         
         if not contract_address:
-            return json.dumps({
+            return json.dumps({)}
                 "success": False,
                 "error": "Missing contract_address",
-                "timestamp": datetime.now().isoformat()
-            })
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+            
         
         if not function_name:
-            return json.dumps({
+            return json.dumps({)}
                 "success": False,
                 "error": "Missing function_name",
-                "timestamp": datetime.now().isoformat()
-            })
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+            
         
         # Simulate contract call result
         result: str = None
@@ -495,14 +510,14 @@ class EVMMCPServer:
         else:
             result: str = [123, "test", True]  # Generic simulated result
         
-        return json.dumps({
+        return json.dumps({)}
             "success": True,
             "network": network,
             "contract_address": contract_address,
             "function_name": function_name,
             "result": result,
-            "timestamp": datetime.now().isoformat()
-        })
+            "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+        
     
     async def _health_check(self, args: Dict[str, Any]) -> str:
         """Check the health of the EVM server"""
@@ -510,16 +525,16 @@ class EVMMCPServer:
         
         # Simulate checking network connections
         for name, network in self.networks.items():
-            network_statuses[name] = {
+            network_statuses[name] = {}
                 "connected": True,
                 "latest_block": 12345678,
                 "response_time_ms": 50 + (hash(name) % 100)  # Simulated response time
-            }
+            
         
-        health_data = {
+        health_data = {}
             "status": self.status,
             "timestamp": datetime.now().isoformat(),
-            "server_info": {
+            "server_info": {}
                 "name": self.name,
                 "type": self.server_type,
                 "version": self.version
@@ -527,88 +542,88 @@ class EVMMCPServer:
             "networks": network_statuses,
             "active_requests": len(self.active_requests),
             "request_history": len(self.request_history)
-        }
         
-        return json.dumps(health_data, indent=2)
+        
+        return json.dumps(health_data, indent=2, ensure_ascii=True, default=str)
     
     async def _register_with_coordinator(self, args: Dict[str, Any]) -> str:
         """Register this server with the MCP coordinator"""
         coordinator_url = args.get("coordinator_url") or self.coordinator_url
         capabilities = args.get("capabilities", self._get_default_capabilities())
         
-        logger.info(f"Registering with coordinator at {coordinator_url}")
+        logger.info(str(f"Registering with coordinator at {coordinator_url}")
         
         try:
             server_port = os.getenv("MCP_PORT", "8003")
             server_url = f"http://localhost:{server_port}"
             
-            response = requests.post(
+            response = requests.post()
                 f"{coordinator_url}/register_server",
-                json={
+                json={}
                     "server_name": self.name,
                     "server_type": self.server_type,
                     "server_url": server_url,
                     "capabilities": capabilities
                 },
                 timeout=10
-            )
+            
             
             if response.status_code == 200:
                 result: str = response.json()
-                logger.info(f"Successfully registered with coordinator: {result}")
-                return json.dumps({
+                logger.info(str(f"Successfully registered with coordinator: {result}")
+                return json.dumps({)}
                     "success": True,
                     "coordinator_url": coordinator_url,
                     "registration_result": result,
-                    "timestamp": datetime.now().isoformat()
-                })
+                    "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+                
             else:
-                logger.warning(f"Failed to register with coordinator: {response.status_code} - {response.text}")
-                return json.dumps({
+                logger.warning(str(f"Failed to register with coordinator: {response.status_code} - {response.text}")
+                return json.dumps({)}
                     "success": False,
                     "error": f"Coordinator returned status {response.status_code}",
                     "response": response.text,
-                    "timestamp": datetime.now().isoformat()
-                })
+                    "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+                
         except Exception as e:
-            logger.error(f"Error registering with coordinator: {e}")
-            return json.dumps({
+            logger.error(str(f"Error registering with coordinator: {e}")
+            return json.dumps({)}
                 "success": False,
-                "error": str(e),
+                "error": str(e, ensure_ascii=True, default=str),
                 "timestamp": datetime.now().isoformat()
-            })
+            
     
     def _get_default_capabilities(self) -> List[str]:
         """Get default capabilities for this server type"""
-        return [
+        return []
             "blockchain_interaction",
             "transaction_management",
             "contract_calls",
             "gas_estimation",
             "multi_chain_support"
-        ]
+        
     
     async def _heartbeat_loop(self):
         """Send regular heartbeats to the coordinator"""
         while True:
             try:
-                response = requests.post(
+                response = requests.post()
                     f"{self.coordinator_url}/server_heartbeat",
-                    json={
+                    json={}
                         "server_name": self.name,
                         "status": self.status,
-                        "stats": {
+                        "stats": {}
                             "active_requests": len(self.active_requests),
                             "uptime_seconds": int(time.time() - self.start_time)
-                        }
+                        
                     },
                     timeout=5
-                )
+                
                 
                 if response.status_code == 200:
-                    logger.debug(f"Heartbeat sent successfully")
+                    logger.debug(str(f"Heartbeat sent successfully")
                 else:
-                    logger.warning(f"Failed to send heartbeat: {response.status_code}")
+                    logger.warning(str(f"Failed to send heartbeat: {response.status_code}")
                     
                     # If we got a 404, try to re-register
                     if response.status_code == 404:
@@ -616,14 +631,14 @@ class EVMMCPServer:
                         await self._register_with_coordinator({})
                 
             except Exception as e:
-                logger.error(f"Error sending heartbeat: {e}")
+                logger.error(str(f"Error sending heartbeat: {e}")
             
             await asyncio.sleep(30)  # Send heartbeat every 30 seconds
     
     async def run(self):
         """Run the EVM MCP server"""
         self.start_time = time.time()
-        logger.info(f"Starting {self.name} v{self.version} (stdio mode)")
+        logger.info(str(f"Starting {self.name} v{self.version} (stdio mode")
         
         # Register with coordinator
         await self._register_with_coordinator({})
@@ -634,9 +649,9 @@ class EVMMCPServer:
         # Start the server
         while True:
             try:
-                line: str = await asyncio.get_event_loop().run_in_executor(
+                line: str = await asyncio.get_event_loop().run_in_executor()
                     None, sys.stdin.readline
-                )
+                
                 
                 if not line:
                     break
@@ -649,23 +664,23 @@ class EVMMCPServer:
                     message = json.loads(line)
                     response = await self.handle_message(message)
                     
-                    print(json.dumps(response))
+                    print(json.dumps(response, ensure_ascii=True, default=str))
                     sys.stdout.flush()
                     
                 except json.JSONDecodeError as e:
-                    error_response = {
+                    error_response = {}
                         "jsonrpc": "2.0",
                         "id": None,
-                        "error": {
+                        "error": {}
                             "code": -32700,
                             "message": f"Parse error: {str(e)}"
-                        }
-                    }
-                    print(json.dumps(error_response))
+                        
+                    
+                    print(json.dumps(error_response, ensure_ascii=True, default=str))
                     sys.stdout.flush()
                     
             except Exception as e:
-                logger.error(f"Server error: {str(e)}")
+                logger.error(str(f"Server error: {str(e}")
                 break
 
 def main():
@@ -678,9 +693,9 @@ def main():
     try:
         asyncio.run(server.run())
     except KeyboardInterrupt:
-        logger.info(f"{server.name} shutting down...")
+        logger.info(str(f"{server.name} shutting down...")
     except Exception as e:
-        logger.error(f"Fatal error: {str(e)}")
+        logger.error(str(f"Fatal error: {str(e}")
         sys.exit(1)
 
 if __name__ == "__main__":

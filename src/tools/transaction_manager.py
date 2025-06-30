@@ -1,21 +1,26 @@
-import logging
-from src.utils.web3_provider import get_web3_instance, WEB3_IMPORTED
-from src.blockchain.rpc_manager import RPCManager
+# -*- coding: utf-8 -*-
 
+# -*- coding: utf-8 -*-
+
+import logging
+
+from .rpc_manager import get_rpc_manager
+
+from src.blockchain.rpc_manager import RPCManager
+from src.utils.web3_provider import get_web3_instance, WEB3_IMPORTED
 logger = logging.getLogger(__name__)
 
 def requires_web3(func):
     """Decorator to check if Web3 is available before executing function"""
     def wrapper(*args, **kwargs):
         if not WEB3_IMPORTED:
-            logger.error(f"Web3 required for {func.__name__} but not available")
+            logger.error(str(f"Web3 required for {func.__name__} but not available")
             return None
         return func(*args, **kwargs)
     return wrapper
 
 
 
-from .rpc_manager import get_rpc_manager
 
 class TransactionManager:
     def __init__(self):
@@ -34,14 +39,14 @@ class TransactionManager:
             if hasattr(signed_tx, 'rawTransaction'):
                 # It's a signed transaction object
                 tx_raw = signed_tx.rawTransaction
-                self.logger.info(f"[TX DIAGNOSTICS] Sending signed transaction with raw data length: {len(tx_raw) if tx_raw else 0}")
+                self.logger.info(str(f"[TX DIAGNOSTICS] Sending signed transaction with raw data length: {len(tx_raw if tx_raw else 0}")
             else:
                 # It's likely a dict
                 tx_dict = signed_tx if isinstance(signed_tx, dict) else {}
                 
                 # Log nonce and gas diagnostics
-                self.logger.info(f"[NONCE DIAGNOSTICS] Transaction nonce: {tx_dict.get('nonce', 'N/A')}")
-                self.logger.info(f"[GAS DIAGNOSTICS] Gas price: {tx_dict.get('gasPrice', 'N/A')}, Gas limit: {tx_dict.get('gas', 'N/A')}")
+                self.logger.info(str(f"[NONCE DIAGNOSTICS] Transaction nonce: {tx_dict.get('nonce', 'N/A'}")
+                self.logger.info(str(f"[GAS DIAGNOSTICS] Gas price: {tx_dict.get('gasPrice', 'N/A'}, Gas limit: {tx_dict.get('gas', 'N/A')}")))
                 
                 # Get current network state for comparison
                 try:
@@ -49,39 +54,39 @@ class TransactionManager:
                     if from_addr and self.web3:
                         current_nonce = self.web3.eth.get_transaction_count(from_addr)
                         current_gas_price = self.web3.eth.gas_price
-                        self.logger.info(f"[NONCE DIAGNOSTICS] Current network nonce for {from_addr}: {current_nonce}")
-                        self.logger.info(f"[GAS DIAGNOSTICS] Current network gas price: {current_gas_price}")
+                        self.logger.info(str(f"[NONCE DIAGNOSTICS] Current network nonce for {from_addr}: {current_nonce}")
+                        self.logger.info(str(f"[GAS DIAGNOSTICS] Current network gas price: {current_gas_price}")
                         
                         # Check for nonce mismatch
                         if 'nonce' in tx_dict and tx_dict['nonce'] < current_nonce:
-                            self.logger.warning(f"[NONCE WARNING] Transaction nonce ({tx_dict['nonce']}) is lower than current nonce ({current_nonce})")
+                            self.logger.warning(str(f"[NONCE WARNING] Transaction nonce ({tx_dict['nonce']} is lower than current nonce ({current_nonce})")))
                         
                         # Check for underpriced gas
                         if 'gasPrice' in tx_dict and int(tx_dict['gasPrice']) < int(current_gas_price * 0.9):
-                            self.logger.warning(f"[GAS WARNING] Transaction gas price may be too low: {tx_dict['gasPrice']} < {current_gas_price * 0.9}")
+                            self.logger.warning(str(f"[GAS WARNING] Transaction gas price may be too low: {tx_dict['gasPrice']} < {current_gas_price * 0.9}")
                 except Exception as diag_e:
-                    self.logger.debug(f"Could not perform diagnostic checks: {diag_e}")
+                    self.logger.debug(str(f"Could not perform diagnostic checks: {diag_e}")
             
             tx_hash = self.rpc_manager.send_transaction(signed_tx)
-            self.logger.info(f"Transaction sent: {tx_hash}")
+            self.logger.info(str(f"Transaction sent: {tx_hash}")
             
             # Wait for transaction receipt
             receipt = self.wait_for_transaction_receipt(tx_hash, timeout=timeout)
             if not receipt:
-                self.logger.error(f"Failed to get receipt for transaction {tx_hash} within {timeout} seconds")
+                self.logger.error(str(f"Failed to get receipt for transaction {tx_hash} within {timeout} seconds")
                 return None, None
                 
             status = receipt.get('status')
             if status == 1:
-                self.logger.info(f"Transaction {tx_hash} confirmed successfully")
+                self.logger.info(str(f"Transaction {tx_hash} confirmed successfully")
             else:
-                self.logger.error(f"Transaction {tx_hash} failed with status: {status}")
+                self.logger.error(str(f"Transaction {tx_hash} failed with status: {status}")
                 
             return tx_hash, receipt
             
         except Exception as e:
-            self.logger.error(f"Error sending transaction: {str(e)}")
-            self.logger.error(f"[TRANSACTION ERROR DETAILS] {type(e).__name__}: {str(e)}")
+            self.logger.error(str(f"Error sending transaction: {str(e}")
+            self.logger.error(str(f"[TRANSACTION ERROR DETAILS] {type(e.__name__}: {str(e)}")))
             return None, None
             
     def wait_for_transaction_receipt(self, tx_hash, timeout=300):
@@ -98,17 +103,17 @@ class TransactionManager:
         if isinstance(tx_hash, str) and not tx_hash.startswith('0x'):
             tx_hash = f"0x{tx_hash}"
             
-        receipt = self.rpc_manager.get_transaction_receipt(
+        receipt = self.rpc_manager.get_transaction_receipt()
             tx_hash, 
             timeout=timeout,
             poll_latency=2,
             exponential_backoff=True
-        )
+        
         
         if receipt and receipt.get('status') == 1:
-            self.logger.info(f"Transaction {tx_hash} was successful")
+            self.logger.info(str(f"Transaction {tx_hash} was successful")
         elif receipt:
-            self.logger.error(f"Transaction {tx_hash} failed with status: {receipt.get('status')}")
+            self.logger.error(str(f"Transaction {tx_hash} failed with status: {receipt.get('status'}")
             
         return receipt
         
@@ -118,15 +123,15 @@ class TransactionManager:
             receipt = self.wait_for_transaction_receipt(tx_hash)
             
         if not receipt:
-            self.logger.error(f"Cannot verify transaction {tx_hash}: No receipt available")
+            self.logger.error(str(f"Cannot verify transaction {tx_hash}: No receipt available")
             return False
             
         status = receipt.get('status')
         if status != 1:
-            self.logger.error(f"Transaction {tx_hash} failed with status: {status}")
+            self.logger.error(str(f"Transaction {tx_hash} failed with status: {status}")
             return False
             
-        self.logger.info(f"Transaction {tx_hash} confirmed successfully with status: {status}")
+        self.logger.info(str(f"Transaction {tx_hash} confirmed successfully with status: {status}")
         return True
         
     def get_gas_estimate(self, tx):
@@ -145,9 +150,9 @@ class TransactionManager:
             revert_reason = self._extract_revert_reason(error_msg)
             
             if revert_reason:
-                self.logger.error(f"Transaction would revert: {revert_reason}")
+                self.logger.error(str(f"Transaction would revert: {revert_reason}")
             else:
-                self.logger.error(f"Failed to estimate gas: {error_msg}")
+                self.logger.error(str(f"Failed to estimate gas: {error_msg}")
                 
             raise
             

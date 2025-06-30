@@ -1,19 +1,35 @@
-from fastapi import FastAPI, Request
-import httpx
+# -*- coding: utf-8 -*-
+
+# -*- coding: utf-8 -*-
 import asyncio
 import logging
 
+from fastapi import FastAPI, Request
+import httpx
 app = FastAPI()
+
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
 
 logging.basicConfig(level=logging.INFO)
 
 # Example: Assign roles to agents
-AGENT_ROLES = {
+AGENT_ROLES = {}
     1: 'indexer', 2: 'indexer', 3: 'indexer',
     4: 'analyzer', 5: 'analyzer', 6: 'analyzer',
     7: 'fetcher', 8: 'fetcher',
     9: 'coordinator', 10: 'coordinator'
-}
+
 
 AI_AGENT_URLS = [f"http://ai_agent-{i}:5000/action" for i in range(1, 11)]
 MCP_SERVER_URLS = [f"http://mcp_server-{i}:5000/action" for i in range(1, 22)]

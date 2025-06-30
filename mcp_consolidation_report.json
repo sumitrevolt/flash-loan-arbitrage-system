@@ -1,0 +1,806 @@
+{
+  "timestamp": "2025-06-26T20:48:02.882559",
+  "total_files_analyzed": 260,
+  "duplicate_groups": 90,
+  "files_removed": 102,
+  "consolidation_details": {
+    "aave_flash_loan_mcp_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\aave_flash_loan_mcp_server.py",
+      "quality_score": 140.7,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\aave_flash_loan_mcp_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\aave_flash_loan_mcp_server.py"
+      ]
+    },
+    "autodiscover_mcp_agents": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\autodiscover_mcp_agents.py",
+      "quality_score": 5.0,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\autodiscover_mcp_agents.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\autodiscover_mcp_agents.py"
+      ]
+    },
+    "check-mcp-status": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\check-mcp-status.py",
+      "quality_score": 36.900000000000006,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\check-mcp-status.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\check-mcp-status.py"
+      ]
+    },
+    "check_mcp_status": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\check_mcp_status.py",
+      "quality_score": 54.5,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\check_mcp_status.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\check_mcp_status.py"
+      ]
+    },
+    "clean_context7_mcp_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\clean_context7_mcp_server.py",
+      "quality_score": 87.9,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\clean_context7_mcp_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\clean_context7_mcp_server.py"
+      ]
+    },
+    "clean_matic_mcp_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\clean_matic_mcp_server.py",
+      "quality_score": 77.3,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\clean_matic_mcp_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\clean_matic_mcp_server.py"
+      ]
+    },
+    "code_editing_mcp_server": {
+      "total_duplicates": 2,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\code_editing_mcp_server.py",
+      "quality_score": 98.1,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\code_editing_mcp_server.py"
+      ]
+    },
+    "complete_langchain_mcp_integration": {
+      "total_duplicates": 2,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\complete_langchain_mcp_integration.py",
+      "quality_score": 114.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\complete_langchain_mcp_integration.py"
+      ]
+    },
+    "context7_mcp_server": {
+      "total_duplicates": 2,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\context7_mcp_server.py",
+      "quality_score": 88.1,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\context7_mcp_server.py"
+      ]
+    },
+    "copilot_mcp_mcp_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\copilot_mcp_mcp_server.py",
+      "quality_score": 63.0,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\copilot_mcp_mcp_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\copilot_mcp_mcp_server.py"
+      ]
+    },
+    "create_final_unified_mcp_manager": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\create_final_unified_mcp_manager.py",
+      "quality_score": 96.2,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\create_final_unified_mcp_manager.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\create_final_unified_mcp_manager.py"
+      ]
+    },
+    "dashboard_enhanced_mcp_dashboard_with_chat": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\dashboard_enhanced_mcp_dashboard_with_chat.py",
+      "quality_score": 155.5,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\dashboard_enhanced_mcp_dashboard_with_chat.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\dashboard_enhanced_mcp_dashboard_with_chat.py"
+      ]
+    },
+    "dex_aggregator_mcp_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\dex_aggregator_mcp_server.py",
+      "quality_score": 72.8,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\dex_aggregator_mcp_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\dex_aggregator_mcp_server.py"
+      ]
+    },
+    "discord_mcp_bot": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\discord_mcp_bot.py",
+      "quality_score": 91.6,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\discord_mcp_bot.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\discord_mcp_bot.py"
+      ]
+    },
+    "enhanced_llm_code_suggestion_mcp_server": {
+      "total_duplicates": 2,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\enhanced_llm_code_suggestion_mcp_server.py",
+      "quality_score": 15.1,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\enhanced_llm_code_suggestion_mcp_server.py"
+      ]
+    },
+    "enhanced_mcp_dashboard_with_chat": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\enhanced_mcp_dashboard_with_chat.py",
+      "quality_score": 278.1,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\enhanced_mcp_dashboard_with_chat.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\enhanced_mcp_dashboard_with_chat.py"
+      ]
+    },
+    "enhanced_mcp_server_manager": {
+      "total_duplicates": 2,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\enhanced_mcp_server_manager.py",
+      "quality_score": 140.9,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\enhanced_mcp_server_manager.py"
+      ]
+    },
+    "evm_mcp_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\evm_mcp_server.py",
+      "quality_score": 120.2,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\evm_mcp_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\evm_mcp_server.py"
+      ]
+    },
+    "fix_all_local_mcp_servers": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\fix_all_local_mcp_servers.py",
+      "quality_score": 109.7,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\fix_all_local_mcp_servers.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\fix_all_local_mcp_servers.py"
+      ]
+    },
+    "flash_loan_mcp_mcp_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\flash_loan_mcp_mcp_server.py",
+      "quality_score": 63.0,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\flash_loan_mcp_mcp_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\flash_loan_mcp_mcp_server.py"
+      ]
+    },
+    "foundry_mcp_mcp_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\foundry_mcp_mcp_server.py",
+      "quality_score": 63.0,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\foundry_mcp_mcp_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\foundry_mcp_mcp_server.py"
+      ]
+    },
+    "github_mcp_integration": {
+      "total_duplicates": 2,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\github_mcp_integration.py",
+      "quality_score": 77.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\github_mcp_integration.py"
+      ]
+    },
+    "identify_mcp_servers": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\identify_mcp_servers.py",
+      "quality_score": 91.9,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\identify_mcp_servers.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\identify_mcp_servers.py"
+      ]
+    },
+    "langchain_mcp_orchestrator": {
+      "total_duplicates": 2,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\langchain_mcp_orchestrator.py",
+      "quality_score": 128.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\langchain_mcp_orchestrator.py"
+      ]
+    },
+    "llm_code_suggestion_mcp_server": {
+      "total_duplicates": 2,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\llm_code_suggestion_mcp_server.py",
+      "quality_score": 92.6,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\llm_code_suggestion_mcp_server.py"
+      ]
+    },
+    "mcp-health-check": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp-health-check.py",
+      "quality_score": 56.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp-health-check.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp-health-check.py"
+      ]
+    },
+    "mcp-stability-report": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp-stability-report.py",
+      "quality_score": 31.200000000000003,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp-stability-report.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp-stability-report.py"
+      ]
+    },
+    "mcp_api_client_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_api_client_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_api_client_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_api_client_server.py"
+      ]
+    },
+    "mcp_arbitrage_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_arbitrage_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_arbitrage_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_arbitrage_server.py"
+      ]
+    },
+    "mcp_auth_manager_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_auth_manager_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_auth_manager_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_auth_manager_server.py"
+      ]
+    },
+    "mcp_blockchain_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_blockchain_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_blockchain_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_blockchain_server.py"
+      ]
+    },
+    "mcp_cache_manager_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_cache_manager_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_cache_manager_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_cache_manager_server.py"
+      ]
+    },
+    "mcp_code_quality_server": {
+      "total_duplicates": 2,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_code_quality_server.py",
+      "quality_score": 129.3,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_code_quality_server.py"
+      ]
+    },
+    "mcp_coordinator_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_coordinator_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_coordinator_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_coordinator_server.py"
+      ]
+    },
+    "mcp_dashboard": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_dashboard.py",
+      "quality_score": 126.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_dashboard.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_dashboard.py"
+      ]
+    },
+    "mcp_database_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_database_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_database_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_database_server.py"
+      ]
+    },
+    "mcp_data_analyzer_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_data_analyzer_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_data_analyzer_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_data_analyzer_server.py"
+      ]
+    },
+    "mcp_defi_analyzer_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_defi_analyzer_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_defi_analyzer_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_defi_analyzer_server.py"
+      ]
+    },
+    "mcp_enhanced_coordinator": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_enhanced_coordinator.py",
+      "quality_score": 176.10000000000002,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_enhanced_coordinator.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_enhanced_coordinator.py"
+      ]
+    },
+    "mcp_filesystem_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_filesystem_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_filesystem_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_filesystem_server.py"
+      ]
+    },
+    "mcp_file_processor_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_file_processor_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_file_processor_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_file_processor_server.py"
+      ]
+    },
+    "mcp_flash_loan_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_flash_loan_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_flash_loan_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_flash_loan_server.py"
+      ]
+    },
+    "mcp_github_actions_server": {
+      "total_duplicates": 2,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_github_actions_server.py",
+      "quality_score": 115.2,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_github_actions_server.py"
+      ]
+    },
+    "mcp_github_copilot_server": {
+      "total_duplicates": 4,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_github_copilot_server_enhanced.py",
+      "quality_score": 217.1,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_github_copilot_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_github_copilot_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_github_copilot_server_enhanced.py"
+      ]
+    },
+    "mcp_integration_bridge": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_integration_bridge.py",
+      "quality_score": 101.6,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_integration_bridge.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_integration_bridge.py"
+      ]
+    },
+    "mcp_liquidity_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_liquidity_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_liquidity_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_liquidity_server.py"
+      ]
+    },
+    "mcp_monitoring_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_monitoring_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_monitoring_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_monitoring_server.py"
+      ]
+    },
+    "mcp_notification_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_notification_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_notification_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_notification_server.py"
+      ]
+    },
+    "mcp_portfolio_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_portfolio_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_portfolio_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_portfolio_server.py"
+      ]
+    },
+    "mcp_price_feed_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_price_feed_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_price_feed_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_price_feed_server.py"
+      ]
+    },
+    "mcp_project_organizer": {
+      "total_duplicates": 6,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_project_organizer_fixed.py",
+      "quality_score": 92.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_project_organizer.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_project_organizer_fixed.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_project_organizer.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_project_organizer.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_project_organizer_fixed.py"
+      ]
+    },
+    "mcp_risk_manager_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_risk_manager_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_risk_manager_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_risk_manager_server.py"
+      ]
+    },
+    "mcp_security_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_security_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_security_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_security_server.py"
+      ]
+    },
+    "mcp_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_server.py",
+      "quality_score": 59.3,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_server.py"
+      ]
+    },
+    "mcp_server_base": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_server_base.py",
+      "quality_score": 80.0,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_server_base.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_server_base.py"
+      ]
+    },
+    "mcp_server_manager": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_server_manager.py",
+      "quality_score": 93.2,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_server_manager.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_server_manager.py"
+      ]
+    },
+    "mcp_server_template": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_server_template.py",
+      "quality_score": 75.6,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_server_template.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_server_template.py"
+      ]
+    },
+    "mcp_server_trainer": {
+      "total_duplicates": 2,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_server_trainer.py",
+      "quality_score": 119.60000000000001,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_server_trainer.py"
+      ]
+    },
+    "mcp_shared_utilities": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_shared_utilities.py",
+      "quality_score": 85.6,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_shared_utilities.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_shared_utilities.py"
+      ]
+    },
+    "mcp_simple_startup": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_simple_startup.py",
+      "quality_score": 73.8,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_simple_startup.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_simple_startup.py"
+      ]
+    },
+    "mcp_status_check": {
+      "total_duplicates": 2,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_status_check.py",
+      "quality_score": 32.2,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_status_check.py"
+      ]
+    },
+    "mcp_task_queue_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_task_queue_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_task_queue_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_task_queue_server.py"
+      ]
+    },
+    "mcp_training_coordinator": {
+      "total_duplicates": 2,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_training_coordinator.py",
+      "quality_score": 112.80000000000001,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_training_coordinator.py"
+      ]
+    },
+    "mcp_web_scraper_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\mcp_web_scraper_server.py",
+      "quality_score": 62.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\mcp_web_scraper_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\mcp_web_scraper_server.py"
+      ]
+    },
+    "minimal-mcp-server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\minimal-mcp-server.py",
+      "quality_score": 39.6,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\minimal-mcp-server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\minimal-mcp-server.py"
+      ]
+    },
+    "monitoring_mcp_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\monitoring_mcp_server.py",
+      "quality_score": 81.1,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\monitoring_mcp_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\monitoring_mcp_server.py"
+      ]
+    },
+    "online_mcp_coordinator": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\online_mcp_coordinator.py",
+      "quality_score": 135.10000000000002,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\online_mcp_coordinator.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\online_mcp_coordinator.py"
+      ]
+    },
+    "organize_mcp_servers": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\organize_mcp_servers.py",
+      "quality_score": 37.2,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\organize_mcp_servers.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\organize_mcp_servers.py"
+      ]
+    },
+    "profit_optimizer_mcp_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\profit_optimizer_mcp_server.py",
+      "quality_score": 80.9,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\profit_optimizer_mcp_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\profit_optimizer_mcp_server.py"
+      ]
+    },
+    "quick_mcp_check": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\quick_mcp_check.py",
+      "quality_score": 32.3,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\quick_mcp_check.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\quick_mcp_check.py"
+      ]
+    },
+    "real_time_price_mcp_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\real_time_price_mcp_server.py",
+      "quality_score": 153.3,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\real_time_price_mcp_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\real_time_price_mcp_server.py"
+      ]
+    },
+    "risk_management_mcp_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\risk_management_mcp_server.py",
+      "quality_score": 75.7,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\risk_management_mcp_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\risk_management_mcp_server.py"
+      ]
+    },
+    "setup_github_mcp": {
+      "total_duplicates": 2,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\setup_github_mcp.py",
+      "quality_score": 36.6,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\setup_github_mcp.py"
+      ]
+    },
+    "simple_mcp_orchestrator": {
+      "total_duplicates": 2,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\simple_mcp_orchestrator.py",
+      "quality_score": 62.5,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\simple_mcp_orchestrator.py"
+      ]
+    },
+    "simple_mcp_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\simple_mcp_server.py",
+      "quality_score": 69.6,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\simple_mcp_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\simple_mcp_server.py"
+      ]
+    },
+    "simplified_mcp_coordinator": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\simplified_mcp_coordinator_fixed.py",
+      "quality_score": 92.1,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\simplified_mcp_coordinator_fixed.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\simplified_mcp_coordinator_fixed.py"
+      ]
+    },
+    "start_mcp_servers": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\start_mcp_servers.py",
+      "quality_score": 32.7,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\start_mcp_servers.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\start_mcp_servers.py"
+      ]
+    },
+    "training_mcp_server": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\training_mcp_server.py",
+      "quality_score": 53.5,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\training_mcp_server.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\training_mcp_server.py"
+      ]
+    },
+    "unified_mcp_coordinator": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\unified_mcp_coordinator.py",
+      "quality_score": 110.6,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\unified_mcp_coordinator.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\unified_mcp_coordinator.py"
+      ]
+    },
+    "unified_mcp_coordinator_20250617_143120": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\unified_mcp_coordinator_20250617_143120.py",
+      "quality_score": 156.9,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\unified_mcp_coordinator_20250617_143120.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\unified_mcp_coordinator_20250617_143120.py"
+      ]
+    },
+    "unified_mcp_integration_manager": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\unified_mcp_integration_manager.py",
+      "quality_score": 107.0,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\unified_mcp_integration_manager.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\unified_mcp_integration_manager.py"
+      ]
+    },
+    "unified_mcp_manager": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\unified_mcp_manager.py",
+      "quality_score": 82.0,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\unified_mcp_manager.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\unified_mcp_manager.py"
+      ]
+    },
+    "unified_mcp_orchestration_manager": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\unified_mcp_orchestration_manager.py",
+      "quality_score": 169.3,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\unified_mcp_orchestration_manager.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\unified_mcp_orchestration_manager.py"
+      ]
+    },
+    "verify_mcp_organization": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\verify_mcp_organization.py",
+      "quality_score": 44.4,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\verify_mcp_organization.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\verify_mcp_organization.py"
+      ]
+    },
+    "verify_mcp_system": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\verify_mcp_system.py",
+      "quality_score": 34.9,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\verify_mcp_system.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\verify_mcp_system.py"
+      ]
+    },
+    "working_flash_loan_mcp": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\working_flash_loan_mcp.py",
+      "quality_score": 85.30000000000001,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\working_flash_loan_mcp.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\working_flash_loan_mcp.py"
+      ]
+    },
+    "working_mcp_server_template": {
+      "total_duplicates": 3,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\src\\mcp_servers\\working_mcp_server_template.py",
+      "quality_score": 62.7,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\working_mcp_server_template.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\working_mcp_server_template.py"
+      ]
+    },
+    "integration_example": {
+      "total_duplicates": 4,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\context7-mcp\\integration_example.py",
+      "quality_score": 95.80000000000001,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\supermemory\\integration_example.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\context7-mcp\\integration_example.py",
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\supermemory\\integration_example.py"
+      ]
+    },
+    "flash_loan_integration_example": {
+      "total_duplicates": 2,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\filesystem\\flash_loan_integration_example.py",
+      "quality_score": 69.1,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\filesystem\\flash_loan_integration_example.py"
+      ]
+    },
+    "supermemory_mcp_server": {
+      "total_duplicates": 2,
+      "kept_file": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_servers\\supermemory\\supermemory_mcp_server.py",
+      "quality_score": 110.9,
+      "removed_files": [
+        "C:\\Users\\Ratanshila\\Documents\\flash loan\\organization_backup_20250626_114950\\mcp_servers\\supermemory\\supermemory_mcp_server.py"
+      ]
+    }
+  }
+}

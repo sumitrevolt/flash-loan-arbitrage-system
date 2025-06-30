@@ -1,4 +1,11 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+        import time
+from typing import Optional
+import asyncio
+import logging
+
+import aiohttp
 """
 Realistic Fee Calculator for Arbitrage Opportunities
 Calculates all fees involved in flash loan arbitrage including:
@@ -8,31 +15,27 @@ Calculates all fees involved in flash loan arbitrage including:
 - Slippage
 """
 
-import asyncio
-import aiohttp
-from typing import Optional
-import logging
 
 class RealisticFeeCalculator:
     def __init__(self):
         # Fee configurations
-        self.dex_fees = {
+        self.dex_fees = {}
             'QuickSwap': 0.003,      # 0.3%
             'SushiSwap': 0.003,      # 0.3%
             'Uniswap V3': 0.0025,    # 0.25% average
             'Balancer': 0.0025,      # 0.25%
             'Curve': 0.0004          # 0.04%
-        }
+        
         
         # Aave flash loan fee
         self.flash_loan_fee = 0.0009  # 0.09%
         
         # Gas estimates (in gas units)
-        self.gas_estimates = {
+        self.gas_estimates = {}
             'flash_loan': 350000,     # Flash loan + arbitrage execution
             'approve': 50000,         # Token approval
             'swap': 150000           # Single swap
-        }
+        
         
         # Slippage settings
         self.default_slippage = 0.005  # 0.5%
@@ -45,7 +48,6 @@ class RealisticFeeCalculator:
     
     async def update_matic_price(self) -> Optional[float]:
         """Fetch real-time MATIC price from CoinGecko API"""
-        import time
         
         # Check if cache is still valid
         current_time = time.time()
@@ -64,11 +66,11 @@ class RealisticFeeCalculator:
                         if new_price and isinstance(new_price, (int, float)):
                             self.matic_price_usd = float(new_price)
                             self.last_price_update = current_time
-                            self.logger.info(f"Updated MATIC price: ${self.matic_price_usd:.4f}")
+                            self.logger.info(str(f"Updated MATIC price: ${self.matic_price_usd:.4f}")
                             return self.matic_price_usd
                         
         except Exception as e:
-            self.logger.warning(f"Failed to fetch MATIC price, using cached value: {e}")
+            self.logger.warning(str(f"Failed to fetch MATIC price, using cached value: {e}")
             
         return self.matic_price_usd
     
@@ -124,7 +126,7 @@ class RealisticFeeCalculator:
         is_profitable = net_profit > 0 and actual_roi >= min_roi_threshold
         
         # Return analysis
-        analysis = {
+        analysis = {}
             'gross_profit': gross_profit,
             'total_costs': total_costs,
             'net_profit': net_profit,
@@ -133,13 +135,13 @@ class RealisticFeeCalculator:
             'slippage_cost': slippage_cost,
             'gas_cost_usd': gas_cost_usd,
             'flash_loan_fee': flash_loan_fee,
-            'cost_breakdown': {
+            'cost_breakdown': {}
                 'dex_fees': dex_fees,
                 'slippage': slippage_cost,
                 'gas_fees': gas_cost_usd,
                 'flash_loan_fee': flash_loan_fee
-            }
-        }
+            
+        
         
         return is_profitable, analysis
     
@@ -148,9 +150,9 @@ class RealisticFeeCalculator:
         Synchronous wrapper for backwards compatibility
         Note: This will use cached MATIC price, for real-time price use async version
         """
-        return asyncio.run(self.is_arbitrage_profitable(
+        return asyncio.run(self.is_arbitrage_profitable())
             trade_amount_usd, price_diff_pct, buy_dex, sell_dex, gas_price_gwei, min_roi_threshold
-        ))
+
     
     def calculate_minimum_profit_threshold(self, gas_price_gwei):
         """

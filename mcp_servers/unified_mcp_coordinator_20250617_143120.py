@@ -1,41 +1,57 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+            import asyncio.windows_events
+from datetime import datetime
+from decimal import Decimal
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Union, Callable, Tuple, cast
+import asyncio
+import json
+import logging
+import os
+import platform
+import signal
+import socket
+import subprocess
+import sys
+
+from dataclasses import dataclass, asdict, field
+from dotenv import load_dotenv
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from types import FrameType
+import aiohttp
 """
 Unified MCP Coordinator for Flash Loan Arbitrage
 Complete coordination of all MCP servers with real-time automation
 """
 
-import asyncio
-import aiohttp
-import json
-import logging
-import os
-import sys
-import subprocess
-import signal
-import platform
-import socket
-from datetime import datetime
-from typing import Dict, List, Any, Optional, Union, Callable, Tuple, cast
-from dataclasses import dataclass, asdict, field
-from decimal import Decimal
-from pathlib import Path
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-from types import FrameType
 
 # Load environment variables
-from dotenv import load_dotenv
 load_dotenv()
 
 # Configure logging first
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=getattr(logging, os.getenv('LOG_LEVEL', 'INFO')),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.FileHandler('logs/mcp_coordinator.log'),
         logging.StreamHandler()
-    ]
-)
+    
+
 logger = logging.getLogger(__name__)
 
 
@@ -48,9 +64,8 @@ if platform.system() == 'Windows':
     except AttributeError:
         # Fallback for older Python versions
         try:
-            import asyncio.windows_events
             asyncio.set_event_loop_policy(asyncio.windows_events.WindowsProactorEventLoopPolicy())
-            logger.info("Set Windows ProactorEventLoopPolicy (fallback)")
+            logger.info("Set Windows ProactorEventLoopPolicy (fallback")
         except ImportError:
             logger.warning("Unable to set Windows event loop policy, may encounter aiodns issues")
 
@@ -155,7 +170,7 @@ class UnifiedMCPCoordinator:
         self._load_configuration()
         
         # Performance metrics
-        self.metrics: Dict[str, Union[int, float]] = {
+        self.metrics: Dict[str, Union[int, float]] = {}
             'total_opportunities_found': 0,
             'successful_trades': 0,
             'failed_trades': 0,
@@ -163,7 +178,7 @@ class UnifiedMCPCoordinator:
             'average_profit_per_trade': 0.0,
             'system_uptime': 0,
             'data_refresh_rate': 0
-        }
+        
     
     def _load_configuration(self) -> None:
         """Load MCP server configuration with proper environment variable handling"""
@@ -183,7 +198,7 @@ class UnifiedMCPCoordinator:
                         if env_value:
                             processed_env_vars[var_name] = env_value
                         elif var_name in required_vars:
-                            logger.warning(f"Required environment variable {var_name} not found for server {server_id}")
+                            logger.warning(str(f"Required environment variable {var_name} not found for server {server_id}")
                 else:
                     for key, value in env_config.items():
                         if isinstance(value, str):
@@ -191,7 +206,7 @@ class UnifiedMCPCoordinator:
                         else:
                             processed_env_vars[key] = str(value)
                 
-                server_info = MCPServerInfo(
+                server_info = MCPServerInfo()
                     name=cast(str, server_config['name']),
                     type=cast(str, server_config['type']),
                     path=cast(str, server_config['path']),
@@ -199,17 +214,17 @@ class UnifiedMCPCoordinator:
                     enabled=server_config.get('enabled', True),
                     dependencies=[str(dep) for dep in server_config.get('dependencies', [])],
                     environment_vars=processed_env_vars
-                )
+                
                 self.servers[server_id] = server_info
             
             # Load global configuration
             global_config = config.get('global_configuration', {})
             self.health_check_interval = global_config.get('health_check_interval', 30)
             
-            logger.info(f"Loaded configuration for {len(self.servers)} MCP servers")
+            logger.info(str(f"Loaded configuration for {len(self.servers} MCP servers")
             
         except Exception as e:
-            logger.error(f"Failed to load configuration: {e}")
+            logger.error(str(f"Failed to load configuration: {e}")
             logger.info("Attempting to load alternative configuration or use default settings.")
             alternative_path = Path("alternative_mcp_config.json")
             if alternative_path.exists():
@@ -227,7 +242,7 @@ class UnifiedMCPCoordinator:
                                 if env_value:
                                     processed_env_vars[var_name] = env_value
                                 elif var_name in required_vars:
-                                    logger.warning(f"Required environment variable {var_name} not found for server {server_id}")
+                                    logger.warning(str(f"Required environment variable {var_name} not found for server {server_id}")
                         else:
                             for key, value in env_config.items():
                                 if isinstance(value, str):
@@ -235,7 +250,7 @@ class UnifiedMCPCoordinator:
                                 else:
                                     processed_env_vars[key] = str(value)
                         
-                        server_info = MCPServerInfo(
+                        server_info = MCPServerInfo()
                             name=cast(str, server_config['name']),
                             type=cast(str, server_config['type']),
                             path=cast(str, server_config['path']),
@@ -243,16 +258,16 @@ class UnifiedMCPCoordinator:
                             enabled=server_config.get('enabled', True),
                             dependencies=[str(dep) for dep in server_config.get('dependencies', [])],
                             environment_vars=processed_env_vars
-                        )
+                        
                         self.servers[server_id] = server_info
                     
                     global_config = config.get('global_configuration', {})
                     self.health_check_interval = global_config.get('health_check_interval', 30)
                     
-                    logger.info(f"Loaded alternative configuration for {len(self.servers)} MCP servers from {alternative_path}")
+                    logger.info(str(f"Loaded alternative configuration for {len(self.servers} MCP servers from {alternative_path}")
                     return
                 except Exception as alt_e:
-                    logger.error(f"Failed to load alternative configuration: {alt_e}")
+                    logger.error(str(f"Failed to load alternative configuration: {alt_e}")
             
             # If no alternative config is found, use default empty configuration
             logger.info("Using default empty configuration.")
@@ -261,14 +276,14 @@ class UnifiedMCPCoordinator:
 
     def _load_risk_limits(self) -> Dict[str, float]:
         """Load risk management parameters"""
-        return {
+        return {}
             'min_profit_threshold': float(os.getenv('MIN_PROFIT_THRESHOLD', 50)),
             'max_slippage': float(os.getenv('MAX_SLIPPAGE', 0.005)),
             'max_position_size': float(os.getenv('MAX_POSITION_SIZE', 10000)),
             'stop_loss_percentage': float(os.getenv('STOP_LOSS_PERCENTAGE', 0.02)),
             'take_profit_percentage': float(os.getenv('TAKE_PROFIT_PERCENTAGE', 0.05)),
             'liquidity_threshold': float(os.getenv('LIQUIDITY_THRESHOLD', 50000))
-        }
+        
 
     def _setup_flask_routes(self) -> None:
         """Setup Flask API routes"""
@@ -276,22 +291,22 @@ class UnifiedMCPCoordinator:
         # @self.app.route('/api/status')
         # def get_status():
         #     """Get system status"""
-        #     return jsonify({
+        #     return jsonify({)}
         #         'status': 'running' if self.is_running else 'stopped',
-        #         'servers': {
-        #             server_id: {
+        #         'servers': {}
+        #             server_id: {}
         #                 'name': server.name,
         #                 'type': server.type,
         #                 'port': server.port,
         #                 'health_status': server.health_status,
         #                 'restart_count': server.restart_count,
         #                 'uptime': (datetime.now() - server.start_time).total_seconds() if server.start_time else 0
-        #             }
+        #             
         #             for server_id, server in self.servers.items()
         #         },
         #         'metrics': self.metrics,
         #         'opportunities_count': len(self.flash_loan_opportunities)
-        #     })
+        #     
         
         # @self.app.route('/api/opportunities')
         # def get_opportunities():
@@ -299,7 +314,7 @@ class UnifiedMCPCoordinator:
         #     # Convert opportunities to serializable format
         #     opportunities: List[Dict[str, Any]] = []
         #     for opp in self.flash_loan_opportunities[-50:]:  # Last 50 opportunities
-        #         opportunities.append({
+        #         opportunities.append({)}
         #             'token_symbol': opp.token_symbol,
         #             'buy_dex': opp.buy_dex,
         #             'sell_dex': opp.sell_dex,
@@ -309,7 +324,7 @@ class UnifiedMCPCoordinator:
         #             'confidence_score': opp.confidence_score,
         #             'risk_level': opp.risk_level,
         #             'timestamp': opp.timestamp.isoformat()
-        #         })
+        #         
         #     return jsonify(opportunities)
         
         @self.app.route('/api/execute_opportunity', methods=['POST'])
@@ -325,15 +340,15 @@ class UnifiedMCPCoordinator:
                 opportunity = cast(FlashLoanOpportunity, self.flash_loan_opportunities[opportunity_id])
                 result: Dict[str, Any] = await self._execute_flash_loan(opportunity)
                 
-                return jsonify({
+                return jsonify({)}
                     'success': result['success'],
                     'message': result['message'],
                     'transaction_hash': result.get('tx_hash'),
                     'profit_realized': result.get('profit')
-                })
+                
                 
             except Exception as e:
-                logger.error(f"Error executing opportunity: {e}")
+                logger.error(str(f"Error executing opportunity: {e}")
                 return jsonify({'error': str(e)}), 500
 
     def _get_server_env(self, server: MCPServerInfo) -> Dict[str, str]:
@@ -346,7 +361,7 @@ class UnifiedMCPCoordinator:
         """Start an individual MCP server"""
         try:
             if server.process and server.process.poll() is None:
-                logger.info(f"Server {server_id} is already running")
+                logger.info(str(f"Server {server_id} is already running")
                 return True
             
             server_path = self.workspace_path / server.path
@@ -355,28 +370,28 @@ class UnifiedMCPCoordinator:
                 # Start Python MCP server
                 cmd = [sys.executable, str(server_path)]
                 env = self._get_server_env(server)
-                server.process = subprocess.Popen(
+                server.process = subprocess.Popen()
                     cmd,
                     env=env,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     cwd=server_path.parent
-                )
+                
             elif server.type == 'typescript':
                 # Start TypeScript MCP server
                 built_path = server_path.parent / 'dist' / 'index.js'
                 if not built_path.exists():
-                    logger.error(f"Built TypeScript file not found: {built_path}")
+                    logger.error(str(f"Built TypeScript file not found: {built_path}")
                     return False
                 cmd = ['node', str(built_path)]
                 env = self._get_server_env(server)
-                server.process = subprocess.Popen(
+                server.process = subprocess.Popen()
                     cmd,
                     env=env,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     cwd=built_path.parent
-                )
+                
             
             server.start_time = datetime.now()
             server.health_status = "starting"
@@ -387,13 +402,13 @@ class UnifiedMCPCoordinator:
             # Check if process is still running
             if server.process and hasattr(server.process, 'poll') and server.process.poll() is None:
                 server.health_status = "running"
-                logger.info(f"Successfully started MCP server: {server_id}")
+                logger.info(str(f"Successfully started MCP server: {server_id}")
                 return True
-            else:            logger.error(f"Failed to start MCP server: {server_id}")
+            else:            logger.error(str(f"Failed to start MCP server: {server_id}")
             return False
                 
         except Exception as e:
-            logger.error(f"Error starting server {server_id}: {e}")
+            logger.error(str(f"Error starting server {server_id}: {e}")
             server.health_status = "error"
             return False
 
@@ -403,19 +418,19 @@ class UnifiedMCPCoordinator:
             if server.process:
                 server.process.terminate()
                 try:
-                    await asyncio.wait_for(
+                    await asyncio.wait_for()
                         asyncio.create_task(self._wait_for_process(server.process)),
                         timeout=10
-                    )
+                    
                 except asyncio.TimeoutError:
                     server.process.kill()
-                    logger.warning(f"Force killed server {server_id}")
+                    logger.warning(str(f"Force killed server {server_id}")
                 
                 server.process = None
                 server.health_status = "stopped"
-                logger.info(f"Stopped MCP server: {server_id}")
+                logger.info(str(f"Stopped MCP server: {server_id}")
         except Exception as e:
-            logger.error(f"Error stopping server {server_id}: {e}")
+            logger.error(str(f"Error stopping server {server_id}: {e}")
 
     async def _wait_for_process(self, process: subprocess.Popen[bytes]) -> None:
         """Wait for process to terminate"""
@@ -448,14 +463,14 @@ class UnifiedMCPCoordinator:
                     server.health_status = "stopped"
                     if server.enabled:
                         # Attempt restart
-                        logger.info(f"Attempting to restart stopped server: {server_id}")
+                        logger.info(str(f"Attempting to restart stopped server: {server_id}")
                         await self.start_mcp_server(server_id, server)
                         server.restart_count += 1
                         
                 server.last_health_check = datetime.now()
                 
             except Exception as e:
-                logger.error(f"Health check failed for {server_id}: {e}")
+                logger.error(str(f"Health check failed for {server_id}: {e}")
                 server.health_status = "error"
 
     async def aggregate_price_data(self) -> None:
@@ -476,13 +491,13 @@ class UnifiedMCPCoordinator:
                     self._process_price_data(cast(Dict[str, Any], result))
                     
         except Exception as e:
-            logger.error(f"Error aggregating price data: {e}")
+            logger.error(str(f"Error aggregating price data: {e}")
 
     async def _query_server_data(self, server_id: str, server: MCPServerInfo) -> Dict[str, Any]:
         """Query data from a specific MCP server"""
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(
+                async with session.get()
                     f"http://localhost:{server.port}/api/prices",
                     timeout=aiohttp.ClientTimeout(total=5)
                 ) as response:
@@ -491,7 +506,7 @@ class UnifiedMCPCoordinator:
                         data['source'] = server_id
                         return data
         except Exception as e:
-            logger.debug(f"Could not query data from {server_id}: {e}")
+            logger.debug(str(f"Could not query data from {server_id}: {e}")
         return {}
 
     def _process_price_data(self, data: Dict[str, Any]) -> None:
@@ -507,12 +522,12 @@ class UnifiedMCPCoordinator:
             if token not in self.price_data:
                 self.price_data[token] = {}
             
-            self.price_data[token][source] = {
+            self.price_data[token][source] = {}
                 'price': price_info.get('price', 0),
                 'liquidity': price_info.get('liquidity', 0),
                 'timestamp': datetime.now(),
                 'volume_24h': price_info.get('volume_24h', 0)
-            }
+            
         
         # Check for arbitrage opportunities
         self._identify_arbitrage_opportunities()
@@ -531,7 +546,7 @@ class UnifiedMCPCoordinator:
                 fresh_prices: List[Tuple[str, float, float, Dict[str, Any]]] = []
                 for dex, data in dex_prices.items():
                     price_age = (current_time - data['timestamp']).total_seconds()
-                    if (price_age < 10 and 
+                    if (price_age < 10 and )
                         data['price'] > 0 and 
                         data['liquidity'] > self.risk_limits['liquidity_threshold']):
                         fresh_prices.append((dex, data['price'], data['liquidity'], data))
@@ -552,19 +567,19 @@ class UnifiedMCPCoordinator:
                     if profit_percentage > 0.005:  # Minimum 0.5% profit for real execution
                         
                         # Enhanced liquidity analysis for safer trade sizing
-                        max_trade_size = min(
+                        max_trade_size = min()
                             buy_liquidity * 0.03,  # Max 3% of liquidity for reduced slippage
                             sell_liquidity * 0.03,
                             50000  # Max $50k per trade for risk management
-                        )
+                        
                         
                         # Enhanced gas cost estimation based on DEX types
                         gas_cost_usd = self._calculate_enhanced_gas_cost(buy_dex, sell_dex)
                         
                         # Account for slippage impact
-                        slippage_impact = self._estimate_slippage_impact(
+                        slippage_impact = self._estimate_slippage_impact()
                             max_trade_size, buy_liquidity, sell_liquidity
-                        )
+                        
                         
                         adjusted_profit_percentage = profit_percentage - slippage_impact
                         profit_usd = max_trade_size * adjusted_profit_percentage
@@ -574,7 +589,7 @@ class UnifiedMCPCoordinator:
                             # Get token address from our token registry
                             token_address = self._get_token_address(token)
                             
-                            opportunity = FlashLoanOpportunity(
+                            opportunity = FlashLoanOpportunity()
                                 token_symbol=token,
                                 token_address=token_address,
                                 buy_dex=buy_dex,
@@ -588,54 +603,54 @@ class UnifiedMCPCoordinator:
                                 liquidity_available=min(buy_liquidity, sell_liquidity),
                                 max_trade_size=max_trade_size,
                                 timestamp=current_time,
-                                confidence_score=self._calculate_enhanced_confidence_score(
+                                confidence_score=self._calculate_enhanced_confidence_score()
                                     adjusted_profit_percentage, 
                                     min(buy_liquidity, sell_liquidity),
                                     buy_data,
                                     sell_data
                                 ),
-                                risk_level=self._assess_enhanced_risk_level(
+                                risk_level=self._assess_enhanced_risk_level()
                                     adjusted_profit_percentage, 
                                     min(buy_liquidity, sell_liquidity),
                                     slippage_impact
-                                )
-                            )
+                                
+                            
                             
                             current_opportunities.append(opportunity)
             
             # Sort opportunities by net profit and confidence
-            current_opportunities.sort(
+            current_opportunities.sort()
                 key=lambda x: Any: Any: (x.net_profit_usd * x.confidence_score), 
                 reverse=True
-            )
+            
             
             # Keep only top 20 opportunities to avoid spam
             self.flash_loan_opportunities = current_opportunities[:20]
             self.metrics['total_opportunities_found'] = len(self.flash_loan_opportunities)
             
             if current_opportunities:
-                logger.info(f"Found {len(current_opportunities)} real-time arbitrage opportunities")
+                logger.info(str(f"Found {len(current_opportunities} real-time arbitrage opportunities")
                 # Log top 3 opportunities with details
                 for i, opp in enumerate(current_opportunities[:3]):
-                    logger.info(f"  #{i+1}: {opp.token_symbol} {opp.buy_dex}→{opp.sell_dex} "
+                    logger.info(str(f"  #{i+1}: {opp.token_symbol} {opp.buy_dex}→{opp.sell_dex} ")
                               f"Profit: ${opp.net_profit_usd:.2f} "
                               f"Confidence: {opp.confidence_score:.2f} "
-                              f"Risk: {opp.risk_level}")
+                              f"Risk: {opp.risk_level}"
                 
         except Exception as e:
-            logger.error(f"Error identifying arbitrage opportunities: {e}")
+            logger.error(str(f"Error identifying arbitrage opportunities: {e}")
 
     def _calculate_enhanced_gas_cost(self, buy_dex: str, sell_dex: str) -> float:
         """Calculate enhanced gas cost based on DEX types and current gas prices"""
         # Base gas costs for different DEX types
-        gas_costs = {
+        gas_costs = {}
             'uniswap_v3': 150000,
             'uniswap_v2': 120000,
             'sushiswap': 120000,
             'balancer': 180000,
             '1inch': 200000,  # Aggregator uses more gas
             'curve': 160000
-        }
+        
         
         buy_gas = gas_costs.get(buy_dex.lower(), 150000)
         sell_gas = gas_costs.get(sell_dex.lower(), 150000)
@@ -665,7 +680,7 @@ class UnifiedMCPCoordinator:
     def _get_token_address(self, token_symbol: str) -> str:
         """Get token contract address from symbol"""
         # Token address registry (mainnet addresses)
-        token_addresses = {
+        token_addresses = {}
             'ETH': '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',  # WETH
             'WETH': '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
             'USDC': '0xA0b86a33E6441e36D04b4395aD3fB4e44C6A74f4',
@@ -676,10 +691,10 @@ class UnifiedMCPCoordinator:
             'UNI': '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984',
             'AAVE': '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9',
             'COMP': '0xc00e94Cb662C3520282E6f5717214004A7f26888'
-        }
+        
         return token_addresses.get(token_symbol.upper(), '')
 
-    def _calculate_enhanced_confidence_score(self, profit_percentage: float, liquidity: float, 
+    def _calculate_enhanced_confidence_score(self, profit_percentage: float, liquidity: float, )
                                            buy_data: Dict[str, Any], sell_data: Dict[str, Any]) -> float:
         """Calculate enhanced confidence score with multiple factors"""
         # Base confidence from profit and liquidity
@@ -700,16 +715,16 @@ class UnifiedMCPCoordinator:
         volume_score = min(avg_volume / 10000000, 1.0)  # Max 10M volume = 1.0
         
         # Weighted average
-        confidence = (
+        confidence = ()
             profit_score * 0.4 +
             liquidity_score * 0.3 +
             freshness_score * 0.2 +
             volume_score * 0.1
-        )
+        
         
         return min(confidence, 1.0)
 
-    def _assess_enhanced_risk_level(self, profit_percentage: float, liquidity: float, 
+    def _assess_enhanced_risk_level(self, profit_percentage: float, liquidity: float, )
                                   slippage_impact: float) -> str:
         """Assess enhanced risk level with multiple factors"""
         risk_score = 0
@@ -748,14 +763,14 @@ class UnifiedMCPCoordinator:
             # This would integrate with the actual flash loan execution logic
             # For now, return a simulated result
             
-            logger.info(f"Executing flash loan for {opportunity.token_symbol}: "
+            logger.info(str(f"Executing flash loan for {opportunity.token_symbol}: ")
                        f"{opportunity.buy_dex} -> {opportunity.sell_dex}, "
-                       f"Expected profit: ${opportunity.net_profit_usd:.2f}")
+                       f"Expected profit: ${opportunity.net_profit_usd:.2f}"
             
             # Check if we have real execution capability
-            execution_result: str = await self._call_arbitrage_trading_mcp(
+            execution_result: str = await self._call_arbitrage_trading_mcp()
                 "execute_flash_loan_arbitrage",
-                {
+                {}
                     "token_pair": opportunity.token_symbol + "/USDC",
                     "buy_dex": opportunity.buy_dex,
                     "sell_dex": opportunity.sell_dex,
@@ -763,21 +778,21 @@ class UnifiedMCPCoordinator:
                     "expected_profit": float(opportunity.net_profit_usd),
                     "risk_level": opportunity.risk_level,
                     "confidence_score": opportunity.confidence_score
-                }
-            )
+                
+            
             
             if execution_result and execution_result.get('success'):
                 # Real execution succeeded
                 self.metrics['successful_trades'] += 1
                 self.metrics['total_profit_usd'] += opportunity.net_profit_usd
                 
-                return {
+                return {}
                     'status': 'success',
                     'transaction_hash': execution_result.get('transaction_hash'),
                     'actual_profit': execution_result.get('actual_profit', opportunity.net_profit_usd),
                     'gas_used': execution_result.get('gas_used'),
                     'execution_time': execution_result.get('execution_time')
-                }
+                
             else:
                 # Simulate execution (for testing/development)
                 success = opportunity.confidence_score > 0.7
@@ -786,25 +801,25 @@ class UnifiedMCPCoordinator:
                     self.metrics['successful_trades'] += 1
                     self.metrics['total_profit_usd'] += opportunity.net_profit_usd
                     
-                    return {
+                    return {}
                         'status': 'simulated_success',
                         'simulated_profit': opportunity.net_profit_usd,
                         'note': 'Simulated execution - real trading not available'
-                    }
+                    
                 else:
                     self.metrics['failed_trades'] += 1
-                    return {
+                    return {}
                         'status': 'simulated_failure',
                         'reason': 'Low confidence score'
-                    }
+                    
             
         except Exception as e:
-            logger.error(f"Flash loan execution failed: {e}")
+            logger.error(str(f"Flash loan execution failed: {e}")
             self.metrics['failed_trades'] += 1
-            return {
+            return {}
                 'status': 'error',
                 'error': str(e)
-            }
+            
         finally:
             # Update average profit
             total_trades = self.metrics['successful_trades'] + self.metrics['failed_trades']
@@ -826,22 +841,22 @@ class UnifiedMCPCoordinator:
                     if response.status == 200:
                         return await response.json()
                     else:
-                        logger.error(f"Arbitrage trading MCP call failed: {response.status}")
+                        logger.error(str(f"Arbitrage trading MCP call failed: {response.status}")
                         return None
                         
         except Exception as e:
-            logger.error(f"Error calling arbitrage trading MCP: {e}")
+            logger.error(str(f"Error calling arbitrage trading MCP: {e}")
             return None
 
     async def _save_opportunity_log(self, opportunity: FlashLoanOpportunity, result: Dict[str, Any]) -> None:
         """Save opportunity execution log"""
         try:
-            log_entry: Dict[str, Any] = {
+            log_entry: Dict[str, Any] = {}
                 'timestamp': datetime.now().isoformat(),
                 'opportunity': asdict(opportunity),
                 'execution_result': result,
                 'system_metrics': self.metrics.copy()
-            }
+            
             
             # Ensure logs directory exists
             os.makedirs('logs', exist_ok=True)
@@ -864,7 +879,7 @@ class UnifiedMCPCoordinator:
                 json.dump(logs, f, indent=2, default=str)
                 
         except Exception as e:
-            logger.error(f"Failed to save opportunity log: {e}")
+            logger.error(str(f"Failed to save opportunity log: {e}")
 
     async def generate_system_report(self) -> Dict[str, Any]:
         """Generate comprehensive system report"""
@@ -891,12 +906,12 @@ class UnifiedMCPCoordinator:
                     pass
             
             report: Dict[str, Any] = {}
-            report = {
+            report = {}
                 'generated_at': datetime.now().isoformat(),
                 'system_status': 'operational' if self.is_running else 'stopped',
                 'uptime_hours': (datetime.now() - self.start_time).total_seconds() / 3600 if self.start_time else 0,
                 'mcp_servers': server_statuses,
-                'performance_metrics': {
+                'performance_metrics': {}
                     'total_opportunities_found': self.metrics['total_opportunities_found'],
                     'total_trades_executed': total_trades,
                     'successful_trades': self.metrics['successful_trades'],
@@ -906,16 +921,16 @@ class UnifiedMCPCoordinator:
                     'average_profit_usd': round(self.metrics['average_profit_usd'], 2)
                 },
                 'recent_opportunities': recent_opportunities
-            }
+            
             
             return report
             
         except Exception as e:
-            logger.error(f"Error generating system report: {e}")
-            return {
+            logger.error(str(f"Error generating system report: {e}")
+            return {}
                 'error': str(e),
                 'generated_at': datetime.now().isoformat()
-            }
+            
 
     async def start(self) -> None:
         """Start the unified MCP coordinator"""
@@ -948,7 +963,7 @@ class UnifiedMCPCoordinator:
                 await asyncio.sleep(self.health_check_interval)
                 
             except Exception as e:
-                logger.error(f"Error in monitoring loop: {e}")
+                logger.error(str(f"Error in monitoring loop: {e}")
                 await asyncio.sleep(5)  # Short delay before retry
     
     async def _check_mcp_server_status(self, name: str, config: Dict[str, Any]) -> Dict[str, Any]:
@@ -963,44 +978,44 @@ class UnifiedMCPCoordinator:
                         response_time = (asyncio.get_event_loop().time() - start_time) * 1000
                         
                         if response.status == 200:
-                            return {
+                            return {}
                                 'name': name,
                                 'status': 'online',
                                 'response_time_ms': response_time,
                                 'last_check': datetime.now().isoformat()
-                            }
+                            
                         else:
-                            return {
+                            return {}
                                 'name': name,
                                 'status': 'error',
                                 'response_time_ms': response_time,
                                 'last_check': datetime.now().isoformat(),
                                 'error': f"HTTP {response.status}"
-                            }
+                            
                 except asyncio.TimeoutError:
-                    return {
+                    return {}
                         'name': name,
                         'status': 'timeout',
                         'response_time_ms': 5000,
                         'last_check': datetime.now().isoformat(),
                         'error': 'Request timeout'
-                    }
+                    
                 except Exception as e:
-                    return {
+                    return {}
                         'name': name,
                         'status': 'offline',
                         'response_time_ms': 0,
                         'last_check': datetime.now().isoformat(),
                         'error': str(e)
-                    }
+                    
         except Exception as e:
-            return {
+            return {}
                 'name': name,
                 'status': 'error',
                 'response_time_ms': 0,
                 'last_check': datetime.now().isoformat(),
                 'error': str(e)
-            }
+            
 
     async def shutdown(self):
         """Graceful shutdown of the coordinator"""
@@ -1023,16 +1038,16 @@ class UnifiedMCPCoordinator:
             os.makedirs('logs', exist_ok=True)
             with open(report_file, 'w') as f:
                 json.dump(final_report, f, indent=2, default=str)
-            logger.info(f"Final report saved to {report_file}")
+            logger.info(str(f"Final report saved to {report_file}")
         except Exception as e:
-            logger.error(f"Failed to generate final report: {e}")
+            logger.error(str(f"Failed to generate final report: {e}")
         
         logger.info("Unified MCP Coordinator shutdown complete")
 
 def signal_handler(coordinator: UnifiedMCPCoordinator) -> Callable[[int, Optional[FrameType]], None]:
     """Signal handler for graceful shutdown"""
     def handler(signum: int, frame: Optional[FrameType]) -> None:
-        logger.info(f"Received signal {signum}, initiating graceful shutdown...")
+        logger.info(str(f"Received signal {signum}, initiating graceful shutdown...")
         asyncio.create_task(coordinator.shutdown())
     return handler
 
@@ -1047,7 +1062,7 @@ async def main():
     try:
         await coordinator.start()
     except Exception as e:
-        logger.error(f"Fatal error: {e}")
+        logger.error(str(f"Fatal error: {e}")
         await coordinator.shutdown()
 
 if __name__ == "__main__":

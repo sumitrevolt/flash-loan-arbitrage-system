@@ -1,0 +1,507 @@
+{
+  "organization_timestamp": "2025-06-26T21:19:48.067065",
+  "summary": {
+    "total_files_analyzed": 31,
+    "local_servers_kept": 21,
+    "ai_agents_kept": 6,
+    "files_removed": 4,
+    "functions_merged": 13
+  },
+  "selected_local_servers": [
+    {
+      "name": "enhanced_mcp_dashboard_with_chat.py",
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "realtime_data",
+        "web_interface",
+        "database_integration",
+        "external_api_calls",
+        "monitoring_capabilities",
+        "security_features"
+      ],
+      "tools": [
+        "ascii",
+        "params",
+        "name"
+      ],
+      "complexity_score": 5145,
+      "functions_count": 87
+    },
+    {
+      "name": "mcp_github_copilot_server_enhanced.py",
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "database_integration",
+        "external_api_calls",
+        "security_features"
+      ],
+      "tools": [
+        "find_related_memories",
+        "query",
+        "text",
+        "node_type",
+        "search_memory",
+        "generate_tests",
+        "get_code_suggestions",
+        "source_id",
+        "create_memory_relationship",
+        "get_thinking_summary",
+        "start_thinking_sequence",
+        "ascii",
+        "node_id",
+        "reflect_on_thinking",
+        "add_thought_step",
+        "problem",
+        "fix_code_issues",
+        "store_memory",
+        "optimize_code",
+        "sequence_id",
+        "enhanced_code_analysis",
+        "explain_code",
+        "code"
+      ],
+      "complexity_score": 1955,
+      "functions_count": 13
+    },
+    {
+      "name": "mcp_github_copilot_server.py",
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "database_integration",
+        "external_api_calls",
+        "security_features"
+      ],
+      "tools": [
+        "find_related_memories",
+        "query",
+        "text",
+        "node_type",
+        "search_memory",
+        "generate_tests",
+        "get_code_suggestions",
+        "source_id",
+        "create_memory_relationship",
+        "get_thinking_summary",
+        "start_thinking_sequence",
+        "ascii",
+        "node_id",
+        "reflect_on_thinking",
+        "add_thought_step",
+        "problem",
+        "fix_code_issues",
+        "store_memory",
+        "optimize_code",
+        "sequence_id",
+        "enhanced_code_analysis",
+        "explain_code",
+        "code"
+      ],
+      "complexity_score": 1955,
+      "functions_count": 13
+    },
+    {
+      "name": "unified_mcp_orchestration_manager.py",
+      "features": [
+        "arbitrage_detection",
+        "web_interface",
+        "database_integration",
+        "external_api_calls",
+        "monitoring_capabilities",
+        "security_features"
+      ],
+      "tools": [],
+      "complexity_score": 1818,
+      "functions_count": 23
+    },
+    {
+      "name": "langchain_mcp_orchestrator.py",
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "database_integration"
+      ],
+      "tools": [
+        "ascii",
+        "calculate_arbitrage",
+        "clean_context",
+        "create_session",
+        "get_gas_price"
+      ],
+      "complexity_score": 1493,
+      "functions_count": 47
+    },
+    {
+      "name": "unified_mcp_coordinator_20250617_143120.py",
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "external_api_calls",
+        "monitoring_capabilities"
+      ],
+      "tools": [
+        "ascii",
+        "arbitrage_trading"
+      ],
+      "complexity_score": 1663,
+      "functions_count": 6
+    },
+    {
+      "name": "mcp_enhanced_coordinator.py",
+      "features": [
+        "flash_loan_support",
+        "monitoring_capabilities"
+      ],
+      "tools": [
+        "ascii",
+        "agent_heartbeat",
+        "create_task",
+        "jsonrpc",
+        "serverInfo",
+        "register_agent",
+        "task_id",
+        "get_system_status",
+        "name",
+        "operational",
+        "get_task_status",
+        "MCP_CONFIG_PATH",
+        "server_heartbeat",
+        "arguments",
+        "register_server"
+      ],
+      "complexity_score": 1540,
+      "functions_count": 6
+    },
+    {
+      "name": "online_mcp_coordinator.py",
+      "features": [
+        "arbitrage_detection",
+        "monitoring_capabilities"
+      ],
+      "tools": [
+        "ascii",
+        "medium",
+        "health",
+        "github",
+        "search_repositories",
+        "search_docs",
+        "libraryName",
+        "library_id",
+        "tools",
+        "status",
+        "create_or_update_file"
+      ],
+      "complexity_score": 1341,
+      "functions_count": 3
+    },
+    {
+      "name": "unified_mcp_integration_manager.py",
+      "features": [
+        "arbitrage_detection",
+        "external_api_calls",
+        "monitoring_capabilities",
+        "security_features"
+      ],
+      "tools": [],
+      "complexity_score": 920,
+      "functions_count": 20
+    },
+    {
+      "name": "unified_mcp_coordinator.py",
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "monitoring_capabilities",
+        "security_features"
+      ],
+      "tools": [],
+      "complexity_score": 938,
+      "functions_count": 20
+    },
+    {
+      "name": "dashboard_enhanced_mcp_dashboard_with_chat.py",
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "web_interface",
+        "monitoring_capabilities"
+      ],
+      "tools": [],
+      "complexity_score": 1352,
+      "functions_count": 16
+    },
+    {
+      "name": "real_time_price_mcp_server.py",
+      "features": [
+        "arbitrage_detection",
+        "monitoring_capabilities"
+      ],
+      "tools": [
+        "ascii",
+        "MCP_COORDINATOR_URL",
+        "jsonrpc",
+        "serverInfo",
+        "name",
+        "fetch_price",
+        "arguments"
+      ],
+      "complexity_score": 1437,
+      "functions_count": 11
+    },
+    {
+      "name": "mcp_code_quality_server.py",
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "database_integration",
+        "external_api_calls",
+        "security_features"
+      ],
+      "tools": [
+        "analyze_code_quality",
+        "check_code_standards",
+        "ascii",
+        "required",
+        "run_security_scan",
+        "bandit",
+        "python",
+        "results",
+        "fix_code_issues",
+        "type",
+        "path",
+        "mypy",
+        "generate_quality_report",
+        "tools",
+        "ruff",
+        "text"
+      ],
+      "complexity_score": 960,
+      "functions_count": 4
+    },
+    {
+      "name": "mcp_dashboard.py",
+      "features": [
+        "arbitrage_detection",
+        "realtime_data",
+        "web_interface",
+        "external_api_calls",
+        "monitoring_capabilities"
+      ],
+      "tools": [],
+      "complexity_score": 1135,
+      "functions_count": 30
+    },
+    {
+      "name": "aave_flash_loan_mcp_server.py",
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "database_integration",
+        "monitoring_capabilities"
+      ],
+      "tools": [],
+      "complexity_score": 1277,
+      "functions_count": 2
+    },
+    {
+      "name": "mcp_server_trainer.py",
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "realtime_data",
+        "database_integration",
+        "external_api_calls",
+        "monitoring_capabilities"
+      ],
+      "tools": [
+        "stopped"
+      ],
+      "complexity_score": 1049,
+      "functions_count": 7
+    },
+    {
+      "name": "fix_all_local_mcp_servers.py",
+      "features": [],
+      "tools": [
+        "jsonrpc",
+        "serverInfo",
+        "get_status",
+        "name",
+        "arguments",
+        "logs"
+      ],
+      "complexity_score": 914,
+      "functions_count": 7
+    },
+    {
+      "name": "evm_mcp_server.py",
+      "features": [
+        "external_api_calls",
+        "monitoring_capabilities"
+      ],
+      "tools": [
+        "ascii",
+        "get_network_status",
+        "call_contract",
+        "MCP_COORDINATOR_URL",
+        "register_with_coordinator",
+        "jsonrpc",
+        "serverInfo",
+        "name",
+        "get_gas_price",
+        "health_check",
+        "send_transaction",
+        "arguments"
+      ],
+      "complexity_score": 979,
+      "functions_count": 6
+    },
+    {
+      "name": "mcp_training_coordinator.py",
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection",
+        "database_integration",
+        "monitoring_capabilities",
+        "security_features"
+      ],
+      "tools": [],
+      "complexity_score": 930,
+      "functions_count": 9
+    },
+    {
+      "name": "create_final_unified_mcp_manager.py",
+      "features": [
+        "arbitrage_detection",
+        "monitoring_capabilities"
+      ],
+      "tools": [],
+      "complexity_score": 682,
+      "functions_count": 11
+    },
+    {
+      "name": "simple_mcp_orchestrator.py",
+      "features": [
+        "flash_loan_support",
+        "arbitrage_detection"
+      ],
+      "tools": [
+        "ascii",
+        "clean_context",
+        "simulate_flash_loan"
+      ],
+      "complexity_score": 621,
+      "functions_count": 25
+    }
+  ],
+  "selected_ai_agents": [
+    {
+      "name": "enhanced_mcp_server_manager.py",
+      "features": [
+        "database_integration",
+        "external_api_calls",
+        "monitoring_capabilities",
+        "security_features"
+      ],
+      "tools": [],
+      "complexity_score": 1281,
+      "functions_count": 22
+    },
+    {
+      "name": "complete_langchain_mcp_integration.py",
+      "features": [
+        "realtime_data",
+        "web_interface",
+        "database_integration",
+        "external_api_calls",
+        "monitoring_capabilities",
+        "security_features"
+      ],
+      "tools": [],
+      "complexity_score": 1000,
+      "functions_count": 9
+    },
+    {
+      "name": "llm_code_suggestion_mcp_server.py",
+      "features": [
+        "external_api_calls"
+      ],
+      "tools": [
+        "DummyMCP",
+        "get_llm_code_suggestion",
+        "LLMCodeSuggestionMCPServer"
+      ],
+      "complexity_score": 480,
+      "functions_count": 11
+    },
+    {
+      "name": "training_mcp_server.py",
+      "features": [
+        "arbitrage_detection"
+      ],
+      "tools": [
+        "arbitrage_predictor",
+        "deployment_initiated",
+        "discovered_servers",
+        "training_status_retrieved",
+        "arbitrage",
+        "models_available"
+      ],
+      "complexity_score": 283,
+      "functions_count": 0
+    },
+    {
+      "name": "copilot_mcp_mcp_server.py",
+      "features": [],
+      "tools": [
+        "ascii",
+        "jsonrpc",
+        "serverInfo",
+        "get_status",
+        "name",
+        "arguments"
+      ],
+      "complexity_score": 218,
+      "functions_count": 4
+    },
+    {
+      "name": "autodiscover_mcp_agents.py",
+      "features": [],
+      "tools": [],
+      "complexity_score": 67,
+      "functions_count": 1
+    }
+  ],
+  "functions_extracted": {
+    "enhanced_mcp_dashboard_with_chat.py": [
+      "Function from 1 files",
+      "Function from 4 files",
+      "Function from 4 files",
+      "Function from 4 files",
+      "Function from 4 files"
+    ],
+    "unified_mcp_orchestration_manager.py": [
+      "Function from 7 files",
+      "Function from 7 files",
+      "Function from 7 files",
+      "Function from 7 files",
+      "Function from 7 files",
+      "Function from 7 files",
+      "Function from 7 files"
+    ],
+    "fix_all_local_mcp_servers.py": [
+      "Function from 1 files"
+    ]
+  },
+  "backup_location": "C:\\Users\\Ratanshila\\Documents\\flash loan\\mcp_organization_backup_20250626_211930",
+  "configuration_updated": "config/unified_mcp_config.json",
+  "next_steps": [
+    "Use the organized MCP servers for better performance",
+    "Local servers handle infrastructure and blockchain operations",
+    "AI agents handle intelligent tasks and analysis",
+    "All useful functions have been preserved through merging",
+    "Backup available if any functionality is needed"
+  ]
+}

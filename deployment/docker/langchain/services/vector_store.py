@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Vector Store Service
 ==================
@@ -6,24 +8,19 @@ Service for managing vector embeddings and similarity search
 for the RAG system in the flash loan application.
 """
 
-import asyncio
-import logging
-from typing import Dict, List, Optional, Any
-import os
-from datetime import datetime
+from utils.config import get_config
+from utils.logger import setup_logger
 
 try:
     from langchain.vectorstores import Chroma
-    from langchain_openai import OpenAIEmbeddings
     from langchain.schema import Document
+    from langchain_openai import OpenAIEmbeddings
 except ImportError:
     # Fallback imports for type hints
     Chroma = None
     OpenAIEmbeddings = None
     Document = None
 
-from utils.logger import setup_logger
-from utils.config import get_config
 
 logger = setup_logger(__name__)
 
@@ -44,12 +41,12 @@ class VectorStoreService:
         self.embeddings = None
         self.collections = {}
         
-        logger.info("🔍 Vector Store Service initialized")
+        logger.info("[SEARCH] Vector Store Service initialized")
 
     async def initialize(self):
         """Initialize the vector store service"""
         try:
-            logger.info("🔍 Initializing Vector Store Service...")
+            logger.info("[SEARCH] Initializing Vector Store Service...")
             
             # Initialize embeddings
             await self.setup_embeddings()
@@ -60,28 +57,26 @@ class VectorStoreService:
             # Create default collection
             await self.create_collection(self.config.vector_store.collection_name)
             
-            logger.info("✅ Vector Store Service initialization completed")
+            logger.info("[OK] Vector Store Service initialization completed")
             
         except Exception as e:
-            logger.error(f"❌ Vector Store Service initialization failed: {e}")
+            logger.error(str(f"[ERROR] Vector Store Service initialization failed: {e}"))
             raise
 
     async def setup_embeddings(self):
         """Set up embedding model"""
         try:
             if OpenAIEmbeddings is None:
-                logger.warning("⚠️ OpenAI embeddings not available, using mock embeddings")
+                logger.warning("[WARN] OpenAI embeddings not available, using mock embeddings")
                 self.embeddings = MockEmbeddings()
             else:
                 self.embeddings = OpenAIEmbeddings(
                     model=self.config.vector_store.embedding_model,
                     openai_api_key=self.config.llm.openai_api_key
                 )
-            
-            logger.info(f"✅ Embeddings setup completed with model: {self.config.vector_store.embedding_model}")
-            
+            logger.info(str(f"[OK] Embeddings setup completed with model: {self.config.vector_store.embedding_model}"))
         except Exception as e:
-            logger.error(f"❌ Embeddings setup failed: {e}")
+            logger.error(str(f"[ERROR] Embeddings setup failed: {e}"))
             # Fallback to mock embeddings
             self.embeddings = MockEmbeddings()
 
@@ -89,7 +84,6 @@ class VectorStoreService:
         """Set up vector store backend"""
         try:
             provider = self.config.vector_store.provider.lower()
-            
             if provider == "chroma":
                 await self.setup_chroma()
             elif provider == "pinecone":
@@ -97,13 +91,11 @@ class VectorStoreService:
             elif provider == "weaviate":
                 await self.setup_weaviate()
             else:
-                logger.warning(f"⚠️ Unknown vector store provider: {provider}, using mock store")
+                logger.warning(str(f"[WARN] Unknown vector store provider: {provider}, using mock store"))
                 self.vector_store = MockVectorStore()
-            
-            logger.info(f"✅ Vector store setup completed with provider: {provider}")
-            
+            logger.info(str(f"[OK] Vector store setup completed with provider: {provider}"))
         except Exception as e:
-            logger.error(f"❌ Vector store setup failed: {e}")
+            logger.error(str(f"[ERROR] Vector store setup failed: {e}"))
             # Fallback to mock vector store
             self.vector_store = MockVectorStore()
 
@@ -111,7 +103,7 @@ class VectorStoreService:
         """Set up ChromaDB vector store"""
         try:
             if Chroma is None:
-                logger.warning("⚠️ ChromaDB not available, using mock store")
+                logger.warning("[WARN] ChromaDB not available, using mock store")
                 self.vector_store = MockVectorStore()
                 return
                 
@@ -119,37 +111,37 @@ class VectorStoreService:
             persist_dir = self.config.vector_store.persist_directory
             os.makedirs(persist_dir, exist_ok=True)
             
-            self.vector_store = Chroma(
+            self.vector_store = Chroma()
                 embedding_function=self.embeddings,
                 persist_directory=persist_dir
-            )
             
-            logger.info(f"✅ ChromaDB initialized with persist directory: {persist_dir}")
+            
+            logger.info(str(f"[OK] ChromaDB initialized with persist directory: {persist_dir}")
             
         except Exception as e:
-            logger.error(f"❌ ChromaDB setup failed: {e}")
+            logger.error(str(f"[ERROR] ChromaDB setup failed: {e}")
             self.vector_store = MockVectorStore()
 
     async def setup_pinecone(self):
         """Set up Pinecone vector store"""
         try:
             # Pinecone setup would go here
-            logger.warning("⚠️ Pinecone setup not implemented, using mock store")
+            logger.warning("[WARN] Pinecone setup not implemented, using mock store")
             self.vector_store = MockVectorStore()
             
         except Exception as e:
-            logger.error(f"❌ Pinecone setup failed: {e}")
+            logger.error(str(f"[ERROR] Pinecone setup failed: {e}")
             self.vector_store = MockVectorStore()
 
     async def setup_weaviate(self):
         """Set up Weaviate vector store"""
         try:
             # Weaviate setup would go here
-            logger.warning("⚠️ Weaviate setup not implemented, using mock store")
+            logger.warning("[WARN] Weaviate setup not implemented, using mock store")
             self.vector_store = MockVectorStore()
             
         except Exception as e:
-            logger.error(f"❌ Weaviate setup failed: {e}")
+            logger.error(str(f"[ERROR] Weaviate setup failed: {e}")
             self.vector_store = MockVectorStore()
 
     async def create_collection(self, collection_name: str) -> bool:
@@ -158,18 +150,18 @@ class VectorStoreService:
             if collection_name not in self.collections:
                 # For ChromaDB, collections are created automatically
                 # For other providers, specific collection creation logic would go here
-                self.collections[collection_name] = {
+                self.collections[collection_name] = {}
                     "created_at": datetime.now(),
                     "document_count": 0
-                }
-                logger.info(f"✅ Collection '{collection_name}' created")
+                
+                logger.info(str(f"[OK] Collection '{collection_name}' created")
                 return True
             else:
-                logger.info(f"ℹ️ Collection '{collection_name}' already exists")
+                logger.info(str(f"ℹ️ Collection '{collection_name}' already exists")
                 return False
                 
         except Exception as e:
-            logger.error(f"❌ Failed to create collection '{collection_name}': {e}")
+            logger.error(str(f"[ERROR] Failed to create collection '{collection_name}': {e}")
             return False
 
     async def get_collection(self, collection_name: str):
@@ -181,14 +173,14 @@ class VectorStoreService:
             return self.vector_store
             
         except Exception as e:
-            logger.error(f"❌ Failed to get collection '{collection_name}': {e}")
+            logger.error(str(f"[ERROR] Failed to get collection '{collection_name}': {e}")
             return None
 
     async def add_documents(self, documents: List[Document], collection_name: Optional[str] = None) -> bool:
         """Add documents to the vector store"""
         try:
             if not documents:
-                logger.warning("⚠️ No documents provided to add")
+                logger.warning("[WARN] No documents provided to add")
                 return False
             
             collection_name = collection_name or self.config.vector_store.collection_name
@@ -203,11 +195,11 @@ class VectorStoreService:
             if collection_name in self.collections:
                 self.collections[collection_name]["document_count"] += len(documents)
             
-            logger.info(f"✅ Added {len(documents)} documents to collection '{collection_name}'")
+            logger.info(str(f"[OK] Added {len(documents} documents to collection '{collection_name}'")
             return True
             
         except Exception as e:
-            logger.error(f"❌ Failed to add documents: {e}")
+            logger.error(str(f"[ERROR] Failed to add documents: {e}")
             return False
 
     async def similarity_search(self, query: str, k: int = 5, collection_name: Optional[str] = None) -> List[Document]:
@@ -217,15 +209,15 @@ class VectorStoreService:
             
             if hasattr(self.vector_store, 'similarity_search'):
                 results = await self.vector_store.asimilarity_search(query, k=k)
-                logger.info(f"🔍 Similarity search returned {len(results)} results")
+                logger.info(str(f"[SEARCH] Similarity search returned {len(results} results")
                 return results
             else:
                 # Mock results
-                logger.warning("⚠️ Using mock similarity search results")
+                logger.warning("[WARN] Using mock similarity search results")
                 return [MockDocument(f"Mock result {i+1} for query: {query}") for i in range(min(k, 3))]
                 
         except Exception as e:
-            logger.error(f"❌ Similarity search failed: {e}")
+            logger.error(str(f"[ERROR] Similarity search failed: {e}")
             return []
 
     async def similarity_search_with_score(self, query: str, k: int = 5, collection_name: Optional[str] = None) -> List[tuple]:
@@ -235,11 +227,11 @@ class VectorStoreService:
             
             if hasattr(self.vector_store, 'similarity_search_with_score'):
                 results = await self.vector_store.asimilarity_search_with_score(query, k=k)
-                logger.info(f"🔍 Similarity search with scores returned {len(results)} results")
+                logger.info(str(f"[SEARCH] Similarity search with scores returned {len(results} results")
                 return results
             else:
                 # Mock results with scores
-                logger.warning("⚠️ Using mock similarity search results with scores")
+                logger.warning("[WARN] Using mock similarity search results with scores")
                 mock_results = []
                 for i in range(min(k, 3)):
                     doc = MockDocument(f"Mock result {i+1} for query: {query}")
@@ -248,7 +240,7 @@ class VectorStoreService:
                 return mock_results
                 
         except Exception as e:
-            logger.error(f"❌ Similarity search with scores failed: {e}")
+            logger.error(str(f"[ERROR] Similarity search with scores failed: {e}")
             return []
 
     async def delete_collection(self, collection_name: str) -> bool:
@@ -257,14 +249,14 @@ class VectorStoreService:
             if collection_name in self.collections:
                 # Implementation would depend on the vector store provider
                 del self.collections[collection_name]
-                logger.info(f"✅ Collection '{collection_name}' deleted")
+                logger.info(str(f"[OK] Collection '{collection_name}' deleted")
                 return True
             else:
-                logger.warning(f"⚠️ Collection '{collection_name}' not found")
+                logger.warning(str(f"[WARN] Collection '{collection_name}' not found")
                 return False
                 
         except Exception as e:
-            logger.error(f"❌ Failed to delete collection '{collection_name}': {e}")
+            logger.error(str(f"[ERROR] Failed to delete collection '{collection_name}': {e}")
             return False
 
     async def get_collection_stats(self, collection_name: Optional[str] = None) -> Dict[str, Any]:
@@ -275,13 +267,13 @@ class VectorStoreService:
             if collection_name in self.collections:
                 return self.collections[collection_name]
             else:
-                return {
+                return {}
                     "created_at": None,
                     "document_count": 0
-                }
+                
                 
         except Exception as e:
-            logger.error(f"❌ Failed to get collection stats: {e}")
+            logger.error(str(f"[ERROR] Failed to get collection stats: {e}")
             return {}
 
     async def list_collections(self) -> List[str]:
@@ -290,7 +282,7 @@ class VectorStoreService:
             return list(self.collections.keys())
             
         except Exception as e:
-            logger.error(f"❌ Failed to list collections: {e}")
+            logger.error(str(f"[ERROR] Failed to list collections: {e}")
             return []
 
     async def cleanup(self):
@@ -299,10 +291,10 @@ class VectorStoreService:
             if hasattr(self.vector_store, 'persist'):
                 self.vector_store.persist()
             
-            logger.info("✅ Vector store cleanup completed")
+            logger.info("[OK] Vector store cleanup completed")
             
         except Exception as e:
-            logger.error(f"❌ Vector store cleanup failed: {e}")
+            logger.error(str(f"[ERROR] Vector store cleanup failed: {e}")
 
 # Mock classes for fallback
 class MockEmbeddings:
@@ -310,11 +302,9 @@ class MockEmbeddings:
     
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         # Return random embeddings for testing
-        import random
         return [[random.random() for _ in range(1536)] for _ in texts]
     
     def embed_query(self, text: str) -> List[float]:
-        import random
         return [random.random() for _ in range(1536)]
 
 class MockVectorStore:

@@ -1,15 +1,17 @@
-#!/usr/bin/env python3
-"""
-Simple DEX Price & Arbitrage Calculator - Quick Test
-"""
-
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from decimal import Decimal, getcontext
 import asyncio
 import json
 import os
 import platform
-from decimal import Decimal, getcontext
-from web3 import Web3
+
 from dotenv import load_dotenv
+from web3 import Web3
+"""
+Simple DEX Price & Arbitrage Calculator - Quick Test
+"""
+
 
 # Windows compatibility
 if platform.system() == 'Windows':
@@ -21,7 +23,7 @@ getcontext().prec = 50
 async def show_dex_calculations():
     """Show current DEX prices and arbitrage calculations"""
     
-    print("🚀 DEX PRICE & ARBITRAGE CALCULATOR")
+    print("[INIT] DEX PRICE & ARBITRAGE CALCULATOR")
     print("=" * 60)
     
     # Load config
@@ -33,10 +35,10 @@ async def show_dex_calculations():
     web3 = Web3(Web3.HTTPProvider(rpc_url))
     
     if not web3.is_connected():
-        print("❌ Failed to connect to Polygon")
+        print("[ERROR] Failed to connect to Polygon")
         return
     
-    print(f"✅ Connected to Polygon (Block: {web3.eth.block_number})")
+    print(f"[OK] Connected to Polygon (Block: {web3.eth.block_number})")
     
     # Trading parameters
     trade_size = Decimal(str(config['trading']['min_trade_size_usd']))
@@ -49,15 +51,15 @@ async def show_dex_calculations():
     print()
     
     # Sample calculation for WMATIC/USDC
-    print("📊 SAMPLE ARBITRAGE CALCULATION (WMATIC/USDC)")
+    print("[METRICS] SAMPLE ARBITRAGE CALCULATION (WMATIC/USDC)")
     print("-" * 50)
     
     # Mock prices (since we can't guarantee real-time data)
-    sample_prices = {
+    sample_prices = {}
         'quickswap': {'price': Decimal('0.5245'), 'fee': Decimal('0.003')},
         'uniswap_v3': {'price': Decimal('0.5251'), 'fee': Decimal('0.003')},
         'sushiswap': {'price': Decimal('0.5248'), 'fee': Decimal('0.003')},
-    }
+    
     
     print("DEX Prices (WMATIC per USDC):")
     for dex, data in sample_prices.items():
@@ -70,7 +72,7 @@ async def show_dex_calculations():
     buy_price = sample_prices[best_buy_dex]['price']
     sell_price = sample_prices[best_sell_dex]['price']
     
-    print(f"\n🔄 Best Route: {best_buy_dex} → {best_sell_dex}")
+    print(f"\n[SYNC] Best Route: {best_buy_dex} → {best_sell_dex}")
     print(f"   Buy at:  ${buy_price:.4f} on {best_buy_dex}")
     print(f"   Sell at: ${sell_price:.4f} on {best_sell_dex}")
     
@@ -101,11 +103,11 @@ async def show_dex_calculations():
     print(f"NET PROFIT:        ${net_profit:7.2f}")
     
     if net_profit > min_profit:
-        print(f"🎉 PROFITABLE! (>${min_profit} threshold met)")
+        print(f"[CELEBRATE] PROFITABLE! (>${min_profit} threshold met)")
     else:
-        print(f"❌ Not profitable (need >${min_profit})")
+        print(f"[ERROR] Not profitable (need >${min_profit})")
     
-    print(f"\n📈 ROI: {(net_profit/trade_size)*100:.2f}%")
+    print(f"\n[GROWTH] ROI: {(net_profit/trade_size)*100:.2f}%")
     
     # Show what your bot is actually doing
     print("\n" + "=" * 60)
@@ -119,11 +121,11 @@ async def show_dex_calculations():
     token_count = len(tokens)
     pair_count = token_count * (token_count - 1)
     
-    print(f"✅ Monitoring {len(enabled_dexes)} DEXes: {', '.join(enabled_dexes)}")
-    print(f"✅ Scanning {token_count} tokens: {', '.join(tokens.keys())}")
-    print(f"✅ Checking {pair_count} trading pairs every second")
-    print(f"✅ Looking for profits ≥ ${min_profit}")
-    print(f"✅ Ready to execute trades up to ${config['trading']['max_trade_size_usd']}")
+    print(f"[OK] Monitoring {len(enabled_dexes)} DEXes: {', '.join(enabled_dexes)}")
+    print(f"[OK] Scanning {token_count} tokens: {', '.join(tokens.keys())}")
+    print(f"[OK] Checking {pair_count} trading pairs every second")
+    print(f"[OK] Looking for profits ≥ ${min_profit}")
+    print(f"[OK] Ready to execute trades up to ${config['trading']['max_trade_size_usd']}")
     
     # Current gas price
     try:
@@ -132,7 +134,7 @@ async def show_dex_calculations():
     except:
         print("⛽ Gas price: Unable to fetch")
     
-    print("\n🔍 The bot finds 0 opportunities because:")
+    print("\n[SEARCH] The bot finds 0 opportunities because:")
     print("   • Market is efficient (spreads < profit threshold)")
     print("   • High competition from other arbitrage bots")
     print("   • Gas costs reduce profitability")

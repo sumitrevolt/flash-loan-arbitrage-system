@@ -1,19 +1,21 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Any, Callable
+import asyncio
+import json
+import logging
+import platform
+import time
+
+from dataclasses import dataclass
+import aiohttp
+import websockets
 """
 Real-time Data Connector for Flash Loan Arbitrage System
 Connects to Foundry MCP Server and provides real-time price feeds
 """
 
-import asyncio
-import json
-import logging
-import platform
-import aiohttp
-import websockets
-from typing import Dict, List, Optional, Any, Callable
-from datetime import datetime, timedelta
-from dataclasses import dataclass
-import time
 
 # Setup Windows-compatible event loop
 if platform.system() == 'Windows':
@@ -125,7 +127,7 @@ class RealTimeDataConnector:
                     continue
                     
             except Exception as e:
-                self.logger.error(f"Connection error: {e}")
+                self.logger.error(str(f"Connection error: {e}")
                 self.connected = False
                 self.reconnect_attempts += 1
                 
@@ -143,7 +145,7 @@ class RealTimeDataConnector:
                     health_data = await response.json()
                     return health_data.get('status') == 'healthy'
         except Exception as e:
-            self.logger.debug(f"Health check failed: {e}")
+            self.logger.debug(str(f"Health check failed: {e}")
             return False
         
         return False
@@ -151,14 +153,14 @@ class RealTimeDataConnector:
     async def _connect_websocket(self):
         """Connect to WebSocket for real-time data"""
         try:
-            self.logger.info(f"Connecting to WebSocket: {self.ws_url}")
+            self.logger.info(str(f"Connecting to WebSocket: {self.ws_url}")
             
             # For now, we'll use HTTP polling since WebSocket might not be implemented
             # TODO: Replace with actual WebSocket when available
             await self._start_http_polling()
             
         except Exception as e:
-            self.logger.error(f"WebSocket connection failed: {e}")
+            self.logger.error(str(f"WebSocket connection failed: {e}")
             raise
     
     async def _start_http_polling(self):
@@ -177,7 +179,7 @@ class RealTimeDataConnector:
                 await asyncio.sleep(poll_interval)
                 
             except Exception as e:
-                self.logger.error(f"Polling error: {e}")
+                self.logger.error(str(f"Polling error: {e}")
                 self.connected = False
                 break
     
@@ -193,7 +195,7 @@ class RealTimeDataConnector:
                 await self._process_price_update(update)
                 
         except Exception as e:
-            self.logger.error(f"Failed to poll price data: {e}")
+            self.logger.error(str(f"Failed to poll price data: {e}")
             raise
     
     async def _get_mock_price_data(self) -> List[PriceUpdate]:
@@ -201,8 +203,8 @@ class RealTimeDataConnector:
         # Mock data for testing
         current_time = datetime.now()
         
-        mock_data = [
-            PriceUpdate(
+        mock_data = []
+            PriceUpdate()
                 token_pair="WMATIC/USDC",
                 dex="quickswap",
                 price=0.85 + (time.time() % 10) * 0.01,  # Slight price variation
@@ -210,7 +212,7 @@ class RealTimeDataConnector:
                 volume_24h=1000000.0,
                 liquidity=5000000.0
             ),
-            PriceUpdate(
+            PriceUpdate()
                 token_pair="WMATIC/USDC",
                 dex="uniswap_v3",
                 price=0.85 + (time.time() % 8) * 0.012,  # Different variation
@@ -218,15 +220,15 @@ class RealTimeDataConnector:
                 volume_24h=800000.0,
                 liquidity=4500000.0
             ),
-            PriceUpdate(
+            PriceUpdate()
                 token_pair="WETH/USDC",
                 dex="quickswap",
                 price=2450.0 + (time.time() % 20) * 2.0,
                 timestamp=current_time,
                 volume_24h=2000000.0,
                 liquidity=10000000.0
-            )
-        ]
+            
+        
         
         return mock_data
     
@@ -244,7 +246,7 @@ class RealTimeDataConnector:
                 try:
                     await callback(update)
                 except Exception as e:
-                    self.logger.error(f"Subscriber callback error: {e}")
+                    self.logger.error(str(f"Subscriber callback error: {e}")
     
     def subscribe_to_pair(self, token_pair: str, dex: str, callback: Callable):
         """Subscribe to price updates for a specific token pair and DEX"""
@@ -254,7 +256,7 @@ class RealTimeDataConnector:
             self.subscribers[key] = []
         
         self.subscribers[key].append(callback)
-        self.logger.info(f"Subscribed to {key}")
+        self.logger.info(str(f"Subscribed to {key}")
     
     def unsubscribe_from_pair(self, token_pair: str, dex: str, callback: Callable):
         """Unsubscribe from price updates"""
@@ -262,7 +264,7 @@ class RealTimeDataConnector:
         
         if key in self.subscribers and callback in self.subscribers[key]:
             self.subscribers[key].remove(callback)
-            self.logger.info(f"Unsubscribed from {key}")
+            self.logger.info(str(f"Unsubscribed from {key}")
     
     def get_latest_price(self, token_pair: str, dex: str) -> Optional[PriceUpdate]:
         """Get the latest price for a token pair and DEX"""
@@ -283,11 +285,11 @@ class RealTimeDataConnector:
     
     def get_connection_status(self) -> Dict[str, Any]:
         """Get detailed connection status"""
-        return {
+        return {}
             "connected": self.connected,
             "reconnect_attempts": self.reconnect_attempts,
             "max_reconnect_attempts": self.max_reconnect_attempts,
             "cached_pairs": len(self.price_cache),
             "subscribers": len(self.subscribers),
             "last_update": max(self.last_update.values()) if self.last_update else None
-        }
+        

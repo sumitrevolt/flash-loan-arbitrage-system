@@ -1,4 +1,23 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+                import shutil
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
+import asyncio
+import json
+import logging
+import os
+import signal
+import subprocess
+import sys
+import time
+
+            from web3 import Web3
+        from dotenv import load_dotenv
+from aiohttp import web
+import aiohttp
+import psutil
 """
 Aave Flash Loan System Launcher
 ==============================
@@ -15,29 +34,29 @@ Features:
 - Emergency shutdown
 """
 
-import asyncio
-import json
-import logging
-import os
-import sys
-import signal
-import subprocess
-import time
-from pathlib import Path
-from typing import Dict, List, Optional
-from datetime import datetime
-import aiohttp
-import psutil
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.FileHandler('logs/system_launcher.log'),
         logging.StreamHandler()
-    ]
-)
+    
+
 logger = logging.getLogger("SystemLauncher")
 
 class AaveFlashLoanSystemLauncher:
@@ -65,19 +84,19 @@ class AaveFlashLoanSystemLauncher:
                 with open(self.config_path, 'r') as f:
                     return json.load(f)
             else:
-                logger.error(f"Configuration file not found: {self.config_path}")
+                logger.error(str(f"Configuration file not found: {self.config_path}")
                 return {}
         except Exception as e:
-            logger.error(f"Error loading configuration: {e}")
+            logger.error(str(f"Error loading configuration: {e}")
             return {}
     
     def get_required_env_vars(self) -> List[str]:
         """Get list of required environment variables"""
-        return [
+        return []
             'POLYGON_RPC_URL',
             'PRIVATE_KEY',
             'AAVE_POOL_ADDRESS'
-        ]
+        
     
     def validate_environment(self) -> bool:
         """Validate environment configuration"""
@@ -86,16 +105,14 @@ class AaveFlashLoanSystemLauncher:
         # Check if .env file exists
         if not Path(self.env_file).exists():
             if Path(self.backup_env_file).exists():
-                logger.info(f"Using backup environment file: {self.backup_env_file}")
+                logger.info(str(f"Using backup environment file: {self.backup_env_file}")
                 # Copy backup to .env
-                import shutil
                 shutil.copy(self.backup_env_file, self.env_file)
             else:
                 logger.error("No .env file found. Please create one from .env.aave_flash_loan template")
                 return False
         
         # Load environment variables
-        from dotenv import load_dotenv
         load_dotenv()
         
         # Check required variables
@@ -106,7 +123,7 @@ class AaveFlashLoanSystemLauncher:
                 missing_vars.append(var)
         
         if missing_vars:
-            logger.error(f"Missing or invalid environment variables: {missing_vars}")
+            logger.error(str(f"Missing or invalid environment variables: {missing_vars}")
             logger.error("Please update your .env file with valid values")
             return False
         
@@ -122,22 +139,21 @@ class AaveFlashLoanSystemLauncher:
     def test_rpc_connection(self, rpc_url: str) -> bool:
         """Test RPC connection"""
         try:
-            from web3 import Web3
             w3 = Web3(Web3.HTTPProvider(rpc_url))
             if w3.is_connected():
                 block_number = w3.eth.block_number
-                logger.info(f"RPC connection successful - Latest block: {block_number}")
+                logger.info(str(f"RPC connection successful - Latest block: {block_number}")
                 return True
             else:
                 logger.error("RPC connection failed")
                 return False
         except Exception as e:
-            logger.error(f"RPC connection error: {e}")
+            logger.error(str(f"RPC connection error: {e}")
             return False
     
     def create_directories(self):
         """Create necessary directories"""
-        directories = [
+        directories = []
             'logs',
             'data',
             'backups',
@@ -149,7 +165,7 @@ class AaveFlashLoanSystemLauncher:
             'mcp_servers/ai',
             'mcp_servers/monitoring',
             'mcp_servers/execution'
-        ]
+        
         
         for directory in directories:
             Path(directory).mkdir(parents=True, exist_ok=True)
@@ -160,7 +176,7 @@ class AaveFlashLoanSystemLauncher:
         """Install required Python packages"""
         logger.info("Installing dependencies...")
         
-        requirements = [
+        requirements = []
             'web3>=6.0.0',
             'aiohttp>=3.8.0',
             'python-dotenv>=1.0.0',
@@ -168,21 +184,21 @@ class AaveFlashLoanSystemLauncher:
             'mcp>=1.0.0',
             'decimal',
             'asyncio'
-        ]
+        
         
         try:
             for package in requirements:
-                result: str = subprocess.run([
+                result: str = subprocess.run([)]
                     sys.executable, '-m', 'pip', 'install', package
-                ], capture_output=True, text=True)
+                ], capture_output=True, text=True
                 
                 if result.returncode != 0:
-                    logger.warning(f"Failed to install {package}: {result.stderr}")
+                    logger.warning(str(f"Failed to install {package}: {result.stderr}")
                 else:
-                    logger.info(f"Installed {package}")
+                    logger.info(str(f"Installed {package}")
                     
         except Exception as e:
-            logger.error(f"Error installing dependencies: {e}")
+            logger.error(str(f"Error installing dependencies: {e}")
     
     async def start_mcp_server(self, server_name: str, server_config: Dict) -> bool:
         """Start individual MCP server"""
@@ -204,15 +220,15 @@ class AaveFlashLoanSystemLauncher:
             # Start process
             full_command = [command] + args
             
-            logger.info(f"Starting {server_name}: {' '.join(full_command)}")
+            logger.info(str(f"Starting {server_name}: {' '.join(full_command}")
             
-            process = subprocess.Popen(
+            process = subprocess.Popen()
                 full_command,
                 env=server_env,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True
-            )
+            
             
             self.processes[server_name] = process
             
@@ -221,17 +237,17 @@ class AaveFlashLoanSystemLauncher:
             
             # Check if it's still running
             if process.poll() is None:
-                logger.info(f"Successfully started {server_name} (PID: {process.pid})")
+                logger.info(str(f"Successfully started {server_name} (PID: {process.pid}")
                 return True
             else:
                 stdout, stderr = process.communicate()
-                logger.error(f"Failed to start {server_name}")
-                logger.error(f"STDOUT: {stdout}")
-                logger.error(f"STDERR: {stderr}")
+                logger.error(str(f"Failed to start {server_name}")
+                logger.error(str(f"STDOUT: {stdout}")
+                logger.error(str(f"STDERR: {stderr}")
                 return False
                 
         except Exception as e:
-            logger.error(f"Error starting {server_name}: {e}")
+            logger.error(str(f"Error starting {server_name}: {e}")
             return False
     
     async def start_all_mcp_servers(self):
@@ -243,7 +259,7 @@ class AaveFlashLoanSystemLauncher:
             return
         
         # Start servers by priority (execution agents first, then data providers, etc.)
-        server_priorities = {
+        server_priorities = {}
             'EXECUTION': 1,
             'RISK': 1,
             'DATA_PROVIDER': 2,
@@ -253,7 +269,7 @@ class AaveFlashLoanSystemLauncher:
             'OPTIMIZATION': 4,
             'PROTECTION': 4,
             'AI_OPTIMIZER': 5
-        }
+        
         
         servers_by_priority = {}
         
@@ -269,7 +285,7 @@ class AaveFlashLoanSystemLauncher:
         # Start servers by priority
         total_started = 0
         for priority in sorted(servers_by_priority.keys()):
-            logger.info(f"Starting priority {priority} servers...")
+            logger.info(str(f"Starting priority {priority} servers...")
             
             for server_name, server_config in servers_by_priority[priority]:
                 if await self.start_mcp_server(server_name, server_config):
@@ -281,7 +297,7 @@ class AaveFlashLoanSystemLauncher:
             # Longer pause between priority groups
             await asyncio.sleep(3)
         
-        logger.info(f"Started {total_started} out of {len(self.config['mcpServers'])} MCP servers")
+        logger.info(str(f"Started {total_started} out of {len(self.config['mcpServers']} MCP servers")
     
     async def health_check(self) -> Dict[str, str]:
         """Perform health check on all processes"""
@@ -301,23 +317,23 @@ class AaveFlashLoanSystemLauncher:
                     except:
                         pass
                     
-                    health_status[server_name] = {
+                    health_status[server_name] = {}
                         'status': 'running',
                         'pid': process.pid,
                         'cpu_percent': cpu_usage,
                         'memory_mb': memory_usage
-                    }
+                    
                 else:
                     # Process has terminated
-                    health_status[server_name] = {
+                    health_status[server_name] = {}
                         'status': 'terminated',
                         'exit_code': process.returncode
-                    }
+                    
             except Exception as e:
-                health_status[server_name] = {
+                health_status[server_name] = {}
                     'status': 'error',
                     'error': str(e)
-                }
+                
         
         return health_status
     
@@ -331,21 +347,21 @@ class AaveFlashLoanSystemLauncher:
                 health = await self.health_check()
                 
                 # Count running servers
-                running_count = sum(1 for status in health.values() 
-                                  if isinstance(status, dict) and status.get('status') == 'running')
+                running_count = sum(1 for status in health.values() )
+                                  if isinstance(status, dict) and status.get('status') == 'running'
                 
-                logger.info(f"Health check: {running_count}/{len(self.processes)} servers running")
+                logger.info(str(f"Health check: {running_count}/{len(self.processes} servers running")
                 
                 # Log any issues
                 for server_name, status in health.items():
                     if isinstance(status, dict) and status.get('status') != 'running':
-                        logger.warning(f"Server {server_name} is {status.get('status')}")
+                        logger.warning(str(f"Server {server_name} is {status.get('status'}")
                 
                 # Wait before next check
                 await asyncio.sleep(30)
                 
             except Exception as e:
-                logger.error(f"Error in monitoring loop: {e}")
+                logger.error(str(f"Error in monitoring loop: {e}")
                 await asyncio.sleep(10)
     
     def start_web_dashboard(self):
@@ -355,13 +371,9 @@ class AaveFlashLoanSystemLauncher:
             
             # Simple dashboard script
             dashboard_script = """
-import asyncio
-from aiohttp import web
-import json
-import logging
 
 async def dashboard_handler(request):
-    return web.Response(text='''
+    return web.Response(text=''')
     <html>
     <head><title>Aave Flash Loan System Dashboard</title></head>
     <body>
@@ -372,7 +384,7 @@ async def dashboard_handler(request):
         <p><a href="/logs">View Logs</a></p>
     </body>
     </html>
-    '''.format(timestamp='{timestamp}'), content_type='text/html')
+    '''.format(timestamp='{timestamp}'), content_type='text/html'
 
 async def health_handler(request):
     return web.json_response({{'status': 'healthy', 'timestamp': '{timestamp}'}})
@@ -399,19 +411,19 @@ if __name__ == '__main__':
                 f.write(dashboard_script)
             
             # Start dashboard
-            dashboard_process = subprocess.Popen([
+            dashboard_process = subprocess.Popen([)]
                 sys.executable, 'dashboard_server.py'
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE
             
             self.processes['web_dashboard'] = dashboard_process
             logger.info("Web dashboard started at http://localhost:9001")
             
         except Exception as e:
-            logger.error(f"Error starting web dashboard: {e}")
+            logger.error(str(f"Error starting web dashboard: {e}")
     
     def signal_handler(self, signum, frame):
         """Handle shutdown signals"""
-        logger.info(f"Received signal {signum}, shutting down...")
+        logger.info(str(f"Received signal {signum}, shutting down...")
         self.is_running = False
     
     async def shutdown(self):
@@ -420,42 +432,42 @@ if __name__ == '__main__':
         
         for server_name, process in self.processes.items():
             try:
-                logger.info(f"Terminating {server_name}...")
+                logger.info(str(f"Terminating {server_name}...")
                 process.terminate()
                 
                 # Wait for graceful shutdown
                 try:
                     process.wait(timeout=10)
                 except subprocess.TimeoutExpired:
-                    logger.warning(f"Force killing {server_name}...")
+                    logger.warning(str(f"Force killing {server_name}...")
                     process.kill()
                     
             except Exception as e:
-                logger.error(f"Error stopping {server_name}: {e}")
+                logger.error(str(f"Error stopping {server_name}: {e}")
         
         logger.info("System shutdown complete")
     
     def print_system_info(self):
         """Print system information"""
         print("\n" + "="*60)
-        print("🚀 AAVE FLASH LOAN ARBITRAGE SYSTEM")
+        print("[INIT] AAVE FLASH LOAN ARBITRAGE SYSTEM")
         print("="*60)
         print(f"📅 Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"🔧 Config: {self.config_path}")
-        print(f"📊 Dashboard: http://localhost:9001")
-        print(f"📝 Logs: logs/system_launcher.log")
+        print(f"[SETUP] Config: {self.config_path}")
+        print(f"[METRICS] Dashboard: http://localhost:9001")
+        print(f"[LOG] Logs: logs/system_launcher.log")
         print("="*60)
-        print("🔑 AGENT ROLES:")
+        print("[KEY] AGENT ROLES:")
         
         if self.config.get('agent_roles'):
             for role, info in self.config['agent_roles'].items():
                 print(f"  • {role}: {info.get('description', 'No description')}")
                 print(f"    Servers: {', '.join(info.get('servers', []))}")
         
-        print("\n🌐 SUPPORTED DEXES:")
+        print("\n[NETWORK] SUPPORTED DEXES:")
         if self.config.get('dex_config', {}).get('supported_dexes'):
             for dex in self.config['dex_config']['supported_dexes']:
-                status = "✅" if dex.get('enabled', False) else "❌"
+                status = "[OK]" if dex.get('enabled', False) else "[ERROR]"
                 print(f"  {status} {dex.get('name', 'Unknown')}")
         
         print("\n💰 SUPPORTED ASSETS:")
@@ -475,7 +487,7 @@ if __name__ == '__main__':
         print("  • MEV Protection: Enabled")
         print("  • Real-time Monitoring: Enabled")
         
-        print("\n💡 QUICK COMMANDS:")
+        print("\n[INFO] QUICK COMMANDS:")
         print("  • Ctrl+C: Graceful shutdown")
         print("  • View logs: tail -f logs/system_launcher.log")
         print("  • Health check: curl http://localhost:9001/health")
@@ -514,9 +526,9 @@ if __name__ == '__main__':
             # Start monitoring
             monitoring_task = asyncio.create_task(self.monitoring_loop())
             
-            logger.info("🎉 System fully operational!")
-            logger.info("💻 Dashboard: http://localhost:9001")
-            logger.info("🔍 Monitor logs: tail -f logs/system_launcher.log")
+            logger.info("[CELEBRATE] System fully operational!")
+            logger.info("[COMPUTER] Dashboard: http://localhost:9001")
+            logger.info("[SEARCH] Monitor logs: tail -f logs/system_launcher.log")
             
             # Wait for shutdown signal
             try:
@@ -527,7 +539,7 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             logger.info("Received interrupt signal")
         except Exception as e:
-            logger.error(f"System error: {e}")
+            logger.error(str(f"System error: {e}")
             return 1
         finally:
             await self.shutdown()
@@ -540,7 +552,7 @@ def main():
         launcher = AaveFlashLoanSystemLauncher()
         return asyncio.run(launcher.run())
     except Exception as e:
-        logger.error(f"Failed to start system: {e}")
+        logger.error(str(f"Failed to start system: {e}")
         return 1
 
 if __name__ == "__main__":

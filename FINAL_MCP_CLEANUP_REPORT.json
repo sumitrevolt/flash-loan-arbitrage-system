@@ -1,0 +1,14 @@
+{
+  "final_cleanup_timestamp": "2025-06-26T20:56:27.124954",
+  "total_files_removed": 57,
+  "backup_location": "C:\\Users\\Ratanshila\\Documents\\flash loan\\final_mcp_cleanup_20250626_205626",
+  "canonical_config": "config/unified_mcp_config.json",
+  "mcp_servers_location": "mcp_servers/",
+  "cleanup_status": "COMPLETE - Single MCP setup achieved",
+  "next_steps": [
+    "Use only config/unified_mcp_config.json for MCP configuration",
+    "All MCP servers are in mcp_servers/ directory",
+    "No more duplicate configurations exist",
+    "Backup files available if needed"
+  ]
+}

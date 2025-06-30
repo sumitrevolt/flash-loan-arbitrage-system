@@ -1,8 +1,8 @@
-import unicodedata
-import sys
-
-
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # HFS Plus uses decomposed UTF-8
+import sys
+import unicodedata
 def decompose(path):
     if isinstance(path, str):
         return unicodedata.normalize('NFD', path)

@@ -1,4 +1,22 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import argparse
+from datetime import datetime, timedelta
+from decimal import Decimal, getcontext
+from pathlib import Path
+from typing import Dict, List, Optional, Any, Tuple
+import asyncio
+import json
+import logging
+import os
+import signal
+import subprocess
+import sys
+import time
+
+from dataclasses import dataclass, asdict
+from web3 import Web3
+import aiohttp
+import requests
 """
 PRODUCTION 24/7 ARBITRAGE SYSTEM
 ================================
@@ -17,35 +35,32 @@ Author: AI Assistant
 Created: 2024
 """
 
-import asyncio
-import json
-import logging
-import os
-import sys
-import time
-import signal
-import subprocess
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-from decimal import Decimal, getcontext
-from dataclasses import dataclass, asdict
-from web3 import Web3
-import aiohttp
-import requests
 
 # Set high precision for financial calculations
 getcontext().prec = 50
 
 # Configure production logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(sys.stdout),
         logging.FileHandler('logs/production_arbitrage.log'),
-    ]
-)
+    
+
 logger = logging.getLogger("ProductionArbitrageSystem")
 
 @dataclass
@@ -87,17 +102,17 @@ class ProductionArbitrageSystem:
         # System state
         self.current_prices = {}
         self.active_opportunities = []
-        self.system_stats = {
+        self.system_stats = {}
             'opportunities_found': 0,
             'opportunities_executed': 0,
             'total_profit_usd': 0.0,
             'execution_errors': 0,
             'uptime_start': datetime.now(),
             'last_profitable_trade': None
-        }
+        
         
         # Production configuration - 5 DEXs, 15 tokens
-        self.POLYGON_TOKENS = {
+        self.POLYGON_TOKENS = {}
             'WMATIC': '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
             'WETH': '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619',
             'WBTC': '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6',
@@ -113,36 +128,36 @@ class ProductionArbitrageSystem:
             'BAL': '0x9a71012b13ca4d3d0cdc72a177df3ef03b0e76a3',
             'QUICK': '0x831753dd7087cac61ab5644b308642cc1c33dc13',
             'GHST': '0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7'
-        }
         
-        self.POLYGON_DEXS = {
-            'Uniswap_V3': {
+        
+        self.POLYGON_DEXS = {}
+            'Uniswap_V3': {}
                 'router': '0xE592427A0AEce92De3Edee1F18E0157C05861564',
                 'factory': '0x1F98431c8aD98523631AE4a59f267346ea31F984',
                 'fee_tiers': [100, 500, 3000, 10000]
             },
-            'SushiSwap': {
+            'SushiSwap': {}
                 'router': '0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506',
                 'factory': '0xc35DADB65012eC5796536bD9864eD8773aBc74C4'
             },
-            'QuickSwap': {
+            'QuickSwap': {}
                 'router': '0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff',
                 'factory': '0x5757371414417b8C6CAad45bAeF941aBc7d3Ab32'
             },
-            'Balancer_V2': {
+            'Balancer_V2': {}
                 'vault': '0xBA12222222228d8Ba445958a75a0704d566BF2C8'
             },
-            'Curve': {
+            'Curve': {}
                 'registry': '0x094d12e5b541784701FD8d65F11fc0598FBC6332'
-            }
-        }
+            
+        
         
         # Aave V3 Polygon mainnet addresses
-        self.AAVE_ADDRESSES = {
+        self.AAVE_ADDRESSES = {}
             'pool': '0x794a61358D6845594F94dc1DB02A252b5b4814aD',
             'provider': '0xa97684ead0e402dC232d5A977953DF7ECBaB3CDb',
             'data_provider': '0x69FA688f1Dc47d4B5d8029D5a35FB7a548310654'
-        }
+        
         
         # Your deployed flash loan contract
         self.FLASH_LOAN_CONTRACT = os.getenv('CONTRACT_ADDRESS', '0x35791D283Ec6eeF6C7687026CaF026C5F84C7c15')
@@ -171,7 +186,7 @@ class ProductionArbitrageSystem:
             if not os.getenv(var):
                 raise Exception(f"Required environment variable {var} not found")
                 
-        self.logger.info("✅ Environment loaded successfully")
+        self.logger.info("[OK] Environment loaded successfully")
         
     def _initialize_web3(self):
         """Initialize Web3 connection to Polygon mainnet"""
@@ -191,16 +206,16 @@ class ProductionArbitrageSystem:
             with open('abi/aave_pool.json', 'r') as f:
                 aave_pool_abi = json.load(f)
                 
-            self.aave_pool = self.w3.eth.contract(
+            self.aave_pool = self.w3.eth.contract()
                 address=self.AAVE_ADDRESSES['pool'],
                 abi=aave_pool_abi
-            )
             
-            self.logger.info(f"✅ Connected to Polygon mainnet (Block: {self.w3.eth.block_number})")
-            self.logger.info(f"✅ Wallet: {self.wallet_address}")
+            
+            self.logger.info(str(f"[OK] Connected to Polygon mainnet (Block: {self.w3.eth.block_number}")
+            self.logger.info(str(f"[OK] Wallet: {self.wallet_address}")
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to initialize Web3: {e}")
+            self.logger.error(str(f"[ERROR] Failed to initialize Web3: {e}")
             raise
             
     def _initialize_system_config(self):
@@ -209,34 +224,34 @@ class ProductionArbitrageSystem:
         Path('logs').mkdir(exist_ok=True)
         Path('config').mkdir(exist_ok=True)
         
-        self.logger.info("✅ System configuration initialized")
+        self.logger.info("[OK] System configuration initialized")
         
     async def start_mcp_servers(self):
         """Start all MCP servers for coordination"""
-        self.logger.info("🚀 Starting MCP servers...")
+        self.logger.info("[INIT] Starting MCP servers...")
         
-        mcp_servers = [
+        mcp_servers = []
             ('real_time_price', 'python mcp_servers/real_time_price_mcp_server.py'),
             ('profit_optimizer', 'python mcp_servers/profit_optimizer_mcp_server.py'),
             ('aave_integration', 'python mcp_servers/aave_flash_loan_mcp_server.py'),
             ('dex_aggregator', 'python mcp_servers/dex_aggregator_mcp_server.py'),
             ('risk_management', 'python mcp_servers/risk_management_mcp_server.py'),
             ('monitoring', 'python mcp_servers/monitoring_mcp_server.py')
-        ]
+        
         
         for name, command in mcp_servers:
             try:
-                process = subprocess.Popen(
+                process = subprocess.Popen()
                     command.split(),
                     cwd=os.getcwd(),
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE
-                )
+                
                 self.mcp_processes[name] = process
-                self.logger.info(f"✅ MCP Server '{name}' started (PID: {process.pid})")
+                self.logger.info(str(f"[OK] MCP Server '{name}' started (PID: {process.pid}")
                 
             except Exception as e:
-                self.logger.error(f"❌ Failed to start MCP server '{name}': {e}")
+                self.logger.error(str(f"[ERROR] Failed to start MCP server '{name}': {e}")
                 
         # Wait for servers to initialize
         await asyncio.sleep(5)
@@ -245,26 +260,26 @@ class ProductionArbitrageSystem:
         """Start all AI agents for intelligent coordination"""
         self.logger.info("🤖 Starting AI agents...")
         
-        ai_agents = [
+        ai_agents = []
             ('arbitrage_detector', 'python ai_agents/arbitrage_detector.py'),
             ('risk_manager', 'python ai_agents/risk_manager.py'),
             ('route_optimizer', 'python ai_agents/route_optimizer.py'),
             ('market_analyzer', 'python ai_agents/market_analyzer.py')
-        ]
+        
         
         for name, command in ai_agents:
             try:
-                process = subprocess.Popen(
+                process = subprocess.Popen()
                     command.split(),
                     cwd=os.getcwd(),
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE
-                )
+                
                 self.ai_processes[name] = process
-                self.logger.info(f"✅ AI Agent '{name}' started (PID: {process.pid})")
+                self.logger.info(str(f"[OK] AI Agent '{name}' started (PID: {process.pid}")
                 
             except Exception as e:
-                self.logger.error(f"❌ Failed to start AI agent '{name}': {e}")
+                self.logger.error(str(f"[ERROR] Failed to start AI agent '{name}': {e}")
                 
         # Wait for agents to initialize
         await asyncio.sleep(3)
@@ -289,25 +304,25 @@ class ProductionArbitrageSystem:
                         token_prices[dex_name] = base_price * dex_variation
                         
                     except Exception as e:
-                        self.logger.warning(f"Failed to fetch {token_symbol} price from {dex_name}: {e}")
+                        self.logger.warning(str(f"Failed to fetch {token_symbol} price from {dex_name}: {e}")
                         
                 prices[token_symbol] = token_prices
                 
             return prices
             
         except Exception as e:
-            self.logger.error(f"Price fetching failed: {e}")
+            self.logger.error(str(f"Price fetching failed: {e}")
             return {}
             
     def _get_base_token_price(self, token_symbol: str) -> float:
         """Get base token price (simplified - in production use price oracles)"""
-        base_prices = {
+        base_prices = {}
             'WMATIC': 0.85, 'WETH': 3200.0, 'WBTC': 67000.0,
             'USDC': 1.0, 'USDT': 1.0, 'DAI': 1.0,
             'LINK': 12.5, 'AAVE': 95.0, 'UNI': 6.8,
             'SUSHI': 0.85, 'MATICX': 0.88, 'CRV': 0.32,
             'BAL': 2.1, 'QUICK': 0.045, 'GHST': 0.88
-        }
+        
         return base_prices.get(token_symbol, 1.0)
         
     async def detect_arbitrage_opportunities(self, price_data: Dict[str, Any]) -> List[ArbitrageOpportunity]:
@@ -343,7 +358,7 @@ class ProductionArbitrageSystem:
                         
                         # Filter for profitable opportunities between $3-$30
                         if self.MIN_PROFIT_USD <= net_profit_usd <= self.MAX_PROFIT_USD:
-                            opportunity = ArbitrageOpportunity(
+                            opportunity = ArbitrageOpportunity()
                                 token_symbol=token_symbol,
                                 token_address=token_address,
                                 buy_dex=buy_dex,
@@ -363,7 +378,7 @@ class ProductionArbitrageSystem:
                                 approvals_valid=False,  # To be checked
                                 execution_ready=False,
                                 route_path=[buy_dex, sell_dex]
-                            )
+                            
                             
                             opportunities.append(opportunity)
                             
@@ -385,23 +400,23 @@ class ProductionArbitrageSystem:
             opportunity.approvals_valid = True  # Assume valid
             
             # Mark as execution ready if all checks pass
-            opportunity.execution_ready = (
+            opportunity.execution_ready = ()
                 opportunity.aave_liquidity_sufficient and 
                 opportunity.approvals_valid and
                 opportunity.net_profit_usd >= self.MIN_PROFIT_USD
-            )
+            
             
             return opportunity.execution_ready
             
         except Exception as e:
-            self.logger.error(f"Verification failed for {opportunity.token_symbol}: {e}")
+            self.logger.error(str(f"Verification failed for {opportunity.token_symbol}: {e}")
             return False
             
     async def execute_arbitrage_opportunity(self, opportunity: ArbitrageOpportunity) -> Dict[str, Any]:
         """Execute arbitrage using flash loan"""
         try:
-            self.logger.info(f"🔄 Executing arbitrage: {opportunity.token_symbol} via {opportunity.buy_dex} → {opportunity.sell_dex}")
-            self.logger.info(f"💰 Expected profit: ${opportunity.net_profit_usd:.2f}")
+            self.logger.info(str(f"[SYNC] Executing arbitrage: {opportunity.token_symbol} via {opportunity.buy_dex} → {opportunity.sell_dex}")
+            self.logger.info(str(f"💰 Expected profit: ${opportunity.net_profit_usd:.2f}")
             
             # Transaction tracing before execution
             trace_result = await self._trace_transaction(opportunity)
@@ -435,11 +450,11 @@ class ProductionArbitrageSystem:
             if gas_cost_usd > opportunity.net_profit_usd * 0.5:
                 return {'success': False, 'error': 'Gas cost too high relative to profit'}
                 
-            return {
+            return {}
                 'success': True,
                 'estimated_gas': estimated_gas,
                 'gas_cost_usd': gas_cost_usd
-            }
+            
             
         except Exception as e:
             return {'success': False, 'error': str(e)}
@@ -460,20 +475,20 @@ class ProductionArbitrageSystem:
             # 4. Wait for confirmation
             
             # Simulate successful execution
-            return {
+            return {}
                 'success': True,
                 'profit': opportunity.net_profit_usd,
                 'gas_used': 420000,
                 'tx_hash': '0x' + '1' * 64,  # Placeholder
                 'block_number': self.w3.eth.block_number
-            }
+            
             
         except Exception as e:
             return {'success': False, 'error': str(e)}
             
     async def main_arbitrage_loop(self):
         """Main arbitrage detection and execution loop"""
-        self.logger.info("🔄 Starting main arbitrage loop...")
+        self.logger.info("[SYNC] Starting main arbitrage loop...")
         
         while self.is_running and not self.admin_controls["stop"]:
             try:
@@ -501,10 +516,10 @@ class ProductionArbitrageSystem:
                     
                     # Log top opportunities
                     for opp in opportunities[:3]:
-                        self.logger.info(
+                        self.logger.info()
                             f"💎 Found: {opp.token_symbol} | {opp.buy_dex} → {opp.sell_dex} | "
                             f"Profit: ${opp.net_profit_usd:.2f} | Diff: {opp.price_diff_pct:.2f}%"
-                        )
+                        
                     
                     # Process the best opportunity
                     best_opportunity = opportunities[0]
@@ -514,15 +529,15 @@ class ProductionArbitrageSystem:
                         execution_result = await self.execute_arbitrage_opportunity(best_opportunity)
                         
                         if execution_result['success']:
-                            self.logger.info(
-                                f"✅ EXECUTED: {best_opportunity.token_symbol} | "
+                            self.logger.info()
+                                f"[OK] EXECUTED: {best_opportunity.token_symbol} | "
                                 f"Profit: ${execution_result['profit']:.2f} | "
                                 f"Total Profit: ${self.system_stats['total_profit_usd']:.2f}"
-                            )
+                            
                         else:
-                            self.logger.error(f"❌ Execution failed: {execution_result['error']}")
+                            self.logger.error(str(f"[ERROR] Execution failed: {execution_result['error']}")
                     else:
-                        self.logger.warning(f"⚠️ Opportunity not ready: {best_opportunity.token_symbol}")
+                        self.logger.warning(str(f"[WARN] Opportunity not ready: {best_opportunity.token_symbol}")
                 
                 # Store active opportunities
                 self.active_opportunities = opportunities
@@ -531,7 +546,7 @@ class ProductionArbitrageSystem:
                 await asyncio.sleep(2)  # 2-second monitoring interval
                 
             except Exception as e:
-                self.logger.error(f"Main loop error: {e}")
+                self.logger.error(str(f"Main loop error: {e}")
                 await asyncio.sleep(10)
                 
     async def system_monitoring_loop(self):
@@ -543,21 +558,21 @@ class ProductionArbitrageSystem:
                 balance_matic = balance_wei / 1e18
                 
                 if balance_matic < 10:
-                    self.logger.warning(f"⚠️ Low MATIC balance: {balance_matic:.2f}")
+                    self.logger.warning(str(f"[WARN] Low MATIC balance: {balance_matic:.2f}")
                 
                 # Check gas price
                 gas_price_gwei = self.w3.eth.gas_price / 1e9
                 if gas_price_gwei > 100:
-                    self.logger.warning(f"⚠️ High gas price: {gas_price_gwei:.1f} Gwei")
+                    self.logger.warning(str(f"[WARN] High gas price: {gas_price_gwei:.1f} Gwei")
                 
                 # Report metrics every 5 minutes
                 uptime = datetime.now() - self.system_stats['uptime_start']
-                self.logger.info(f"📊 System Status: Uptime {uptime}, Opportunities: {self.system_stats['opportunities_found']}, Executed: {self.system_stats['opportunities_executed']}, Profit: ${self.system_stats['total_profit_usd']:.2f}")
+                self.logger.info(str(f"[METRICS] System Status: Uptime {uptime}, Opportunities: {self.system_stats['opportunities_found']}, Executed: {self.system_stats['opportunities_executed']}, Profit: ${self.system_stats['total_profit_usd']:.2f}")
                 
                 await asyncio.sleep(300)  # Check every 5 minutes
                 
             except Exception as e:
-                self.logger.error(f"Monitoring error: {e}")
+                self.logger.error(str(f"Monitoring error: {e}")
                 await asyncio.sleep(60)
                 
     async def admin_control_loop(self):
@@ -573,23 +588,23 @@ class ProductionArbitrageSystem:
                     if controls.get('pause', False) != self.admin_controls["pause"]:
                         self.admin_controls["pause"] = controls['pause']
                         status = "PAUSED" if controls['pause'] else "RESUMED"
-                        self.logger.info(f"🔧 Admin Control: System {status}")
+                        self.logger.info(str(f"[SETUP] Admin Control: System {status}")
                         
                     if controls.get('stop', False):
                         self.admin_controls["stop"] = True
-                        self.logger.info("🔧 Admin Control: System STOP requested")
+                        self.logger.info("[SETUP] Admin Control: System STOP requested")
                         break
                         
                 await asyncio.sleep(5)
                 
             except Exception as e:
-                self.logger.error(f"Admin control error: {e}")
+                self.logger.error(str(f"Admin control error: {e}")
                 await asyncio.sleep(10)
                 
     def setup_signal_handlers(self):
         """Setup signal handlers for graceful shutdown"""
         def signal_handler(signum, frame):
-            self.logger.info(f"Signal {signum} received, initiating shutdown...")
+            self.logger.info(str(f"Signal {signum} received, initiating shutdown...")
             self.admin_controls["stop"] = True
             
         signal.signal(signal.SIGINT, signal_handler)
@@ -611,62 +626,62 @@ class ProductionArbitrageSystem:
             await self.start_ai_agents()
             
             # Start all monitoring loops
-            tasks = [
+            tasks = []
                 asyncio.create_task(self.main_arbitrage_loop()),
                 asyncio.create_task(self.system_monitoring_loop()),
                 asyncio.create_task(self.admin_control_loop())
-            ]
+            
             
             # Wait for all tasks
             await asyncio.gather(*tasks, return_exceptions=True)
             
         except KeyboardInterrupt:
-            self.logger.info("🛑 Shutdown signal received")
+            self.logger.info("[STOP] Shutdown signal received")
         except Exception as e:
-            self.logger.error(f"❌ System error: {e}")
+            self.logger.error(str(f"[ERROR] System error: {e}")
         finally:
             await self.shutdown_system()
             
     def _display_startup_banner(self):
         """Display system startup banner"""
-        banner = [
-            "🔥 PRODUCTION 24/7 ARBITRAGE SYSTEM 🔥",
+        banner = []
+            "[HOT] PRODUCTION 24/7 ARBITRAGE SYSTEM [HOT]",
             "=" * 80,
-            f"📊 Monitoring: {len(self.POLYGON_TOKENS)} tokens across {len(self.POLYGON_DEXS)} DEXs",
+            f"[METRICS] Monitoring: {len(self.POLYGON_TOKENS)} tokens across {len(self.POLYGON_DEXS)} DEXs",
             f"💰 Profit Range: ${self.MIN_PROFIT_USD} - ${self.MAX_PROFIT_USD}",
             f"🏦 Flash Loans: Aave V3 (Polygon)",
             f"🔗 Network: Polygon Mainnet",
             f"👛 Wallet: {self.wallet_address[:10]}...{self.wallet_address[-6:]}",
             f"📅 Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-            f"🎯 Contract: {self.FLASH_LOAN_CONTRACT[:10]}...{self.FLASH_LOAN_CONTRACT[-6:]}",
+            f"[TASK] Contract: {self.FLASH_LOAN_CONTRACT[:10]}...{self.FLASH_LOAN_CONTRACT[-6:]}",
             "=" * 80
-        ]
+        
         
         for line in banner:
             self.logger.info(line)
             
     async def shutdown_system(self):
         """Gracefully shutdown the system"""
-        self.logger.info("🛑 Shutting down system...")
+        self.logger.info("[STOP] Shutting down system...")
         self.is_running = False
         
         # Terminate MCP servers
         for name, process in self.mcp_processes.items():
             try:
                 process.terminate()
-                self.logger.info(f"✅ MCP Server '{name}' terminated")
+                self.logger.info(str(f"[OK] MCP Server '{name}' terminated")
             except Exception as e:
-                self.logger.error(f"❌ Error terminating MCP server '{name}': {e}")
+                self.logger.error(str(f"[ERROR] Error terminating MCP server '{name}': {e}")
                 
         # Terminate AI agents
         for name, process in self.ai_processes.items():
             try:
                 process.terminate()
-                self.logger.info(f"✅ AI Agent '{name}' terminated")
+                self.logger.info(str(f"[OK] AI Agent '{name}' terminated")
             except Exception as e:
-                self.logger.error(f"❌ Error terminating AI agent '{name}': {e}")
+                self.logger.error(str(f"[ERROR] Error terminating AI agent '{name}': {e}")
                 
-        self.logger.info("✅ System shutdown complete")
+        self.logger.info("[OK] System shutdown complete")
         
     # Admin API methods
     def pause_system(self):
@@ -674,25 +689,24 @@ class ProductionArbitrageSystem:
         self.admin_controls["pause"] = True
         with open('admin_controls.json', 'w') as f:
             json.dump(self.admin_controls, f)
-        self.logger.info("🔧 System PAUSED")
+        self.logger.info("[SETUP] System PAUSED")
         
     def resume_system(self):
         """Resume the system"""
         self.admin_controls["pause"] = False
         with open('admin_controls.json', 'w') as f:
             json.dump(self.admin_controls, f)
-        self.logger.info("🔧 System RESUMED")
+        self.logger.info("[SETUP] System RESUMED")
         
     def stop_system(self):
         """Stop the system"""
         self.admin_controls["stop"] = True
         with open('admin_controls.json', 'w') as f:
             json.dump(self.admin_controls, f)
-        self.logger.info("🔧 System STOP requested")
+        self.logger.info("[SETUP] System STOP requested")
 
 async def main():
     """Main entry point"""
-    import argparse
     
     parser = argparse.ArgumentParser(description="Production 24/7 Arbitrage System")
     parser.add_argument("--min-profit", type=float, default=3.0, help="Minimum profit in USD")
@@ -713,7 +727,7 @@ async def main():
     except KeyboardInterrupt:
         print("\n👋 System shutdown requested")
     except Exception as e:
-        logger.error(f"❌ System startup failed: {e}")
+        logger.error(str(f"[ERROR] System startup failed: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

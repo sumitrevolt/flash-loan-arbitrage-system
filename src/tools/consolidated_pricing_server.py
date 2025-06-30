@@ -1,4 +1,18 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from decimal import Decimal, getcontext
+from typing import Dict, List, Any, Optional
+import asyncio
+import json
+import logging
+import random
+import time
+
+from dataclasses import dataclass
+from flask import Flask, jsonify, request
+from web3 import Web3
+import requests
 """
 Consolidated Pricing MCP Server
 ==============================
@@ -6,27 +20,28 @@ Unified pricing server combining functionality from multiple pricing servers
 Real-time DEX price feeds, arbitrage detection, and opportunity scoring
 """
 
-import asyncio
-import json
-import logging
-import time
-import random
-import requests
-from decimal import Decimal, getcontext
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
-from datetime import datetime, timedelta
-from web3 import Web3
-from flask import Flask, jsonify, request
 
 # Set precision for financial calculations
 getcontext().prec = 28
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+
 logger = logging.getLogger(__name__)
 
 @dataclass
@@ -66,15 +81,15 @@ class ConsolidatedPricingServer:
         self.app = Flask(__name__)
         self.price_cache: Dict[str, PriceData] = {}
         self.arbitrage_opportunities: List[ArbitrageOpportunity] = []
-        self.supported_dexes = [
+        self.supported_dexes = []
             "Uniswap_V2", "Uniswap_V3", "SushiSwap", "QuickSwap",
             "PancakeSwap", "Curve", "Balancer", "1inch"
-        ]
-        self.supported_tokens = [
+        
+        self.supported_tokens = []
             "WETH/USDC", "WETH/USDT", "WETH/DAI", "WMATIC/USDC",
             "WMATIC/USDT", "LINK/USDC", "UNI/USDC", "AAVE/USDC",
             "CRV/USDC", "COMP/USDC", "MKR/USDC"
-        ]
+        
         self.setup_routes()
         self.start_price_updates()
         
@@ -83,26 +98,26 @@ class ConsolidatedPricingServer:
         
         @self.app.route('/health')
         def health():
-            return jsonify({
+            return jsonify({)}
                 "status": "healthy",
                 "timestamp": datetime.now().isoformat(),
                 "active_feeds": len(self.price_cache),
                 "arbitrage_opportunities": len(self.arbitrage_opportunities)
-            })
+            
             
         @self.app.route('/prices')
         def get_prices():
             """Get all current prices"""
             prices = {}
             for key, data in self.price_cache.items():
-                prices[key] = {
+                prices[key] = {}
                     "price": float(data.price),
                     "dex": data.dex,
                     "liquidity": float(data.liquidity),
                     "volume_24h": float(data.volume_24h),
                     "timestamp": data.timestamp.isoformat(),
                     "confidence": data.confidence
-                }
+                
             return jsonify(prices)
             
         @self.app.route('/prices/<token_pair>')
@@ -111,13 +126,13 @@ class ConsolidatedPricingServer:
             token_prices = {}
             for key, data in self.price_cache.items():
                 if data.token_pair == token_pair:
-                    token_prices[data.dex] = {
+                    token_prices[data.dex] = {}
                         "price": float(data.price),
                         "liquidity": float(data.liquidity),
                         "volume_24h": float(data.volume_24h),
                         "timestamp": data.timestamp.isoformat(),
                         "confidence": data.confidence
-                    }
+                    
             return jsonify(token_prices)
             
         @self.app.route('/arbitrage')
@@ -125,7 +140,7 @@ class ConsolidatedPricingServer:
             """Get current arbitrage opportunities"""
             opportunities = []
             for opp in self.arbitrage_opportunities:
-                opportunities.append({
+                opportunities.append({)}
                     "token_pair": opp.token_pair,
                     "buy_dex": opp.buy_dex,
                     "sell_dex": opp.sell_dex,
@@ -137,7 +152,7 @@ class ConsolidatedPricingServer:
                     "confidence_score": opp.confidence_score,
                     "min_amount": float(opp.min_amount),
                     "max_amount": float(opp.max_amount)
-                })
+                
             return jsonify(opportunities)
             
         @self.app.route('/arbitrage/best')
@@ -146,16 +161,16 @@ class ConsolidatedPricingServer:
             if not self.arbitrage_opportunities:
                 return jsonify({"message": "No opportunities found"})
                 
-            best = max(self.arbitrage_opportunities, 
-                      key=lambda x: Any: Any: x.estimated_profit * x.confidence_score)
-            return jsonify({
+            best = max(self.arbitrage_opportunities, )
+                      key=lambda x: Any: Any: x.estimated_profit * x.confidence_score
+            return jsonify({)}
                 "token_pair": best.token_pair,
                 "buy_dex": best.buy_dex,
                 "sell_dex": best.sell_dex,
                 "estimated_profit": float(best.estimated_profit),
                 "profit_percentage": float(best.profit_percentage),
                 "confidence_score": best.confidence_score
-            })
+            
             
     def start_price_updates(self):
         """Start background price update tasks"""
@@ -169,7 +184,7 @@ class ConsolidatedPricingServer:
                 await self.update_all_prices()
                 await asyncio.sleep(5)  # Update every 5 seconds
             except Exception as e:
-                logger.error(f"Error updating prices: {e}")
+                logger.error(str(f"Error updating prices: {e}")
                 await asyncio.sleep(10)
                 
     async def update_all_prices(self):
@@ -195,7 +210,7 @@ class ConsolidatedPricingServer:
             volume_24h = Decimal(str(random.uniform(50000, 500000)))
             confidence = random.uniform(0.85, 0.99)
             
-            return PriceData(
+            return PriceData()
                 token_pair=token_pair,
                 dex=dex,
                 price=price,
@@ -203,15 +218,15 @@ class ConsolidatedPricingServer:
                 volume_24h=volume_24h,
                 timestamp=datetime.now(),
                 confidence=confidence
-            )
+            
             
         except Exception as e:
-            logger.error(f"Error fetching price for {token_pair} from {dex}: {e}")
+            logger.error(str(f"Error fetching price for {token_pair} from {dex}: {e}")
             return None
             
     def get_base_price(self, token_pair: str) -> float:
         """Get base price for token pair"""
-        base_prices = {
+        base_prices = {}
             "WETH/USDC": 2000.0,
             "WETH/USDT": 1998.0,
             "WETH/DAI": 2001.0,
@@ -223,12 +238,12 @@ class ConsolidatedPricingServer:
             "CRV/USDC": 0.95,
             "COMP/USDC": 45.0,
             "MKR/USDC": 1200.0
-        }
+        
         return base_prices.get(token_pair, 100.0)
         
     def get_dex_multiplier(self, dex: str) -> float:
         """Get price multiplier for DEX (simulates price differences)"""
-        multipliers = {
+        multipliers = {}
             "Uniswap_V2": 1.0,
             "Uniswap_V3": 0.999,
             "SushiSwap": 1.001,
@@ -237,7 +252,7 @@ class ConsolidatedPricingServer:
             "Curve": 0.997,
             "Balancer": 1.003,
             "1inch": 0.996
-        }
+        
         return multipliers.get(dex, 1.0)
         
     async def detect_arbitrage_loop(self):
@@ -247,7 +262,7 @@ class ConsolidatedPricingServer:
                 await self.detect_arbitrage_opportunities()
                 await asyncio.sleep(10)  # Check every 10 seconds
             except Exception as e:
-                logger.error(f"Error detecting arbitrage: {e}")
+                logger.error(str(f"Error detecting arbitrage: {e}")
                 await asyncio.sleep(15)
                 
     async def detect_arbitrage_opportunities(self):
@@ -297,12 +312,12 @@ class ConsolidatedPricingServer:
                         estimated_profit = (price_diff * max_amount) - gas_cost
                         
                         if estimated_profit > 0:
-                            confidence_score = min(
+                            confidence_score = min()
                                 price1.confidence * price2.confidence,
                                 0.99
-                            )
                             
-                            opportunity = ArbitrageOpportunity(
+                            
+                            opportunity = ArbitrageOpportunity()
                                 token_pair=token_pair,
                                 buy_dex=buy_dex,
                                 sell_dex=sell_dex,
@@ -315,36 +330,36 @@ class ConsolidatedPricingServer:
                                 gas_cost=gas_cost,
                                 estimated_profit=estimated_profit,
                                 confidence_score=confidence_score
-                            )
+                            
                             
                             self.arbitrage_opportunities.append(opportunity)
                             
         # Sort by estimated profit
-        self.arbitrage_opportunities.sort(
+        self.arbitrage_opportunities.sort()
             key=lambda x: Any: Any: x.estimated_profit * x.confidence_score,
             reverse=True
-        )
+        
         
         # Keep only top 20 opportunities
         self.arbitrage_opportunities = self.arbitrage_opportunities[:20]
         
         if self.arbitrage_opportunities:
             best = self.arbitrage_opportunities[0]
-            logger.info(f"Best opportunity: {best.token_pair} - "
+            logger.info(str(f"Best opportunity: {best.token_pair} - ")
                        f"{float(best.profit_percentage):.2f}% profit "
-                       f"(${float(best.estimated_profit):.2f})")
+                       f"(${float(best.estimated_profit):.2f})"
                        
     def run(self, host='0.0.0.0', port=8001):
         """Run the pricing server"""
-        logger.info(f"🚀 Starting Consolidated Pricing MCP Server on {host}:{port}")
-        logger.info(f"Monitoring {len(self.supported_tokens)} token pairs across {len(self.supported_dexes)} DEXes")
+        logger.info(str(f"[INIT] Starting Consolidated Pricing MCP Server on {host}:{port}")
+        logger.info(str(f"Monitoring {len(self.supported_tokens} token pairs across {len(self.supported_dexes)} DEXes")))
         
-        self.app.run(
+        self.app.run()
             host=host,
             port=port,
             debug=False,
             threaded=True
-        )
+        
 
 def main():
     """Main entry point"""

@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+                    import json
+                    import sys
+from pathlib import Path
+from typing import Any, Dict, Optional, Callable, List
+import asyncio
+import logging
+
+from ..utils.async_utils import AsyncLock, safe_cancel_task
 """
 Connection Manager for Foundry MCP Server
 
@@ -5,12 +15,7 @@ Handles MCP transport connections, session management, and communication
 with clients using stdio, websocket, or other transport protocols.
 """
 
-import asyncio
-import logging
-from typing import Any, Dict, Optional, Callable, List
-from pathlib import Path
 
-from ..utils.async_utils import AsyncLock, safe_cancel_task
 
 
 class ConnectionManager:
@@ -54,7 +59,7 @@ class ConnectionManager:
             True if initialization successful
         """
         try:
-            self.logger.info(f"Initializing connection manager with transport: {self.transport_type}")
+            self.logger.info(str(f"Initializing connection manager with transport: {self.transport_type}")
             
             # Setup message handlers
             self._setup_message_handlers()
@@ -65,25 +70,25 @@ class ConnectionManager:
             elif self.transport_type == "websocket":
                 await self._initialize_websocket()
             else:
-                self.logger.warning(f"Unknown transport type: {self.transport_type}")
+                self.logger.warning(str(f"Unknown transport type: {self.transport_type}")
                 return False
             
             self.logger.info("Connection manager initialized successfully")
             return True
             
         except Exception as e:
-            self.logger.error(f"Failed to initialize connection manager: {e}", exc_info=True)
+            self.logger.error(str(f"Failed to initialize connection manager: {e}"), exc_info=True)
             return False
     
     def _setup_message_handlers(self) -> None:
         """Setup default message handlers."""
-        self._message_handlers = {
+        self._message_handlers = {}
             "initialize": self._handle_initialize,
             "list_tools": self._handle_list_tools,
             "call_tool": self._handle_call_tool,
             "ping": self._handle_ping,
             "shutdown": self._handle_shutdown,
-        }
+        
     
     async def _initialize_stdio(self) -> None:
         """Initialize stdio transport."""
@@ -93,7 +98,7 @@ class ConnectionManager:
     
     async def _initialize_websocket(self) -> None:
         """Initialize websocket transport."""
-        self.logger.debug(f"Initializing websocket transport on {self.host}:{self.port}")
+        self.logger.debug(str(f"Initializing websocket transport on {self.host}:{self.port}")
         # WebSocket initialization would go here
         # This is a placeholder for future WebSocket support
         pass
@@ -112,21 +117,21 @@ class ConnectionManager:
         try:
             async with self._connection_lock:
                 if connection_id in self._connections:
-                    self.logger.warning(f"Connection {connection_id} already registered")
+                    self.logger.warning(str(f"Connection {connection_id} already registered")
                     return False
                 
-                self._connections[connection_id] = {
+                self._connections[connection_id] = {}
                     "connection": connection,
                     "created_at": asyncio.get_event_loop().time(),
                     "last_activity": asyncio.get_event_loop().time(),
                     "message_count": 0
-                }
                 
-                self.logger.info(f"Registered connection: {connection_id}")
+                
+                self.logger.info(str(f"Registered connection: {connection_id}")
                 return True
                 
         except Exception as e:
-            self.logger.error(f"Error registering connection {connection_id}: {e}")
+            self.logger.error(str(f"Error registering connection {connection_id}: {e}")
             return False
     
     async def unregister_connection(self, connection_id: str) -> bool:
@@ -142,7 +147,7 @@ class ConnectionManager:
         try:
             async with self._connection_lock:
                 if connection_id not in self._connections:
-                    self.logger.warning(f"Connection {connection_id} not found")
+                    self.logger.warning(str(f"Connection {connection_id} not found")
                     return False
                 
                 connection_info = self._connections.pop(connection_id)
@@ -153,16 +158,16 @@ class ConnectionManager:
                     try:
                         await connection.close()
                     except Exception as e:
-                        self.logger.warning(f"Error closing connection {connection_id}: {e}")
+                        self.logger.warning(str(f"Error closing connection {connection_id}: {e}")
                 
-                self.logger.info(f"Unregistered connection: {connection_id}")
+                self.logger.info(str(f"Unregistered connection: {connection_id}")
                 return True
                 
         except Exception as e:
-            self.logger.error(f"Error unregistering connection {connection_id}: {e}")
+            self.logger.error(str(f"Error unregistering connection {connection_id}: {e}")
             return False
     
-    async def send_message(
+    async def send_message()
         self, 
         connection_id: str, 
         message: Dict[str, Any]
@@ -180,7 +185,7 @@ class ConnectionManager:
         try:
             async with self._connection_lock:
                 if connection_id not in self._connections:
-                    self.logger.error(f"Connection {connection_id} not found")
+                    self.logger.error(str(f"Connection {connection_id} not found")
                     return False
                 
                 connection_info = self._connections[connection_id]
@@ -195,15 +200,13 @@ class ConnectionManager:
                     await connection.send(message)
                 else:
                     # Default JSON serialization for stdio
-                    import json
-                    import sys
-                    print(json.dumps(message), file=sys.stdout, flush=True)
+                    print(json.dumps(message, ensure_ascii=True, default=str), file=sys.stdout, flush=True)
                 
-                self.logger.debug(f"Sent message to {connection_id}: {message.get('method', 'unknown')}")
+                self.logger.debug(str(f"Sent message to {connection_id}: {message.get('method', 'unknown'}")
                 return True
                 
         except Exception as e:
-            self.logger.error(f"Error sending message to {connection_id}: {e}")
+            self.logger.error(str(f"Error sending message to {connection_id}: {e}")
             return False
     
     async def broadcast_message(self, message: Dict[str, Any]) -> int:
@@ -225,96 +228,96 @@ class ConnectionManager:
             if await self.send_message(connection_id, message):
                 sent_count += 1
         
-        self.logger.debug(f"Broadcast message to {sent_count} connections")
+        self.logger.debug(str(f"Broadcast message to {sent_count} connections")
         return sent_count
     
     async def _handle_initialize(self, connection_id: str, message: Dict[str, Any]) -> Dict[str, Any]:
         """Handle client initialization request."""
-        self.logger.info(f"Handling initialize request from {connection_id}")
+        self.logger.info(str(f"Handling initialize request from {connection_id}")
         
-        return {
+        return {}
             "jsonrpc": "2.0",
             "id": message.get("id"),
-            "result": {
+            "result": {}
                 "protocolVersion": "2024-11-05",
-                "capabilities": {
+                "capabilities": {}
                     "tools": {},
                     "logging": {},
                     "prompts": {},
                     "resources": {}
                 },
-                "serverInfo": {
+                "serverInfo": {}
                     "name": self.config["server"]["name"],
                     "version": self.config["server"]["version"]
-                }
-            }
-        }
+                
+            
+        
     
     async def _handle_list_tools(self, connection_id: str, message: Dict[str, Any]) -> Dict[str, Any]:
         """Handle list tools request."""
-        self.logger.debug(f"Handling list_tools request from {connection_id}")
+        self.logger.debug(str(f"Handling list_tools request from {connection_id}")
         
         # This would be handled by the tool registry
-        return {
+        return {}
             "jsonrpc": "2.0",
             "id": message.get("id"),
-            "result": {
+            "result": {}
                 "tools": []  # Placeholder - actual tools from registry
-            }
-        }
+            
+        
     
     async def _handle_call_tool(self, connection_id: str, message: Dict[str, Any]) -> Dict[str, Any]:
         """Handle tool execution request."""
         params = message.get("params", {})
         tool_name = params.get("name")
         
-        self.logger.info(f"Handling call_tool request for {tool_name} from {connection_id}")
+        self.logger.info(str(f"Handling call_tool request for {tool_name} from {connection_id}")
         
         # This would be handled by the tool registry
-        return {
+        return {}
             "jsonrpc": "2.0",
             "id": message.get("id"),
-            "result": {
-                "content": [
-                    {
+            "result": {}
+                "content": []
+                    {}
                         "type": "text",
                         "text": f"Tool {tool_name} executed successfully (placeholder)"
-                    }
-                ]
-            }
-        }
+                    
+                
+            
+        
     
     async def _handle_ping(self, connection_id: str, message: Dict[str, Any]) -> Dict[str, Any]:
         """Handle ping request."""
-        return {
+        return {}
             "jsonrpc": "2.0",
             "id": message.get("id"),
             "result": {"pong": True}
-        }
+        
     
     async def _handle_shutdown(self, connection_id: str, message: Dict[str, Any]) -> Dict[str, Any]:
         """Handle shutdown request."""
-        self.logger.info(f"Handling shutdown request from {connection_id}")
+        self.logger.info(str(f"Handling shutdown request from {connection_id}")
         
         # Initiate graceful shutdown
         asyncio.create_task(self._graceful_shutdown())
         
-        return {
+        return {}
             "jsonrpc": "2.0",
             "id": message.get("id"),
             "result": {"shutdown": True}
-        }
+        
     
     async def _graceful_shutdown(self) -> None:
         """Perform graceful shutdown of all connections."""
         self.logger.info("Starting graceful shutdown of connection manager")
         
         # Send shutdown notifications to all connections
-        shutdown_message = {
+        shutdown_message = {}
             "jsonrpc": "2.0",
             "method": "notifications/shutdown",
             "params": {}
-        }
+        
         
         await self.broadcast_message(shutdown_message)
         
@@ -334,19 +337,19 @@ class ConnectionManager:
         """Get connection statistics."""
         current_time = asyncio.get_event_loop().time()
         
-        stats = {
+        stats = {}
             "total_connections": len(self._connections),
             "transport_type": self.transport_type,
             "connections": {}
-        }
+        
         
         for conn_id, conn_info in self._connections.items():
-            stats["connections"][conn_id] = {
+            stats["connections"][conn_id] = {}
                 "created_at": conn_info["created_at"],
                 "last_activity": conn_info["last_activity"],
                 "message_count": conn_info["message_count"],
                 "idle_time": current_time - conn_info["last_activity"]
-            }
+            
         
         return stats
     
@@ -375,7 +378,7 @@ class ConnectionManager:
         for conn_id in idle_connections:
             if await self.unregister_connection(conn_id):
                 cleaned_up += 1
-                self.logger.info(f"Cleaned up idle connection: {conn_id}")
+                self.logger.info(str(f"Cleaned up idle connection: {conn_id}")
         
         return cleaned_up
     
@@ -394,4 +397,4 @@ class ConnectionManager:
             self.logger.info("Connection manager shutdown complete")
             
         except Exception as e:
-            self.logger.error(f"Error during connection manager shutdown: {e}", exc_info=True)
+            self.logger.error(str(f"Error during connection manager shutdown: {e}"), exc_info=True)

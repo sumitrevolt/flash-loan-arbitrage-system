@@ -1,35 +1,41 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+    from typing import Callable, Any
+    from typing import Dict
+from functools import lru_cache
+from typing import Optional, Any, Dict, Callable, List
+import functools
+import json
+import logging
+import os
+import time
+
+    from web3 import Web3
+    from web3._utils.encoding import HexStr  # Correct import for HexStr
+    from web3._utils.evm import Hash32  # Importing from the correct module
+    from web3.exceptions import Web3Exception, ContractLogicError, TransactionNotFound
+    from web3.middleware import Middleware
+    from web3.types import TxParams, BlockIdentifier, Wei, TxReceipt, BlockData, HexStr
+
+                    from src.utils.web3_v7_middleware import get_compatible_middleware, apply_middleware as apply_v7_middleware
 """
 Central Web3 provider module for the Flash Loan Arbitrage System.
 This module provides a unified way to handle Web3 initialization, connections,
 middleware, and common utility functions across the entire application.
 """
 
-import logging
-import os
-import json
-import time
-import functools
-from functools import lru_cache
-from typing import Optional, Any, Dict, Callable, List
 
 logger = logging.getLogger(__name__)
 
 # Real Web3 import - no mock fallback, with version compatibility
 try:
-    from web3 import Web3
-    from web3.types import TxParams, BlockIdentifier, Wei, TxReceipt, BlockData, HexStr
-    from web3._utils.evm import Hash32  # Importing from the correct module
-    from web3._utils.encoding import HexStr  # Correct import for HexStr
     ChecksumAddress = str  # robust fallback for all web3 versions
-    from web3.exceptions import Web3Exception, ContractLogicError, TransactionNotFound
 
     # Simplified imports and fallbacks for HexStr and Hash32
     HexStr = str  # Direct fallback to str
     Hash32 = bytes  # Direct fallback to bytes
 
     # Middleware handling with Web3's Middleware type
-    from web3.middleware import Middleware
-    from typing import Callable, Any
 
     def geth_poa_middleware(make_request: Callable[[str, Any], Any], w3: Any) -> Middleware:
         raise NotImplementedError("geth_poa_middleware is not available in this Web3 version")
@@ -38,7 +44,6 @@ try:
         raise NotImplementedError("construct_sign_and_send_raw_middleware is not available in this Web3 version")
 
     # Updated type annotations
-    from typing import Dict
     TxParams = Dict[str, Any]  # Simplified fallback for transaction parameters
 
     # Refined transaction handling
@@ -80,7 +85,7 @@ try:
     WEB3_IMPORTED = True
     logger.info("Web3 successfully imported")
 except ImportError as e:
-    logger.error(f"CRITICAL: Failed to import Web3: {e}")
+    logger.error(str(f"CRITICAL: Failed to import Web3: {e}")
     logger.error("Web3 is required for this application to function. Please install web3.py package.")
     raise ImportError(f"Web3 is required but not available: {e}")
 
@@ -89,7 +94,7 @@ def requires_web3(func: Callable[..., Any]) -> Callable[..., Optional[Any]]:
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Optional[Any]:
         if not WEB3_IMPORTED:
-            logger.error(f"Web3 required for {func.__name__} but not available")
+            logger.error(str(f"Web3 required for {func.__name__} but not available")
             return None
         return func(*args, **kwargs)
     return wrapper
@@ -114,20 +119,19 @@ def get_web3_instance(rpc_url: str, private_key: Optional[str] = None, apply_poa
         if apply_poa and geth_poa_middleware:
             try:
                 w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-                logger.debug(f"Applied PoA middleware to Web3 instance for {rpc_url}")
+                logger.debug(str(f"Applied PoA middleware to Web3 instance for {rpc_url}")
             except Exception as e:
-                logger.warning(f"Error applying PoA middleware: {e}")
+                logger.warning(str(f"Error applying PoA middleware: {e}")
                 # Try fallback middleware from our utility
                 try:
-                    from src.utils.web3_v7_middleware import get_compatible_middleware, apply_middleware as apply_v7_middleware
                     middleware = get_compatible_middleware()
                     if middleware:
                         apply_v7_middleware(w3, middleware, layer=0)
-                        logger.debug(f"Applied compatible middleware to Web3 instance for {rpc_url}")
+                        logger.debug(str(f"Applied compatible middleware to Web3 instance for {rpc_url}")
                 except ImportError:
                     logger.warning("Could not apply PoA middleware - compatibility issues may occur")
                 except Exception as e2:
-                    logger.warning(f"Error applying fallback PoA middleware: {e2}")
+                    logger.warning(str(f"Error applying fallback PoA middleware: {e2}")
         elif apply_poa:
             logger.warning("PoA middleware requested but not available in this Web3.py version")
 
@@ -137,19 +141,19 @@ def get_web3_instance(rpc_url: str, private_key: Optional[str] = None, apply_poa
                 w3.middleware_onion.add(construct_sign_and_send_raw_middleware(private_key))
                 logger.debug("Applied transaction signing middleware")
             except Exception as e:
-                logger.warning(f"Error applying signing middleware: {e}")
+                logger.warning(str(f"Error applying signing middleware: {e}")
         elif private_key:
             logger.warning("Transaction signing middleware requested but not available")
 
         # Verify connection
         if not w3.is_connected():
-            logger.error(f"Could not connect to {rpc_url}")
+            logger.error(str(f"Could not connect to {rpc_url}")
             return None
 
-        logger.info(f"Successfully connected to {rpc_url}")
+        logger.info(str(f"Successfully connected to {rpc_url}")
         return w3
     except Exception as e:
-        logger.error(f"Error creating Web3 instance: {e}")
+        logger.error(str(f"Error creating Web3 instance: {e}")
         return None
 
 def validate_web3_connection(w3: Web3) -> bool:
@@ -168,10 +172,10 @@ def validate_web3_connection(w3: Web3) -> bool:
 
         # Try to get latest block number as a connectivity test
         block_number = w3.eth.block_number
-        logger.debug(f"Web3 connection validated - latest block: {block_number}")
+        logger.debug(str(f"Web3 connection validated - latest block: {block_number}")
         return True
     except Exception as e:
-        logger.error(f"Web3 connection validation failed: {e}")
+        logger.error(str(f"Web3 connection validation failed: {e}")
         return False
 
 def get_chain_id(w3: Web3) -> Optional[int]:
@@ -187,7 +191,7 @@ def get_chain_id(w3: Web3) -> Optional[int]:
     try:
         return w3.eth.chain_id
     except Exception as e:
-        logger.error(f"Error getting chain ID: {e}")
+        logger.error(str(f"Error getting chain ID: {e}")
         return None
 
 def format_address(address: str) -> str:
@@ -203,7 +207,7 @@ def format_address(address: str) -> str:
     try:
         return Web3.to_checksum_address(address)
     except Exception as e:
-        logger.error(f"Error formatting address {address}: {e}")
+        logger.error(str(f"Error formatting address {address}: {e}")
         return address
 
 def to_checksum_address(address: str) -> str:
@@ -255,7 +259,7 @@ def get_gas_price(w3: Web3) -> Optional[int]:
     try:
         return w3.eth.gas_price
     except Exception as e:
-        logger.error(f"Error getting gas price: {e}")
+        logger.error(str(f"Error getting gas price: {e}")
         return None
 
 def estimate_gas(w3: Web3, transaction: Dict[str, Any]) -> Optional[int]:
@@ -272,7 +276,7 @@ def estimate_gas(w3: Web3, transaction: Dict[str, Any]) -> Optional[int]:
     try:
         return w3.eth.estimate_gas(transaction)
     except Exception as e:
-        logger.error(f"Error estimating gas: {e}")
+        logger.error(str(f"Error estimating gas: {e}")
         return None
 
 def get_account_balance(w3: Web3, address: str) -> Optional[float]:
@@ -290,7 +294,7 @@ def get_account_balance(w3: Web3, address: str) -> Optional[float]:
         balance_wei = w3.eth.get_balance(Web3.to_checksum_address(address))
         return wei_to_ether(balance_wei)
     except Exception as e:
-        logger.error(f"Error getting balance for {address}: {e}")
+        logger.error(str(f"Error getting balance for {address}: {e}")
         return None
 
 def get_transaction_receipt(w3: Web3, tx_hash: HexStr, timeout: int = 120) -> Optional[TxReceipt]:
@@ -336,7 +340,7 @@ def load_contract_abi(abi_path: str) -> Optional[List[Dict[str, Any]]]:
         with open(abi_path, 'r') as abi_file:
             return json.load(abi_file)
     except Exception as e:
-        logger.error(f"Error loading ABI from {abi_path}: {e}")
+        logger.error(str(f"Error loading ABI from {abi_path}: {e}")
         return None
 
 def get_block_info(w3: Web3, block_identifier: BlockIdentifier = 'latest') -> Optional[BlockData]:
@@ -372,7 +376,7 @@ def send_transaction(w3: Any, transaction: Dict[str, Any]) -> str:
     tx_hash = w3.eth.send_transaction(transaction)
     return tx_hash.hex()
 
-def build_transaction(w3: Web3, from_address: str, to_address: str, value: int = 0,
+def build_transaction(w3: Web3, from_address: str, to_address: str, value: int = 0,)
                      gas_limit: Optional[int] = None, gas_price: Optional[int] = None,
                      data: str = '0x', nonce: Optional[int] = None) -> Dict[str, Any]:
     """
@@ -392,12 +396,12 @@ def build_transaction(w3: Web3, from_address: str, to_address: str, value: int =
         Transaction dictionary
     """
     try:
-        transaction = {
+        transaction = {}
             'from': Web3.to_checksum_address(from_address),
             'to': Web3.to_checksum_address(to_address),
             'value': value,
             'data': data,
-        }
+        
 
         if nonce is None:
             transaction['nonce'] = w3.eth.get_transaction_count(Web3.to_checksum_address(from_address))
@@ -419,7 +423,7 @@ def build_transaction(w3: Web3, from_address: str, to_address: str, value: int =
 
         return transaction
     except Exception as e:
-        logger.error(f"Error building transaction: {e}")
+        logger.error(str(f"Error building transaction: {e}")
         return {}
 
 def is_transaction_successful(receipt: Dict[str, Any]) -> bool:
@@ -468,10 +472,10 @@ def retry_on_failure(max_retries: int = 3, delay: float = 1.0) -> Callable[[Call
                     return func(*args, **kwargs)
                 except Exception as e:
                     if attempt < max_retries:
-                        logger.warning(f"Attempt {attempt + 1} failed for {func.__name__}: {e}. Retrying in {delay}s...")
+                        logger.warning(str(f"Attempt {attempt + 1} failed for {func.__name__}: {e}. Retrying in {delay}s...")
                         time.sleep(delay)
                     else:
-                        logger.error(f"All {max_retries + 1} attempts failed for {func.__name__}")
+                        logger.error(str(f"All {max_retries + 1} attempts failed for {func.__name__}")
                         raise
         return wrapper
     return decorator
@@ -506,7 +510,7 @@ class Web3Manager:
         self.default_connection: Optional[Web3] = None
         self.private_key: Optional[str] = None
 
-    def add_connection(self, name: str, rpc_url: str, private_key: Optional[str] = None,
+    def add_connection(self, name: str, rpc_url: str, private_key: Optional[str] = None,)
                       apply_poa: bool = True, set_as_default: bool = False) -> bool:
         """
         Add a new Web3 connection.
@@ -527,10 +531,10 @@ class Web3Manager:
             if set_as_default or not self.default_connection:
                 self.default_connection = w3
                 self.private_key = private_key
-            logger.info(f"Added Web3 connection '{name}' for {rpc_url}")
+            logger.info(str(f"Added Web3 connection '{name}' for {rpc_url}")
             return True
         else:
-            logger.error(f"Failed to add Web3 connection '{name}' for {rpc_url}")
+            logger.error(str(f"Failed to add Web3 connection '{name}' for {rpc_url}")
             return False
 
     def get_connection(self, name: Optional[str] = None) -> Optional[Web3]:
@@ -561,7 +565,7 @@ class Web3Manager:
             del self.connections[name]
             if self.default_connection == self.connections.get(name):
                 self.default_connection = next(iter(self.connections.values())) if self.connections else None
-            logger.info(f"Removed Web3 connection '{name}'")
+            logger.info(str(f"Removed Web3 connection '{name}'")
             return True
         return False
 
@@ -589,18 +593,18 @@ class Web3Manager:
             try:
                 chain_id = get_chain_id(w3)
                 block_number = w3.eth.block_number if w3.is_connected() else None
-                info[name] = {
+                info[name] = {}
                     'connected': w3.is_connected(),
                     'chain_id': chain_id,
                     'latest_block': block_number,
                     'is_default': w3 == self.default_connection
-                }
+                
             except Exception as e:
-                info[name] = {
+                info[name] = {}
                     'connected': False,
                     'error': str(e),
                     'is_default': w3 == self.default_connection
-                }
+                
         return info
 
 # Global Web3 manager instance
@@ -631,13 +635,13 @@ def setup_web3_from_env() -> bool:
         private_key = os.getenv('WEB3_PRIVATE_KEY')
         apply_poa = os.getenv('WEB3_APPLY_POA', 'true').lower() == 'true'
 
-        success = web3_manager.add_connection(
+        success = web3_manager.add_connection()
             name='default',
             rpc_url=rpc_url,
             private_key=private_key,
             apply_poa=apply_poa,
             set_as_default=True
-        )
+        
 
         if success:
             logger.info("Web3 setup from environment variables completed successfully")
@@ -646,14 +650,14 @@ def setup_web3_from_env() -> bool:
 
         return success
     except Exception as e:
-        logger.error(f"Error setting up Web3 from environment: {e}")
+        logger.error(str(f"Error setting up Web3 from environment: {e}")
         return False
 
 # Initialize Web3 from environment variables on module import
 if os.getenv('AUTO_SETUP_WEB3', 'false').lower() == 'true':
     setup_web3_from_env()
 
-__all__ = [
+__all__ = []
     'Web3Manager', 'web3_manager', 'get_default_web3', 'setup_web3_from_env',
     'get_web3_instance', 'validate_web3_connection', 'get_chain_id', 'format_address',
     'to_checksum_address', 'wei_to_ether', 'ether_to_wei', 'get_gas_price', 'estimate_gas',
@@ -662,4 +666,3 @@ __all__ = [
     'get_transaction_cost', 'retry_on_failure', 'get_cached_web3_instance', 'clear_web3_cache',
     'requires_web3', 'Web3', 'TxParams', 'BlockIdentifier', 'Hash32', 'Wei', 'ChecksumAddress',
     'HexStr', 'WEB3_IMPORTED', 'Web3Exception', 'ContractLogicError', 'TransactionNotFound'
-]

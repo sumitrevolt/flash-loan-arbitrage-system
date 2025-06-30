@@ -1,19 +1,25 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+    import platform
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List
+from typing import Dict, List, Any, Optional
+import asyncio
+import json
+import logging
+import os
+import shutil
+import subprocess
+import sys
+import time
+
+            import py_compile
 """
 Universal MCP Server Fixer and Launcher
 Fixes and starts ALL local MCP servers in your system
 """
 
-import asyncio
-import subprocess
-import sys
-import os
-import json
-import time
-import shutil
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Any, Optional
 
 class UniversalMCPServerFixer:
     """
@@ -25,16 +31,16 @@ class UniversalMCPServerFixer:
         self.server_processes = {}
         self.fixed_servers = []
         self.failed_fixes = []
-        self.config_files = [
+        self.config_files = []
             'mcp_servers/config_files/complete_cline_mcp_config.json',
             'mcp_servers/config_files/working_cline_mcp_config.json',
             'mcp_servers/config_files/FINAL_WORKING_CLINE_CONFIG.json'
-        ]
+        
         
         # Ensure logs directory
         os.makedirs('logs', exist_ok=True)
         
-        print("🔧 Universal MCP Server Fixer initialized")
+        print("[SETUP] Universal MCP Server Fixer initialized")
     
     def log(self, message: str) -> None:
         """Enhanced logging"""
@@ -49,13 +55,13 @@ class UniversalMCPServerFixer:
     
     def scan_all_mcp_servers(self) -> Dict[str, List[str]]:
         """Scan for all MCP server files in the directory"""
-        self.log("🔍 Scanning for all MCP server files...")
+        self.log("[SEARCH] Scanning for all MCP server files...")
         
-        found_servers = {
+        found_servers = {}
             'python_servers': [],
             'nodejs_servers': [],
             'configs': []
-        }
+        
         
         # Find Python MCP servers
         for py_file in self.workspace_path.rglob('*mcp*server*.py'):
@@ -94,10 +100,10 @@ class UniversalMCPServerFixer:
                     for name, server_config in servers.items():
                         if name not in all_servers:
                             all_servers[name] = server_config
-                            self.log(f"✅ Loaded config for {name}")
+                            self.log(f"[OK] Loaded config for {name}")
                         
             except Exception as e:
-                self.log(f"⚠️ Error loading {config_file}: {e}")
+                self.log(f"[WARN] Error loading {config_file}: {e}")
         
         return all_servers
     
@@ -132,7 +138,7 @@ class UniversalMCPServerFixer:
             if file_path.exists():
                 return True
             
-            self.log(f"🔧 Creating missing server file: {file_path}")
+            self.log(f"[SETUP] Creating missing server file: {file_path}")
             
             # Create directory if needed
             file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -143,12 +149,12 @@ class UniversalMCPServerFixer:
             with open(file_path, 'w') as f:
                 f.write(server_template)
             
-            self.log(f"✅ Created {file_path}")
+            self.log(f"[OK] Created {file_path}")
             self.fixed_servers.append(f"{server_name} - created {file_path}")
             return True
             
         except Exception as e:
-            self.log(f"❌ Failed to create server for {server_name}: {e}")
+            self.log(f"[ERROR] Failed to create server for {server_name}: {e}")
             self.failed_fixes.append(f"{server_name} - creation failed: {e}")
             return False
     
@@ -160,14 +166,21 @@ class UniversalMCPServerFixer:
 Auto-generated MCP server for {server_name}
 """
 
-import asyncio
-import json
-import sys
-import logging
-from typing import Any, Dict, List
-from datetime import datetime
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 logger = logging.getLogger("{server_name}-mcp-server")
 
@@ -182,26 +195,26 @@ class {server_name.replace('-', '_').title()}MCPServer:
     
     def _setup_tools(self):
         """Setup available tools"""
-        self.tools = [
-            {{
+        self.tools = []
+            {{}}
                 "name": "get_status",
                 "description": "Get server status",
-                "inputSchema": {{
+                "inputSchema": {{}}
                     "type": "object",
                     "properties": {{}},
                     "required": []
-                }}
+
             }},
-            {{
+            {{}}
                 "name": "health_check",
                 "description": "Perform health check",
-                "inputSchema": {{
+                "inputSchema": {{}}
                     "type": "object",
                     "properties": {{}},
                     "required": []
-                }}
-            }}
-        ]
+
+
+        
     
     async def handle_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """Handle incoming MCP messages"""
@@ -210,29 +223,29 @@ class {server_name.replace('-', '_').title()}MCPServer:
         id_val = message.get("id")
         
         if method == "initialize":
-            return {{
+            return {{}}
                 "jsonrpc": "2.0",
                 "id": id_val,
-                "result": {{
+                "result": {{}}
                     "protocolVersion": "2024-11-05",
-                    "capabilities": {{
+                    "capabilities": {{}}
                         "tools": {{}}
                     }},
-                    "serverInfo": {{
+                    "serverInfo": {{}}
                         "name": self.name,
                         "version": self.version
-                    }}
-                }}
-            }}
+
+
+
         
         elif method == "tools/list":
-            return {{
+            return {{}}
                 "jsonrpc": "2.0", 
                 "id": id_val,
-                "result": {{
+                "result": {{}}
                     "tools": self.tools
-                }}
-            }}
+
+
         
         elif method == "tools/call":
             tool_name = params.get("name")
@@ -240,58 +253,58 @@ class {server_name.replace('-', '_').title()}MCPServer:
             
             result: str = await self.call_tool(tool_name, tool_args)
             
-            return {{
+            return {{}}
                 "jsonrpc": "2.0",
                 "id": id_val,
-                "result": {{
-                    "content": [
-                        {{
+                "result": {{}}
+                    "content": []
+                        {{}}
                             "type": "text",
                             "text": result
-                        }}
-                    ]
-                }}
-            }}
+
+                    
+
+
         
         else:
-            return {{
+            return {{}}
                 "jsonrpc": "2.0",
                 "id": id_val,
-                "error": {{
+                "error": {{}}
                     "code": -32601,
                     "message": f"Method not found: {{method}}"
-                }}
-            }}
+
+
     
     async def call_tool(self, name: str, args: Dict[str, Any]) -> str:
         """Handle tool calls"""
         if name == "get_status":
-            return json.dumps({{
+            return json.dumps({{)}}
                 "server": self.name,
                 "status": "operational",
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat(),
                 "capabilities": ["status", "health_check"]
-            }}, indent=2)
+            }}, indent=2
         
         elif name == "health_check":
-            return json.dumps({{
+            return json.dumps({{)}}
                 "status": "healthy",
                 "server": self.name,
                 "version": self.version,
-                "timestamp": datetime.now().isoformat()
-            }}, indent=2)
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+            }}, indent=2
         
         return f"Unknown tool: {{name}}"
     
     async def run(self):
         """Run the MCP server"""
-        logger.info(f"Starting {{self.name}} (stdio mode)")
+        logger.info(str(f"Starting {{self.name}} (stdio mode")
         
         while True:
             try:
-                line: str = await asyncio.get_event_loop().run_in_executor(
+                line: str = await asyncio.get_event_loop().run_in_executor()
                     None, sys.stdin.readline
-                )
+                
                 
                 if not line:
                     break
@@ -304,23 +317,23 @@ class {server_name.replace('-', '_').title()}MCPServer:
                     message = json.loads(line)
                     response = await self.handle_message(message)
                     
-                    print(json.dumps(response))
+                    print(json.dumps(response, ensure_ascii=True, default=str))
                     sys.stdout.flush()
                     
                 except json.JSONDecodeError as e:
-                    error_response: Dict[str, Any] = {{
+                    error_response: Dict[str, Any] = {{}}
                         "jsonrpc": "2.0",
                         "id": None,
-                        "error": {{
+                        "error": {{}}
                             "code": -32700,
                             "message": f"Parse error: {{str(e)}}"
-                        }}
-                    }}
-                    print(json.dumps(error_response))
+
+
+                    print(json.dumps(error_response, ensure_ascii=True, default=str))
                     sys.stdout.flush()
                     
             except Exception as e:
-                logger.error(f"Server error: {{str(e)}}")
+                logger.error(str(f"Server error: {{str(e}}")
                 break
 
 def main():
@@ -329,9 +342,9 @@ def main():
     try:
         asyncio.run(server.run())
     except KeyboardInterrupt:
-        logger.info(f"{{server.name}} shutting down...")
+        logger.info(str(f"{{server.name}} shutting down...")
     except Exception as e:
-        logger.error(f"Fatal error: {{str(e)}}")
+        logger.error(str(f"Fatal error: {{str(e}}")
         sys.exit(1)
 
 if __name__ == "__main__":
@@ -354,12 +367,11 @@ if __name__ == "__main__":
                 return False
             
             # Test syntax compilation
-            import py_compile
             py_compile.compile(str(file_path), doraise=True)
             return True
             
         except Exception as e:
-            self.log(f"⚠️ {server_name} syntax error: {e}")
+            self.log(f"[WARN] {server_name} syntax error: {e}")
             return False
     
     async def test_server_startup(self, server_name: str, server_config: Dict[str, Any]) -> bool:
@@ -380,20 +392,20 @@ if __name__ == "__main__":
             elif command == 'node':
                 full_command = ['node'] + args
             else:
-                self.log(f"⚠️ {server_name}: Unknown command type - {command}")
+                self.log(f"[WARN] {server_name}: Unknown command type - {command}")
                 return False
             
             self.log(f"🧪 Testing {server_name}: {' '.join(full_command[:3])}...")
             
             # Start process and test for 3 seconds
-            process = subprocess.Popen(
+            process = subprocess.Popen()
                 full_command,
                 env=env,
                 cwd=self.workspace_path,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 stdin=subprocess.PIPE
-            )
+            
             
             # Wait a moment
             await asyncio.sleep(3)
@@ -406,37 +418,37 @@ if __name__ == "__main__":
                 except subprocess.TimeoutExpired:
                     process.kill()
                 
-                self.log(f"✅ {server_name}: Startup test passed")
+                self.log(f"[OK] {server_name}: Startup test passed")
                 return True
             else:
                 stdout, stderr = process.communicate()
                 error_msg = stderr.decode() if stderr else "Process exited"
-                self.log(f"❌ {server_name}: Startup failed - {error_msg[:100]}")
+                self.log(f"[ERROR] {server_name}: Startup failed - {error_msg[:100]}")
                 return False
                 
         except Exception as e:
-            self.log(f"❌ {server_name}: Test exception - {e}")
+            self.log(f"[ERROR] {server_name}: Test exception - {e}")
             return False
     
     async def fix_all_servers(self) -> Dict[str, Any]:
         """Fix all MCP servers"""
-        self.log("🔧 Starting comprehensive MCP server fix...")
+        self.log("[SETUP] Starting comprehensive MCP server fix...")
         
         # Load all configurations
         all_servers = self.load_all_configs()
         self.log(f"📋 Found {len(all_servers)} configured servers")
         
-        results = {
+        results = {}
             'total_servers': len(all_servers),
             'fixed_servers': [],
             'working_servers': [],
             'failed_servers': [],
             'created_files': [],
             'syntax_fixes': []
-        }
+        
         
         for server_name, server_config in all_servers.items():
-            self.log(f"\n🔧 Processing {server_name}...")
+            self.log(f"\n[SETUP] Processing {server_name}...")
             
             # Check if file exists
             if not self.check_server_file_exists(server_config):
@@ -450,17 +462,17 @@ if __name__ == "__main__":
             
             # Test syntax
             if not self.test_server_syntax(server_name, server_config):
-                self.log(f"🔧 {server_name}: Syntax issues detected")
+                self.log(f"[SETUP] {server_name}: Syntax issues detected")
                 results['syntax_fixes'].append(f"{server_name} - syntax issues")
             
             # Test startup
             startup_success = await self.test_server_startup(server_name, server_config)
             if startup_success:
                 results['working_servers'].append(server_name)
-                self.log(f"✅ {server_name}: Working correctly")
+                self.log(f"[OK] {server_name}: Working correctly")
             else:
                 results['failed_servers'].append(f"{server_name} - startup failed")
-                self.log(f"❌ {server_name}: Startup failed")
+                self.log(f"[ERROR] {server_name}: Startup failed")
         
         return results
     
@@ -469,28 +481,28 @@ if __name__ == "__main__":
         self.log("📋 Creating unified configuration...")
         
         all_servers = self.load_all_configs()
-        unified_config = {
+        unified_config = {}
             "mcpServers": {}
-        }
+        
         
         # Add our clean servers first
-        unified_config["mcpServers"]["context7_clean"] = {
+        unified_config["mcpServers"]["context7_clean"] = {}
             "command": "python",
             "args": ["mcp_servers/ai_integration/clean_context7_mcp_server.py"],
             "cwd": ".",
-            "env": {
+            "env": {}
                 "PYTHONPATH": "."
-            }
-        }
+            
         
-        unified_config["mcpServers"]["matic_clean"] = {
+        
+        unified_config["mcpServers"]["matic_clean"] = {}
             "command": "python",
             "args": ["mcp_servers/blockchain_integration/clean_matic_mcp_server.py"],
             "cwd": ".",
-            "env": {
+            "env": {}
                 "PYTHONPATH": "."
-            }
-        }
+            
+        
         
         # Add working servers
         for server_name in working_servers:
@@ -508,17 +520,17 @@ if __name__ == "__main__":
     def generate_summary_report(self, results: Dict[str, Any]) -> None:
         """Generate comprehensive summary report"""
         self.log("\n" + "="*60)
-        self.log("🎉 MCP SERVER FIX COMPLETE")
+        self.log("[CELEBRATE] MCP SERVER FIX COMPLETE")
         self.log("="*60)
         
-        self.log(f"📊 Total servers processed: {results['total_servers']}")
-        self.log(f"✅ Working servers: {len(results['working_servers'])}")
-        self.log(f"🔧 Fixed servers: {len(results['fixed_servers'])}")
+        self.log(f"[METRICS] Total servers processed: {results['total_servers']}")
+        self.log(f"[OK] Working servers: {len(results['working_servers'])}")
+        self.log(f"[SETUP] Fixed servers: {len(results['fixed_servers'])}")
         self.log(f"📁 Created files: {len(results['created_files'])}")
-        self.log(f"❌ Failed servers: {len(results['failed_servers'])}")
+        self.log(f"[ERROR] Failed servers: {len(results['failed_servers'])}")
         
         if results['working_servers']:
-            self.log("\n✅ Working Servers:")
+            self.log("\n[OK] Working Servers:")
             for server in results['working_servers']:
                 self.log(f"  • {server}")
         
@@ -528,7 +540,7 @@ if __name__ == "__main__":
                 self.log(f"  • {server}")
         
         if results['failed_servers']:
-            self.log("\n❌ Failed Servers:")
+            self.log("\n[ERROR] Failed Servers:")
             for server in results['failed_servers']:
                 self.log(f"  • {server}")
         
@@ -561,20 +573,19 @@ async def main():
         success_rate = len(results['working_servers']) / max(results['total_servers'], 1)
         
         if success_rate > 0.7:
-            fixer.log("\n🎉 SUCCESS: Most servers are working!")
+            fixer.log("\n[CELEBRATE] SUCCESS: Most servers are working!")
         elif success_rate > 0.3:
-            fixer.log("\n⚠️ PARTIAL: Some servers need attention")
+            fixer.log("\n[WARN] PARTIAL: Some servers need attention")
         else:
-            fixer.log("\n❌ ATTENTION: Many servers need fixing")
+            fixer.log("\n[ERROR] ATTENTION: Many servers need fixing")
         
         return success_rate > 0.5
         
     except Exception as e:
-        fixer.log(f"❌ Fatal error: {e}")
+        fixer.log(f"[ERROR] Fatal error: {e}")
         return False
 
 if __name__ == "__main__":
-    import platform
     if platform.system() == 'Windows':
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
     
@@ -584,3 +595,19 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\n⏹️ Interrupted by user")
         sys.exit(1)
+
+# Merged functions from other servers:
+
+    def add_tool(self, name: str, description: str, parameters: Dict[str, Any]):
+        """Add a tool to the server"""
+        self.tools.append({)}
+            "name": name,
+            "description": description,
+            "inputSchema": {}
+                "type": "object",
+                "properties": parameters,
+                "required": list(parameters.keys())
+            
+        
+    
+

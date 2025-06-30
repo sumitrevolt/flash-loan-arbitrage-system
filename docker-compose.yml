@@ -1,0 +1,256 @@
+networks:
+  flashloan_flash-loan-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  langchain_data:
+    driver: local
+  autogen_data:
+    driver: local
+
+services:
+  # Core Infrastructure Services
+  postgres:
+    image: postgres:15-alpine
+    container_name: flash-loan-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-flash_loan_db}
+      POSTGRES_USER: ${POSTGRES_USER:-flash_loan_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flash_loan_secure_2025}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      flashloan_flash-loan-network:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flash_loan_user} -d ${POSTGRES_DB:-flash_loan_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: flash-loan-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-flash_loan_redis_2025} --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      flashloan_flash-loan-network:
+        ipv4_address: 172.20.0.11
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+
+  # Web3 Node Provider
+  web3-node:
+    image: ethereum/client-go:latest
+    container_name: flash-loan-web3-node
+    restart: unless-stopped
+    command: >
+      --dev
+      --dev.period 1
+      --http
+      --http.addr 0.0.0.0
+      --http.port 8545
+      --http.api eth,net,web3,debug,personal,txpool
+      --http.corsdomain "*"
+      --http.vhosts "*"
+      --ws
+      --ws.addr 0.0.0.0
+      --ws.port 8546
+      --ws.api eth,net,web3
+      --ws.origins "*"
+      --allow-insecure-unlock
+      --rpc.gascap 0
+      --rpc.txfeecap 0
+      --mine
+      --miner.etherbase 0x0000000000000000000000000000000000000000
+    environment:
+      - WEB3_NODE_LOG_LEVEL=${WEB3_NODE_LOG_LEVEL:-3}
+    ports:
+      - "${WEB3_NODE_PORT:-8545}:8545"
+      - "${WEB3_WS_PORT:-8546}:8546"
+    networks:
+      flashloan_flash-loan-network:
+        ipv4_address: 172.20.0.12
+    healthcheck:
+      test: ["CMD", "sh", "-c", "wget -q -O - --post-data='{\"jsonrpc\":\"2.0\",\"method\":\"web3_clientVersion\",\"params\":[],\"id\":1}' --header='Content-Type: application/json' http://localhost:8545 | grep -q '\"result\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # LangChain Coordinator Service
+  langchain-coordinator:
+    build:
+      context: ./deployment/docker/langchain
+      dockerfile: Dockerfile
+    container_name: flash-loan-langchain
+    restart: unless-stopped
+    env_file:
+      - docker-compose.env
+    environment:
+      # Cursor API Configuration
+      - CURSOR_API_KEY=${CURSOR_API_KEY}
+      - CURSOR_MODEL=${CURSOR_MODEL:-cursor-gpt-4}
+      - CURSOR_BASE_URL=${CURSOR_BASE_URL:-https://api.cursor.com/v1}
+      - CURSOR_ORGANIZATION_ID=${CURSOR_ORGANIZATION_ID}
+      - CURSOR_PROJECT_ID=${CURSOR_PROJECT_ID}
+      
+      # LangChain Specific Configuration
+      - LANGCHAIN_API_KEY=${CURSOR_API_KEY}
+      - LANGCHAIN_MODEL=${CURSOR_MODEL:-cursor-gpt-4}
+      - LANGCHAIN_ENDPOINT=${CURSOR_BASE_URL:-https://api.cursor.com/v1}
+      - USE_CURSOR_FOR_LANGCHAIN=true
+      - LANGCHAIN_MAX_CHAINS=${LANGCHAIN_MAX_CHAINS:-5}
+      
+      # Fallback API Keys
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-demo_key}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-demo_key}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-demo_key}
+      
+      # Database Configuration
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-flash_loan_db}
+      - POSTGRES_USER=${POSTGRES_USER:-flash_loan_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-flash_loan_secure_2025}
+      
+      # Redis Configuration
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-flash_loan_redis_2025}
+      
+      # Web3 Configuration
+      - WEB3_NODE_URL=http://web3-node:8545
+      - WEB3_NODE_TIMEOUT=30
+      - WEB3_MAX_RETRIES=3
+      
+      # Service Configuration
+      - SERVICE_NAME=langchain-coordinator
+      - SERVICE_PORT=8000
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - ENABLE_CURSOR_INTEGRATION=${ENABLE_CURSOR_INTEGRATION:-true}
+    volumes:
+      - langchain_data:/app/data
+      - ./logs:/app/logs
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8002:8002"
+    networks:
+      flashloan_flash-loan-network:
+        ipv4_address: 172.20.0.30
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web3-node:
+        condition: service_healthy
+
+  # AutoGen Coordinator Service
+  autogen-coordinator:
+    build:
+      context: ./deployment/docker/autogen
+      dockerfile: Dockerfile
+    container_name: flash-loan-autogen
+    restart: unless-stopped
+    env_file:
+      - docker-compose.env
+    environment:
+      # Cursor API Configuration
+      - CURSOR_API_KEY=${CURSOR_API_KEY}
+      - CURSOR_MODEL=${CURSOR_MODEL:-cursor-gpt-4}
+      - CURSOR_BASE_URL=${CURSOR_BASE_URL:-https://api.cursor.com/v1}
+      - CURSOR_ORGANIZATION_ID=${CURSOR_ORGANIZATION_ID}
+      - CURSOR_PROJECT_ID=${CURSOR_PROJECT_ID}
+      
+      # AutoGen Specific Configuration
+      - AUTOGEN_API_KEY=${CURSOR_API_KEY}
+      - AUTOGEN_MODEL=${CURSOR_MODEL:-cursor-gpt-4}
+      - AUTOGEN_ENDPOINT=${CURSOR_BASE_URL:-https://api.cursor.com/v1}
+      - USE_CURSOR_FOR_AUTOGEN=true
+      - AUTOGEN_MAX_AGENTS=${AUTOGEN_MAX_AGENTS:-10}
+      - AUTOGEN_CONVERSATION_TIMEOUT=300
+      - AUTOGEN_WORK_DIR=/app/autogen_work
+      - AUTOGEN_LOG_LEVEL=${LOG_LEVEL:-INFO}
+      
+      # Fallback API Keys
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-demo_key}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-demo_key}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-demo_key}
+      
+      # Database Configuration
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-flash_loan_db}
+      - POSTGRES_USER=${POSTGRES_USER:-flash_loan_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-flash_loan_secure_2025}
+      
+      # Redis Configuration
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-flash_loan_redis_2025}
+      
+      # Web3 Configuration
+      - WEB3_NODE_URL=http://web3-node:8545
+      - WEB3_NODE_TIMEOUT=30
+      - WEB3_MAX_RETRIES=3
+      
+      # Service Configuration
+      - SERVICE_NAME=autogen-coordinator
+      - SERVICE_PORT=8000
+      - LANGCHAIN_COORDINATOR_URL=http://langchain-coordinator:8000
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - ENABLE_CURSOR_INTEGRATION=${ENABLE_CURSOR_INTEGRATION:-true}
+    volumes:
+      - autogen_data:/app/data
+      - autogen_data:/app/autogen_work
+      - autogen_data:/app/conversation_logs
+      - ./logs:/app/logs
+    ports:
+      - "8010:8000"
+      - "8011:8001"
+      - "8012:8002"
+    networks:
+      flashloan_flash-loan-network:
+        ipv4_address: 172.20.0.31
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web3-node:
+        condition: service_healthy
+      langchain-coordinator:
+        condition: service_healthy

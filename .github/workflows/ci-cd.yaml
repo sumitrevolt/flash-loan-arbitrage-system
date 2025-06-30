@@ -1,0 +1,108 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/arbitrage-bot
+  K8S_NAMESPACE: flash-loan-prod
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+
+    - name: Run unit tests
+      run: |
+        pytest src/tests/unit --cov=./ --cov-report=xml
+      env:
+        TEST_ENV: ci
+
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+
+    - name: Run integration tests
+      run: |
+        pytest src/tests/integration
+      env:
+        TEST_ENV: ci
+        POSTGRES_URL: postgres://test:test@localhost:5432/test
+        REDIS_URL: redis://localhost:6379
+
+  security:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: python
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+
+    - name: Dependency check
+      uses: actions/dependency-review-action@v3
+
+    - name: Run Bandit (Python security)
+      run: |
+        pip install bandit
+        bandit -r src -f json -o bandit-results.json
+
+  build:
+    needs: security
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push Docker image
+      run: |
+        docker build -t $DOCKER_IMAGE:latest .
+        docker tag $DOCKER_IMAGE:latest $DOCKER_IMAGE:$GITHUB_SHA
+        docker push $DOCKER_IMAGE:latest
+        docker push $DOCKER_IMAGE:$GITHUB_SHA
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Configure kubectl
+      run: |
+        mkdir -p ~/.kube
+        echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f deployment.yaml -n $K8S_NAMESPACE
+        kubectl rollout status deployment/arbitrage-bot -n $K8S_NAMESPACE

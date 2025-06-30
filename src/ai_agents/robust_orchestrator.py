@@ -1,17 +1,19 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Dict, List, Any
+import asyncio
+import json
+import logging
+import os
+import time
+
+import docker
+import requests
 """
 Robust Flash Loan Orchestrator with Auto-Healing
 """
 
-import asyncio
-import logging
-import json
-import os
-import time
-from datetime import datetime
-from typing import Dict, List, Any
-import docker
-import requests
 
 class RobustOrchestrator:
     """Main orchestrator with health monitoring and auto-healing"""
@@ -23,14 +25,27 @@ class RobustOrchestrator:
         self.health_check_interval = 30
         
         # Setup logging
-        logging.basicConfig(
+        
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s',
-            handlers=[
+            handlers=[]
                 logging.FileHandler('/app/logs/orchestrator.log'),
                 logging.StreamHandler()
-            ]
-        )
+            
+        
         self.logger = logging.getLogger(__name__)
         
     async def start(self):
@@ -53,12 +68,12 @@ class RobustOrchestrator:
         self.logger.info("Initializing services...")
         
         # Register services
-        self.services = {
+        self.services = {}
             'mcp-servers': {'health_endpoint': 'http://mcp-servers:8000/health'},
             'agents': {'health_endpoint': 'http://agents:8001/health'}
-        }
         
-        self.logger.info(f"Registered {len(self.services)} services")
+        
+        self.logger.info(str(f"Registered {len(self.services} services")
     
     async def start_health_monitoring(self):
         """Start health monitoring loop"""
@@ -71,7 +86,7 @@ class RobustOrchestrator:
                 await self.check_all_services()
                 await asyncio.sleep(self.health_check_interval)
             except Exception as e:
-                self.logger.error(f"Health monitor error: {e}")
+                self.logger.error(str(f"Health monitor error: {e}")
                 await asyncio.sleep(5)
     
     async def check_all_services(self):
@@ -80,29 +95,29 @@ class RobustOrchestrator:
             try:
                 response = requests.get(config['health_endpoint'], timeout=10)
                 if response.status_code == 200:
-                    self.logger.debug(f"Service {service_name} is healthy")
+                    self.logger.debug(str(f"Service {service_name} is healthy")
                 else:
-                    self.logger.warning(f"Service {service_name} returned {response.status_code}")
+                    self.logger.warning(str(f"Service {service_name} returned {response.status_code}")
                     await self.heal_service(service_name)
             except Exception as e:
-                self.logger.error(f"Service {service_name} health check failed: {e}")
+                self.logger.error(str(f"Service {service_name} health check failed: {e}")
                 await self.heal_service(service_name)
     
     async def heal_service(self, service_name: str):
         """Attempt to heal a failed service"""
-        self.logger.info(f"Attempting to heal service: {service_name}")
+        self.logger.info(str(f"Attempting to heal service: {service_name}")
         
         try:
             # Try to restart the container
             container = self.client.containers.get(f"flashloan-{service_name}")
             container.restart()
-            self.logger.info(f"Restarted container for {service_name}")
+            self.logger.info(str(f"Restarted container for {service_name}")
             
             # Wait and check again
             await asyncio.sleep(10)
             
         except Exception as e:
-            self.logger.error(f"Failed to heal service {service_name}: {e}")
+            self.logger.error(str(f"Failed to heal service {service_name}: {e}")
 
 if __name__ == "__main__":
     orchestrator = RobustOrchestrator()

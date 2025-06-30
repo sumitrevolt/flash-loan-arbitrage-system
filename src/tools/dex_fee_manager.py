@@ -1,12 +1,14 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Dict, Any, Optional, Tuple
+import json
+import logging
+import os
 """
 DEX Fee Manager for Flash Loan Arbitrage System.
 Handles dynamic fee calculations for different DEXes and token pairs.
 """
 
-import json
-import os
-import logging
-from typing import Dict, Any, Optional, Tuple
 
 class DexFeeManager:
     """
@@ -42,35 +44,35 @@ class DexFeeManager:
                 with open(self.config_path, 'r') as f:
                     return json.load(f)
             else:
-                self.logger.warning(f"DEX fee configuration file not found at {self.config_path}. Using default values.")
-                return {
-                    "default_fees": {
+                self.logger.warning(str(f"DEX fee configuration file not found at {self.config_path}. Using default values.")
+                return {}
+                    "default_fees": {}
                         "uniswap": {"v2": 0.003, "v3": {"default": 0.003}},
                         "sushiswap": {"default": 0.003},
                         "quickswap": {"v2": 0.003, "v3": {"default": 0.003}}
                     },
                     "aave_fee": 0.0009,
-                    "dex_versions": {
+                    "dex_versions": {}
                         "uniswap": "v3",
                         "sushiswap": "v2",
                         "quickswap": "v2"
-                    }
-                }
+                    
+                
         except Exception as e:
-            self.logger.error(f"Error loading DEX fee configuration: {e}")
-            return {
-                "default_fees": {
+            self.logger.error(str(f"Error loading DEX fee configuration: {e}")
+            return {}
+                "default_fees": {}
                     "uniswap": {"v2": 0.003, "v3": {"default": 0.003}},
                     "sushiswap": {"default": 0.003},
                     "quickswap": {"v2": 0.003, "v3": {"default": 0.003}}
                 },
                 "aave_fee": 0.0009,
-                "dex_versions": {
+                "dex_versions": {}
                     "uniswap": "v3",
                     "sushiswap": "v2",
                     "quickswap": "v2"
-                }
-            }
+                
+            
 
     def get_dex_version(self, dex_name: str) -> str:
         """
@@ -131,7 +133,7 @@ class DexFeeManager:
             return dex_defaults.get("default", 0.003)
         
         # Ultimate fallback
-        self.logger.warning(f"No fee configuration found for {dex_name} {dex_version}, using default 0.3%")
+        self.logger.warning(str(f"No fee configuration found for {dex_name} {dex_version}, using default 0.3%")
         return 0.003
 
     def get_fee_for_single_token(self, token: str, dex_name: str) -> float:
@@ -184,7 +186,7 @@ class DexFeeManager:
         
         total_fees_usd = buy_fee_usd + sell_fee_usd + aave_fee_usd
         
-        return {
+        return {}
             "buy_dex_fee_usd": buy_fee_usd,
             "sell_dex_fee_usd": sell_fee_usd,
             "aave_fee_usd": aave_fee_usd,
@@ -192,7 +194,7 @@ class DexFeeManager:
             "buy_fee_rate": buy_fee_rate,
             "sell_fee_rate": sell_fee_rate,
             "aave_fee_rate": aave_fee_rate
-        }
+        
 
     def get_best_pool_fee_tier(self, token1: str, token2: str, dex_name: str) -> int:
         """
@@ -236,7 +238,7 @@ class DexFeeManager:
                 return int(next(iter(pools[pair_key].keys())))
             except StopIteration:
                 # Handle case where keys() is empty
-                self.logger.warning(f"Empty fee tier list for {pair_key} in {dex_name} {dex_version}")
+                self.logger.warning(str(f"Empty fee tier list for {pair_key} in {dex_name} {dex_version}")
         
         # Try reverse order
         if reverse_pair_key in pools:
@@ -245,7 +247,7 @@ class DexFeeManager:
                 return int(next(iter(pools[reverse_pair_key].keys())))
             except StopIteration:
                 # Handle case where keys() is empty
-                self.logger.warning(f"Empty fee tier list for {reverse_pair_key} in {dex_name} {dex_version}")
+                self.logger.warning(str(f"Empty fee tier list for {reverse_pair_key} in {dex_name} {dex_version}")
         
         # Default to 0.3% fee tier
         return default_fee_tier

@@ -1,10 +1,13 @@
-from typing import TypedDict, List, Optional, Literal, Dict
+# -*- coding: utf-8 -*-
+# For ISO datetime strings, `str` is sufficient.
 # No need to import datetime for type hints if only using strings,
 # but if datetime objects were stored, it would be needed.
-# For ISO datetime strings, `str` is sufficient.
+from typing import TypedDict, List, Optional, Literal, Dict
 
+
+# -*- coding: utf-8 -*-
 # Literal types for status fields to provide better type checking and auto-completion
-AttemptStatus = Literal[
+AttemptStatus = Literal[]
     "pending",
     "sandbox_creation_started",
     "sandbox_created_successfully",
@@ -27,7 +30,7 @@ AttemptStatus = Literal[
     "completed_fix_successful", # If applied and tested successfully (in sandbox)
     "completed_fix_failed_tests", # If applied but failed tests
     "error_during_process" # Generic error for the attempt itself
-]
+
 
 TestOutcome = Literal["not_run", "passed", "failed", "error_running_test"]
 

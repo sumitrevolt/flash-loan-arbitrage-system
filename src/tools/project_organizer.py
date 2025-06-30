@@ -1,4 +1,13 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Set, Optional, Tuple, Any
+import hashlib
+import json
+import os
+import re
+import shutil
 """
 Flash Loan Arbitrage Bot - Project Organizer
 ===========================================
@@ -8,14 +17,6 @@ Combines functionality from final_project_organizer.py and final_duplicate_merge
 Following COPILOT_AGENT_RULES.md principles.
 """
 
-import os
-import shutil
-import json
-import hashlib
-import re
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Set, Optional, Tuple, Any
 
 class FlashLoanProjectOrganizer:
     """
@@ -31,18 +32,18 @@ class FlashLoanProjectOrganizer:
         self.removed_duplicates: List[str] = []
         
         # Target project structure following industry standards
-        self.target_structure = {
-            "app/": {
+        self.target_structure = {}
+            "app/": {}
                 "description": "Main application entry points",
-                "files": [
+                "files": []
                     "optimized_arbitrage_bot_v2.py",
                     "dex_integrations.py", 
                     "config.py"
-                ]
+                
             },
-            "core/": {
+            "core/": {}
                 "description": "Core business logic",
-                "subdirs": {
+                "subdirs": {}
                     "arbitrage/": ["*arbitrage*.py"],
                     "coordinators/": ["*coordinator*.py", "*mcp*.py"],
                     "dex/": ["*dex*.py"],
@@ -50,102 +51,102 @@ class FlashLoanProjectOrganizer:
                     "pricing/": ["*price*.py", "*pricing*.py"],
                     "revenue/": ["*revenue*.py"],
                     "trading/": ["*trading*.py", "*trade*.py"]
-                }
+                
             },
-            "infrastructure/": {
+            "infrastructure/": {}
                 "description": "Infrastructure and deployment",
-                "subdirs": {
+                "subdirs": {}
                     "mcp_servers/": ["existing structure"],
                     "docker/": ["existing structure"],
                     "monitoring/": ["*monitor*.py", "*health*.py", "*check*.py"]
-                }
+                
             },
-            "interfaces/": {
+            "interfaces/": {}
                 "description": "User interfaces and APIs",
-                "subdirs": {
+                "subdirs": {}
                     "web/": ["*dashboard*.py", "*web*.py", "*.html", "*.css", "*.js"],
                     "cli/": ["*cli*.py", "*console*.py"],
                     "bots/": ["*bot*.py"]
-                }
+                
             },
-            "scripts/": {
+            "scripts/": {}
                 "description": "Utility and management scripts",
-                "files": [
+                "files": []
                     "*script*.py", "*organizer*.py", "*merger*.py", 
                     "*tool*.py", "*utility*.py", "*deploy*.py", "*.sh", "*.bat", "*.ps1"
-                ]
+                
             },
-            "tests/": {
+            "tests/": {}
                 "description": "Test files",
                 "files": ["*test*.py", "test_*.py", "*verify*.py"]
             },
-            "config/": {
+            "config/": {}
                 "description": "Configuration files", 
                 "files": ["*.json", "*.ini", ".env*", "*config*.py"]
             },
-            "docs/": {
+            "docs/": {}
                 "description": "Documentation",
                 "files": ["*.md", "*.txt", "*.rst"]
             },
-            "data/": {
+            "data/": {}
                 "description": "Data files and cache",
-                "subdirs": {
+                "subdirs": {}
                     "cache/": [],
                     "logs/": [],
                     "abi/": ["*.json"]
-                }
-            }
-        }
+                
+            
+        
         
         # Define duplicate categories for cleanup
-        self.duplicate_categories = {
-            'organization_scripts': {
+        self.duplicate_categories = {}
+            'organization_scripts': {}
                 'keep': 'scripts/project_organizer.py',
-                'remove': [
+                'remove': []
                     'final_project_organizer.py',
                     'final_duplicate_merger_and_organizer.py',
                     'project_organizer_fixed.py',
                     'automated_duplicate_merger.py',
                     'comprehensive_duplicate_merger.py',
                     'cleanup_duplicates.py'
-                ]
+                
             },
-            'completion_scripts': {
+            'completion_scripts': {}
                 'keep': 'project_completion_summary.py',
-                'remove': [
+                'remove': []
                     'final_success_confirmation.py',
                     'complete_project_with_mcp.py',
                     'final_comprehensive_fix.py'
-                ]
+                
             },
-            'optimization_scripts': {
+            'optimization_scripts': {}
                 'keep': 'production_optimizer.py',
-                'remove': [
+                'remove': []
                     'optimization_summary.py',
                     'mcp_optimization_report.py',
                     'comprehensive_code_optimization.py',
                     'comprehensive_type_fix.py'
-                ]
+                
             },
-            'discord_bots': {
+            'discord_bots': {}
                 'keep': 'interfaces/bots/discord_mcp_bot.py',
-                'remove': [
+                'remove': []
                     'bot/discord_mcp_bot.py',
                     'bot/discord_mcp_bot_clean.py',
                     'bot/discord_mcp_bot_enhanced_fixed.py'
-                ]
+                
             },
-            'deployment_scripts': {
+            'deployment_scripts': {}
                 'keep': 'production_deployment_manager.py',
-                'remove': [
+                'remove': []
                     'generate_corrected_agent_config.py'
-                ]
-            }
-        }
+                
+            
+        
     
     def create_backup(self) -> None:
         """Create comprehensive backup before organization"""
-        print(f"📦 Creating backup at {self.backup_dir}")
+        print(f"[PACKAGE] Creating backup at {self.backup_dir}")
         self.backup_dir.mkdir(parents=True, exist_ok=True)
         
         # Backup all files that will be modified or moved
@@ -167,7 +168,7 @@ class FlashLoanProjectOrganizer:
                 dest = self.backup_dir / source.name
                 shutil.copy2(source, dest)
         
-        print(f"✅ Backed up {len(all_files_to_backup)} files")
+        print(f"[OK] Backed up {len(all_files_to_backup)} files")
     
     def analyze_file_quality(self, file_path: Path) -> int:
         """Analyze file quality to determine which version to keep"""
@@ -194,7 +195,7 @@ class FlashLoanProjectOrganizer:
             score += len(re.findall(r'try:|except:|finally:', content)) * 2
             
             # Logging and best practices
-            score += len(re.findall(r'log\.|print\(|logger\.', content))
+            score += len(re.findall(r'log\.|print\(|logger\.', content)))
             
             # Recent modification bonus
             mod_time = file_path.stat().st_mtime
@@ -231,7 +232,7 @@ class FlashLoanProjectOrganizer:
     
     def merge_duplicate_category(self, category: str, category_info: Dict[str, Any]) -> None:
         """Merge files in a specific duplicate category"""
-        print(f"\n🔄 Processing duplicate category: {category}")
+        print(f"\n[SYNC] Processing duplicate category: {category}")
         
         keep_file = category_info['keep']
         remove_files = category_info['remove']
@@ -244,7 +245,7 @@ class FlashLoanProjectOrganizer:
         existing_files = [f for f in [keep_file] + remove_files if Path(f).exists()]
         
         if not existing_files:
-            print(f"  ⚠️ No files found for category {category}")
+            print(f"  [WARN] No files found for category {category}")
             return
             
         # Analyze and pick the best file
@@ -252,7 +253,7 @@ class FlashLoanProjectOrganizer:
         
         # Move the best file to the keep location if different
         if best_file != keep_file:
-            print(f"  📝 Moving {best_file} to {keep_file}")
+            print(f"  [LOG] Moving {best_file} to {keep_file}")
             shutil.move(best_file, keep_file)
             if best_file in remove_files:
                 remove_files.remove(best_file)
@@ -267,15 +268,15 @@ class FlashLoanProjectOrganizer:
                 self.removed_duplicates.append(remove_file)
                 removed_count += 1
         
-        self.organization_log.append({
+        self.organization_log.append({)}
             'category': category,
             'action': 'merge_duplicates',
             'kept': keep_file,
             'removed': [f for f in remove_files if f in self.removed_duplicates],
             'count_removed': removed_count
-        })
         
-        print(f"  ✅ Category {category}: kept {keep_file}, removed {removed_count} duplicates")
+        
+        print(f"  [OK] Category {category}: kept {keep_file}, removed {removed_count} duplicates")
     
     def organize_files_by_category(self) -> None:
         """Organize files into appropriate directories"""
@@ -304,11 +305,11 @@ class FlashLoanProjectOrganizer:
     
     def _move_files_to_app(self) -> None:
         """Move main application files to app/ directory"""
-        app_files = [
+        app_files = []
             "optimized_arbitrage_bot_v2.py",
             "dex_integrations.py",
             "config.py"
-        ]
+        
         
         app_dir = self.root_dir / "app"
         app_dir.mkdir(exist_ok=True)
@@ -326,7 +327,7 @@ class FlashLoanProjectOrganizer:
         """Organize core business logic files"""
         core_path = self.root_dir / "core"
         
-        core_patterns = [
+        core_patterns = []
             ("*revenue*.py", "revenue/"),
             ("*coordinator*.py", "coordinators/"),
             ("*mcp*.py", "coordinators/"),
@@ -334,7 +335,7 @@ class FlashLoanProjectOrganizer:
             ("*price*.py", "pricing/"),
             ("*trading*.py", "trading/"),
             ("*arbitrage*.py", "arbitrage/")
-        ]
+        
         
         for pattern, subdir in core_patterns:
             matches = list(self.root_dir.glob(pattern))
@@ -353,24 +354,24 @@ class FlashLoanProjectOrganizer:
         interfaces_dir = self.root_dir / "interfaces"
         
         # Web interface files
-        web_patterns = [
+        web_patterns = []
             ("*dashboard*.py", "web/"),
             ("*dashboard*.html", "web/"),
             ("*.html", "web/"),
             ("*.css", "web/"),
             ("*.js", "web/")
-        ]
+        
         
         # Bot files
-        bot_patterns = [
+        bot_patterns = []
             ("*bot*.py", "bots/")
-        ]
+        
         
         # CLI files
-        cli_patterns = [
+        cli_patterns = []
             ("*cli*.py", "cli/"),
             ("*console*.py", "cli/")
-        ]
+        
         
         all_patterns = web_patterns + bot_patterns + cli_patterns
         
@@ -388,10 +389,10 @@ class FlashLoanProjectOrganizer:
     
     def _organize_scripts(self) -> None:
         """Organize script files"""
-        script_patterns = [
+        script_patterns = []
             "*script*.py", "*organizer*.py", "*merger*.py", "*tool*.py", 
             "*utility*.py", "*deploy*.py", "*.sh", "*.bat", "*.ps1"
-        ]
+        
         
         scripts_dir = self.root_dir / "scripts"
         scripts_dir.mkdir(exist_ok=True)
@@ -473,7 +474,7 @@ class FlashLoanProjectOrganizer:
             for dir_name in dirs:
                 dir_path = Path(root) / dir_name
                 try:
-                    if (not any(dir_path.iterdir()) and 
+                    if (not any(dir_path.iterdir()) and )
                         dir_path.name not in ['__pycache__', '.git', '.vscode', 'node_modules']):
                         dir_path.rmdir()
                         cleaned_count += 1
@@ -481,14 +482,14 @@ class FlashLoanProjectOrganizer:
                 except OSError:
                     pass  # Directory not empty or permission issue
         
-        print(f"✅ Cleaned {cleaned_count} empty directories")
+        print(f"[OK] Cleaned {cleaned_count} empty directories")
     
     def generate_organization_report(self) -> Dict[str, Any]:
         """Generate comprehensive organization report"""
-        report = {
+        report = {}
             'timestamp': datetime.now().isoformat(),
             'backup_location': str(self.backup_dir),
-            'summary': {
+            'summary': {}
                 'directories_created': len(self.target_structure),
                 'files_moved': len(self.moved_files),
                 'duplicates_removed': len(self.removed_duplicates),
@@ -498,7 +499,7 @@ class FlashLoanProjectOrganizer:
             'removed_duplicates': self.removed_duplicates,
             'organization_log': self.organization_log,
             'target_structure': self.target_structure
-        }
+        
         
         # Save detailed report
         report_path = self.root_dir / 'docs' / 'ORGANIZATION_REPORT.json'
@@ -518,11 +519,11 @@ class FlashLoanProjectOrganizer:
 - **Backup location:** `{self.backup_dir}`
 
 ## Key Improvements
-- ✅ Professional directory structure
-- ✅ Eliminated duplicate files
-- ✅ Logical separation of concerns
-- ✅ Easy navigation and maintenance
-- ✅ Scalable architecture
+- [OK] Professional directory structure
+- [OK] Eliminated duplicate files
+- [OK] Logical separation of concerns
+- [OK] Easy navigation and maintenance
+- [OK] Scalable architecture
 
 ## Directory Structure
 """
@@ -555,7 +556,7 @@ This organization creates a professional, maintainable project structure followi
     
     def run_complete_organization(self) -> Dict[str, Any]:
         """Run the complete organization process"""
-        print("🚀 Starting Flash Loan Arbitrage Bot Organization")
+        print("[INIT] Starting Flash Loan Arbitrage Bot Organization")
         print("=" * 60)
         
         try:
@@ -579,9 +580,9 @@ This organization creates a professional, maintainable project structure followi
             report = self.generate_organization_report()
             
             print(f"\n{'='*60}")
-            print("🎉 PROJECT ORGANIZATION COMPLETED SUCCESSFULLY")
+            print("[CELEBRATE] PROJECT ORGANIZATION COMPLETED SUCCESSFULLY")
             print(f"{'='*60}")
-            print(f"📊 Summary:")
+            print(f"[METRICS] Summary:")
             print(f"   • Directories created: {len(self.target_structure)}")
             print(f"   • Files organized: {len(self.moved_files)}")
             print(f"   • Duplicates removed: {len(self.removed_duplicates)}")
@@ -593,7 +594,7 @@ This organization creates a professional, maintainable project structure followi
             return report
             
         except Exception as e:
-            print(f"❌ Error during organization: {e}")
+            print(f"[ERROR] Error during organization: {e}")
             print(f"Check backup directory: {self.backup_dir}")
             raise
 

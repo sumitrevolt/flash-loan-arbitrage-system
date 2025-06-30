@@ -1,4 +1,20 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+                    from typing import List # Add List import for type hint
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, Any, Optional, Callable, Awaitable
+import asyncio
+import json
+import logging
+import signal
+import sys
+import weakref
+
+from aiohttp import web, WSMsgType
+from enhanced_langchain_coordinator import EnhancedLangChainCoordinator
+from enhanced_mcp_server_manager import EnhancedMCPServerManager
+from types import FrameType
 """
 Complete LangChain MCP Integration System
 ========================================
@@ -14,33 +30,33 @@ Author: GitHub Copilot Assistant
 Date: June 16, 2025
 """
 
-import asyncio
-import logging
-import json
-import signal
-import sys
-from datetime import datetime
-from typing import Dict, Any, Optional, Callable, Awaitable # Union removed
-from pathlib import Path
-from types import FrameType
-from aiohttp import web, WSMsgType
 # BaseRequest removed
 # from aiohttp.web_response import Response # Remove unused Response alias
-import weakref
 
 # Import our enhanced components
-from enhanced_langchain_coordinator import EnhancedLangChainCoordinator
-from enhanced_mcp_server_manager import EnhancedMCPServerManager
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(),
         logging.FileHandler('complete_integration.log', encoding='utf-8')
-    ]
-)
+    
+
 
 logger = logging.getLogger(__name__)
 
@@ -62,12 +78,12 @@ class CompleteLangChainMCPSystem:
         # System state
         self.is_running = False
         self.start_time = datetime.now()
-        self.system_metrics = {
+        self.system_metrics = {}
             'requests_processed': 0,
             'errors_encountered': 0,
             'uptime_seconds': 0,
             'active_connections': 0
-        }
+        
         
         # Shutdown handling
         self.shutdown_event = asyncio.Event()
@@ -76,37 +92,37 @@ class CompleteLangChainMCPSystem:
     
     def _signal_handler(self, signum: int, frame: Optional[FrameType]) -> None:
         """Handle shutdown signals"""
-        logger.info(f"🛑 Received signal {signum}, initiating graceful shutdown...")
+        logger.info(str(f"[STOP] Received signal {signum}, initiating graceful shutdown...")
         self.shutdown_event.set()
     
     async def initialize(self) -> bool:
         """Initialize all system components"""
-        logger.info("🚀 Initializing Complete LangChain MCP Integration System...")
+        logger.info("[INIT] Initializing Complete LangChain MCP Integration System...")
         
         try:
             # Initialize LangChain coordinator
             logger.info("🧠 Initializing LangChain coordinator...")
             self.coordinator = EnhancedLangChainCoordinator(self.config_path)
             if not await self.coordinator.initialize():
-                logger.error("❌ Failed to initialize LangChain coordinator")
+                logger.error("[ERROR] Failed to initialize LangChain coordinator")
                 return False
             
             # Initialize MCP server manager
             logger.info("📡 Initializing MCP server manager...")
             self.server_manager = EnhancedMCPServerManager(self.config_path)
             if not await self.server_manager.initialize():
-                logger.error("❌ Failed to initialize MCP server manager")
+                logger.error("[ERROR] Failed to initialize MCP server manager")
                 return False
             
             # Initialize web interface
-            logger.info("🌐 Initializing web interface...")
+            logger.info("[NETWORK] Initializing web interface...")
             await self._init_web_interface()
             
-            logger.info("✅ Complete LangChain MCP Integration System initialized successfully!")
+            logger.info("[OK] Complete LangChain MCP Integration System initialized successfully!")
             return True
             
         except Exception as e:
-            logger.error(f"❌ System initialization failed: {e}")
+            logger.error(str(f"[ERROR] System initialization failed: {e}")
             return False
     
     async def _init_web_interface(self):
@@ -140,7 +156,7 @@ class CompleteLangChainMCPSystem:
     
     async def start_system(self):
         """Start the complete integration system"""
-        logger.info("🎪 Starting Complete LangChain MCP Integration System...")
+        logger.info("[CIRCUS] Starting Complete LangChain MCP Integration System...")
         
         self.is_running = True
         
@@ -153,24 +169,24 @@ class CompleteLangChainMCPSystem:
             await self.web_runner.setup()
             site = web.TCPSite(self.web_runner, 'localhost', 8000)
             await site.start()
-            logger.info("🌐 Web interface started on http://localhost:8000")
+            logger.info("[NETWORK] Web interface started on http://localhost:8000")
             
             # Start core system tasks
             assert self.coordinator is not None, "Coordinator not initialized before starting tasks"
             assert self.server_manager is not None, "Server manager not initialized before starting tasks"
-            system_tasks = [
+            system_tasks = []
                 asyncio.create_task(self.coordinator.start_coordination()),
                 asyncio.create_task(self.server_manager.start_management()),
                 asyncio.create_task(self._metrics_update_loop()),
                 asyncio.create_task(self._websocket_broadcast_loop()),
                 asyncio.create_task(self._system_health_monitor())
-            ]
+            
             
             # Wait for shutdown signal or task completion
-            _, pending = await asyncio.wait( # Changed 'done' to '_'
+            _, pending = await asyncio.wait( # Changed 'done' to '_')
                 system_tasks + [asyncio.create_task(self.shutdown_event.wait())],
                 return_when=asyncio.FIRST_COMPLETED
-            )
+            
             
             # Cancel remaining tasks
             for task in pending:
@@ -181,7 +197,7 @@ class CompleteLangChainMCPSystem:
                     pass
             
         except Exception as e:
-            logger.error(f"❌ System error: {e}")
+            logger.error(str(f"[ERROR] System error: {e}")
         finally:
             await self.cleanup()
     
@@ -196,7 +212,7 @@ class CompleteLangChainMCPSystem:
                 await asyncio.sleep(10)  # Update every 10 seconds
                 
             except Exception as e:
-                logger.error(f"📊 Metrics update error: {e}")
+                logger.error(str(f"[METRICS] Metrics update error: {e}")
                 await asyncio.sleep(30)
     
     async def _websocket_broadcast_loop(self):
@@ -208,18 +224,17 @@ class CompleteLangChainMCPSystem:
                     status_data = await self._get_complete_status()
                     
                     # Broadcast to all connected clients
-                    from typing import List # Add List import for type hint
                     disconnected: List[web.WebSocketResponse] = []
                     for ws in list(self.websocket_connections): # Iterate over a copy for safe removal
                         try:
                             # Removed isinstance check, assuming ws is web.WebSocketResponse
-                            await ws.send_str(json.dumps({
+                            await ws.send_str(json.dumps({))}
                                 'type': 'status_update',
                                 'data': status_data,
-                                'timestamp': datetime.now().isoformat() # Correctly include timestamp
-                            }))
+                                'timestamp': datetime.now(, ensure_ascii=True, default=str).isoformat() # Correctly include timestamp
+                            
                         except Exception as e_ws: # Catch exception for this specific WebSocket
-                            logger.warning(f"Failed to send to WebSocket {ws}: {e_ws}")
+                            logger.warning(str(f"Failed to send to WebSocket {ws}: {e_ws}")
                             disconnected.append(ws)
                     
                     # Remove disconnected clients
@@ -229,7 +244,7 @@ class CompleteLangChainMCPSystem:
                 await asyncio.sleep(5)  # Broadcast every 5 seconds
                 
             except Exception as e:
-                logger.error(f"📡 WebSocket broadcast error: {e}")
+                logger.error(str(f"📡 WebSocket broadcast error: {e}")
                 await asyncio.sleep(10)
     
     async def _system_health_monitor(self):
@@ -246,12 +261,12 @@ class CompleteLangChainMCPSystem:
                 if coordinator_healthy and manager_healthy:
                     logger.debug("💚 System health: All components operational")
                 else:
-                    logger.warning(f"⚠️ System health: Coordinator={coordinator_healthy}, Manager={manager_healthy}")
+                    logger.warning(str(f"[WARN] System health: Coordinator={coordinator_healthy}, Manager={manager_healthy}")
                 
                 await asyncio.sleep(60)  # Check every minute
                 
             except Exception as e:
-                logger.error(f"🏥 Health monitor error: {e}")
+                logger.error(str(f"🏥 Health monitor error: {e}")
                 await asyncio.sleep(30)
     
     # Web API Handlers
@@ -316,28 +331,28 @@ class CompleteLangChainMCPSystem:
             <script>
                 let ws = null;
                 
-                function connectWebSocket() {
+                function connectWebSocket() {}
                     ws = new WebSocket('ws://localhost:8000/ws');
                     
-                    ws.onmessage = function(event) {
+                    ws.onmessage = function(event) {}
                         const data = JSON.parse(event.data);
-                        if (data.type === 'status_update') {
+                        if (data.type === 'status_update') {}
                             updateDashboard(data.data);
-                        }
+                        
                         logMessage('WebSocket: ' + event.data);
                     };
                     
-                    ws.onclose = function() {
+                    ws.onclose = function() {}
                         logMessage('WebSocket connection closed, reconnecting...');
                         setTimeout(connectWebSocket, 5000);
                     };
                     
-                    ws.onerror = function(error) {
+                    ws.onerror = function(error) {}
                         logMessage('WebSocket error: ' + error);
                     };
-                }
                 
-                function updateDashboard(data) {
+                
+                function updateDashboard(data) {}
                     // Update system status
                     document.getElementById('system-status').innerHTML = 
                         '<p>Uptime: ' + Math.floor(data.system_metrics.uptime_seconds / 60) + ' minutes</p>' +
@@ -346,12 +361,12 @@ class CompleteLangChainMCPSystem:
                     
                     // Update server status
                     let serverHtml = '';
-                    if (data.servers) {
-                        for (const [name, server] of Object.entries(data.servers.servers || {})) {
+                    if (data.servers) {}
+                        for (const [name, server] of Object.entries(data.servers.servers || {})) {}
                             const statusClass = server.status === 'healthy' ? 'status-healthy' : 'status-unhealthy';
                             serverHtml += '<p><span class="' + statusClass + '">●</span> ' + name + ' (' + server.status + ')</p>';
-                        }
-                    }
+                        
+                    
                     document.getElementById('server-status').innerHTML = serverHtml || 'No servers';
                     
                     // Update metrics
@@ -360,21 +375,21 @@ class CompleteLangChainMCPSystem:
                         '<div class="metric">Memory Usage: N/A</div>' +
                         '<div class="metric">Response Time: N/A</div>' +
                         '<div class="metric">Success Rate: N/A</div>';
-                }
                 
-                function logMessage(message) {
+                
+                function logMessage(message) {}
                     const log = document.getElementById('log');
                     const timestamp = new Date().toLocaleTimeString();
                     log.innerHTML += '[' + timestamp + '] ' + message + '\\n';
                     log.scrollTop = log.scrollHeight;
-                }
                 
-                async function executeQuery() {
+                
+                async function executeQuery() {}
                     const query = document.getElementById('query-input').value;
                     if (!query) return;
                     
-                    try {
-                        const response = await fetch('/api/query', {
+                    try {}
+                        const response = await fetch('/api/query', {)}
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ query: query })
@@ -387,21 +402,21 @@ class CompleteLangChainMCPSystem:
                         
                     } catch (error) {
                         logMessage('Query error: ' + error);
-                    }
-                }
+                    
+                
                 
                 // Initialize
                 connectWebSocket();
                 
                 // Refresh data every 30 seconds
-                setInterval(async function() {
-                    try {
+                setInterval(async function() {)}
+                    try {}
                         const response = await fetch('/api/status');
                         const data = await response.json();
                         updateDashboard(data);
                     } catch (error) {
                         logMessage('Status update error: ' + error);
-                    }
+                    
                 }, 30000);
             </script>
         </body>
@@ -417,7 +432,7 @@ class CompleteLangChainMCPSystem:
             return web.json_response(status)
         except Exception as e:
             self.system_metrics['errors_encountered'] += 1
-            logger.error(f"❌ Status API error: {e}")
+            logger.error(str(f"[ERROR] Status API error: {e}")
             return web.json_response({'error': str(e)}, status=500)
     
     async def servers_api(self, request: web.Request) -> web.Response:
@@ -429,7 +444,7 @@ class CompleteLangChainMCPSystem:
             else:
                 return web.json_response({'error': 'Server manager not initialized'}, status=503)
         except Exception as e:
-            logger.error(f"❌ Servers API error: {e}")
+            logger.error(str(f"[ERROR] Servers API error: {e}")
             return web.json_response({'error': str(e)}, status=500)
     
     async def execute_api(self, request: web.Request) -> web.Response:
@@ -451,7 +466,7 @@ class CompleteLangChainMCPSystem:
                 
         except Exception as e:
             self.system_metrics['errors_encountered'] += 1
-            logger.error(f"❌ Execute API error: {e}")
+            logger.error(str(f"[ERROR] Execute API error: {e}")
             return web.json_response({'error': str(e)}, status=500)
     
     async def query_api(self, request: web.Request) -> web.Response:
@@ -473,7 +488,7 @@ class CompleteLangChainMCPSystem:
                 
         except Exception as e:
             self.system_metrics['errors_encountered'] += 1
-            logger.error(f"❌ Query API error: {e}")
+            logger.error(str(f"[ERROR] Query API error: {e}")
             return web.json_response({'error': str(e)}, status=500)
     
     async def metrics_api(self, request: web.Request) -> web.Response:
@@ -483,7 +498,7 @@ class CompleteLangChainMCPSystem:
             metrics['timestamp'] = datetime.now().isoformat()
             return web.json_response(metrics)
         except Exception as e:
-            logger.error(f"❌ Metrics API error: {e}")
+            logger.error(str(f"[ERROR] Metrics API error: {e}")
             return web.json_response({'error': str(e)}, status=500)
     
     async def restart_server_api(self, request: web.Request) -> web.Response:
@@ -505,7 +520,7 @@ class CompleteLangChainMCPSystem:
                 return web.json_response({'error': 'Server not found'}, status=404)
                 
         except Exception as e:
-            logger.error(f"❌ Restart API error: {e}")
+            logger.error(str(f"[ERROR] Restart API error: {e}")
             return web.json_response({'error': str(e)}, status=500)
     
     async def websocket_handler(self, request: web.Request) -> web.WebSocketResponse: # Qualified types
@@ -523,14 +538,14 @@ class CompleteLangChainMCPSystem:
                         data = json.loads(msg.data)
                         # Handle incoming WebSocket messages if needed
                         if data.get('type') == 'ping':
-                            await ws.send_str(json.dumps({'type': 'pong'}))
+                            await ws.send_str(json.dumps({'type': 'pong'}, ensure_ascii=True, default=str))
                     except json.JSONDecodeError:
                         logger.warning("📡 Invalid JSON received via WebSocket")
                 elif msg.type == WSMsgType.ERROR:
-                    logger.error(f"📡 WebSocket error: {ws.exception()}")
+                    logger.error(str(f"📡 WebSocket error: {ws.exception(}")
                     break
         except Exception as e:
-            logger.error(f"📡 WebSocket handler error: {e}")
+            logger.error(str(f"📡 WebSocket handler error: {e}")
         finally:
             self.websocket_connections.discard(ws)
             logger.info("🔌 WebSocket connection closed")
@@ -539,12 +554,12 @@ class CompleteLangChainMCPSystem:
     
     async def _get_complete_status(self) -> Dict[str, Any]:
         """Get complete system status"""
-        status = {
+        status = {}
             'timestamp': datetime.now().isoformat(),
             'system_metrics': dict(self.system_metrics),
             'coordinator_status': 'running' if self.coordinator and self.coordinator.is_running else 'stopped',
             'manager_status': 'running' if self.server_manager and self.server_manager.is_running else 'stopped'
-        }
+        
         
         # Add server status if available
         if self.server_manager:
@@ -556,11 +571,11 @@ class CompleteLangChainMCPSystem:
         # Add coordinator status if available
         if self.coordinator:
             try:
-                status['coordinator_details'] = {
+                status['coordinator_details'] = {}
                     'active_agents': len(self.coordinator.agents),
                     'active_chains': len(self.coordinator.chains),
                     'memory_enabled': self.coordinator.memory is not None
-                }
+                
             except Exception as e:
                 status['coordinator_error'] = str(e)
         
@@ -591,25 +606,25 @@ class CompleteLangChainMCPSystem:
         if self.server_manager:
             await self.server_manager.shutdown()
         
-        logger.info("✅ System cleanup completed")
+        logger.info("[OK] System cleanup completed")
 
 async def main():
     """Main execution function"""
     system = CompleteLangChainMCPSystem()
     
     try:
-        print("🚀 Starting Complete LangChain MCP Integration System")
+        print("[INIT] Starting Complete LangChain MCP Integration System")
         print("=" * 60)
         
         # Initialize system
         if not await system.initialize():
-            logger.error("❌ Failed to initialize system")
+            logger.error("[ERROR] Failed to initialize system")
             return 1
         
-        print("\n✅ System initialized successfully!")
-        print("\n🌐 Dashboard available at: http://localhost:8000")
-        print("📊 API endpoints available at: http://localhost:8000/api/")
-        print("\n🔧 Press Ctrl+C to shutdown gracefully\n")
+        print("\n[OK] System initialized successfully!")
+        print("\n[NETWORK] Dashboard available at: http://localhost:8000")
+        print("[METRICS] API endpoints available at: http://localhost:8000/api/")
+        print("\n[SETUP] Press Ctrl+C to shutdown gracefully\n")
         
         # Start system
         await system.start_system()
@@ -617,10 +632,10 @@ async def main():
         return 0
         
     except KeyboardInterrupt:
-        logger.info("🛑 Received shutdown signal")
+        logger.info("[STOP] Received shutdown signal")
         return 0
     except Exception as e:
-        logger.error(f"❌ System error: {e}")
+        logger.error(str(f"[ERROR] System error: {e}")
         return 1
     finally:
         await system.cleanup()

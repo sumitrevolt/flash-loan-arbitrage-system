@@ -1,32 +1,34 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import List, Dict
+import asyncio
+import json
+import os
+import platform
+
+from dotenv import load_dotenv
+from web3 import Web3
+import requests
 """
 Production Deployment Validation Script
 Validates all systems are ready for production flash loan arbitrage trading
 """
 
-import asyncio
-import json
-import os
-import platform
-import requests
-from typing import List, Dict
-from dotenv import load_dotenv
-from web3 import Web3
 
 # Load environment variables
 load_dotenv()
 
 def test_environment_variables() -> bool:
     """Test all required environment variables are set"""
-    print("\n🔍 Testing Environment Variables...")
+    print("\n[SEARCH] Testing Environment Variables...")
     
-    required_vars = [
+    required_vars = []
         "POLYGON_RPC_URL",
         "PRIVATE_KEY", 
         "ACCOUNT_ADDRESS",
         "ETHERSCAN_API_KEY",
         "POLYGONSCAN_API_KEY"
-    ]
+    
     
     missing_vars: List[str] = []
     for var in required_vars:
@@ -34,15 +36,15 @@ def test_environment_variables() -> bool:
             missing_vars.append(var)
             
     if missing_vars:
-        print(f"❌ Missing required variables: {', '.join(missing_vars)}")
+        print(f"[ERROR] Missing required variables: {', '.join(missing_vars)}")
         return False
     else:
-        print("✅ All required environment variables are set")
+        print("[OK] All required environment variables are set")
         return True
 
 def test_api_connectivity() -> bool:
     """Test API connectivity for external services"""
-    print("\n🌐 Testing API Connectivity...")
+    print("\n[NETWORK] Testing API Connectivity...")
     
     all_passed = True
     
@@ -50,62 +52,62 @@ def test_api_connectivity() -> bool:
     try:
         polygon_rpc = os.getenv("POLYGON_RPC_URL")
         if polygon_rpc:
-            response = requests.post(
+            response = requests.post()
                 polygon_rpc,
                 json={"jsonrpc": "2.0", "method": "eth_blockNumber", "params": [], "id": 1},
                 timeout=10
-            )
+            
             if response.status_code == 200 and "result" in response.json():
                 block_num = int(response.json()['result'], 16)
-                print(f"✅ Polygon RPC - Connected successfully - Block: {block_num}")
+                print(f"[OK] Polygon RPC - Connected successfully - Block: {block_num}")
             else:
-                print("❌ Polygon RPC - Failed to get block number")
+                print("[ERROR] Polygon RPC - Failed to get block number")
                 all_passed = False
         else:
-            print("❌ Polygon RPC URL not configured")
+            print("[ERROR] Polygon RPC URL not configured")
             all_passed = False
     except Exception as e:
-        print(f"❌ Polygon RPC - Connection failed: {str(e)}")
+        print(f"[ERROR] Polygon RPC - Connection failed: {str(e)}")
         all_passed = False
         
     # Test Etherscan API
     try:
         etherscan_key = os.getenv("ETHERSCAN_API_KEY")
         if etherscan_key:
-            response = requests.get(
+            response = requests.get()
                 f"https://api.etherscan.io/api?module=proxy&action=eth_blockNumber&apikey={etherscan_key}",
                 timeout=10
-            )
+            
             if response.status_code == 200 and "result" in response.json():
-                print("✅ Etherscan API - Connected successfully")
+                print("[OK] Etherscan API - Connected successfully")
             else:
-                print("❌ Etherscan API - API key invalid or service unavailable")
+                print("[ERROR] Etherscan API - API key invalid or service unavailable")
                 all_passed = False
         else:
-            print("❌ Etherscan API key not configured")
+            print("[ERROR] Etherscan API key not configured")
             all_passed = False
     except Exception as e:
-        print(f"❌ Etherscan API - Connection failed: {str(e)}")
+        print(f"[ERROR] Etherscan API - Connection failed: {str(e)}")
         all_passed = False
         
     # Test Polygonscan API
     try:
         polygonscan_key = os.getenv("POLYGONSCAN_API_KEY")
         if polygonscan_key:
-            response = requests.get(
+            response = requests.get()
                 f"https://api.polygonscan.com/api?module=proxy&action=eth_blockNumber&apikey={polygonscan_key}",
                 timeout=10
-            )
+            
             if response.status_code == 200 and "result" in response.json():
-                print("✅ Polygonscan API - Connected successfully")
+                print("[OK] Polygonscan API - Connected successfully")
             else:
-                print("❌ Polygonscan API - API key invalid or service unavailable") 
+                print("[ERROR] Polygonscan API - API key invalid or service unavailable") 
                 all_passed = False
         else:
-            print("❌ Polygonscan API key not configured")
+            print("[ERROR] Polygonscan API key not configured")
             all_passed = False
     except Exception as e:
-        print(f"❌ Polygonscan API - Connection failed: {str(e)}")
+        print(f"[ERROR] Polygonscan API - Connection failed: {str(e)}")
         all_passed = False
         
     return all_passed
@@ -116,11 +118,11 @@ def test_mcp_servers() -> bool:
     
     all_passed = True
     
-    mcp_servers: List[Dict[str, str]] = [
+    mcp_servers: List[Dict[str, str]] = []
         {"name": "Copilot MCP", "url": "http://127.0.0.1:3002/health"},
         {"name": "TaskManager MCP", "url": "http://127.0.0.1:8007/health"},
         {"name": "Flash Loan Arbitrage TS", "url": "http://127.0.0.1:8000/health"}
-    ]
+    
     
     for server in mcp_servers:
         try:
@@ -128,12 +130,12 @@ def test_mcp_servers() -> bool:
             if response.status_code == 200:
                 data = response.json()
                 status = data.get('status', 'ok')
-                print(f"✅ MCP {server['name']} - Server healthy - Status: {status}")
+                print(f"[OK] MCP {server['name']} - Server healthy - Status: {status}")
             else:
-                print(f"❌ MCP {server['name']} - Server returned status code: {response.status_code}")
+                print(f"[ERROR] MCP {server['name']} - Server returned status code: {response.status_code}")
                 all_passed = False
         except Exception as e:
-            print(f"❌ MCP {server['name']} - Connection failed: {str(e)}")
+            print(f"[ERROR] MCP {server['name']} - Connection failed: {str(e)}")
             all_passed = False
             
     return all_passed
@@ -148,18 +150,18 @@ def test_web3_connectivity() -> bool:
         # Initialize Web3
         rpc_url = os.getenv("POLYGON_RPC_URL")
         if not rpc_url:
-            print("❌ Web3 Setup - No RPC URL configured")
+            print("[ERROR] Web3 Setup - No RPC URL configured")
             return False
             
         w3 = Web3(Web3.HTTPProvider(rpc_url))
         
         # Test connection
         if w3.is_connected():
-            print("✅ Web3 Connection - Connected to Polygon network")
+            print("[OK] Web3 Connection - Connected to Polygon network")
             
             # Get latest block
             latest_block = w3.eth.block_number
-            print(f"✅ Blockchain Sync - Latest block: {latest_block}")
+            print(f"[OK] Blockchain Sync - Latest block: {latest_block}")
             
             # Test wallet
             private_key = os.getenv("PRIVATE_KEY")
@@ -169,33 +171,33 @@ def test_web3_connectivity() -> bool:
                     balance = w3.eth.get_balance(account.address)
                     balance_matic = w3.from_wei(balance, 'ether')
                     
-                    print(f"✅ Wallet Access - Address: {account.address}")
-                    print(f"✅ Wallet Balance - {balance_matic:.4f} MATIC")
+                    print(f"[OK] Wallet Access - Address: {account.address}")
+                    print(f"[OK] Wallet Balance - {balance_matic:.4f} MATIC")
                     
                     # Check if balance is sufficient for gas
                     if balance_matic < 0.1:
-                        print(f"⚠️  WARNING - Low MATIC balance ({balance_matic:.4f}) - recommend at least 0.1 MATIC for gas")
+                        print(f"[WARN]  WARNING - Low MATIC balance ({balance_matic:.4f}) - recommend at least 0.1 MATIC for gas")
                         
                 except Exception as e:
-                    print(f"❌ Wallet Access - Invalid private key: {str(e)}")
+                    print(f"[ERROR] Wallet Access - Invalid private key: {str(e)}")
                     all_passed = False
             else:
-                print("❌ Wallet Access - Private key not configured or invalid length")
+                print("[ERROR] Wallet Access - Private key not configured or invalid length")
                 all_passed = False
                 
         else:
-            print("❌ Web3 Connection - Failed to connect to Polygon network")
+            print("[ERROR] Web3 Connection - Failed to connect to Polygon network")
             all_passed = False
             
     except Exception as e:
-        print(f"❌ Web3 Setup - Initialization failed: {str(e)}")
+        print(f"[ERROR] Web3 Setup - Initialization failed: {str(e)}")
         all_passed = False
         
     return all_passed
 
 def test_system_requirements() -> bool:
     """Test system requirements"""
-    print("\n💻 Testing System Requirements...")
+    print("\n[COMPUTER] Testing System Requirements...")
     
     all_passed = True
     
@@ -204,18 +206,18 @@ def test_system_requirements() -> bool:
     major, minor = map(int, python_version.split('.')[:2])
     
     if major == 3 and minor >= 8:
-        print(f"✅ Python Version - Python {python_version} (compatible)")
+        print(f"[OK] Python Version - Python {python_version} (compatible)")
     else:
-        print(f"❌ Python Version - Python {python_version} (requires 3.8+)")
+        print(f"[ERROR] Python Version - Python {python_version} (requires 3.8+)")
         all_passed = False
         
     # Test Windows asyncio fix
     if platform.system() == "Windows":
         try:
             asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
-            print("✅ Windows Asyncio Fix - ProactorEventLoopPolicy applied")
+            print("[OK] Windows Asyncio Fix - ProactorEventLoopPolicy applied")
         except Exception as e:
-            print(f"❌ Windows Asyncio Fix - Failed to set event loop policy: {str(e)}")
+            print(f"[ERROR] Windows Asyncio Fix - Failed to set event loop policy: {str(e)}")
             all_passed = False
             
     return all_passed
@@ -232,30 +234,30 @@ def test_configuration_files() -> bool:
             config = json.load(f)
         
         servers = config.get("servers", {})
-        print(f"✅ MCP Configuration - Valid JSON with {len(servers)} server configurations")
+        print(f"[OK] MCP Configuration - Valid JSON with {len(servers)} server configurations")
         
         # Check for required fields
         required_fields: List[str] = ["name", "version", "servers", "global_configuration"]
         missing_fields: List[str] = [field for field in required_fields if field not in config]
         
         if missing_fields:
-            print(f"⚠️  WARNING - MCP Config missing fields: {', '.join(missing_fields)}")
+            print(f"[WARN]  WARNING - MCP Config missing fields: {', '.join(missing_fields)}")
             
     except FileNotFoundError:
-        print("❌ MCP Configuration - unified_mcp_config.json not found")
+        print("[ERROR] MCP Configuration - unified_mcp_config.json not found")
         all_passed = False
     except json.JSONDecodeError as e:
-        print(f"❌ MCP Configuration - Invalid JSON: {str(e)}")
+        print(f"[ERROR] MCP Configuration - Invalid JSON: {str(e)}")
         all_passed = False
     except Exception as e:
-        print(f"❌ MCP Configuration - Error reading config: {str(e)}")
+        print(f"[ERROR] MCP Configuration - Error reading config: {str(e)}")
         all_passed = False
         
     return all_passed
 
 async def main() -> bool:
     """Main validation function"""
-    print("🚀 Production Deployment Validation Starting...")
+    print("[INIT] Production Deployment Validation Starting...")
     
     # Run all validation tests
     test_results: List[bool] = []
@@ -269,7 +271,7 @@ async def main() -> bool:
     
     # Generate final report
     print("\n" + "="*60)
-    print("🎯 PRODUCTION VALIDATION REPORT")
+    print("[TASK] PRODUCTION VALIDATION REPORT")
     print("="*60)
     
     total_tests = len(test_results)
@@ -282,9 +284,9 @@ async def main() -> bool:
     print(f"  Failed: {failed_tests}")
     
     if failed_tests == 0:
-        print(f"\n🎉 ALL TESTS PASSED - READY FOR PRODUCTION!")
+        print(f"\n[CELEBRATE] ALL TESTS PASSED - READY FOR PRODUCTION!")
     else:
-        print(f"\n❌ {failed_tests} TESTS FAILED - PRODUCTION NOT READY")
+        print(f"\n[ERROR] {failed_tests} TESTS FAILED - PRODUCTION NOT READY")
         
     print(f"\nProduction readiness: {'🟢 READY' if failed_tests == 0 else '🔴 NOT READY'}")
     print("="*60)

@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Dict, Any, Optional, List
+import json
+import os
+
+from dataclasses import dataclass, asdict
 """
 Configuration Management
 ========================
@@ -5,11 +12,6 @@ Configuration Management
 Centralized configuration management for the LangChain multi-agent system.
 """
 
-import os
-import json
-from typing import Dict, Any, Optional, List
-from dataclasses import dataclass, asdict
-from pathlib import Path
 
 @dataclass
 class DatabaseConfig:
@@ -79,6 +81,7 @@ class SecurityConfig:
                 'web3', 'eth_account', 'eth_utils'
             ]
 
+
 @dataclass
 class MonitoringConfig:
     """Monitoring configuration"""
@@ -137,12 +140,12 @@ class Config:
                 if 'monitoring' in config_data:
                     self._update_dataclass(self.monitoring, config_data['monitoring'])
                 
-                print(f"✅ Configuration loaded from {self.config_file}")
+                print(f"[OK] Configuration loaded from {self.config_file}")
             else:
                 print(f"ℹ️ Configuration file {self.config_file} not found, using defaults")
                 
         except Exception as e:
-            print(f"⚠️ Error loading configuration: {e}")
+            print(f"[WARN] Error loading configuration: {e}")
 
     def load_environment_variables(self):
         """Load configuration from environment variables"""
@@ -200,11 +203,11 @@ class Config:
             with open(file_path, 'w') as f:
                 json.dump(config_data, f, indent=2)
             
-            print(f"✅ Configuration saved to {file_path}")
+            print(f"[OK] Configuration saved to {file_path}")
             return True
             
         except Exception as e:
-            print(f"❌ Error saving configuration: {e}")
+            print(f"[ERROR] Error saving configuration: {e}")
             return False
 
     def validate_config(self) -> Dict[str, Any]:
@@ -270,6 +273,7 @@ class Config:
             },
             "monitoring": asdict(self.monitoring)
         }
+
 
 # Singleton instance
 _config_instance = None

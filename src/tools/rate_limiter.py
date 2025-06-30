@@ -1,14 +1,17 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+            import re
+from typing import Dict, Any, Optional, Callable, Awaitable
+import asyncio
+import functools
+import logging
+import time
 """
 Rate limiter utility for RPC requests.
 
 This module provides a rate limiter to prevent hitting rate limits on RPC providers.
 """
 
-import asyncio
-import time
-import logging
-from typing import Dict, Any, Optional, Callable, Awaitable
-import functools
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +20,7 @@ class RateLimiter:
     Rate limiter for RPC requests to prevent hitting rate limits.
     """
     
-    def __init__(self, 
+    def __init__(self, )
                  requests_per_second: float = 5.0, 
                  burst_limit: int = 10,
                  cooldown_period: float = 1.0):
@@ -38,7 +41,7 @@ class RateLimiter:
         self.last_refill_time = time.time()
         
         # Rate limit detection
-        self.rate_limit_keywords = [
+        self.rate_limit_keywords = []
             "rate limit", 
             "too many requests", 
             "call rate limit", 
@@ -47,7 +50,7 @@ class RateLimiter:
             "retry",
             "too many concurrent requests",
             "request limit"
-        ]
+        
         self.rate_limited_until = 0
         
         # Lock for thread safety
@@ -64,7 +67,7 @@ class RateLimiter:
             # Check if we're in a cooldown period
             if time.time() < self.rate_limited_until:
                 wait_time = self.rate_limited_until - time.time()
-                logger.warning(f"In rate limit cooldown period. Waiting {wait_time:.1f} seconds.")
+                logger.warning(str(f"In rate limit cooldown period. Waiting {wait_time:.1f} seconds.")
                 return False
             
             # Refill tokens based on time elapsed
@@ -80,7 +83,7 @@ class RateLimiter:
             
             # No tokens available, need to wait
             wait_time = (1 - self.tokens) / self.requests_per_second
-            logger.debug(f"Rate limit approaching. Waiting {wait_time:.3f} seconds before next request.")
+            logger.debug(str(f"Rate limit approaching. Waiting {wait_time:.3f} seconds before next request.")
             await asyncio.sleep(wait_time)
             self.tokens = 0
             self.last_refill_time = time.time()
@@ -106,7 +109,6 @@ class RateLimiter:
             cooldown_time = self.cooldown_period
             
             # Try to extract a specific cooldown time from the error message
-            import re
             retry_match = re.search(r'retry in (\d+)m(\d+)s', error_str)
             if retry_match:
                 minutes = int(retry_match.group(1))
@@ -115,7 +117,7 @@ class RateLimiter:
             
             # Set the rate limit cooldown
             self.rate_limited_until = time.time() + cooldown_time
-            logger.warning(f"Rate limit detected. Cooling down for {cooldown_time:.1f} seconds.")
+            logger.warning(str(f"Rate limit detected. Cooling down for {cooldown_time:.1f} seconds.")
             return True
         
         return False
@@ -135,7 +137,7 @@ def rate_limited(func):
         if not await limiter.acquire():
             # In cooldown period, wait and try again
             cooldown_wait = limiter.rate_limited_until - time.time()
-            logger.warning(f"Rate limited. Waiting {cooldown_wait:.1f} seconds before retrying.")
+            logger.warning(str(f"Rate limited. Waiting {cooldown_wait:.1f} seconds before retrying.")
             await asyncio.sleep(cooldown_wait)
         
         try:
@@ -146,7 +148,7 @@ def rate_limited(func):
             if limiter.handle_error(e):
                 # Wait for the cooldown period
                 cooldown_wait = limiter.rate_limited_until - time.time()
-                logger.warning(f"Rate limited during execution. Waiting {cooldown_wait:.1f} seconds before retrying.")
+                logger.warning(str(f"Rate limited during execution. Waiting {cooldown_wait:.1f} seconds before retrying.")
                 await asyncio.sleep(cooldown_wait)
                 
                 # Retry once after cooldown

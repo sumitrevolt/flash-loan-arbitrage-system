@@ -1,0 +1,47 @@
+# =============================================================================
+# MASTER COORDINATION SYSTEM DOCKERFILE
+# =============================================================================
+# Unified orchestrator for 21 MCP servers, 10 AI agents, LangChain, and AutoGen
+# =============================================================================
+
+FROM python:3.11.8-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    jq \
+    htop \
+    redis-tools \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY requirements-master-coordination.txt /app/
+RUN pip install --no-cache-dir -r requirements-master-coordination.txt
+
+# Copy source code
+COPY master_coordinator.py /app/
+COPY coordination_system/ ./coordination/
+COPY config/ ./config/
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# Create necessary directories
+RUN mkdir -p /app/logs /app/data /app/coordination
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8500/health || exit 1
+
+# Expose ports
+EXPOSE 8500 8501 8502 8503
+
+# Run the master coordinator
+CMD ["python", "master_coordinator.py"]

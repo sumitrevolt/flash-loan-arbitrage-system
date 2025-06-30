@@ -1,12 +1,20 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+import logging
+
+                from web3.middleware import ExtraDataToPOAMiddleware
+            from web3.middleware import geth_poa_middleware
+    from eth_account import Account
+
+            from src.utils.middleware_compat import construct_sign_and_send_raw_middleware
+        from src.utils.web3_v7_middleware import get_compatible_middleware
+    from src.utils.web3_provider import Web3
 """Custom middleware implementations for web3"""
 
-import logging
 
 # Import Web3 with error handling
 try:
     # Import from central web3_provider
-    from src.utils.web3_provider import Web3
-    from eth_account import Account
     WEB3_IMPORTED = True
 except ImportError as e:
     logging.getLogger(__name__).error(f"Failed to import Web3: {e}")
@@ -25,16 +33,13 @@ def get_poa_middleware():
     """
     try:
         # Try to get the actual middleware function, not the applier
-        from src.utils.web3_v7_middleware import get_compatible_middleware
         return get_compatible_middleware()
     except ImportError:
         try:
             # Try to get middleware from web3 directly
-            from web3.middleware import geth_poa_middleware
             return geth_poa_middleware
         except ImportError:
             try:
-                from web3.middleware import ExtraDataToPOAMiddleware
                 return ExtraDataToPOAMiddleware
             except ImportError:
                 # Create a basic fallback middleware if nothing else is available
@@ -60,7 +65,6 @@ class CustomMiddleware:
             
         try:
             # First try to import the built-in middleware
-            from src.utils.middleware_compat import construct_sign_and_send_raw_middleware
             middleware = construct_sign_and_send_raw_middleware(private_key)
             if middleware:
                 return middleware

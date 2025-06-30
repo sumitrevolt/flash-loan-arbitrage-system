@@ -1,0 +1,92 @@
+{
+  "mcpServers": {
+    "curated-langchain": {
+      "command": "docker",
+      "args": [
+        "exec", "curated_mcp_system-coordinator-1",
+        "python", "/app/coordinator.py"
+      ],
+      "disabled": false,
+      "autoApprove": [],
+      "alwaysAllow": [
+        "langchain_query",
+        "autogen_coordination", 
+        "agent_management",
+        "system_status",
+        "health_check"
+      ]
+    },
+    "curated-defi": {
+      "command": "docker",
+      "args": [
+        "exec", "curated_mcp_system-mcp-defi-1",
+        "python", "/app/mcp_servers/aave_flash_loan_mcp_server.py"
+      ],
+      "disabled": false,
+      "autoApprove": [],
+      "alwaysAllow": [
+        "flash_loan_analysis",
+        "arbitrage_detection",
+        "price_monitoring",
+        "risk_assessment",
+        "defi_operations"
+      ]
+    },
+    "curated-agents": {
+      "command": "docker",
+      "args": [
+        "exec", "curated_mcp_system-ai-arbitrage-1",
+        "python", "/app/ai_agents/arbitrage/arbitrage_detector.py"
+      ],
+      "disabled": false,
+      "autoApprove": [],
+      "alwaysAllow": [
+        "agent_status",
+        "agent_command",
+        "arbitrage_analysis",
+        "risk_analysis",
+        "market_analysis"
+      ]
+    },
+    "context7-mcp-server": {
+      "command": "python",
+      "args": [
+        "mcp_servers/context7_mcp_server.py"
+      ],
+      "disabled": false,
+      "autoApprove": [],
+      "alwaysAllow": [
+        "search_docs",
+        "get_library_info",
+        "get_context_suggestions",
+        "analyze_code_context",
+        "health_check",
+        "register_with_coordinator"
+      ]
+    },
+    "github.com/modelcontextprotocol/servers/tree/main/src/filesystem": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "c:\\Users\\Ratanshila\\Documents\\flash loan"
+      ],
+      "disabled": false,
+      "autoApprove": [],
+      "alwaysAllow": [
+        "read_file",
+        "read_multiple_files",
+        "get_file_info",
+        "list_allowed_directories",
+        "search_files",
+        "list_directory",
+        "write_file",
+        "edit_file",
+        "create_directory",
+        "move_file"
+      ]
+    }
+  }
+}

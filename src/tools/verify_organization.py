@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+from pathlib import Path
+import os
+
+
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python3
 """
 Project Organization Verification
@@ -5,26 +11,24 @@ Project Organization Verification
 Verifies that all consolidated files exist and are accessible.
 """
 
-import os
-from pathlib import Path
 
 def verify_organization():
     """Verify that the project organization is complete"""
     
-    print("🔍 Verifying Project Organization...")
+    print("[SEARCH] Verifying Project Organization...")
     print("=" * 50)
     
     project_root = Path.cwd()
     
     # Check consolidated files
-    consolidated_files = {
+    consolidated_files = {}
         "AI System": "core/ai_agents/enhanced_ai_system.py",
         "System Coordinator": "core/coordinators/complete_ai_system.py", 
         "Web Dashboard": "interfaces/web/mcp_dashboard.py",
         "Docker Generator": "infrastructure/docker/compose_generator.py",
         "System Repair": "utilities/tools/system_repair.py",
         "DEX Monitor": "integrations/dex/dex_monitor.py"
-    }
+    
     
     print("📋 Checking Consolidated Files:")
     all_exist = True
@@ -33,15 +37,15 @@ def verify_organization():
         full_path = project_root / file_path
         if full_path.exists():
             size = full_path.stat().st_size
-            print(f"  ✅ {name}: {file_path} ({size:,} bytes)")
+            print(f"  [OK] {name}: {file_path} ({size:,} bytes)")
         else:
-            print(f"  ❌ {name}: {file_path} (MISSING)")
+            print(f"  [ERROR] {name}: {file_path} (MISSING)")
             all_exist = False
     
     print("\n📁 Checking Directory Structure:")
     
     # Check directory structure
-    required_dirs = [
+    required_dirs = []
         "core/ai_agents",
         "core/coordinators", 
         "core/flash_loan",
@@ -64,22 +68,22 @@ def verify_organization():
         "utilities/data",
         "tests",
         "docs"
-    ]
+    
     
     dirs_exist = True
     for dir_path in required_dirs:
         full_dir = project_root / dir_path
         if full_dir.exists():
             file_count = len(list(full_dir.glob("*")))
-            print(f"  ✅ {dir_path}/ ({file_count} items)")
+            print(f"  [OK] {dir_path}/ ({file_count} items)")
         else:
-            print(f"  ❌ {dir_path}/ (MISSING)")
+            print(f"  [ERROR] {dir_path}/ (MISSING)")
             dirs_exist = False
     
     print("\n🧹 Checking Cleanup Status:")
     
     # Check that duplicate files are gone
-    duplicate_files = [
+    duplicate_files = []
         "enhanced_ai_agents.py",
         "enhanced_ai_agents_v2.py",
         "advanced_ai_agents.py",
@@ -97,34 +101,34 @@ def verify_organization():
         "enhanced_dex_monitor_final.py",
         "enhanced_dex_calculations_dashboard.py",
         "enhanced_dex_price_calculator.py"
-    ]
+    
     
     cleanup_complete = True
     for file_name in duplicate_files:
         file_path = project_root / file_name
         if file_path.exists():
-            print(f"  ⚠️ {file_name} still exists (should be in backup)")
+            print(f"  [WARN] {file_name} still exists (should be in backup)")
             cleanup_complete = False
         else:
-            print(f"  ✅ {file_name} cleaned up")
+            print(f"  [OK] {file_name} cleaned up")
     
     print("\n" + "=" * 50)
     
     if all_exist and dirs_exist and cleanup_complete:
-        print("🎉 Project Organization: COMPLETE ✅")
-        print("✅ All consolidated files exist")
-        print("✅ Directory structure is correct") 
-        print("✅ Duplicate files cleaned up")
+        print("[CELEBRATE] Project Organization: COMPLETE [OK]")
+        print("[OK] All consolidated files exist")
+        print("[OK] Directory structure is correct") 
+        print("[OK] Duplicate files cleaned up")
     else:
-        print("⚠️ Project Organization: INCOMPLETE")
+        print("[WARN] Project Organization: INCOMPLETE")
         if not all_exist:
-            print("❌ Some consolidated files missing")
+            print("[ERROR] Some consolidated files missing")
         if not dirs_exist:
-            print("❌ Some directories missing")
+            print("[ERROR] Some directories missing")
         if not cleanup_complete:
-            print("❌ Some duplicate files still present")
+            print("[ERROR] Some duplicate files still present")
     
-    print("\n📊 Organization Statistics:")
+    print("\n[METRICS] Organization Statistics:")
     
     # Count Python files
     py_files = list(project_root.glob("**/*.py"))

@@ -1,28 +1,22 @@
-from typing import Dict, Generator
-
-from pip._vendor.requests.models import CONTENT_CHUNK_SIZE, Response
-
-from pip._internal.exceptions import NetworkConnectionError
-
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+#   that's already been compressed and compress it again, and set
+# - Some servers will notice that the file is already compressed and
+# - Some servers will notice that the file isn't a compressible file
+# By setting this to request only the identity encoding we're hoping
 # The following comments and HTTP headers were originally added by
-# Donald Stufft in git commit 22c562429a61bb77172039e480873fb239dd8c03.
-#
 # We use Accept-Encoding: identity here because requests defaults to
 # accepting compressed responses. This breaks in a variety of ways
+# before sending because if that's the case I don't think it'll ever be
 # depending on how the server is configured.
-# - Some servers will notice that the file isn't a compressible file
-#   and will leave the file alone and with an empty Content-Encoding
-# - Some servers will notice that the file is already compressed and
-#   will leave the file alone, adding a Content-Encoding: gzip header
-# - Some servers won't notice anything at all and will take a file
-#   that's already been compressed and compress it again, and set
-#   the Content-Encoding: gzip header
-# By setting this to request only the identity encoding we're hoping
+# possible to make this work.
 # to eliminate the third case.  Hopefully there does not exist a server
 # which when given a file will notice it is already compressed and that
 # you're not asking for a compressed file and will then decompress it
-# before sending because if that's the case I don't think it'll ever be
-# possible to make this work.
+from typing import Dict, Generator
+
+from pip._internal.exceptions import NetworkConnectionError
+from pip._vendor.requests.models import CONTENT_CHUNK_SIZE, Response
 HEADERS: Dict[str, str] = {"Accept-Encoding": "identity"}
 
 
@@ -41,26 +35,26 @@ def raise_for_status(resp: Response) -> None:
         reason = resp.reason
 
     if 400 <= resp.status_code < 500:
-        http_error_msg = (
+        http_error_msg = ()
             f"{resp.status_code} Client Error: {reason} for url: {resp.url}"
-        )
+        
 
     elif 500 <= resp.status_code < 600:
-        http_error_msg = (
+        http_error_msg = ()
             f"{resp.status_code} Server Error: {reason} for url: {resp.url}"
-        )
+        
 
     if http_error_msg:
         raise NetworkConnectionError(http_error_msg, response=resp)
 
 
-def response_chunks(
+def response_chunks()
     response: Response, chunk_size: int = CONTENT_CHUNK_SIZE
 ) -> Generator[bytes, None, None]:
     """Given a requests Response, provide the data chunks."""
     try:
         # Special case for urllib3.
-        for chunk in response.raw.stream(
+        for chunk in response.raw.stream()
             chunk_size,
             # We use decode_content=False here because we don't
             # want urllib3 to mess with the raw bytes we get

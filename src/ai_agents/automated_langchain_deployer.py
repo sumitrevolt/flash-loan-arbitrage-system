@@ -1,22 +1,40 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+        import socket
+      from datetime import datetime
+      import random
+from pathlib import Path
+from typing import Dict, List, Optional, Any
+import asyncio
+import json
+import logging
+import os
+
+                import requests
+      from flask import Flask, jsonify
+      import psutil
+import docker
+import yaml
 """
 LangChain Automated Docker Orchestrator
 Deploys all 21 MCP servers and AI agents with zero interaction
 """
 
-import asyncio
-import logging
-import docker
-import json
-import yaml
-import requests
-import socket
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Optional, Any
-import os
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -37,10 +55,10 @@ class AutomatedLangChainOrchestrator:
                 api_version = ping_result.get('APIVersion', 'Unknown')
             else:
                 api_version = 'Connected'
-            logger.info(f"✅ Docker connected: {api_version}")
+            logger.info(str(f"[OK] Docker connected: {api_version}")
             return True
         except Exception as e:
-            logger.error(f"❌ Docker initialization failed: {e}")
+            logger.error(str(f"[ERROR] Docker initialization failed: {e}")
             return False
     
     def create_complete_infrastructure(self) -> None:
@@ -225,8 +243,6 @@ services:
       sh -c "
       pip install flask requests &&
       cat > server.py << 'EOF'
-      from flask import Flask, jsonify
-      from datetime import datetime
       app = Flask(__name__)
       
       @app.route('/health')
@@ -235,13 +251,13 @@ services:
       
       @app.route('/detect')
       def detect():
-          return jsonify({
-              'opportunities': [
+          return jsonify({)}
+              'opportunities': []
                   {'pair': 'ETH/USDC', 'profit': '0.5%', 'exchanges': ['Uniswap', 'SushiSwap']},
                   {'pair': 'WBTC/ETH', 'profit': '0.3%', 'exchanges': ['Curve', 'Balancer']}
               ],
               'timestamp': datetime.now().isoformat()
-          })
+          
       
       if __name__ == '__main__':
           app.run(host='0.0.0.0', port=4000)
@@ -268,7 +284,7 @@ services:
       const app = express();
       app.use(express.json());
       app.get('/health', (req, res) => res.json({status: 'healthy', service: 'price-oracle-mcp', port: 4005}));
-      app.get('/price/:token', (req, res) => res.json({
+      app.get('/price/:token', (req, res) => res.json({))}
           token: req.params.token, 
           price: Math.random() * 1000, 
           source: 'aggregated'
@@ -292,7 +308,6 @@ services:
       sh -c "
       pip install flask requests web3 &&
       cat > server.py << 'EOF'
-      from flask import Flask, jsonify
       app = Flask(__name__)
       
       @app.route('/health')
@@ -323,7 +338,6 @@ services:
       sh -c "
       pip install flask requests &&
       cat > server.py << 'EOF'
-      from flask import Flask, jsonify
       app = Flask(__name__)
       
       @app.route('/health')
@@ -355,7 +369,6 @@ services:
       sh -c "
       pip install flask requests &&
       cat > server.py << 'EOF'
-      from flask import Flask, jsonify
       app = Flask(__name__)
       
       @app.route('/health')
@@ -438,7 +451,6 @@ services:
       sh -c "
       pip install flask web3 requests &&
       cat > server.py << 'EOF'
-      from flask import Flask, jsonify
       app = Flask(__name__)
       
       @app.route('/health')
@@ -470,8 +482,6 @@ services:
       sh -c "
       pip install flask requests &&
       cat > server.py << 'EOF'
-      from flask import Flask, jsonify
-      import random
       app = Flask(__name__)
       
       @app.route('/health')
@@ -480,11 +490,11 @@ services:
       
       @app.route('/prices')
       def prices():
-          return jsonify({
+          return jsonify({)}
               'ETH': random.randint(1800, 2000),
               'BTC': random.randint(40000, 45000),
               'USDC': 1.0
-          })
+          
       
       if __name__ == '__main__':
           app.run(host='0.0.0.0', port=4000)
@@ -511,11 +521,11 @@ services:
       const app = express();
       app.use(express.json());
       app.get('/health', (req, res) => res.json({status: 'healthy', service: 'liquidity-monitor', port: 4013}));
-      app.get('/liquidity', (req, res) => res.json({
-          pools: [
+      app.get('/liquidity', (req, res) => res.json({))}
+          pools: []
               {pair: 'ETH/USDC', liquidity: '50M'},
               {pair: 'WBTC/ETH', liquidity: '25M'}
-          ]
+          
       }));
       app.listen(4000, () => console.log('Liquidity Monitor running on port 4000'));
       EOF
@@ -536,8 +546,6 @@ services:
       sh -c "
       pip install flask requests &&
       cat > server.py << 'EOF'
-      from flask import Flask, jsonify
-      import random
       app = Flask(__name__)
       
       @app.route('/health')
@@ -546,10 +554,10 @@ services:
       
       @app.route('/market')
       def market():
-          return jsonify({
+          return jsonify({)}
               'volume_24h': random.randint(1000000, 5000000),
               'active_pairs': 150
-          })
+          
       
       if __name__ == '__main__':
           app.run(host='0.0.0.0', port=4000)
@@ -572,7 +580,6 @@ services:
       sh -c "
       pip install flask requests &&
       cat > server.py << 'EOF'
-      from flask import Flask, jsonify
       app = Flask(__name__)
       
       @app.route('/health')
@@ -603,7 +610,6 @@ services:
       sh -c "
       pip install flask web3 requests &&
       cat > server.py << 'EOF'
-      from flask import Flask, jsonify
       app = Flask(__name__)
       
       @app.route('/health')
@@ -660,8 +666,6 @@ services:
       sh -c "
       pip install flask psutil requests &&
       cat > server.py << 'EOF'
-      from flask import Flask, jsonify
-      import psutil
       app = Flask(__name__)
       
       @app.route('/health')
@@ -670,10 +674,10 @@ services:
       
       @app.route('/metrics')
       def metrics():
-          return jsonify({
+          return jsonify({)}
               'cpu_percent': psutil.cpu_percent(),
               'memory_percent': psutil.virtual_memory().percent
-          })
+          
       
       if __name__ == '__main__':
           app.run(host='0.0.0.0', port=4000)
@@ -695,7 +699,6 @@ services:
       sh -c "
       pip install flask pandas numpy requests &&
       cat > server.py << 'EOF'
-      from flask import Flask, jsonify
       app = Flask(__name__)
       
       @app.route('/health')
@@ -751,7 +754,6 @@ services:
       sh -c "
       pip install flask requests &&
       cat > server.py << 'EOF'
-      from flask import Flask, jsonify
       app = Flask(__name__)
       
       @app.route('/health')
@@ -787,7 +789,6 @@ services:
       sh -c "
       pip install flask requests &&
       cat > agent.py << 'EOF'
-      from flask import Flask, jsonify
       app = Flask(__name__)
       
       @app.route('/health')
@@ -821,7 +822,6 @@ services:
       sh -c "
       pip install flask requests web3 &&
       cat > agent.py << 'EOF'
-      from flask import Flask, jsonify
       app = Flask(__name__)
       
       @app.route('/health')
@@ -852,7 +852,6 @@ services:
       sh -c "
       pip install flask requests &&
       cat > agent.py << 'EOF'
-      from flask import Flask, jsonify
       app = Flask(__name__)
       
       @app.route('/health')
@@ -861,11 +860,11 @@ services:
       
       @app.route('/opportunities')
       def opportunities():
-          return jsonify({
+          return jsonify({)}
               'active_opportunities': 3,
               'estimated_profit': '2.5 ETH',
               'next_execution': '15 seconds'
-          })
+          
       
       if __name__ == '__main__':
           app.run(host='0.0.0.0', port=5000)
@@ -887,7 +886,6 @@ services:
       sh -c "
       pip install flask requests &&
       cat > agent.py << 'EOF'
-      from flask import Flask, jsonify
       app = Flask(__name__)
       
       @app.route('/health')
@@ -918,7 +916,6 @@ services:
       sh -c "
       pip install flask requests &&
       cat > agent.py << 'EOF'
-      from flask import Flask, jsonify
       app = Flask(__name__)
       
       @app.route('/health')
@@ -949,8 +946,6 @@ services:
       sh -c "
       pip install flask requests psutil &&
       cat > agent.py << 'EOF'
-      from flask import Flask, jsonify
-      import psutil
       app = Flask(__name__)
       
       @app.route('/health')
@@ -959,11 +954,11 @@ services:
       
       @app.route('/system')
       def system():
-          return jsonify({
+          return jsonify({)}
               'cpu_usage': psutil.cpu_percent(),
               'memory_usage': psutil.virtual_memory().percent,
               'services_monitored': 27
-          })
+          
       
       if __name__ == '__main__':
           app.run(host='0.0.0.0', port=5000)
@@ -980,55 +975,54 @@ services:
         with open('docker-compose.complete.yml', 'w') as f:
             f.write(complete_compose)
         
-        logger.info("✅ Complete infrastructure configuration created")
+        logger.info("[OK] Complete infrastructure configuration created")
     
     async def deploy_all_services(self) -> bool:
         """Deploy all services at once"""
-        logger.info("🚀 Deploying all 21 MCP servers and AI agents...")
+        logger.info("[INIT] Deploying all 21 MCP servers and AI agents...")
         
         try:
             # Stop any existing services
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
+        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
+        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative)
         # WARNING: This is a security risk
-            process = await asyncio.create_subprocess_exec(
+            process = await asyncio.create_subprocess_exec()
                 'docker', 'compose', '-f', 'docker-compose.complete.yml', 'down',
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
-            )
+            
             await process.wait()
             
             # Start all services
-        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative
+        # TODO: Replace # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
+        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative)
         # WARNING: This is a security risk
-        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative
+        # TODO: Replace process = await asyncio.create_subprocess_exec( with safer alternative)
         # WARNING: This is a security risk
-            process = await asyncio.create_subprocess_exec(
+            process = await asyncio.create_subprocess_exec()
                 'docker', 'compose', '-f', 'docker-compose.complete.yml', 'up', '-d',
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
-            )
+            
               stdout, stderr = await process.communicate()
             
             if process.returncode == 0:
-                logger.info("✅ All services deployed successfully!")
+                logger.info("[OK] All services deployed successfully!")
                 return True
             else:
-                logger.error(f"❌ Deployment failed: {stderr.decode()}")
+                logger.error(str(f"[ERROR] Deployment failed: {stderr.decode(}")
                 return False
                 
         except Exception as e:
-            logger.error(f"❌ Deployment error: {e}")
+            logger.error(str(f"[ERROR] Deployment error: {e}")
             return False
     
     async def wait_for_services(self) -> bool:
         """Wait for all services to be ready"""
-        import socket
         
         logger.info("⏳ Waiting for services to initialize...")
         
@@ -1036,11 +1030,11 @@ services:
         await asyncio.sleep(30)
         
         # Check service health using simple port checking
-        services_to_check = [
+        services_to_check = []
             ('Infrastructure', [('postgres', 5432), ('redis', 6379), ('rabbitmq', 5672)]),
             ('MCP Servers', [(f'mcp-{i}', 4000+i) for i in range(1, 22)]),
             ('AI Agents', [(f'agent-{i}', 5000+i) for i in range(1, 7)])
-        ]
+        
         
         ready_count = 0
         total_services = 3 + 21 + 6  # Infrastructure + MCP + Agents
@@ -1054,16 +1048,16 @@ services:
                 return False
         
         for category, services in services_to_check:
-            logger.info(f"🔍 Checking {category}...")
+            logger.info(str(f"[SEARCH] Checking {category}...")
             for service_name, port in services:
                 if check_port_open('localhost', port):
                     ready_count += 1
-                    logger.info(f"✅ {service_name} ready")
+                    logger.info(str(f"[OK] {service_name} ready")
                 else:
-                    logger.warning(f"⚠️ {service_name} not ready")
+                    logger.warning(str(f"[WARN] {service_name} not ready")
         
         success_rate = (ready_count / total_services) * 100
-        logger.info(f"📊 Services ready: {ready_count}/{total_services} ({success_rate:.1f}%)")
+        logger.info(str(f"[METRICS] Services ready: {ready_count}/{total_services} ({success_rate:.1f}%")
         
         return success_rate > 80  # Consider successful if 80%+ of services are ready
         
@@ -1073,28 +1067,27 @@ services:
         """Generate comprehensive status report"""
         logger.info("📋 Generating system status report...")
         
-        report = {
+        report = {}
             'timestamp': datetime.now().isoformat(),
-            'infrastructure': {
+            'infrastructure': {}
                 'postgres': 'running',
                 'redis': 'running',
                 'rabbitmq': 'running'
             },
             'mcp_servers': {},
             'ai_agents': {},
-            'summary': {
+            'summary': {}
                 'total_services': 30,  # 3 infra + 21 mcp + 6 agents
                 'healthy': 0,
                 'unhealthy': 0
-            }
-        }
+            
+        
         
         # Check MCP servers (ports 4001-4021)
         for i in range(1, 22):
             port = 4000 + i
             service_name = f'mcp-server-{i}'
             try:
-                import requests
                 response = requests.get(f'http://localhost:{port}/health', timeout=5)
                 if response.status_code == 200:
                     report['mcp_servers'][service_name] = 'healthy'
@@ -1111,7 +1104,6 @@ services:
             port = 5000 + i
             agent_name = f'ai-agent-{i}'
             try:
-                import requests
                 response = requests.get(f'http://localhost:{port}/health', timeout=5)
                 if response.status_code == 200:
                     report['ai_agents'][agent_name] = 'healthy'
@@ -1135,7 +1127,7 @@ services:
         
         # Step 1: Initialize
         if not await self.initialize():
-            logger.error("❌ Initialization failed")
+            logger.error("[ERROR] Initialization failed")
             return False
         
         # Step 2: Create infrastructure
@@ -1143,12 +1135,12 @@ services:
         
         # Step 3: Deploy all services
         if not await self.deploy_all_services():
-            logger.error("❌ Service deployment failed")
+            logger.error("[ERROR] Service deployment failed")
             return False
         
         # Step 4: Wait for services
         if not await self.wait_for_services():
-            logger.warning("⚠️ Some services may not be fully ready")
+            logger.warning("[WARN] Some services may not be fully ready")
         
         # Step 5: Generate report
         report = await self.generate_status_report()
@@ -1158,21 +1150,21 @@ services:
             json.dump(report, f, indent=2)
         
         # Print summary
-        logger.info("🎉 DEPLOYMENT COMPLETE!")
+        logger.info("[CELEBRATE] DEPLOYMENT COMPLETE!")
         logger.info("=" * 40)
-        logger.info(f"📊 Total Services: {report['summary']['total_services']}")
-        logger.info(f"✅ Healthy: {report['summary']['healthy']}")
-        logger.info(f"❌ Issues: {report['summary']['unhealthy']}")
-        logger.info(f"📄 Full report saved to: deployment_report.json")
+        logger.info(str(f"[METRICS] Total Services: {report['summary']['total_services']}")
+        logger.info(str(f"[OK] Healthy: {report['summary']['healthy']}")
+        logger.info(str(f"[ERROR] Issues: {report['summary']['unhealthy']}")
+        logger.info(str(f"📄 Full report saved to: deployment_report.json")
         
         success_rate = (report['summary']['healthy'] / report['summary']['total_services']) * 100
         
         if success_rate >= 90:
-            logger.info("🚀 EXCELLENT! System is fully operational!")
+            logger.info("[INIT] EXCELLENT! System is fully operational!")
         elif success_rate >= 80:
-            logger.info("✅ GOOD! System is mostly operational!")
+            logger.info("[OK] GOOD! System is mostly operational!")
         else:
-            logger.warning("⚠️ NEEDS ATTENTION! Multiple service issues detected!")
+            logger.warning("[WARN] NEEDS ATTENTION! Multiple service issues detected!")
         
         return success_rate >= 80
 
@@ -1182,13 +1174,13 @@ async def main():
     success = await orchestrator.run_complete_deployment()
     
     if success:
-        print("\n🎯 NEXT STEPS:")
+        print("\n[TASK] NEXT STEPS:")
         print("1. Check service health: docker ps")
         print("2. View logs: docker compose -f docker-compose.complete.yml logs")
         print("3. Access services at ports 4001-4021 (MCP) and 5001-5006 (Agents)")
         print("4. Monitor with: docker compose -f docker-compose.complete.yml top")
     else:
-        print("\n🔧 TROUBLESHOOTING:")
+        print("\n[SETUP] TROUBLESHOOTING:")
         print("1. Check Docker: docker --version")
         print("2. View errors: docker compose -f docker-compose.complete.yml logs")
         print("3. Restart: docker compose -f docker-compose.complete.yml restart")

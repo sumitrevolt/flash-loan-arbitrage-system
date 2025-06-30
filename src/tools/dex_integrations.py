@@ -1,4 +1,20 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+                        import random
+            import sys
+from datetime import datetime
+from decimal import Decimal, getcontext
+from typing import Dict, List, Optional, Any
+import asyncio
+import logging
+import os
+import time
+
+                from flash_loan_contract import FlashLoanContractFactory
+        import requests
+from dataclasses import dataclass
+from web3 import AsyncWeb3
+import aiohttp
 """
 REAL DEX INTEGRATIONS FOR FLASH LOAN ARBITRAGE
 ===============================================
@@ -14,16 +30,6 @@ Real implementations for:
 This module replaces mock implementations with actual DEX API calls
 """
 
-import asyncio
-import aiohttp
-import logging
-import os
-from typing import Dict, List, Optional, Any
-from decimal import Decimal, getcontext
-from dataclasses import dataclass
-import time
-from datetime import datetime
-from web3 import AsyncWeb3
 
 # Set precision for Decimal calculations
 getcontext().prec = 28
@@ -50,42 +56,42 @@ class RealDEXIntegrations:
         self.session: Optional[aiohttp.ClientSession] = None
         
         # Check if we have real credentials
-        self.has_real_credentials = (
+        self.has_real_credentials = ()
             self.rpc_url and 
             'YOUR_' not in self.rpc_url and
             len(self.rpc_url) > 10
-        )
+        
         
         if not self.has_real_credentials:
             logger.info("No real API credentials detected, will use simulation mode")
         
         # DEX API endpoints
-        self.dex_apis = {
-            'uniswap_v3': {
+        self.dex_apis = {}
+            'uniswap_v3': {}
                 'subgraph': 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3',
                 'router': '0xE592427A0AEce92De3Edee1F18E0157C05861564',
                 'factory': '0x1F98431c8aD98523631AE4a59f267346ea31F984'
             },
-            'sushiswap': {
+            'sushiswap': {}
                 'subgraph': 'https://api.thegraph.com/subgraphs/name/sushiswap/exchange',
                 'router': '0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F',
                 'factory': '0xC0AEe478e3658e2610c5F7A4A2E1777cE9e4f2Ac'
             },
-            'balancer': {
+            'balancer': {}
                 'subgraph': 'https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-v2',
                 'vault': '0xBA12222222228d8Ba445958a75a0704d566BF2C8'
             },
-            'oneinch': {
+            'oneinch': {}
                 'api': 'https://api.1inch.io/v5.0/1',
                 'router': '0x1111111254EEB25477B68fb85Ed929f73A960582'
             },
-            'pancakeswap': {
+            'pancakeswap': {}
                 'subgraph': 'https://api.thegraph.com/subgraphs/name/pancakeswap/exchange',
                 'router': '0x10ED43C718714eb63d5aA57B78B54704E256024E'
-            }
-        }
+            
+        
           # Token addresses (mainnet) - 11 Approved Tokens
-        self.token_addresses = {
+        self.token_addresses = {}
             'ETH': '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',  # WETH
             'USDC': '0xA0b86a33E6441e36D04b4395aD3fB4e44C6A74f4',            'USDT': '0xdAC17F958D2ee523a2206206994597C13D831ec7',
             'DAI': '0x6B175474E89094C44Da98b954EedeAC495271d0F',
@@ -96,36 +102,35 @@ class RealDEXIntegrations:
             'COMP': '0xc00e94Cb662C3520282E6f5717214004A7f26888',
             'MATIC': '0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0',  # Polygon
             'SUSHI': '0x6B3595068778DD592e39A122f4f5a5cF09C90fE2'  # SushiSwap
-        }
+        
 
     async def initialize(self):
         """Initialize Web3 and HTTP session with graceful degradation"""
         try:
             if not self.has_real_credentials:
-                logger.info("Initializing in simulation mode (no real API credentials)")
+                logger.info("Initializing in simulation mode (no real API credentials")
                 
             # Windows-compatible initialization
-            import sys
             if sys.platform == 'win32':
                 # Use ThreadedResolver for Windows compatibility
-                connector = aiohttp.TCPConnector(
+                connector = aiohttp.TCPConnector()
                     resolver=aiohttp.ThreadedResolver(),
                     limit=100,
                     limit_per_host=10
-                )
+                
             else:
                 # Use DefaultResolver for other platforms
-                connector = aiohttp.TCPConnector(
+                connector = aiohttp.TCPConnector()
                     resolver=aiohttp.DefaultResolver(),
                     limit=100,
                     limit_per_host=10
-                )
                 
-            self.session = aiohttp.ClientSession(
+                
+            self.session = aiohttp.ClientSession()
                 connector=connector,
                 timeout=aiohttp.ClientTimeout(total=10.0),
                 headers={'User-Agent': 'ArbitrageBot/1.0'}
-            )
+            
             
             # Initialize Web3 if RPC URL is provided
             if self.rpc_url and self.rpc_url != "YOUR_INFURA_KEY":
@@ -134,28 +139,28 @@ class RealDEXIntegrations:
                     # Test connection with timeout
                     connected = await asyncio.wait_for(self.w3.is_connected(), timeout=5.0)
                     if connected:
-                        logger.info("✅ Real Web3 connection established")
+                        logger.info("[OK] Real Web3 connection established")
                         self.has_real_credentials = True
                     else:
                         logger.warning("Web3 connection test failed, using simulation mode")
                         self.has_real_credentials = False
                 except Exception as e:
-                    logger.warning(f"Web3 initialization failed: {e}, using simulation mode")
+                    logger.warning(str(f"Web3 initialization failed: {e}, using simulation mode")
                     self.has_real_credentials = False
                     self.w3 = None
             
-            logger.info("✅ DEX integrations initialized successfully")
+            logger.info("[OK] DEX integrations initialized successfully")
             
         except Exception as e:
-            logger.error(f"DEX integration initialization failed: {e}, using basic mode")
+            logger.error(str(f"DEX integration initialization failed: {e}, using basic mode")
             # Fallback to most basic session possible
             try:
-                self.session = aiohttp.ClientSession(
+                self.session = aiohttp.ClientSession()
                     timeout=aiohttp.ClientTimeout(total=10.0)
-                )
-                logger.info("✅ Basic HTTP session initialized")
+                
+                logger.info("[OK] Basic HTTP session initialized")
             except Exception as e2:
-                logger.error(f"Failed to create any session: {e2}")
+                logger.error(str(f"Failed to create any session: {e2}")
                 raise
     
     async def close(self):
@@ -169,42 +174,42 @@ class RealDEXIntegrations:
         
         # Enhanced query with recent price data and real liquidity
         query = """
-        query($tokens: [String!]!) {
-            pools(
-                where: {
+        query($tokens: [String!]!) {}
+            pools()
+                where: {}
                     token0_: {symbol_in: $tokens}
                     token1_: {symbol_in: $tokens}
                     totalValueLockedUSD_gte: "10000"
-                }
+                
                 orderBy: totalValueLockedUSD
                 orderDirection: desc
                 first: 100
-            ) {
+            ) {}
                 id
-                token0 {
+                token0 {}
                     symbol
                     decimals
                     id
-                }
-                token1 {
+                
+                token1 {}
                     symbol
                     decimals
                     id
-                }
+                
                 sqrtPrice
                 liquidity
                 volumeUSD
                 totalValueLockedUSD
                 feeTier
                 tick
-                poolDayData(first: 1, orderBy: date, orderDirection: desc) {
+                poolDayData(first: 1, orderBy: date, orderDirection: desc) {}
                     high
                     low
                     close
                     volumeUSD
-                }
-            }
-        }
+                
+            
+        
         """
         
         try:
@@ -216,7 +221,7 @@ class RealDEXIntegrations:
                 tokens.add(token1)
             
             if self.session:
-                async with self.session.post(
+                async with self.session.post()
                     self.dex_apis['uniswap_v3']['subgraph'],
                     json={'query': query, 'variables': {'tokens': list(tokens)}},
                     timeout=aiohttp.ClientTimeout(total=10)
@@ -225,46 +230,46 @@ class RealDEXIntegrations:
                     if response.status == 200:
                         data = await response.json()
                         if 'errors' in data:
-                            logger.error(f"Uniswap V3 GraphQL errors: {data['errors']}")
+                            logger.error(str(f"Uniswap V3 GraphQL errors: {data['errors']}")
                             return {}
                         return self._parse_uniswap_v3_response(data, token_pairs)
                     else:
-                        logger.error(f"Uniswap V3 API error: {response.status}")
+                        logger.error(str(f"Uniswap V3 API error: {response.status}")
                         return {}
             return {}
                     
         except Exception as e:
-            logger.error(f"Error fetching Uniswap V3 prices: {e}")
+            logger.error(str(f"Error fetching Uniswap V3 prices: {e}")
             return {}
     
     async def fetch_sushiswap_prices(self, token_pairs: List[str]) -> Dict[str, DexPrice]:
         """Fetch real prices from SushiSwap via TheGraph"""
         
         query = """
-        query($pairs: [String!]!) {
-            pairs(where: {id_in: $pairs}, orderBy: reserveUSD, orderDirection: desc) {
+        query($pairs: [String!]!) {}
+            pairs(where: {id_in: $pairs}, orderBy: reserveUSD, orderDirection: desc) {}
                 id
-                token0 {
+                token0 {}
                     symbol
                     decimals
-                }
-                token1 {
+                
+                token1 {}
                     symbol
                     decimals
-                }
+                
                 reserve0
                 reserve1
                 reserveUSD
                 volumeUSD
-            }
-        }
+            
+        
         """
         
         try:
             pair_ids = await self._get_sushiswap_pair_ids(token_pairs)
             
             if self.session:
-                async with self.session.post(
+                async with self.session.post()
                     self.dex_apis['sushiswap']['subgraph'],
                     json={'query': query, 'variables': {'pairs': pair_ids}}
                 ) as response:
@@ -273,12 +278,12 @@ class RealDEXIntegrations:
                         data = await response.json()
                         return self._parse_sushiswap_response(data, token_pairs)
                     else:
-                        logger.error(f"SushiSwap API error: {response.status}")
+                        logger.error(str(f"SushiSwap API error: {response.status}")
                         return {}
             return {}
                     
         except Exception as e:
-            logger.error(f"Error fetching SushiSwap prices: {e}")
+            logger.error(str(f"Error fetching SushiSwap prices: {e}")
             return {}
 
     async def fetch_1inch_prices(self, token_pairs: List[str]) -> Dict[str, DexPrice]:
@@ -299,11 +304,11 @@ class RealDEXIntegrations:
                 amount = 10**18  # 1 token with 18 decimals
                 
                 url = f"{self.dex_apis['oneinch']['api']}/quote"
-                params = {
+                params = {}
                     'fromTokenAddress': token0_addr,
                     'toTokenAddress': token1_addr,
                     'amount': str(amount)
-                }
+                
                 
                 if self.session:
                     async with self.session.get(url, params=params) as response:
@@ -314,7 +319,7 @@ class RealDEXIntegrations:
                             to_token_amount = int(data['toTokenAmount'])
                             price = Decimal(to_token_amount) / Decimal(amount)
                             
-                            prices[pair] = DexPrice(
+                            prices[pair] = DexPrice()
                                 dex_name='1inch',
                                 token_pair=pair,
                                 price=price,
@@ -322,12 +327,12 @@ class RealDEXIntegrations:
                                 timestamp=time.time(),
                                 gas_estimate=int(data.get('estimatedGas', 200000)),
                                 slippage=0.01  # 1% default slippage
-                            )
+                            
                             
                         await asyncio.sleep(0.1)  # Rate limiting
                     
             except Exception as e:
-                logger.error(f"Error fetching 1inch price for {pair}: {e}")
+                logger.error(str(f"Error fetching 1inch price for {pair}: {e}")
                 continue
         
         return prices
@@ -336,22 +341,22 @@ class RealDEXIntegrations:
         """Fetch prices from Balancer V2 via TheGraph"""
         
         query = """
-        query($tokens: [String!]!) {
-            pools(where: {tokensList_contains: $tokens}, orderBy: totalLiquidity, orderDirection: desc) {
+        query($tokens: [String!]!) {}
+            pools(where: {tokensList_contains: $tokens}, orderBy: totalLiquidity, orderDirection: desc) {}
                 id
                 poolType
-                tokens {
+                tokens {}
                     address
                     symbol
                     balance
                     weight
                     decimals
-                }
+                
                 totalLiquidity
                 totalSwapVolume
                 swapFee
-            }
-        }
+            
+        
         """
         
         try:
@@ -365,7 +370,7 @@ class RealDEXIntegrations:
                     token_addrs.append(self.token_addresses[token1])
             
             if self.session:
-                async with self.session.post(
+                async with self.session.post()
                     self.dex_apis['balancer']['subgraph'],
                     json={'query': query, 'variables': {'tokens': token_addrs}}
                 ) as response:
@@ -374,23 +379,23 @@ class RealDEXIntegrations:
                         data = await response.json()
                         return self._parse_balancer_response(data, token_pairs)
                     else:
-                        logger.error(f"Balancer API error: {response.status}")
+                        logger.error(str(f"Balancer API error: {response.status}")
                         return {}
             return {}
                     
         except Exception as e:
-            logger.error(f"Error fetching Balancer prices: {e}")
+            logger.error(str(f"Error fetching Balancer prices: {e}")
             return {}
     
     async def fetch_all_dex_prices_parallel(self, token_pairs: List[str]) -> Dict[str, Dict[str, DexPrice]]:
         """Fetch prices from all DEXes in parallel"""
         
-        tasks = [
+        tasks = []
             self.fetch_uniswap_v3_prices(token_pairs),
             self.fetch_sushiswap_prices(token_pairs),
             self.fetch_1inch_prices(token_pairs),
             self.fetch_balancer_prices(token_pairs)
-        ]
+        
         
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
@@ -416,10 +421,10 @@ class RealDEXIntegrations:
             token_pairs = ['ETH/USDC', 'ETH/USDT', 'WBTC/ETH', 'DAI/USDC', 'USDC/USDT']
             
             # Fetch real prices with timeout
-            dex_prices = await asyncio.wait_for(
+            dex_prices = await asyncio.wait_for()
                 self.fetch_all_dex_prices_parallel(token_pairs),
                 timeout=10.0
-            )
+            
             
             # Convert to simplified format
             simplified_prices = {}
@@ -429,17 +434,17 @@ class RealDEXIntegrations:
                     simplified_prices[token] = {}
                 
                 for dex_name, price_obj in dex_data.items():
-                    simplified_prices[token][dex_name] = {
+                    simplified_prices[token][dex_name] = {}
                         'price': float(price_obj.price),
                         'liquidity': float(price_obj.liquidity),
                         'timestamp': datetime.now(),
                         'volume_24h': float(price_obj.liquidity) * 0.2
-                    }
+                    
             
             return simplified_prices
             
         except Exception as e:
-            logger.warning(f"Failed to fetch real prices: {e}, using simulation")
+            logger.warning(str(f"Failed to fetch real prices: {e}, using simulation")
             return self._generate_simulated_prices()
     
     def _generate_simulated_prices(self) -> Dict[str, Dict[str, Any]]:
@@ -459,12 +464,12 @@ class RealDEXIntegrations:
                 variation = (hash(f"{token}{dex}{current_time.minute}") % 100 - 50) / 10000
                 price = base_price * (1 + variation)
                 
-                simulated_prices[token][dex] = {
+                simulated_prices[token][dex] = {}
                     'price': price,
                     'liquidity': 100000 + (hash(f"{dex}{token}") % 900000),
                     'timestamp': current_time,
                     'volume_24h': 50000 + (hash(f"{token}{dex}volume") % 200000)
-                }
+                
         
         return simulated_prices
     
@@ -504,7 +509,7 @@ class RealDEXIntegrations:
                     
                     final_price = Decimal(str(price * decimal_adjustment))
                     
-                    prices[pair_name] = DexPrice(
+                    prices[pair_name] = DexPrice()
                         dex_name='uniswap_v3',
                         token_pair=pair_name,
                         price=final_price,
@@ -512,10 +517,10 @@ class RealDEXIntegrations:
                         timestamp=time.time(),
                         gas_estimate=150000,  # Uniswap V3 typical gas
                         slippage=0.005  # 0.5% typical slippage
-                    )
+                    
                     
         except Exception as e:
-            logger.error(f"Error parsing Uniswap V3 response: {e}")
+            logger.error(str(f"Error parsing Uniswap V3 response: {e}")
         
         return prices
     
@@ -538,7 +543,7 @@ class RealDEXIntegrations:
                     if reserve0 > 0:
                         price = reserve1 / reserve0
                         
-                        prices[pair_name] = DexPrice(
+                        prices[pair_name] = DexPrice()
                             dex_name='sushiswap',
                             token_pair=pair_name,
                             price=price,
@@ -546,10 +551,10 @@ class RealDEXIntegrations:
                             timestamp=time.time(),
                             gas_estimate=120000,  # SushiSwap typical gas
                             slippage=0.01  # 1% typical slippage
-                        )
+                        
                         
         except Exception as e:
-            logger.error(f"Error parsing SushiSwap response: {e}")
+            logger.error(str(f"Error parsing SushiSwap response: {e}")
         
         return prices
     
@@ -579,7 +584,7 @@ class RealDEXIntegrations:
                             # Balancer weighted pool price formula
                             price = (balance1 / balance0) * (weight0 / weight1)
                             
-                            prices[pair_name] = DexPrice(
+                            prices[pair_name] = DexPrice()
                                 dex_name='balancer',
                                 token_pair=pair_name,
                                 price=price,
@@ -587,14 +592,14 @@ class RealDEXIntegrations:
                                 timestamp=time.time(),
                                 gas_estimate=180000,  # Balancer typical gas
                                 slippage=0.015  # 1.5% typical slippage
-                            )
+                            
                             
         except Exception as e:
-            logger.error(f"Error parsing Balancer response: {e}")
+            logger.error(str(f"Error parsing Balancer response: {e}")
         
         return prices
     
-    async def execute_flash_loan_arbitrage(self, 
+    async def execute_flash_loan_arbitrage(self, )
                                          token_pair: str,
                                          buy_dex: str, 
                                          sell_dex: str,
@@ -605,20 +610,19 @@ class RealDEXIntegrations:
         try:
             # Import flash loan contract here to avoid circular imports
             try:
-                from flash_loan_contract import FlashLoanContractFactory
             except ImportError:
                 logger.warning("Flash loan contract not available, using simulation mode")
                 await asyncio.sleep(0.5)
-                return {
+                return {}
                     'status': 'success',
                     'transaction_hash': f"0x{'c'*64}",
                     'gas_used': 350000,
                     'profit_realized': str(min_profit * Decimal('0.95')),
                     'execution_time': 0.5,
                     'simulation': True
-                }
+                
             
-            logger.info(f"Executing flash loan arbitrage: {token_pair} on {buy_dex}->{sell_dex}")
+            logger.info(str(f"Executing flash loan arbitrage: {token_pair} on {buy_dex}->{sell_dex}")
             
             # Initialize flash loan contract
             web3_provider_url = os.getenv('WEB3_PROVIDER_URL', 'https://eth-mainnet.alchemyapi.io/v2/your-key')
@@ -628,21 +632,21 @@ class RealDEXIntegrations:
                 logger.warning("No private key provided, using simulation mode")
                 # Fallback to simulation
                 await asyncio.sleep(0.5)
-                return {
+                return {}
                     'status': 'success',
                     'transaction_hash': f"0x{'c'*64}",
                     'gas_used': 350000,
                     'profit_realized': str(min_profit * Decimal('0.95')),
                     'execution_time': 0.5,
                     'simulation': True
-                }
+                
             
             # Create flash loan contract
-            flash_loan_contract = FlashLoanContractFactory.create_contract(
+            flash_loan_contract = FlashLoanContractFactory.create_contract()
                 'ethereum', web3_provider_url, private_key
-            )
+            
               # Token addresses for mainnet (11 Approved Tokens)
-            token_addresses = {
+            token_addresses = {}
                 'ETH': '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',  # WETH
                 'WETH': '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
                 'USDC': '0xA0b86a33E6441e36D04b4395aD3fB4e44C6A74f4',
@@ -655,62 +659,61 @@ class RealDEXIntegrations:
                 'COMP': '0xc00e94Cb662C3520282E6f5717214004A7f26888',
                 'MATIC': '0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0',
                 'SUSHI': '0x6B3595068778DD592e39A122f4f5a5cF09C90fE2'
-            }
+            
             
             # Check profitability on-chain first
-            profitability = await flash_loan_contract.check_profitability_on_chain(
+            profitability = await flash_loan_contract.check_profitability_on_chain()
                 token_pair, buy_dex, sell_dex, amount
-            )
+            
             
             if not profitability.get('profitable', False):
-                return {
+                return {}
                     'status': 'skipped',
                     'reason': 'Not profitable on-chain',
                     'profitability_data': profitability
-                }
+                
             
             # Execute flash loan arbitrage
-            result: str = await flash_loan_contract.execute_flash_loan_arbitrage(
+            result: str = await flash_loan_contract.execute_flash_loan_arbitrage()
                 token_pair=token_pair,
                 buy_dex=buy_dex,
                 sell_dex=sell_dex,
                 amount=amount,
                 min_profit=min_profit,
                 token_addresses=token_addresses
-            )
+            
             
             # Convert result to dict format
-            return {
+            return {}
                 'status': 'success' if result.success else 'failed',
                 'transaction_hash': result.transaction_hash,
                 'gas_used': result.gas_used,
                 'profit_realized': str(result.profit_realized) if result.profit_realized else None,
                 'execution_time': result.execution_time,
                 'error': result.error_message
-            }
+            
             
         except Exception as e:
-            logger.error(f"Flash loan execution failed: {e}")
-            return {
+            logger.error(str(f"Flash loan execution failed: {e}")
+            return {}
                 'status': 'failed',
                 'error': str(e)
-            }
+            
 
     def display_real_time_prices_and_calculations(self):
         """Display real-time DEX prices and arbitrage calculations in terminal"""
         print("\n" + "="*100)
-        print("📊 REAL-TIME DEX PRICES & ARBITRAGE CALCULATIONS")
+        print("[METRICS] REAL-TIME DEX PRICES & ARBITRAGE CALCULATIONS")
         print("="*100)
         
-        import requests
         
         try:            # Fetch real prices from CoinGecko
             coingecko_url = "https://api.coingecko.com/api/v3/simple/price"
-            params = {
+            params = {}
                 'ids': 'ethereum,bitcoin,matic-network,chainlink,uniswap,aave-aave,sushi,compound-coin',
                 'vs_currencies': 'usd',
                 'include_24hr_change': 'true'
-            }
+            
             
             response = requests.get(coingecko_url, params=params, timeout=10)
             
@@ -720,7 +723,7 @@ class RealDEXIntegrations:
                 print(f"{'TOKEN':<8} {'PRICE (USD)':<15} {'24H CHANGE':<15} {'VOLUME INDICATOR':<20}")
                 print("-" * 100)
                 
-                tokens = {
+                tokens = {}
                     'WETH': data.get('ethereum', {}),
                     'WBTC': data.get('bitcoin', {}),
                     'MATIC': data.get('matic-network', {}),
@@ -732,7 +735,7 @@ class RealDEXIntegrations:
                     'USDC': {'usd': 1.0, 'usd_24h_change': 0.0},  # Stablecoin
                     'USDT': {'usd': 1.0, 'usd_24h_change': 0.0},  # Stablecoin  
                     'DAI': {'usd': 1.0, 'usd_24h_change': 0.0}    # Stablecoin
-                }
+                
                 
                 arbitrage_opportunities = []
                 
@@ -742,7 +745,7 @@ class RealDEXIntegrations:
                     
                     # Price change indicator
                     if change > 0:
-                        status = f"+{change:.2f}% 📈"
+                        status = f"+{change:.2f}% [GROWTH]"
                     elif change < 0:
                         status = f"{change:.2f}% 📉"
                     else:
@@ -750,9 +753,9 @@ class RealDEXIntegrations:
                     
                     # Volume indicator (simulated based on price volatility)
                     if abs(change) > 5:
-                        volume_ind = "HIGH VOLATILITY 🔥"
+                        volume_ind = "HIGH VOLATILITY [HOT]"
                     elif abs(change) > 2:
-                        volume_ind = "MODERATE VOLUME 📊"
+                        volume_ind = "MODERATE VOLUME [METRICS]"
                     else:
                         volume_ind = "STABLE 🟢"
                     
@@ -760,16 +763,15 @@ class RealDEXIntegrations:
                     
                     # Calculate arbitrage opportunities for each token
                     if price > 0:
-                        import random
                         
                         # Simulate DEX price variations (realistic 0.1-1.5% differences)
-                        dex_prices = {
+                        dex_prices = {}
                             'Uniswap V3': price * (1 + random.uniform(-0.015, 0.015)),
                             'SushiSwap': price * (1 + random.uniform(-0.012, 0.012)),
                             'Balancer': price * (1 + random.uniform(-0.008, 0.008)),
                             '1inch': price * (1 + random.uniform(-0.010, 0.010)),
                             'Curve': price * (1 + random.uniform(-0.005, 0.005))
-                        }
+                        
                         
                         # Find arbitrage opportunity
                         best_buy_dex = min(dex_prices.keys(), key=lambda x: Any: Any: dex_prices[x])
@@ -791,7 +793,7 @@ class RealDEXIntegrations:
                             net_profit = gross_profit - total_costs
                             
                             if net_profit > 5:  # Minimum $5 profit
-                                arbitrage_opportunities.append({
+                                arbitrage_opportunities.append({)}
                                     'token': token,
                                     'buy_dex': best_buy_dex,
                                     'sell_dex': best_sell_dex,
@@ -799,14 +801,14 @@ class RealDEXIntegrations:
                                     'sell_price': sell_price,
                                     'net_profit': net_profit,
                                     'profit_margin': (net_profit / trade_amount) * 100
-                                })
+                                
                 
                 print("-" * 100)
                 print(f"📅 Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
                 
                 # Display arbitrage opportunities
                 print("\n" + "="*100)
-                print("🎯 ARBITRAGE OPPORTUNITIES ANALYSIS")
+                print("[TASK] ARBITRAGE OPPORTUNITIES ANALYSIS")
                 print("="*100)
                 
                 if arbitrage_opportunities:
@@ -816,20 +818,20 @@ class RealDEXIntegrations:
                         print(f"   🛒 Buy from: {opp['buy_dex']} @ ${opp['buy_price']:.6f}")
                         print(f"   🏪 Sell to: {opp['sell_dex']} @ ${opp['sell_price']:.6f}")
                         print(f"   💰 Net Profit: ${opp['net_profit']:.2f}")
-                        print(f"   📈 Profit Margin: {opp['profit_margin']:.3f}%")
-                        print(f"   🎯 Status: {'PROFITABLE ✅' if opp['net_profit'] >= 5 else 'MARGINAL ⚠️'}")
+                        print(f"   [GROWTH] Profit Margin: {opp['profit_margin']:.3f}%")
+                        print(f"   [TASK] Status: {'PROFITABLE [OK]' if opp['net_profit'] >= 5 else 'MARGINAL [WARN]'}")
                 else:
-                    print("🔍 No profitable arbitrage opportunities found at current prices")
-                    print("💡 Market prices are currently well-balanced across DEXs")
+                    print("[SEARCH] No profitable arbitrage opportunities found at current prices")
+                    print("[INFO] Market prices are currently well-balanced across DEXs")
                 
                 print("="*100)
                 
             else:
-                print("❌ Failed to fetch real-time price data")
+                print("[ERROR] Failed to fetch real-time price data")
                 
         except Exception as e:
-            print(f"❌ Error fetching DEX prices: {e}")
-            print("💡 Continuing with fallback price sources...")
+            print(f"[ERROR] Error fetching DEX prices: {e}")
+            print("[INFO] Continuing with fallback price sources...")
     
 # Example usage and testing
 async def test_dex_integrations():
@@ -847,16 +849,29 @@ async def test_dex_integrations():
         all_prices = await dex.fetch_all_dex_prices_parallel(token_pairs)
         
         execution_time = time.time() - start_time
-        logger.info(f"Fetched prices in {execution_time:.2f}s")
+        logger.info(str(f"Fetched prices in {execution_time:.2f}s")
         
         for pair, dex_prices in all_prices.items():
-            logger.info(f"\\n{pair}:")
+            logger.info(str(f"\\n{pair}:")
             for dex_name, price_data in dex_prices.items():
-                logger.info(f"  {dex_name}: ${price_data.price} (Liquidity: ${price_data.liquidity})")
+                logger.info(str(f"  {dex_name}: ${price_data.price} (Liquidity: ${price_data.liquidity}")
         
     finally:
         await dex.close()
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(level=logging.INFO)
     asyncio.run(test_dex_integrations())

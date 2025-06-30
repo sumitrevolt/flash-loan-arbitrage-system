@@ -1,28 +1,43 @@
-#!/usr/bin/env python3
-"""
-Code Quality MCP Server
-Automated code review and quality analysis with GitHub integration
-"""
-
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 import asyncio
 import json
 import logging
 import os
 import subprocess
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
 from mcp.server import Server
 from mcp.server.models import InitializationOptions
 from mcp.server.stdio import stdio_server
-from mcp.types import (
+from mcp.types import ()
+"""
+Code Quality MCP Server
+Automated code review and quality analysis with GitHub integration
+"""
+
+
     Resource,
     Tool,
     TextContent,
     LoggingLevel
-)
+
 
 # Configure logging
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("code-quality-mcp")
 
@@ -39,32 +54,32 @@ class CodeQualityMCPServer:
         @self.server.list_resources()
         async def handle_list_resources() -> List[Resource]:
             """List available code quality resources."""
-            return [
-                Resource(
+            return []
+                Resource()
                     uri="codequality://analysis/report",
                     name="Code Quality Report",
                     description="Comprehensive code quality analysis report",
                     mimeType="application/json"
                 ),
-                Resource(
+                Resource()
                     uri="codequality://metrics/complexity",
                     name="Code Complexity Metrics",
                     description="Cyclomatic complexity and maintainability metrics",
                     mimeType="application/json"
                 ),
-                Resource(
+                Resource()
                     uri="codequality://issues/security",
                     name="Security Issues",
                     description="Security vulnerabilities and code smells",
                     mimeType="application/json"
                 ),
-                Resource(
+                Resource()
                     uri="codequality://coverage/report",
                     name="Test Coverage Report",
                     description="Code coverage analysis and test quality metrics",
                     mimeType="application/json"
-                )
-            ]
+                
+            
         
         @self.server.read_resource()
         async def handle_read_resource(uri: str) -> str:
@@ -83,72 +98,72 @@ class CodeQualityMCPServer:
         @self.server.list_tools()
         async def handle_list_tools() -> List[Tool]:
             """List available code quality tools."""
-            return [
-                Tool(
+            return []
+                Tool()
                     name="analyze_code_quality",
                     description="Analyze code quality for specific files or directories",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "path": {"type": "string", "description": "Path to analyze"},
                             "language": {"type": "string", "description": "Programming language"},
                             "tools": {"type": "array", "items": {"type": "string"}, "description": "Analysis tools to use"}
                         },
                         "required": ["path"]
-                    }
+                    
                 ),
-                Tool(
+                Tool()
                     name="fix_code_issues",
                     description="Automatically fix detected code quality issues",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "path": {"type": "string", "description": "Path to fix"},
                             "issue_types": {"type": "array", "items": {"type": "string"}, "description": "Types of issues to fix"},
                             "auto_commit": {"type": "boolean", "description": "Auto-commit fixes to git"}
                         },
                         "required": ["path"]
-                    }
+                    
                 ),
-                Tool(
+                Tool()
                     name="run_security_scan",
                     description="Run security vulnerability scan",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "path": {"type": "string", "description": "Path to scan"},
                             "scan_type": {"type": "string", "description": "Type of security scan (sast, dependencies, secrets)"}
                         },
                         "required": ["path"]
-                    }
+                    
                 ),
-                Tool(
+                Tool()
                     name="generate_quality_report",
                     description="Generate comprehensive quality report",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "path": {"type": "string", "description": "Path to analyze"},
                             "output_format": {"type": "string", "description": "Report format (json, html, pdf)"},
                             "include_recommendations": {"type": "boolean", "description": "Include improvement recommendations"}
                         },
                         "required": ["path"]
-                    }
+                    
                 ),
-                Tool(
+                Tool()
                     name="check_code_standards",
                     description="Check code against coding standards and style guides",
-                    inputSchema={
+                    inputSchema={}
                         "type": "object",
-                        "properties": {
+                        "properties": {}
                             "path": {"type": "string", "description": "Path to check"},
                             "standard": {"type": "string", "description": "Coding standard (pep8, eslint, etc.)"},
                             "fix_violations": {"type": "boolean", "description": "Auto-fix standard violations"}
                         },
                         "required": ["path"]
-                    }
-                )
-            ]
+                    
+                
+            
         
         @self.server.call_tool()
         async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
@@ -167,142 +182,142 @@ class CodeQualityMCPServer:
                 else:
                     raise ValueError(f"Unknown tool: {name}")
                 
-                return [TextContent(type="text", text=json.dumps(result, indent=2))]
+                return [TextContent(type="text", text=json.dumps(result, indent=2, ensure_ascii=True, default=str))]
             except Exception as e:
-                logger.error(f"Error in tool {name}: {str(e)}")
+                logger.error(str(f"Error in tool {name}: {str(e}")
                 return [TextContent(type="text", text=f"Error: {str(e)}")]
     
     async def get_quality_report(self) -> str:
         """Get comprehensive code quality report."""
         try:
-            report = {
+            report = {}
                 "timestamp": datetime.now().isoformat(),
                 "repository": self.repo_path,
                 "quality_score": 8.5,
-                "metrics": {
+                "metrics": {}
                     "lines_of_code": 15420,
                     "cyclomatic_complexity": 6.2,
                     "maintainability_index": 72.3,
                     "technical_debt_ratio": 0.8
                 },
-                "issues": {
+                "issues": {}
                     "critical": 2,
                     "major": 15,
                     "minor": 43,
                     "info": 78
                 },
-                "coverage": {
+                "coverage": {}
                     "line_coverage": 85.2,
                     "branch_coverage": 78.9,
                     "function_coverage": 92.1
                 },
-                "recommendations": [
+                "recommendations": []
                     "Reduce cyclomatic complexity in main arbitrage functions",
                     "Add unit tests for edge cases",
                     "Update outdated dependencies"
-                ]
-            }
-            return json.dumps(report, indent=2)
+                
+            
+            return json.dumps(report, indent=2, ensure_ascii=True, default=str)
         except Exception as e:
-            logger.error(f"Error generating quality report: {str(e)}")
-            return json.dumps({"error": str(e)})
+            logger.error(str(f"Error generating quality report: {str(e}")
+            return json.dumps({"error": str(e, ensure_ascii=True, default=str)})
     
     async def get_complexity_metrics(self) -> str:
         """Get code complexity metrics."""
         try:
-            metrics = {
+            metrics = {}
                 "timestamp": datetime.now().isoformat(),
                 "files_analyzed": 45,
-                "complexity_metrics": {
+                "complexity_metrics": {}
                     "average_complexity": 6.2,
                     "highest_complexity": 15.8,
                     "files_over_threshold": 3
                 },
-                "hot_spots": [
-                    {
+                "hot_spots": []
+                    {}
                         "file": "mcp_servers/mcp_arbitrage_server.py",
                         "function": "execute_arbitrage",
                         "complexity": 15.8,
                         "lines": 156
                     },
-                    {
+                    {}
                         "file": "mcp_servers/mcp_risk_manager_server.py",
                         "function": "calculate_risk_score",
                         "complexity": 12.4,
                         "lines": 89
-                    }
-                ]
-            }
-            return json.dumps(metrics, indent=2)
+                    
+                
+            
+            return json.dumps(metrics, indent=2, ensure_ascii=True, default=str)
         except Exception as e:
-            logger.error(f"Error getting complexity metrics: {str(e)}")
-            return json.dumps({"error": str(e)})
+            logger.error(str(f"Error getting complexity metrics: {str(e}")
+            return json.dumps({"error": str(e, ensure_ascii=True, default=str)})
     
     async def get_security_issues(self) -> str:
         """Get security issues and vulnerabilities."""
         try:
-            security_report = {
+            security_report = {}
                 "timestamp": datetime.now().isoformat(),
                 "scan_type": "comprehensive",
-                "vulnerabilities": {
+                "vulnerabilities": {}
                     "critical": 0,
                     "high": 1,
                     "medium": 3,
                     "low": 7
                 },
-                "issues": [
-                    {
+                "issues": []
+                    {}
                         "severity": "high",
                         "type": "hardcoded_secret",
                         "file": "config/settings.py",
                         "line": 45,
                         "description": "Potential hardcoded API key"
                     },
-                    {
+                    {}
                         "severity": "medium",
                         "type": "sql_injection",
                         "file": "database/queries.py",
                         "line": 123,
                         "description": "Potential SQL injection vulnerability"
-                    }
-                ]
-            }
-            return json.dumps(security_report, indent=2)
+                    
+                
+            
+            return json.dumps(security_report, indent=2, ensure_ascii=True, default=str)
         except Exception as e:
-            logger.error(f"Error getting security issues: {str(e)}")
-            return json.dumps({"error": str(e)})
+            logger.error(str(f"Error getting security issues: {str(e}")
+            return json.dumps({"error": str(e, ensure_ascii=True, default=str)})
     
     async def get_coverage_report(self) -> str:
         """Get test coverage report."""
         try:
-            coverage_report = {
+            coverage_report = {}
                 "timestamp": datetime.now().isoformat(),
                 "overall_coverage": 85.2,
-                "coverage_by_file": [
-                    {
+                "coverage_by_file": []
+                    {}
                         "file": "mcp_servers/mcp_flash_loan_server.py",
                         "line_coverage": 92.3,
                         "branch_coverage": 87.1,
                         "uncovered_lines": [45, 67, 123]
                     },
-                    {
+                    {}
                         "file": "mcp_servers/mcp_price_feed_server.py",
                         "line_coverage": 78.9,
                         "branch_coverage": 72.4,
                         "uncovered_lines": [23, 89, 156, 234]
-                    }
+                    
                 ],
-                "test_quality": {
+                "test_quality": {}
                     "total_tests": 156,
                     "passing_tests": 154,
                     "failing_tests": 2,
                     "average_execution_time": "2.3s"
-                }
-            }
-            return json.dumps(coverage_report, indent=2)
+                
+            
+            return json.dumps(coverage_report, indent=2, ensure_ascii=True, default=str)
         except Exception as e:
-            logger.error(f"Error getting coverage report: {str(e)}")
-            return json.dumps({"error": str(e)})
+            logger.error(str(f"Error getting coverage report: {str(e}")
+            return json.dumps({"error": str(e, ensure_ascii=True, default=str)})
     
     async def analyze_code_quality_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Tool implementation for code quality analysis."""
@@ -322,19 +337,19 @@ class CodeQualityMCPServer:
                 if "bandit" in tools:
                     results["bandit"] = await self.run_bandit_analysis(path)
             
-            return {
+            return {}
                 "path": path,
                 "language": language,
                 "tools_used": tools,
                 "results": results,
-                "summary": {
+                "summary": {}
                     "total_issues": sum(len(result.get("issues", [])) for result in results.values()),
                     "quality_score": 8.5,
                     "timestamp": datetime.now().isoformat()
-                }
-            }
+                
+            
         except Exception as e:
-            logger.error(f"Error analyzing code quality: {str(e)}")
+            logger.error(str(f"Error analyzing code quality: {str(e}")
             return {"error": str(e)}
     
     async def fix_code_issues_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
@@ -357,14 +372,14 @@ class CodeQualityMCPServer:
             if auto_commit and fixes_applied:
                 await self.commit_fixes(path, fixes_applied)
             
-            return {
+            return {}
                 "path": path,
                 "fixes_applied": fixes_applied,
                 "auto_committed": auto_commit,
                 "timestamp": datetime.now().isoformat()
-            }
+            
         except Exception as e:
-            logger.error(f"Error fixing code issues: {str(e)}")
+            logger.error(str(f"Error fixing code issues: {str(e}")
             return {"error": str(e)}
     
     async def run_security_scan_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
@@ -382,14 +397,14 @@ class CodeQualityMCPServer:
             else:
                 results = {"error": f"Unknown scan type: {scan_type}"}
             
-            return {
+            return {}
                 "path": path,
                 "scan_type": scan_type,
                 "results": results,
                 "timestamp": datetime.now().isoformat()
-            }
+            
         except Exception as e:
-            logger.error(f"Error running security scan: {str(e)}")
+            logger.error(str(f"Error running security scan: {str(e}")
             return {"error": str(e)}
     
     async def generate_quality_report_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
@@ -409,19 +424,19 @@ class CodeQualityMCPServer:
             else:
                 output_file = f"quality_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
             
-            return {
+            return {}
                 "path": path,
                 "output_format": output_format,
                 "output_file": output_file,
-                "report_summary": {
+                "report_summary": {}
                     "quality_score": report.get("quality_score", 0),
                     "total_issues": report.get("total_issues", 0),
                     "recommendations_count": len(report.get("recommendations", []))
                 },
                 "timestamp": datetime.now().isoformat()
-            }
+            
         except Exception as e:
-            logger.error(f"Error generating quality report: {str(e)}")
+            logger.error(str(f"Error generating quality report: {str(e}")
             return {"error": str(e)}
     
     async def check_code_standards_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
@@ -435,53 +450,53 @@ class CodeQualityMCPServer:
             
             if fix_violations and violations:
                 fixes = await self.fix_standard_violations(path, standard, violations)
-                return {
+                return {}
                     "path": path,
                     "standard": standard,
                     "violations_found": len(violations),
                     "violations_fixed": len(fixes),
                     "remaining_violations": len(violations) - len(fixes),
                     "timestamp": datetime.now().isoformat()
-                }
+                
             else:
-                return {
+                return {}
                     "path": path,
                     "standard": standard,
                     "violations_found": len(violations),
                     "violations": violations[:10],  # Limit to first 10
                     "timestamp": datetime.now().isoformat()
-                }
+                
         except Exception as e:
-            logger.error(f"Error checking code standards: {str(e)}")
+            logger.error(str(f"Error checking code standards: {str(e}")
             return {"error": str(e)}
     
     # Helper methods (mock implementations)
     async def run_ruff_analysis(self, path: str) -> Dict[str, Any]:
         """Run Ruff code analysis."""
-        return {
+        return {}
             "tool": "ruff",
-            "issues": [
+            "issues": []
                 {"file": f"{path}/example.py", "line": 10, "code": "F401", "message": "Unused import"}
-            ]
-        }
+            
+        
     
     async def run_mypy_analysis(self, path: str) -> Dict[str, Any]:
         """Run MyPy type checking."""
-        return {
+        return {}
             "tool": "mypy",
-            "issues": [
+            "issues": []
                 {"file": f"{path}/example.py", "line": 25, "message": "Function is missing return type annotation"}
-            ]
-        }
+            
+        
     
     async def run_bandit_analysis(self, path: str) -> Dict[str, Any]:
         """Run Bandit security analysis."""
-        return {
+        return {}
             "tool": "bandit",
-            "issues": [
+            "issues": []
                 {"file": f"{path}/config.py", "line": 15, "severity": "medium", "message": "Possible hardcoded password"}
-            ]
-        }
+            
+        
     
     async def fix_formatting_issues(self, path: str) -> List[str]:
         """Fix code formatting issues."""
@@ -499,58 +514,58 @@ class CodeQualityMCPServer:
         """Commit applied fixes to git."""
         commit_message = f"Auto-fix: {', '.join(fixes)}"
         # Mock git commit
-        logger.info(f"Mock commit: {commit_message}")
+        logger.info(str(f"Mock commit: {commit_message}")
     
     async def run_sast_scan(self, path: str) -> Dict[str, Any]:
         """Run Static Application Security Testing."""
-        return {
-            "vulnerabilities": [
+        return {}
+            "vulnerabilities": []
                 {"type": "sql_injection", "severity": "high", "file": f"{path}/db.py", "line": 45}
-            ]
-        }
+            
+        
     
     async def run_dependency_scan(self, path: str) -> Dict[str, Any]:
         """Run dependency vulnerability scan."""
-        return {
-            "vulnerable_dependencies": [
+        return {}
+            "vulnerable_dependencies": []
                 {"name": "requests", "version": "2.25.0", "vulnerability": "CVE-2021-33503"}
-            ]
-        }
+            
+        
     
     async def run_secret_scan(self, path: str) -> Dict[str, Any]:
         """Run secret detection scan."""
-        return {
-            "secrets_found": [
+        return {}
+            "secrets_found": []
                 {"type": "api_key", "file": f"{path}/.env", "line": 5}
-            ]
-        }
+            
+        
     
     async def create_comprehensive_report(self, path: str, include_recommendations: bool) -> Dict[str, Any]:
         """Create comprehensive quality report."""
-        report = {
+        report = {}
             "quality_score": 8.5,
             "total_issues": 25,
             "path": path
-        }
+        
         
         if include_recommendations:
-            report["recommendations"] = [
+            report["recommendations"] = []
                 "Increase test coverage to 90%+",
                 "Reduce cyclomatic complexity",
                 "Update dependencies"
-            ]
+            
         
         return report
     
     async def convert_to_html(self, report: Dict[str, Any]) -> str:
         """Convert report to HTML format."""
-        return f"<html><body><h1>Quality Report</h1><pre>{json.dumps(report, indent=2)}</pre></body></html>"
+        return f"<html><body><h1>Quality Report</h1><pre>{json.dumps(report, indent=2, ensure_ascii=True, default=str)}</pre></body></html>"
     
     async def check_coding_standard(self, path: str, standard: str) -> List[Dict[str, Any]]:
         """Check code against coding standard."""
-        return [
+        return []
             {"file": f"{path}/example.py", "line": 10, "violation": "Line too long"}
-        ]
+        
     
     async def fix_standard_violations(self, path: str, standard: str, violations: List[Dict[str, Any]]) -> List[str]:
         """Fix coding standard violations."""
@@ -561,18 +576,18 @@ async def main():
     server_instance = CodeQualityMCPServer()
     
     async with stdio_server() as (read_stream, write_stream):
-        await server_instance.server.run(
+        await server_instance.server.run()
             read_stream,
             write_stream,
-            InitializationOptions(
+            InitializationOptions()
                 server_name="code-quality-mcp",
                 server_version="1.0.0",
-                capabilities=server_instance.server.get_capabilities(
+                capabilities=server_instance.server.get_capabilities()
                     notification_options=None,
                     experimental_capabilities=None,
                 ),
             ),
-        )
+        
 
 if __name__ == "__main__":
     asyncio.run(main())

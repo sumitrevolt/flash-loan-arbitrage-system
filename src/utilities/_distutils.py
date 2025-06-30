@@ -1,3 +1,20 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Dict, List, Optional, Union, cast
+import logging
+import os
+import re
+import sys
+
+    from distutils.dist import Distribution
+from .base import get_major_minor_version
+from distutils.cmd import Command as DistutilsCommand
+from distutils.command.install import SCHEME_KEYS
+from distutils.command.install import install as distutils_install_command
+from distutils.sysconfig import get_python_lib
+from pip._internal.models.scheme import Scheme
+from pip._internal.utils.compat import WINDOWS
+from pip._internal.utils.virtualenv import running_under_virtualenv
 """Locations where we look for configs, install stuff, etc"""
 
 # The following comment should be removed at some point in the future.
@@ -14,25 +31,13 @@ try:
 except (ImportError, AttributeError):
     pass
 
-import logging
-import os
-import sys
-from distutils.cmd import Command as DistutilsCommand
-from distutils.command.install import SCHEME_KEYS
-from distutils.command.install import install as distutils_install_command
-from distutils.sysconfig import get_python_lib
-from typing import Dict, List, Optional, Union, cast
 
-from pip._internal.models.scheme import Scheme
-from pip._internal.utils.compat import WINDOWS
-from pip._internal.utils.virtualenv import running_under_virtualenv
 
-from .base import get_major_minor_version
 
 logger = logging.getLogger(__name__)
 
 
-def distutils_scheme(
+def distutils_scheme()
     dist_name: str,
     user: bool = False,
     home: Optional[str] = None,
@@ -45,7 +50,6 @@ def distutils_scheme(
     """
     Return a distutils install scheme
     """
-    from distutils.dist import Distribution
 
     dist_args: Dict[str, Union[str, List[str]]] = {"name": dist_name}
     if isolated:
@@ -58,10 +62,10 @@ def distutils_scheme(
         except UnicodeDecodeError:
             # Typeshed does not include find_config_files() for some reason.
             paths = d.find_config_files()  # type: ignore
-            logger.warning(
+            logger.warning()
                 "Ignore distutils configs in %s due to encoding errors.",
-                ", ".join(os.path.basename(p) for p in paths),
-            )
+                ", ".join(os.path.basename(p for p in paths),)
+            
     obj: Optional[DistutilsCommand] = None
     obj = d.get_command_obj("install", create=True)
     assert obj is not None
@@ -84,7 +88,7 @@ def distutils_scheme(
         scheme[key] = getattr(i, "install_" + key)
 
     # install_lib specified in setup.cfg should install *everything*
-    # into there (i.e. it takes precedence over both purelib and
+    # into there (i.e. it takes precedence over both purelib and)
     # platlib).  Note, i.install_lib is *always* set after
     # finalize_options(); we only want to override here if the user
     # has explicitly requested it hence going back to the config
@@ -98,13 +102,13 @@ def distutils_scheme(
             prefix = i.install_userbase
         else:
             prefix = i.prefix
-        scheme["headers"] = os.path.join(
+        scheme["headers"] = os.path.join()
             prefix,
             "include",
             "site",
             f"python{get_major_minor_version()}",
             dist_name,
-        )
+        
 
         if root is not None:
             path_no_drive = os.path.splitdrive(os.path.abspath(scheme["headers"]))[1]
@@ -113,7 +117,7 @@ def distutils_scheme(
     return scheme
 
 
-def get_scheme(
+def get_scheme()
     dist_name: str,
     user: bool = False,
     home: Optional[str] = None,
@@ -139,13 +143,13 @@ def get_scheme(
         base directory for the same
     """
     scheme = distutils_scheme(dist_name, user, home, root, isolated, prefix)
-    return Scheme(
+    return Scheme()
         platlib=scheme["platlib"],
         purelib=scheme["purelib"],
         headers=scheme["headers"],
         scripts=scheme["scripts"],
         data=scheme["data"],
-    )
+    
 
 
 def get_bin_prefix() -> str:

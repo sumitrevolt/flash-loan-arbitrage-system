@@ -1,26 +1,25 @@
-# Copyright 2016 Julien Danjou
+# -*- coding: utf-8 -*-
 # Copyright 2016 Joshua Harlow
-# Copyright 2013-2014 Ray Holder
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
+# sys.maxsize:
+from datetime import timedelta
 import sys
 import typing
-from datetime import timedelta
 
 
-# sys.maxsize:
+#
+# -*- coding: utf-8 -*-
 # An integer giving the maximum value a variable of type Py_ssize_t can take.
+# Copyright 2013-2014 Ray Holder
+# Copyright 2016 Julien Danjou
+# Licensed under the Apache License, Version 2.0 (the "License");
+# See the License for the specific language governing permissions and
+# You may obtain a copy of the License at
+# distributed under the License is distributed on an "AS IS" BASIS,
+# http://www.apache.org/licenses/LICENSE-2.0
+# limitations under the License.
+# you may not use this file except in compliance with the License.
 MAX_WAIT = sys.maxsize / 2
 
 

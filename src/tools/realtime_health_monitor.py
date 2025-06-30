@@ -1,19 +1,21 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Dict, List
+import json
+import os
+import socket
+import sys
+import threading
+import time
+
+from concurrent.futures import ThreadPoolExecutor
+import requests
 """
 Real-time Flash Loan System Health Monitor
 Continuously monitors system health and provides live updates
 """
 
-import time
-import os
-import sys
-import json
-import requests
-import socket
-from datetime import datetime
-from typing import Dict, List
-import threading
-from concurrent.futures import ThreadPoolExecutor
 
 class RealTimeHealthMonitor:
     """Real-time system health monitoring"""
@@ -25,14 +27,14 @@ class RealTimeHealthMonitor:
         
     def get_service_definitions(self) -> Dict[str, List[tuple]]:
         """Define services to monitor"""
-        return {
-            'Infrastructure': [
+        return {}
+            'Infrastructure': []
                 ('PostgreSQL', 5432, 'tcp'),
                 ('Redis', 6379, 'tcp'), 
                 ('RabbitMQ', 5672, 'tcp'),
                 ('RabbitMQ Mgmt', 15672, 'tcp')
             ],
-            'MCP Servers': [
+            'MCP Servers': []
                 ('Flash Loan MCP', 4001, 'http'),
                 ('Web3 Provider', 4002, 'http'),
                 ('DEX Price Server', 4003, 'http'),
@@ -42,15 +44,15 @@ class RealTimeHealthMonitor:
                 ('Enhanced Copilot', 4010, 'http'),
                 ('Health Checker', 4021, 'http'),
             ],
-            'AI Agents': [
+            'AI Agents': []
                 ('Coordinator Agent', 5001, 'http'),
                 ('Arbitrage Agent', 5002, 'http'),
                 ('Monitoring Agent', 5003, 'http'),
                 ('Builder Agent', 5004, 'http'),
                 ('AAVE Executor', 5005, 'http'),
                 ('Contract Executor', 5006, 'http'),
-            ]
-        }
+            
+        
     
     def test_tcp_port(self, port: int, timeout: int = 2) -> bool:
         """Test TCP port connectivity"""
@@ -85,13 +87,13 @@ class RealTimeHealthMonitor:
         else:  # http
             is_healthy, service_info = self.test_http_health(port)
         
-        return {
+        return {}
             'name': name,
             'port': port,
             'healthy': is_healthy,
             'service_info': service_info,
             'check_type': check_type
-        }
+        
     
     def monitor_cycle(self) -> Dict:
         """Run one monitoring cycle"""
@@ -103,10 +105,10 @@ class RealTimeHealthMonitor:
             category_results = []
             
             with ThreadPoolExecutor(max_workers=10) as executor:
-                futures = [
+                futures = []
                     executor.submit(self.check_service, name, port, check_type)
                     for name, port, check_type in services
-                ]
+                
                 
                 for future in futures:
                     try:
@@ -122,12 +124,12 @@ class RealTimeHealthMonitor:
         
         # Calculate summary
         health_percentage = (healthy_services / total_services * 100) if total_services > 0 else 0
-        results['summary'] = {
+        results['summary'] = {}
             'total': total_services,
             'healthy': healthy_services,
             'percentage': round(health_percentage, 1),
             'status': 'HEALTHY' if health_percentage >= 80 else 'DEGRADED' if health_percentage >= 50 else 'CRITICAL'
-        }
+        
         
         return results
     
@@ -143,7 +145,7 @@ class RealTimeHealthMonitor:
         print("🏦 Flash Loan System - Real-Time Health Monitor")
         print("=" * 65)
         print(f"⏰ Last Update: {now}")
-        print(f"🔄 Press Ctrl+C to stop monitoring")
+        print(f"[SYNC] Press Ctrl+C to stop monitoring")
         print()
     
     def print_results(self, results: Dict):
@@ -152,7 +154,7 @@ class RealTimeHealthMonitor:
         
         # Print summary
         status_icon = "🟢" if summary['status'] == 'HEALTHY' else "🟡" if summary['status'] == 'DEGRADED' else "🔴"
-        print(f"📊 SYSTEM STATUS: {status_icon} {summary['status']}")
+        print(f"[METRICS] SYSTEM STATUS: {status_icon} {summary['status']}")
         print(f"   Total: {summary['total']} | Healthy: {summary['healthy']} | {summary['percentage']}%")
         print()
         
@@ -160,7 +162,7 @@ class RealTimeHealthMonitor:
         for category, services in results['categories'].items():
             print(f"📋 {category}:")
             for service in services:
-                icon = "✅" if service['healthy'] else "❌"
+                icon = "[OK]" if service['healthy'] else "[ERROR]"
                 port_info = f":{service['port']}"
                 
                 if service['check_type'] == 'http' and service['healthy']:
@@ -173,7 +175,7 @@ class RealTimeHealthMonitor:
     
     def run(self, update_interval: int = 10):
         """Run the monitoring loop"""
-        print("🚀 Starting Flash Loan System Health Monitor...")
+        print("[INIT] Starting Flash Loan System Health Monitor...")
         print(f"📱 Update interval: {update_interval} seconds")
         print("⏳ Performing initial health check...")
         
@@ -195,14 +197,14 @@ class RealTimeHealthMonitor:
                 time.sleep(update_interval)
                 
         except KeyboardInterrupt:
-            print("\n\n🛑 Monitoring stopped by user")
+            print("\n\n[STOP] Monitoring stopped by user")
             self.running = False
         except Exception as e:
-            print(f"\n\n❌ Monitoring error: {e}")
+            print(f"\n\n[ERROR] Monitoring error: {e}")
     
     def single_check(self):
         """Run a single health check"""
-        print("🔍 Running single health check...")
+        print("[SEARCH] Running single health check...")
         results = self.monitor_cycle()
         self.print_results(results)
         return results

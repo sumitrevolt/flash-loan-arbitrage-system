@@ -1,13 +1,24 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Callable, Any, Optional, Dict, cast
+import logging
+import re
+
+            from web3.middleware import geth_poa_middleware
+        from eth_account import Account
+        from eth_account.signers.local import LocalAccount
+        from web3.middleware import ExtraDataToPOAMiddleware
+        import importlib
+    from web3 import Web3
+
+from src.utils.web3_provider import WEB3_IMPORTED, Web3, RPCEndpoint, RPCResponse
 """
 Web3 middleware compatibility utilities for different versions of web3.py
 All middleware functions are centralized here to avoid redundancy.
 """
 
-import logging
-from typing import Callable, Any, Optional, Dict, cast
 
 # Import from the central provider to avoid duplication
-from src.utils.web3_provider import WEB3_IMPORTED, Web3, RPCEndpoint, RPCResponse
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +37,10 @@ def construct_sign_and_send_raw_middleware(private_key: str) -> Optional[Callabl
         return None
         
     try:
-        from eth_account import Account
-        from eth_account.signers.local import LocalAccount
         
         account = Account.from_key(private_key)
         
-        def signing_middleware(make_request: Callable[[RPCEndpoint, Any], RPCResponse],
+        def signing_middleware(make_request: Callable[[RPCEndpoint, Any], RPCResponse],)
                              w3: Web3) -> Callable[[RPCEndpoint, Any], RPCResponse]:
             def middleware(method: RPCEndpoint, params: Any) -> RPCResponse:
                 if method == "eth_sendTransaction":
@@ -50,17 +59,17 @@ def construct_sign_and_send_raw_middleware(private_key: str) -> Optional[Callabl
                         signed_txn = account.sign_transaction(transaction)
                         
                         # Send raw transaction
-                        return make_request(
+                        return make_request()
                             cast(RPCEndpoint, "eth_sendRawTransaction"),
                             [signed_txn.raw_transaction.hex()]
-                        )
+                        
                 return make_request(method, params)
             return middleware
         
         return signing_middleware
         
     except Exception as e:
-        logger.error(f"Error creating signing middleware: {e}")
+        logger.error(str(f"Error creating signing middleware: {e}")
         return None
 
 def get_poa_middleware():
@@ -76,13 +85,11 @@ def get_poa_middleware():
         
     try:
         # Try import path for Web3.py v7+
-        from web3.middleware import ExtraDataToPOAMiddleware
         logger.debug("Using ExtraDataToPOAMiddleware")
         return ExtraDataToPOAMiddleware
     except ImportError:
         try:
             # Try legacy import path
-            from web3.middleware import geth_poa_middleware
             logger.debug("Using geth_poa_middleware")
             return geth_poa_middleware
         except ImportError:
@@ -104,7 +111,6 @@ def apply_geth_poa_middleware(w3: Web3) -> None:
         
     # Dynamically resolve geth_poa_middleware 
     try:
-        import importlib
         mw_mod = importlib.import_module('web3.middleware')
         geth_poa = getattr(mw_mod, 'geth_poa_middleware', None)
         if geth_poa and hasattr(w3, 'middleware_onion'):
@@ -116,7 +122,6 @@ def apply_geth_poa_middleware(w3: Web3) -> None:
     
     # Try alternative POA middleware
     try:
-        import importlib
         mw_mod = importlib.import_module('web3.middleware')
         alt = getattr(mw_mod, 'ExtraDataToPOAMiddleware', None)
         if alt and hasattr(w3, 'middleware_onion'):
@@ -124,7 +129,7 @@ def apply_geth_poa_middleware(w3: Web3) -> None:
             logger.debug("Successfully applied ExtraDataToPOAMiddleware")
             return
     except Exception as e:
-        logger.warning(f"Could not apply POA middleware: {e}")
+        logger.warning(str(f"Could not apply POA middleware: {e}")
         return
         
     logger.warning("No POA middleware available in this web3 version.")
@@ -143,7 +148,6 @@ def apply_web3_middleware(w3):
         
     # Dynamically resolve POA middleware
     try:
-        import importlib
         mw_mod = importlib.import_module('web3.middleware')
         geth_poa = getattr(mw_mod, 'geth_poa_middleware', None)
         if geth_poa and hasattr(w3, 'middleware_onion'):
@@ -153,7 +157,6 @@ def apply_web3_middleware(w3):
         pass
         
     try:
-        import importlib
         mw_mod = importlib.import_module('web3.middleware')
         alt = getattr(mw_mod, 'ExtraDataToPOAMiddleware', None)
         if alt and hasattr(w3, 'middleware_onion'):
@@ -161,12 +164,12 @@ def apply_web3_middleware(w3):
             logger.debug("Successfully applied ExtraDataToPOAMiddleware")
             return
     except Exception as e:
-        logger.warning(f"Could not apply POA middleware: {e}")
+        logger.warning(str(f"Could not apply POA middleware: {e}")
         return
         
     logger.warning("No POA middleware available in this web3 version.")
 
-def construct_exception_handler_middleware(
+def construct_exception_handler_middleware()
     error_handlers: Dict[RPCEndpoint, Any]
 ) -> Any:
     """
@@ -179,7 +182,7 @@ def construct_exception_handler_middleware(
     Returns:
         Middleware function
     """
-    def exception_handler_middleware(
+    def exception_handler_middleware()
         make_request, w3: Web3
     ) -> Any:
         def middleware(method: RPCEndpoint, params: Any) -> RPCResponse:
@@ -208,7 +211,6 @@ def apply_poa_middleware(w3: Web3) -> None:
         
     # Dynamically resolve and apply POA middleware
     try:
-        import importlib
         mw_mod = importlib.import_module('web3.middleware')
         geth_poa = getattr(mw_mod, 'geth_poa_middleware', None)
         if geth_poa and hasattr(w3, 'middleware_onion'):
@@ -216,10 +218,9 @@ def apply_poa_middleware(w3: Web3) -> None:
             logger.debug("Successfully applied geth_poa_middleware")
             return
     except Exception as e:
-        logger.debug(f"geth_poa_middleware not available: {e}")
+        logger.debug(str(f"geth_poa_middleware not available: {e}")
         
     try:
-        import importlib
         mw_mod = importlib.import_module('web3.middleware')
         alt = getattr(mw_mod, 'ExtraDataToPOAMiddleware', None)
         if alt and hasattr(w3, 'middleware_onion'):
@@ -227,7 +228,7 @@ def apply_poa_middleware(w3: Web3) -> None:
             logger.debug("Successfully applied ExtraDataToPOAMiddleware")
             return
     except Exception as e:
-        logger.warning(f"Could not apply POA middleware: {e}")
+        logger.warning(str(f"Could not apply POA middleware: {e}")
         
     logger.warning("No POA middleware available in this web3 version.")
 
@@ -250,5 +251,4 @@ def convert_to_checksum_address(address: str) -> str:
         logger.warning("Web3 not imported, returning address as is")
         return address
         
-    from web3 import Web3
     return Web3.to_checksum_address(address)

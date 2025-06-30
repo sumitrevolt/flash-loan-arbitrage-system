@@ -1,42 +1,65 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Dict, List, Any, Optional, Union
+import asyncio
+import json
+import logging
+import os
+import re
+import time
+
+     from .error_resolution_agent import ErrorResolutionAgent
+     from ai_agents.error_resolution_agent import ErrorResolutionAgent # Fallback
+    from .code_analyzer_agent import CodeAnalyzerAgent
+    from ai_agents.code_analyzer_agent import CodeAnalyzerAgent # Fallback if src is in PYTHONPATH
+    from autogen import AssistantAgent, UserProxyAgent, GroupChat, GroupChatManager
+    from langchain.agents import initialize_agent, AgentType
+    from langchain.llms import OpenAI
+    from langchain.memory import ConversationBufferMemory
+    from langchain.schema import BaseMessage, HumanMessage, SystemMessage
+    from langchain.tools import Tool
+    import docker
+    import psycopg2
+    import redis
+from dataclasses import dataclass, field
+import aiohttp
 """
 Robust LangChain Orchestrator with comprehensive error handling and dependency management
 """
 
-import asyncio
-import logging
-import time
-import json
-import os
-import re
-from datetime import datetime
-from typing import Dict, List, Any, Optional, Union
-from dataclasses import dataclass, field
-import aiohttp
 
 # Attempt a relative import first, then an absolute one if needed.
 # This depends on how the project is structured and PYTHONPATH.
 try:
-    from .code_analyzer_agent import CodeAnalyzerAgent
-     from .error_resolution_agent import ErrorResolutionAgent
 except ImportError:
-    from ai_agents.code_analyzer_agent import CodeAnalyzerAgent # Fallback if src is in PYTHONPATH
-     from ai_agents.error_resolution_agent import ErrorResolutionAgent # Fallback
 
 # Configure logging first
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.FileHandler("/app/logs/orchestrator.log"),
         logging.StreamHandler()
-    ]
-)
+    
+
 logger = logging.getLogger("RobustLangChainOrchestrator")
 
 # Safe imports with fallbacks
 try:
-    import redis
     REDIS_AVAILABLE = True
 except ImportError:
     logger.warning("Redis not available - using in-memory storage")
@@ -44,7 +67,6 @@ except ImportError:
     redis = None
 
 try:
-    import psycopg2
     POSTGRES_AVAILABLE = True
 except ImportError:
     logger.warning("PostgreSQL not available - using file storage")
@@ -52,27 +74,20 @@ except ImportError:
     psycopg2 = None
 
 try:
-    from langchain.llms import OpenAI
-    from langchain.agents import initialize_agent, AgentType
-    from langchain.memory import ConversationBufferMemory
-    from langchain.tools import Tool
-    from langchain.schema import BaseMessage, HumanMessage, SystemMessage
     LANGCHAIN_AVAILABLE = True
     logger.info("LangChain modules loaded successfully")
 except ImportError as e:
-    logger.warning(f"LangChain not fully available: {e} - using fallback implementation")
+    logger.warning(str(f"LangChain not fully available: {e} - using fallback implementation")
     LANGCHAIN_AVAILABLE = False
 
 try:
-    from autogen import AssistantAgent, UserProxyAgent, GroupChat, GroupChatManager
     AUTOGEN_AVAILABLE = True
     logger.info("AutoGen modules loaded successfully")
 except ImportError as e:
-    logger.warning(f"AutoGen not available: {e} - using LangChain only")
+    logger.warning(str(f"AutoGen not available: {e} - using LangChain only")
     AUTOGEN_AVAILABLE = False
 
 try:
-    import docker
     DOCKER_AVAILABLE = True
     docker_client = docker.from_env()
 except ImportError:
@@ -132,28 +147,28 @@ class RobustStorageManager:
         
         if REDIS_AVAILABLE:
             try:
-                self.redis_client = redis.from_url(REDIS_URL)
+                self.redis_client = redis.from_url(REDIS_URL, decode_responses=True, encoding="utf-8")
                 self.redis_client.ping()
                 self.storage_type = "redis"
                 logger.info("Connected to Redis storage")
             except Exception as e:
-                logger.warning(f"Redis connection failed: {e}, using memory storage")
+                logger.warning(str(f"Redis connection failed: {e}, using memory storage")
                 self.storage_type = "memory"
     
     async def set(self, key: str, value: Any, expire: int = None) -> bool:
         """Set a value in storage"""
         try:
             if self.storage_type == "redis" and self.redis_client:
-                self.redis_client.set(key, json.dumps(value), ex=expire)
+                self.redis_client.set(key, json.dumps(value, ensure_ascii=True, default=str), ex=expire)
             else:
-                self.memory_store[key] = {
+                self.memory_store[key] = {}
                     'value': value,
                     'timestamp': time.time(),
                     'expire': expire
-                }
+                
             return True
         except Exception as e:
-            logger.error(f"Storage set error: {e}")
+            logger.error(str(f"Storage set error: {e}")
             return False
     
     async def get(self, key: str) -> Any:
@@ -171,7 +186,7 @@ class RobustStorageManager:
                     return item['value']
                 return None
         except Exception as e:
-            logger.error(f"Storage get error: {e}")
+            logger.error(str(f"Storage get error: {e}")
             return None
 
 class LangChainAgentManager:
@@ -185,47 +200,47 @@ class LangChainAgentManager:
         
         if LANGCHAIN_AVAILABLE and OPENAI_API_KEY:
             try:
-                self.llm = OpenAI(
+                self.llm = OpenAI()
                     temperature=0.7,
                     openai_api_key=OPENAI_API_KEY
-                )
+                
                 self._setup_tools()
                 logger.info("LangChain LLM initialized")
             except Exception as e:
-                logger.error(f"LangChain LLM initialization failed: {e}")
+                logger.error(str(f"LangChain LLM initialization failed: {e}")
     
     def _setup_tools(self):
         """Setup LangChain tools"""
-        self.tools = [
-            Tool(
+        self.tools = []
+            Tool()
                 name="SystemStatus",
                 description="Get current system status and metrics",
                 func=self._get_system_status
             ),
-            Tool(
+            Tool()
                 name="RestartService",
                 description="Restart a failed service or container",
                 func=self._restart_service
             ),
-            Tool(
+            Tool()
                 name="HealthCheck",
                 description="Perform health check on system components",
                 func=self._health_check
-            )
-        ]
+            
+        
     
     def _get_system_status(self, query: str = "") -> str:
         """Get system status"""
         try:
-            status = {
+            status = {}
                 'timestamp': datetime.now().isoformat(),
                 'agents': len(self.agents),
                 'tools_available': len(self.tools),
                 'langchain_status': LANGCHAIN_AVAILABLE,
                 'autogen_status': AUTOGEN_AVAILABLE,
                 'docker_status': DOCKER_AVAILABLE
-            }
-            return json.dumps(status, indent=2)
+            
+            return json.dumps(status, indent=2, ensure_ascii=True, default=str)
         except Exception as e:
             return f"Error getting system status: {e}"
     
@@ -243,55 +258,55 @@ class LangChainAgentManager:
     
     def _health_check(self, component: str = "all") -> str:
         """Perform health check"""
-        results = {
+        results = {}
             'redis': REDIS_AVAILABLE,
             'postgres': POSTGRES_AVAILABLE,
             'langchain': LANGCHAIN_AVAILABLE,
             'autogen': AUTOGEN_AVAILABLE,
             'docker': DOCKER_AVAILABLE
-        }
+        
         
         if component != "all":
             return f"{component}: {'OK' if results.get(component, False) else 'FAILED'}"
         
-        return json.dumps(results, indent=2)
+        return json.dumps(results, indent=2, ensure_ascii=True, default=str)
     
     async def create_agent(self, config: AgentConfig) -> bool:
         """Create a new agent"""
         try:
             if LANGCHAIN_AVAILABLE and self.llm:
                 memory = ConversationBufferMemory(memory_key="chat_history")
-                agent = initialize_agent(
+                agent = initialize_agent()
                     self.tools,
                     self.llm,
                     agent=AgentType.CONVERSATIONAL_REACT_DESCRIPTION,
                     memory=memory,
                     verbose=True
-                )
                 
-                self.agents[config.name] = {
+                
+                self.agents[config.name] = {}
                     'agent': agent,
                     'config': config,
                     'created_at': datetime.now(),
                     'status': 'active'
-                }
+                
                 
                 await self.storage.set(f"agent:{config.name}", config.__dict__)
-                logger.info(f"Created LangChain agent: {config.name}")
+                logger.info(str(f"Created LangChain agent: {config.name}")
                 return True
             else:
                 # Fallback: create simple agent stub
-                self.agents[config.name] = {
+                self.agents[config.name] = {}
                     'config': config,
                     'created_at': datetime.now(),
                     'status': 'active',
                     'type': 'fallback'
-                }
-                logger.info(f"Created fallback agent: {config.name}")
+                
+                logger.info(str(f"Created fallback agent: {config.name}")
                 return True
                 
         except Exception as e:
-            logger.error(f"Failed to create agent {config.name}: {e}")
+            logger.error(str(f"Failed to create agent {config.name}: {e}")
             return False
     
     async def execute_task(self, agent_name: str, task: str) -> Dict[str, Any]:
@@ -304,23 +319,23 @@ class LangChainAgentManager:
             
             if LANGCHAIN_AVAILABLE and 'agent' in agent_data:
                 result = agent_data['agent'].run(task)
-                return {
+                return {}
                     'status': 'success',
                     'result': result,
                     'agent': agent_name,
                     'timestamp': datetime.now().isoformat()
-                }
+                
             else:
                 # Fallback execution
-                return {
+                return {}
                     'status': 'success',
                     'result': f"Fallback execution of task: {task}",
                     'agent': agent_name,
                     'timestamp': datetime.now().isoformat()
-                }
+                
                 
         except Exception as e:
-            logger.error(f"Task execution failed for {agent_name}: {e}")
+            logger.error(str(f"Task execution failed for {agent_name}: {e}")
             return {'status': 'error', 'message': str(e)}
 
 class MCPServerManager:
@@ -333,7 +348,7 @@ class MCPServerManager:
     
     def _setup_default_servers(self):
         """Setup 21 default MCP servers"""
-        server_configs = [
+        server_configs = []
             MCPServerConfig("mcp-filesystem", 8001, health_endpoint="/health"),
             MCPServerConfig("mcp-database", 8002, health_endpoint="/health"),
             MCPServerConfig("mcp-web-scraper", 8003, health_endpoint="/health"),
@@ -355,7 +370,7 @@ class MCPServerManager:
             MCPServerConfig("mcp-liquidity", 8019, health_endpoint="/health"),
             MCPServerConfig("mcp-flash-loan", 8020, health_endpoint="/health"),
             MCPServerConfig("mcp-coordinator", 8021, health_endpoint="/health")
-        ]
+        
         
         for config in server_configs:
             self.servers[config.name] = config
@@ -380,7 +395,7 @@ class MCPServerManager:
                 await self.storage.set(f"server:{name}", config.__dict__)
                 
             except Exception as e:
-                logger.error(f"Health check failed for {name}: {e}")
+                logger.error(str(f"Health check failed for {name}: {e}")
                 results[name] = False
                 config.status = 'error'
         
@@ -390,7 +405,7 @@ class MCPServerManager:
         """Restart a specific MCP server"""
         try:
             if server_name not in self.servers:
-                logger.error(f"Server {server_name} not found")
+                logger.error(str(f"Server {server_name} not found")
                 return False
             
             config = self.servers[server_name]
@@ -399,14 +414,14 @@ class MCPServerManager:
                 container = docker_client.containers.get(config.container_name)
                 container.restart()
                 config.status = 'restarting'
-                logger.info(f"Restarted server: {server_name}")
+                logger.info(str(f"Restarted server: {server_name}")
                 return True
             else:
-                logger.warning(f"Docker not available, cannot restart {server_name}")
+                logger.warning(str(f"Docker not available, cannot restart {server_name}")
                 return False
                 
         except Exception as e:
-            logger.error(f"Failed to restart server {server_name}: {e}")
+            logger.error(str(f"Failed to restart server {server_name}: {e}")
             return False
 
 class RobustLangChainOrchestrator:
@@ -435,7 +450,7 @@ class RobustLangChainOrchestrator:
                  logger.error("AIOHTTP session not available, ErrorResolutionAgent not initialized.")
 
         except Exception as e:
-             logger.error(f"Failed to initialize aiohttp session or core agents: {e}", exc_info=True)
+             logger.error(str(f"Failed to initialize aiohttp session or core agents: {e}"), exc_info=True)
              if self.aiohttp_session and not self.aiohttp_session.closed:
                  # If session is fine, but one agent failed, nullify them to prevent partial use.
                  # This part of the logic might need adjustment based on how critical each agent is.
@@ -453,23 +468,23 @@ class RobustLangChainOrchestrator:
             self.is_running = True
             self.state.status = "running"
             
-            logger.info("🚀 Starting Robust LangChain Orchestrator")
-            logger.info(f"📊 System capabilities:")
-            logger.info(f"   - LangChain: {'✅' if LANGCHAIN_AVAILABLE else '❌'}")
-            logger.info(f"   - AutoGen: {'✅' if AUTOGEN_AVAILABLE else '❌'}")
-            logger.info(f"   - Redis: {'✅' if REDIS_AVAILABLE else '❌'}")
-            logger.info(f"   - Docker: {'✅' if DOCKER_AVAILABLE else '❌'}")
+            logger.info("[INIT] Starting Robust LangChain Orchestrator")
+            logger.info(str(f"[METRICS] System capabilities:")
+            logger.info(str(f"   - LangChain: {'[OK]' if LANGCHAIN_AVAILABLE else '[ERROR]'}")
+            logger.info(str(f"   - AutoGen: {'[OK]' if AUTOGEN_AVAILABLE else '[ERROR]'}")
+            logger.info(str(f"   - Redis: {'[OK]' if REDIS_AVAILABLE else '[ERROR]'}")
+            logger.info(str(f"   - Docker: {'[OK]' if DOCKER_AVAILABLE else '[ERROR]'}")
             
             # Initialize system
             await self._initialize_system()
             
             # Start background tasks
-            background_tasks = [
+            background_tasks = []
                 asyncio.create_task(self._health_monitor()),
                 asyncio.create_task(self._task_processor()),
                 asyncio.create_task(self._agent_coordinator()),
                 asyncio.create_task(self._server_monitor())
-            ]
+            
             
             # Run until interrupted
             await asyncio.gather(*background_tasks)
@@ -477,7 +492,7 @@ class RobustLangChainOrchestrator:
         except KeyboardInterrupt:
             logger.info("Orchestrator stopped by user.")
         except Exception as e:
-            logger.error(f"Critical orchestrator error: {e}", exc_info=True)
+            logger.error(str(f"Critical orchestrator error: {e}"), exc_info=True)
             await self._handle_critical_error(e)
         finally:
             self.is_running = False
@@ -485,15 +500,15 @@ class RobustLangChainOrchestrator:
             if hasattr(self, 'aiohttp_session') and self.aiohttp_session and not self.aiohttp_session.closed:
                 await self.aiohttp_session.close()
                 logger.info("AIOHTTP client session closed.")
-            logger.info("Robust LangChain Orchestrator shutdown complete.") # Ensure this is the final log
+            logger.info("Robust LangChain Orchestrator shutdown complete." # Ensure this is the final log)
 
     async def _call_mcp_tool(self, server_url: str, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Helper method to call a tool on an MCP server via HTTP and parse JSON response."""
         if not hasattr(self, 'aiohttp_session') or not self.aiohttp_session or self.aiohttp_session.closed:
-            logger.error(f"AIOHTTP session not available or closed. Cannot call MCP tool at {server_url}.")
+            logger.error(str(f"AIOHTTP session not available or closed. Cannot call MCP tool at {server_url}.")
             return None
         try:
-            logger.debug(f"Calling MCP tool at {server_url} with payload: {json.dumps(payload)}")
+            logger.debug(str(f"Calling MCP tool at {server_url} with payload: {json.dumps(payload, ensure_ascii=True, default=str}")
             async with self.aiohttp_session.post(server_url, json=payload, timeout=aiohttp.ClientTimeout(total=60)) as response:
                 if response.status == 200:
                     data = await response.json() # Expecting JSON list from MCP server's call_tool handler
@@ -501,35 +516,35 @@ class RobustLangChainOrchestrator:
                         tool_response_json_str = data[0]["text"]
                         try:
                             tool_response_dict = json.loads(tool_response_json_str)
-                            logger.debug(f"Successfully called MCP tool at {server_url}. Response: {json.dumps(tool_response_dict)}")
+                            logger.debug(str(f"Successfully called MCP tool at {server_url}. Response: {json.dumps(tool_response_dict, ensure_ascii=True, default=str}")
                             return tool_response_dict
                         except json.JSONDecodeError as je:
-                            logger.error(f"JSONDecodeError parsing tool response from {server_url}: {je}. Raw text: {tool_response_json_str}")
+                            logger.error(str(f"JSONDecodeError parsing tool response from {server_url}: {je}. Raw text: {tool_response_json_str}")
                             return {"status": "error", "message": f"Failed to parse tool JSON response: {tool_response_json_str}"}
                     else:
-                        logger.error(f"Unexpected response structure from MCP tool at {server_url}. Data: {data}")
+                        logger.error(str(f"Unexpected response structure from MCP tool at {server_url}. Data: {data}")
                         return {"status": "error", "message": f"Unexpected response structure: {data}"}
                 else:
                     error_text = await response.text()
-                    logger.error(f"HTTP error {response.status} calling MCP tool at {server_url}: {error_text}")
+                    logger.error(str(f"HTTP error {response.status} calling MCP tool at {server_url}: {error_text}")
                     return {"status": "error", "message": f"HTTP error {response.status}: {error_text}"}
         except aiohttp.ClientConnectorError as e:
-            logger.error(f"Connection error calling MCP tool at {server_url}: {e}")
+            logger.error(str(f"Connection error calling MCP tool at {server_url}: {e}")
             return {"status": "error", "message": f"Connection error: {e}"}
         except asyncio.TimeoutError: # Added asyncio.TimeoutError
-            logger.error(f"Timeout calling MCP tool at {server_url}")
+            logger.error(str(f"Timeout calling MCP tool at {server_url}")
             return {"status": "error", "message": "Request timed out"}
         except Exception as e:
-            logger.error(f"Exception calling MCP tool at {server_url}: {e}", exc_info=True)
+            logger.error(str(f"Exception calling MCP tool at {server_url}: {e}"), exc_info=True)
             return {"status": "error", "message": f"Generic exception: {str(e)}"}
     
     async def _initialize_system(self):
         """Initialize all system components"""
         try:
-            logger.info("🔧 Initializing system components...")
+            logger.info("[SETUP] Initializing system components...")
             
             # Create 10 agents
-            agent_configs = [
+            agent_configs = []
                 AgentConfig("coordinator", "system_coordinator", ["coordination", "monitoring"]),
                 AgentConfig("analyzer", "market_analyzer", ["analysis", "defi"]),
                 AgentConfig("executor", "trade_executor", ["execution", "blockchain"]),
@@ -540,7 +555,7 @@ class RobustLangChainOrchestrator:
                 AgentConfig("liquidity_manager", "liquidity_optimization", ["liquidity", "pools"]),
                 AgentConfig("reporter", "report_generator", ["reporting", "analytics"]),
                 AgentConfig("healer", "auto_healing", ["recovery", "maintenance"])
-            ]
+            
             
             for config in agent_configs:
                 success = await self.agent_manager.create_agent(config)
@@ -552,14 +567,14 @@ class RobustLangChainOrchestrator:
             server_health = await self.server_manager.health_check_all()
             self.state.active_servers = sum(1 for healthy in server_health.values() if healthy)
             
-            logger.info(f"✅ System initialized:")
-            logger.info(f"   - Agents: {self.state.active_agents}/{self.state.total_agents}")
-            logger.info(f"   - MCP Servers: {self.state.active_servers}/{self.state.mcp_servers}")
+            logger.info(str(f"[OK] System initialized:")
+            logger.info(str(f"   - Agents: {self.state.active_agents}/{self.state.total_agents}")
+            logger.info(str(f"   - MCP Servers: {self.state.active_servers}/{self.state.mcp_servers}")
             
             self.state.status = "initialized"
             
         except Exception as e:
-            logger.error(f"System initialization failed: {e}")
+            logger.error(str(f"System initialization failed: {e}")
             self.state.errors.append(f"Initialization error: {e}")
     
     async def _health_monitor(self):
@@ -577,26 +592,26 @@ class RobustLangChainOrchestrator:
                 self.state.last_health_check = datetime.now()
                 
                 # Log status
-                logger.info(f"📊 Health Status: {healthy_servers}/{self.state.mcp_servers} servers healthy")
+                logger.info(str(f"[METRICS] Health Status: {healthy_servers}/{self.state.mcp_servers} servers healthy")
                 
                 # Auto-heal if needed
                 failed_servers = [name for name, healthy in server_health.items() if not healthy]
                 if failed_servers:
-                    logger.warning(f"⚠️ Failed servers detected: {failed_servers}")
+                    logger.warning(str(f"[WARN] Failed servers detected: {failed_servers}")
                     await self._auto_heal_servers(failed_servers)
                 
                 # Store health data
-                await self.storage.set("system_health", {
+                await self.storage.set("system_health", {)}
                     'timestamp': datetime.now().isoformat(),
                     'servers': server_health,
                     'agents': self.state.active_agents,
                     'status': self.state.status
-                })
+                
                 
                 await asyncio.sleep(60)  # Check every minute
                 
             except Exception as e:
-                logger.error(f"Health monitor error: {e}")
+                logger.error(str(f"Health monitor error: {e}")
                 await asyncio.sleep(30)
     
     async def _task_processor(self):
@@ -610,15 +625,15 @@ class RobustLangChainOrchestrator:
                     continue
                 
                 task_type = task.get('task_type')
-                logger.info(f"🎯 Processing task: {task.get('name', task_type)}")
+                logger.info(str(f"[TASK] Processing task: {task.get('name', task_type}")
 
                 if task_type == "CODE_ERROR_REPORT":
                     service_name = task.get('service_name', 'Unknown service')
-                    logger.info(f"Processing CODE_ERROR_REPORT for service: {service_name}")
+                    logger.info(str(f"Processing CODE_ERROR_REPORT for service: {service_name}")
                     try:
                         if hasattr(self, 'code_analyzer_agent') and self.code_analyzer_agent:
                             analysis_result = await self.code_analyzer_agent.analyze_code_from_report(task)
-                            logger.info(f"Code analysis for {service_name}:\n{json.dumps(analysis_result, indent=2)}")
+                            logger.info(str(f"Code analysis for {service_name}:\n{json.dumps(analysis_result, indent=2, ensure_ascii=True, default=str}")
 
                             # LLM Suggestion Step
                             llm_suggestion_response = None # Initialize for clarity
@@ -632,26 +647,26 @@ class RobustLangChainOrchestrator:
                                 combined_error_message = "\n".join(error_messages_for_llm) if error_messages_for_llm else "No specific error message captured."
 
                                 if code_snippet_for_llm or (combined_error_message != "No specific error message captured."):
-                                    llm_tool_payload = {
+                                    llm_tool_payload = {}
                                         "tool_name": "get_llm_code_suggestion",
-                                        "arguments": {
+                                        "arguments": {}
                                             "code_snippet": code_snippet_for_llm, "error_message": combined_error_message, "language": "python",
                                             "context": f"Service: '{service_name}', Path: '{analysis_result.get('analyzed_file_path', 'N/A')}', Log: {task.get('log_snippet', '')[:500]}"
-                                        }
-                                    }
-                                    logger.info(f"Requesting LLM code suggestion for {service_name} from {LLM_CODE_SUGGESTION_MCP_URL}")
+                                        
+                                    
+                                    logger.info(str(f"Requesting LLM code suggestion for {service_name} from {LLM_CODE_SUGGESTION_MCP_URL}")
                                     llm_suggestion_response = await self._call_mcp_tool(LLM_CODE_SUGGESTION_MCP_URL, llm_tool_payload)
                                     if llm_suggestion_response:
-                                        logger.info(f"LLM Code Suggestion for {service_name}:\n{json.dumps(llm_suggestion_response, indent=2)}")
+                                        logger.info(str(f"LLM Code Suggestion for {service_name}:\n{json.dumps(llm_suggestion_response, indent=2, ensure_ascii=True, default=str}")
                                         analysis_result["llm_suggestion_response"] = llm_suggestion_response
                                     else: # Tool call itself failed or returned None
-                                        logger.warning(f"LLM suggestion call failed or returned empty for {service_name}.")
+                                        logger.warning(str(f"LLM suggestion call failed or returned empty for {service_name}.")
                                         analysis_result["llm_suggestion_response"] = {"status": "error", "message": "LLM suggestion call failed or no response."}
                                 else: # Skipped LLM call
-                                    logger.info(f"Skipping LLM suggestion for {service_name} due to insufficient info.")
+                                    logger.info(str(f"Skipping LLM suggestion for {service_name} due to insufficient info.")
                                     analysis_result["llm_suggestion_response"] = {"status": "skipped", "message": "Insufficient info for LLM."}
                             else: # Code analysis failed or file not accessed
-                                logger.info(f"Skipping LLM suggestion for {service_name} due to code analysis issues.")
+                                logger.info(str(f"Skipping LLM suggestion for {service_name} due to code analysis issues.")
                                 if analysis_result: analysis_result["llm_suggestion_response"] = {"status": "skipped", "message": "Code analysis failed."}
                                 else: analysis_result = {"llm_suggestion_response": {"status": "skipped", "message": "Code analysis result was None."}} # Should not happen if agent ran
 
@@ -659,28 +674,28 @@ class RobustLangChainOrchestrator:
                             task['analyzed_file_path'] = analysis_result.get('analyzed_file_path')
                             task['code_analyzer_output'] = analysis_result # ERA will get preview from 'file_content_preview' key
 
-                            if (hasattr(self, 'error_resolution_agent') and self.error_resolution_agent and
+                            if (hasattr(self, 'error_resolution_agent') and self.error_resolution_agent and)
                                     llm_suggestion_response and llm_suggestion_response.get("status") == "success" and
                                     llm_suggestion_response.get("suggestion")):
-                                logger.info(f"Attempting automated code fix for {service_name} using ErrorResolutionAgent.")
+                                logger.info(str(f"Attempting automated code fix for {service_name} using ErrorResolutionAgent.")
                                 try:
                                     fix_attempt_outcome = await self.error_resolution_agent.attempt_code_fix(task, llm_suggestion_response)
-                                    logger.info(f"Error Resolution Attempt outcome for {service_name}:\n{json.dumps(fix_attempt_outcome, indent=2)}")
+                                    logger.info(str(f"Error Resolution Attempt outcome for {service_name}:\n{json.dumps(fix_attempt_outcome, indent=2, ensure_ascii=True, default=str}")
                                     task['fix_attempt_outcome'] = fix_attempt_outcome
                                 except Exception as era_exc:
-                                    logger.error(f"ErrorResolutionAgent execution failed for {service_name}: {era_exc}", exc_info=True)
+                                    logger.error(str(f"ErrorResolutionAgent execution failed for {service_name}: {era_exc}"), exc_info=True)
                                     task['fix_attempt_outcome'] = {"status": "agent_error", "message": f"ErrorResolutionAgent exception: {str(era_exc)}"}
                             elif not (hasattr(self, 'error_resolution_agent') and self.error_resolution_agent):
-                                logger.warning(f"ErrorResolutionAgent not initialized. Skipping automated fix for {service_name}.")
+                                logger.warning(str(f"ErrorResolutionAgent not initialized. Skipping automated fix for {service_name}.")
                             elif not (llm_suggestion_response and llm_suggestion_response.get("status") == "success" and llm_suggestion_response.get("suggestion")):
-                                logger.info(f"No valid LLM suggestion to attempt fix for {service_name}. LLM response: {json.dumps(llm_suggestion_response, indent=2)}")
+                                logger.info(str(f"No valid LLM suggestion to attempt fix for {service_name}. LLM response: {json.dumps(llm_suggestion_response, indent=2, ensure_ascii=True, default=str}")
 
                             self.state.tasks_completed += 1 # Mark CODE_ERROR_REPORT task as completed by processor
                         else: # CodeAnalyzerAgent not initialized
                             logger.error("CodeAnalyzerAgent not initialized. Cannot process CODE_ERROR_REPORT.")
                             self.state.tasks_failed += 1
                     except Exception as e: # Catch errors from CodeAnalyzerAgent call or subsequent logic
-                        logger.error(f"Error processing CODE_ERROR_REPORT for {service_name}: {e}", exc_info=True)
+                        logger.error(str(f"Error processing CODE_ERROR_REPORT for {service_name}: {e}"), exc_info=True)
                         self.state.tasks_failed += 1
                 
                 # Existing task processing logic (example: agent tasks)
@@ -694,19 +709,19 @@ class RobustLangChainOrchestrator:
 
                         if result['status'] == 'success':
                             self.state.tasks_completed += 1
-                            logger.info(f"✅ Task '{task.get('name')}' completed by {agent_name}")
+                            logger.info(str(f"[OK] Task '{task.get('name'}' completed by {agent_name}")
                         else:
                             self.state.tasks_failed += 1
-                            logger.error(f"❌ Task '{task.get('name')}' failed: {result.get('message', 'Unknown error')}")
+                            logger.error(str(f"[ERROR] Task '{task.get('name'}' failed: {result.get('message', 'Unknown error')}")))
                     else:
-                        logger.warning(f"⚠️ No suitable agent found for task '{task.get('name')}'")
+                        logger.warning(str(f"[WARN] No suitable agent found for task '{task.get('name'}'")
                         self.state.tasks_failed += 1
                 else:
-                    logger.warning(f"Unknown task structure or type: {task}")
+                    logger.warning(str(f"Unknown task structure or type: {task}")
                     self.state.tasks_failed += 1
                 
             except Exception as e:
-                logger.error(f"Task processor error: {e}")
+                logger.error(str(f"Task processor error: {e}")
                 self.state.tasks_failed += 1
                 await asyncio.sleep(5)
     
@@ -717,23 +732,23 @@ class RobustLangChainOrchestrator:
                 logger.info("🤝 Coordinating agents...")
                 
                 # Add some sample tasks to keep agents busy
-                sample_tasks = [
-                    {
+                sample_tasks = []
+                    {}
                         'name': 'system_health_check',
                         'description': 'Perform a comprehensive system health check',
                         'priority': 'high'
                     },
-                    {
+                    {}
                         'name': 'market_analysis',
                         'description': 'Analyze current DeFi market conditions for arbitrage opportunities',
                         'priority': 'medium'
                     },
-                    {
+                    {}
                         'name': 'risk_assessment',
                         'description': 'Assess current system risk levels and recommend adjustments',
                         'priority': 'high'
-                    }
-                ]
+                    
+                
                 
                 for task in sample_tasks:
                     await self.tasks.put(task)
@@ -741,20 +756,20 @@ class RobustLangChainOrchestrator:
                 await asyncio.sleep(300)  # Coordinate every 5 minutes
                 
             except Exception as e:
-                logger.error(f"Agent coordinator error: {e}")
+                logger.error(str(f"Agent coordinator error: {e}")
                 await asyncio.sleep(60)
 
     async def _scan_logs_for_code_errors(self, logs_string: str) -> Optional[List[Dict[str, Any]]]:
         """Scan log string for Python code errors."""
         # Basic pattern for Python tracebacks, can be refined
         # Looking for common errors like SyntaxError, ImportError, NameError
-        pattern = re.compile(
+        pattern = re.compile()
             r"Traceback \(most recent call last\):\n"  # Start of a traceback
             r"(?:  File \".*?\", line \d+, in .*?\n    .*?\n)*"  # Stack frames
             r"(?P<error_type>SyntaxError|ImportError|NameError|TypeError|ValueError|AttributeError|KeyError|IndexError|FileNotFoundError|ZeroDivisionError): (?P<error_message>.+?)\n" # Error line
             r"(?:(?!(Traceback \(most recent call last\):|^\s*$)).*\n)*", # Capture lines after error until next traceback or blank lines (for snippet)
             re.MULTILINE
-        )
+        
 
         found_errors = []
 
@@ -774,28 +789,28 @@ class RobustLangChainOrchestrator:
             file_path = file_path_match.group("file_path") if file_path_match else "Unknown"
             line_number = int(line_number_match.group("line_number")) if line_number_match else "Unknown"
 
-            error_details = {
+            error_details = {}
                 'type': error_type,
                 'message': error_message,
                 'file_path': file_path,
                 'line_number': line_number,
-            }
+            
             found_errors.append({'details': error_details, 'snippet': traceback_snippet})
 
         return found_errors if found_errors else None
 
     async def _report_code_error(self, server_config: MCPServerConfig, error_details: Dict, log_snippet: str):
         """Report a detected code error by putting a task on the queue."""
-        task_payload = {
+        task_payload = {}
             "task_type": "CODE_ERROR_REPORT",
             "service_name": server_config.name,
             "container_id": server_config.container_name,
             "timestamp": datetime.now().isoformat(),
             "error_details": error_details,
             "log_snippet": log_snippet  # Full traceback snippet
-        }
+        
         await self.tasks.put(task_payload)
-        logger.info(f"Reported code error for {server_config.name}: {error_details.get('type')} - {error_details.get('message')}")
+        logger.info(str(f"Reported code error for {server_config.name}: {error_details.get('type'} - {error_details.get('message')}")))
 
     async def _server_monitor(self):
         """Monitor MCP servers specifically"""
@@ -805,7 +820,7 @@ class RobustLangChainOrchestrator:
                 
                 for server_name, config in self.server_manager.servers.items():
                     if config.status == 'error':
-                        logger.warning(f"⚠️ Server {server_name} in error state, attempting restart...")
+                        logger.warning(str(f"[WARN] Server {server_name} in error state, attempting restart...")
                         await self.server_manager.restart_server(server_name)
 
                     # Log fetching and error scanning
@@ -819,24 +834,24 @@ class RobustLangChainOrchestrator:
 
                                 found_errors = await self._scan_logs_for_code_errors(logs_string)
                                 if found_errors:
-                                    logger.info(f"Found {len(found_errors)} potential code error(s) in logs for {config.name}.")
+                                    logger.info(str(f"Found {len(found_errors} potential code error(s) in logs for {config.name}.")))
                                     for error_data in found_errors:
                                         await self._report_code_error(config, error_data['details'], error_data['snippet'])
                                 elif logs_string.strip(): # Only log if there were logs but no errors
-                                    logger.info(f"No code errors found in recent logs for {config.name}.")
+                                    logger.info(str(f"No code errors found in recent logs for {config.name}.")
 
 
                         except docker.errors.NotFound:
-                            logger.warning(f"Container {config.container_name} not found for log fetching.")
+                            logger.warning(str(f"Container {config.container_name} not found for log fetching.")
                         except docker.errors.APIError as e:
-                            logger.error(f"Docker API error when fetching logs for {config.container_name}: {e}")
+                            logger.error(str(f"Docker API error when fetching logs for {config.container_name}: {e}")
                         except Exception as e:
-                            logger.error(f"Unexpected error fetching logs for {config.container_name}: {e}")
+                            logger.error(str(f"Unexpected error fetching logs for {config.container_name}: {e}")
                 
                 await asyncio.sleep(120)  # Monitor every 2 minutes
                 
             except Exception as e:
-                logger.error(f"Server monitor error: {e}")
+                logger.error(str(f"Server monitor error: {e}")
                 await asyncio.sleep(60)
     
     def _select_agent_for_task(self, task: Dict[str, Any]) -> Optional[str]:
@@ -859,47 +874,47 @@ class RobustLangChainOrchestrator:
         """Attempt to heal failed servers"""
         for server_name in failed_servers:
             try:
-                logger.info(f"🔧 Attempting to heal server: {server_name}")
+                logger.info(str(f"[SETUP] Attempting to heal server: {server_name}")
                 success = await self.server_manager.restart_server(server_name)
                 
                 if success:
-                    logger.info(f"✅ Successfully healed server: {server_name}")
+                    logger.info(str(f"[OK] Successfully healed server: {server_name}")
                 else:
-                    logger.error(f"❌ Failed to heal server: {server_name}")
+                    logger.error(str(f"[ERROR] Failed to heal server: {server_name}")
                     
             except Exception as e:
-                logger.error(f"Auto-heal error for {server_name}: {e}")
+                logger.error(str(f"Auto-heal error for {server_name}: {e}")
     
     async def _handle_critical_error(self, error: Exception):
         """Handle critical system errors"""
-        logger.error(f"🚨 Critical error: {error}")
+        logger.error(str(f"[ALERT] Critical error: {error}")
         
         self.state.errors.append(f"Critical: {error}")
         self.state.status = "error"
         
         # Try to save state before shutdown
         try:
-            await self.storage.set("last_error", {
+            await self.storage.set("last_error", {)}
                 'error': str(error),
                 'timestamp': datetime.now().isoformat(),
                 'state': self.state.__dict__
-            })
+            
         except Exception as e:
-            logger.error(f"Failed to save error state: {e}")
+            logger.error(str(f"Failed to save error state: {e}")
 
 # Health check endpoint for Docker
 async def health_check():
     """Simple health check endpoint"""
-    return {
+    return {}
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
-        'components': {
+        'components': {}
             'langchain': LANGCHAIN_AVAILABLE,
             'autogen': AUTOGEN_AVAILABLE,
             'redis': REDIS_AVAILABLE,
             'docker': DOCKER_AVAILABLE
-        }
-    }
+        
+    
 
 if __name__ == "__main__":
     # Create logs directory
@@ -913,6 +928,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         logger.info("Orchestrator shutdown requested")
     except Exception as e:
-        logger.error(f"Fatal error: {e}")
+        logger.error(str(f"Fatal error: {e}")
     finally:
         logger.info("Orchestrator shutdown complete")

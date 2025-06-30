@@ -1,29 +1,44 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from abc import ABC, abstractmethod
+from datetime import datetime
+from typing import Dict, Any, Optional, List
+import asyncio
+import json
+import logging
+import os
+
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from prometheus_client import Counter, Gauge, Histogram, generate_latest
+import aiohttp
+import redis
 """
 Base Agent Framework
 ====================
 Foundation class for all specialized agents in the MCP system.
 """
 
-import os
-import asyncio
-import json
-import logging
-from abc import ABC, abstractmethod
-from datetime import datetime
-from typing import Dict, Any, Optional, List
 
-import aiohttp
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-import redis
-from prometheus_client import Counter, Gauge, Histogram, generate_latest
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=os.getenv('LOG_LEVEL', 'INFO'),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+
 logger = logging.getLogger(__name__)
 
 # Prometheus metrics
@@ -48,7 +63,7 @@ class BaseAgent(ABC):
         
         # Redis connection
         self.redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
-        self.redis_client = redis.from_url(self.redis_url, decode_responses=True)
+        self.redis_client = redis.from_url(self.redis_url, decode_responses=True, decode_responses=True, encoding="utf-8")
         
         # MCP coordinator URL
         self.coordinator_url = os.getenv('MASTER_COORDINATOR_URL', 'http://localhost:4000')
@@ -68,7 +83,7 @@ class BaseAgent(ABC):
         def health():
             """Health check endpoint"""
             agent_status_gauge.labels(agent_name=self.agent_name).set(1 if self.is_running else 0)
-            return jsonify({
+            return jsonify({)}
                 'status': 'healthy' if self.is_running else 'starting',
                 'agent': self.agent_name,
                 'role': self.agent_role,
@@ -76,7 +91,7 @@ class BaseAgent(ABC):
                 'tasks_processed': self.tasks_processed,
                 'last_heartbeat': self.last_heartbeat.isoformat() if self.last_heartbeat else None,
                 'timestamp': datetime.utcnow().isoformat()
-            })
+            
             
         @self.app.route('/command', methods=['POST'])
         def execute_command():
@@ -92,12 +107,12 @@ class BaseAgent(ABC):
             asyncio.set_event_loop(loop)
             result: str = loop.run_until_complete(self.handle_command(command, data))
             
-            return jsonify({
+            return jsonify({)}
                 'agent': self.agent_name,
                 'command': command,
                 'result': result,
                 'timestamp': datetime.utcnow().isoformat()
-            })
+            
             
         @self.app.route('/task', methods=['POST'])
         def execute_task():
@@ -119,12 +134,12 @@ class BaseAgent(ABC):
             task_counter.labels(agent_name=self.agent_name, task_type=task_type).inc()
             self.tasks_processed += 1
             
-            return jsonify({
+            return jsonify({)}
                 'agent': self.agent_name,
                 'task_type': task_type,
                 'result': result,
                 'timestamp': datetime.utcnow().isoformat()
-            })
+            
             
         @self.app.route('/metrics', methods=['GET'])
         def metrics():
@@ -150,30 +165,30 @@ class BaseAgent(ABC):
         # Initialize agent-specific resources
         await self.on_initialize()
         
-        logger.info(f"Agent {self.agent_name} initialized on port {self.agent_port}")
+        logger.info(str(f"Agent {self.agent_name} initialized on port {self.agent_port}")
         
     async def register_with_coordinator(self):
         """Register this agent with the master coordinator"""
         try:
-            registration_data = {
+            registration_data = {}
                 'agent_name': self.agent_name,
                 'agent_role': self.agent_role,
                 'agent_port': self.agent_port,
                 'capabilities': self.get_capabilities(),
                 'timestamp': datetime.utcnow().isoformat()
-            }
             
-            async with self.session.post(
+            
+            async with self.session.post()
                 f"{self.coordinator_url}/agents/register",
                 json=registration_data
             ) as response:
                 if response.status == 200:
-                    logger.info(f"Agent {self.agent_name} registered with coordinator")
+                    logger.info(str(f"Agent {self.agent_name} registered with coordinator")
                 else:
-                    logger.error(f"Failed to register agent: {response.status}")
+                    logger.error(str(f"Failed to register agent: {response.status}")
                     
         except Exception as e:
-            logger.error(f"Registration error: {e}")
+            logger.error(str(f"Registration error: {e}")
             
     async def heartbeat_loop(self):
         """Send periodic heartbeats to coordinator"""
@@ -183,27 +198,27 @@ class BaseAgent(ABC):
                 
                 # Store heartbeat in Redis
                 heartbeat_key = f"agent:heartbeat:{self.agent_name}"
-                heartbeat_data = {
+                heartbeat_data = {}
                     'timestamp': self.last_heartbeat.isoformat(),
                     'tasks_processed': self.tasks_processed,
                     'status': 'running'
-                }
                 
-                self.redis_client.setex(
+                
+                self.redis_client.setex()
                     heartbeat_key,
                     60,  # TTL 60 seconds
-                    json.dumps(heartbeat_data)
-                )
+                    json.dumps(heartbeat_data, ensure_ascii=True, default=str)
+                
                 
                 await asyncio.sleep(30)  # Heartbeat every 30 seconds
                 
             except Exception as e:
-                logger.error(f"Heartbeat error: {e}")
+                logger.error(str(f"Heartbeat error: {e}")
                 await asyncio.sleep(5)
                 
     async def handle_command(self, command: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Handle a command"""
-        logger.info(f"Agent {self.agent_name} handling command: {command}")
+        logger.info(str(f"Agent {self.agent_name} handling command: {command}")
         
         # Common commands
         if command == 'restart':
@@ -218,14 +233,14 @@ class BaseAgent(ABC):
             
     async def handle_task(self, task_type: str, task_data: Dict[str, Any]) -> Dict[str, Any]:
         """Handle a task"""
-        logger.info(f"Agent {self.agent_name} handling task: {task_type}")
+        logger.info(str(f"Agent {self.agent_name} handling task: {task_type}")
         
         # Delegate to agent-specific handler
         return await self.on_task(task_type, task_data)
         
     async def restart(self) -> Dict[str, Any]:
         """Restart the agent"""
-        logger.info(f"Restarting agent {self.agent_name}")
+        logger.info(str(f"Restarting agent {self.agent_name}")
         
         # Shutdown
         await self.on_shutdown()
@@ -242,7 +257,7 @@ class BaseAgent(ABC):
         
     async def shutdown(self) -> Dict[str, Any]:
         """Shutdown the agent"""
-        logger.info(f"Shutting down agent {self.agent_name}")
+        logger.info(str(f"Shutting down agent {self.agent_name}")
         
         self.is_running = False
         await self.on_shutdown()
@@ -254,7 +269,7 @@ class BaseAgent(ABC):
         
     def get_status(self) -> Dict[str, Any]:
         """Get agent status"""
-        return {
+        return {}
             'agent_name': self.agent_name,
             'agent_role': self.agent_role,
             'agent_port': self.agent_port,
@@ -263,7 +278,7 @@ class BaseAgent(ABC):
             'last_heartbeat': self.last_heartbeat.isoformat() if self.last_heartbeat else None,
             'capabilities': self.get_capabilities(),
             'custom_status': self.get_custom_status()
-        }
+        
         
     @abstractmethod
     async def on_initialize(self):
@@ -312,11 +327,11 @@ class ExampleAgent(BaseAgent):
     
     async def on_initialize(self):
         """Initialize agent-specific resources"""
-        logger.info(f"Initializing {self.agent_name}")
+        logger.info(str(f"Initializing {self.agent_name}")
         
     async def on_shutdown(self):
         """Cleanup agent-specific resources"""
-        logger.info(f"Shutting down {self.agent_name}")
+        logger.info(str(f"Shutting down {self.agent_name}")
         
     async def on_command(self, command: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """Handle agent-specific commands"""

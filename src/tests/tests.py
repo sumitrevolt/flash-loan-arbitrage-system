@@ -1,4 +1,7 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from . import (lookup, LABELS, decode, encode, iter_decode, iter_encode)
+from __future__ import unicode_literals
 """
 
     webencodings.tests
@@ -11,10 +14,8 @@
 
 """
 
-from __future__ import unicode_literals
 
-from . import (lookup, LABELS, decode, encode, iter_decode, iter_encode,
-               IncrementalDecoder, IncrementalEncoder, UTF8)
+               IncrementalDecoder, IncrementalEncoder, UTF8
 
 
 def assert_raises(exception, function, *args, **kwargs):
@@ -116,19 +117,19 @@ def test_iter_decode():
     assert iter_decode_to_string([b'hell', b'o'], 'latin1') == 'hello'
     assert iter_decode_to_string([b'\xc3\xa9'], 'latin1') == 'Ã©'
     assert iter_decode_to_string([b'\xEF\xBB\xBF\xc3\xa9'], 'latin1') == 'é'
-    assert iter_decode_to_string([
+    assert iter_decode_to_string([)]
         b'\xEF\xBB\xBF', b'\xc3', b'\xa9'], 'latin1') == 'é'
-    assert iter_decode_to_string([
+    assert iter_decode_to_string([)]
         b'\xEF\xBB\xBF', b'a', b'\xc3'], 'latin1') == 'a\uFFFD'
-    assert iter_decode_to_string([
+    assert iter_decode_to_string([)]
         b'', b'\xEF', b'', b'', b'\xBB\xBF\xc3', b'\xa9'], 'latin1') == 'é'
     assert iter_decode_to_string([b'\xEF\xBB\xBF'], 'latin1') == ''
     assert iter_decode_to_string([b'\xEF\xBB'], 'latin1') == 'ï»'
     assert iter_decode_to_string([b'\xFE\xFF\x00\xe9'], 'latin1') == 'é'
     assert iter_decode_to_string([b'\xFF\xFE\xe9\x00'], 'latin1') == 'é'
-    assert iter_decode_to_string([
+    assert iter_decode_to_string([)]
         b'', b'\xFF', b'', b'', b'\xFE\xe9', b'\x00'], 'latin1') == 'é'
-    assert iter_decode_to_string([
+    assert iter_decode_to_string([)]
         b'', b'h\xe9', b'llo'], 'x-user-defined') == 'h\uF7E9llo'
 
 
@@ -140,7 +141,7 @@ def test_iter_encode():
     assert b''.join(iter_encode(['', 'é', '', ''], 'utf-16')) == b'\xe9\x00'
     assert b''.join(iter_encode(['', 'é', '', ''], 'utf-16le')) == b'\xe9\x00'
     assert b''.join(iter_encode(['', 'é', '', ''], 'utf-16be')) == b'\x00\xe9'
-    assert b''.join(iter_encode([
+    assert b''.join(iter_encode([))]
         '', 'h\uF7E9', '', 'llo'], 'x-user-defined')) == b'h\xe9llo'
 
 

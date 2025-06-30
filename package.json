@@ -1,0 +1,44 @@
+{
+  "name": "flash-loan-arbitrage",
+  "version": "1.0.0",
+  "description": "Real-time flash loan arbitrage system for Amoy testnet",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "deploy": "npx hardhat run scripts/deploy-flashloan-arbitrage.js --network amoy",
+    "bot": "node scripts/real-arbitrage-bot.js",
+    "free-bot": "node scripts/free-arbitrage-bot.js",
+    "prices": "node scripts/real-time-price-service.js",
+    "test-free-apis": "node scripts/test-free-price-apis.js",
+    "test": "npx hardhat test",
+    "verify": "npx hardhat verify --network amoy"
+  },
+  "dependencies": {
+    "@aave/core-v3": "^1.19.3",
+    "@nomicfoundation/hardhat-verify": "^1.1.0",
+    "@openzeppelin/contracts": "^4.9.0",
+    "@uniswap/v2-periphery": "^1.1.0-beta.0",
+    "@uniswap/v3-core": "^1.0.1",
+    "@uniswap/v3-periphery": "^1.4.4",
+    "axios": "^1.6.0",
+    "chai": "^4.3.0",
+    "dotenv": "^16.3.0",
+    "ethers": "^6.8.0",
+    "hardhat": "^2.19.0",
+    "hardhat-gas-reporter": "^1.0.10",
+    "solidity-coverage": "^0.8.5"
+  },
+  "devDependencies": {
+    "prettier": "^2.8.0",
+    "prettier-plugin-solidity": "^1.1.0"
+  },
+  "keywords": [
+    "flash-loan",
+    "arbitrage",
+    "defi",
+    "amoy",
+    "polygon",
+    "ethereum"
+  ],
+  "author": "Flash Loan Arbitrage Team",
+  "license": "MIT"
+}

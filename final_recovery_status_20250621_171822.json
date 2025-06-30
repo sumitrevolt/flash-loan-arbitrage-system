@@ -1,0 +1,22 @@
+{
+  "wallet_address": "0xaCd9a5B2438EF62bc7b725c574cDb23bf8D0314D",
+  "analysis_time": "2025-06-21T17:18:18.838064",
+  "target_amount": 37.0,
+  "exact_matches": [
+    {
+      "hash": "0x7c8137773224ae41d58f46e3b4f1f89e3bfbdb1f48abe962cfe8198e987a0359",
+      "from": "0xacd9a5b2438ef62bc7b725c574cdb23bf8d0314d",
+      "to": "0x01dc4656603ac33d3eee77f16209552b46f5b7a9",
+      "value_matic": 37.20786270006953,
+      "date": "2025-06-18 14:49:41",
+      "status": "success",
+      "block": "72914466",
+      "is_outgoing": true
+    }
+  ],
+  "recovery_conclusion": "ALREADY_RECOVERED",
+  "recommendations": [
+    "SUCCESS: Found 1 successful outgoing transactions of ~37 MATIC. Your tokens were already recovered and sent elsewhere.",
+    "Transaction: 0x7c8137773224ae41d58f46e3b4f1f89e3bfbdb1f48abe962cfe8198e987a0359 on 2025-06-18 14:49:41 - 37.20786270006953 MATIC sent to 0x01dc4656603ac33d3eee77f16209552b46f5b7a9"
+  ]
+}

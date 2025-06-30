@@ -1,3 +1,24 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Dict, List, Optional, Any, Union
+import asyncio
+import json
+import logging
+import os
+
+from github import Github
+from langchain.agents import Tool, AgentExecutor, create_react_agent
+from langchain.memory import ConversationBufferWindowMemory
+from langchain.schema import BaseMessage, HumanMessage, AIMessage, SystemMessage
+from langchain.tools import BaseTool
+from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
+from langchain_openai import ChatOpenAI
+from pydantic import BaseModel, Field
+from utils.config import get_config
+from utils.logger import setup_logger
+import httpx
+import requests
 """
 GitHub Copilot Pro Agent
 ========================
@@ -6,28 +27,10 @@ Agent that integrates with GitHub Copilot Pro for enhanced code generation,
 code analysis, and AI-powered development assistance in the flash loan system.
 """
 
-import asyncio
-import logging
-import json
-import os
-from typing import Dict, List, Optional, Any, Union
-from datetime import datetime
 
-from langchain.agents import Tool, AgentExecutor, create_react_agent
-from langchain.memory import ConversationBufferWindowMemory
-from langchain.schema import BaseMessage, HumanMessage, AIMessage, SystemMessage
-from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_openai import ChatOpenAI
-from langchain.tools import BaseTool
-from pydantic import BaseModel, Field
 
 # GitHub API imports
-import requests
-import httpx
-from github import Github
 
-from utils.logger import setup_logger
-from utils.config import get_config
 
 logger = setup_logger(__name__)
 
@@ -44,7 +47,7 @@ class GitHubCopilotProAgent:
     - Performance optimization recommendations
     """
     
-    def __init__(self, name: str = "GitHubCopilotProAgent", 
+    def __init__(self, name: str = "GitHubCopilotProAgent", )
                  memory_manager=None, tool_registry=None):
         self.name = name
         self.memory_manager = memory_manager
@@ -54,13 +57,13 @@ class GitHubCopilotProAgent:
         self.copilot_api_key = os.getenv('GITHUB_COPILOT_API_KEY')
         self.github_client = None
         self.copilot_chat_model = None
-        self.memory = ConversationBufferWindowMemory(
+        self.memory = ConversationBufferWindowMemory()
             k=10,
             return_messages=True,
             memory_key="chat_history"
-        )
         
-        logger.info(f"🤖 {self.name} initialized")
+        
+        logger.info(str(f"🤖 {self.name} initialized")
 
     async def initialize(self):
         """Initialize the GitHub Copilot Pro agent"""
@@ -70,17 +73,17 @@ class GitHubCopilotProAgent:
             # Initialize GitHub client
             if self.github_token:
                 self.github_client = Github(self.github_token)
-                logger.info("✅ GitHub API client initialized")
+                logger.info("[OK] GitHub API client initialized")
             else:
-                logger.warning("⚠️ GitHub token not provided, some features may be limited")
+                logger.warning("[WARN] GitHub token not provided, some features may be limited")
             
             # Initialize Copilot-enhanced ChatGPT model
-            self.copilot_chat_model = ChatOpenAI(
+            self.copilot_chat_model = ChatOpenAI()
                 model="gpt-4-turbo-preview",
                 temperature=0.1,
                 api_key=os.getenv('OPENAI_API_KEY'),
                 max_tokens=4000
-            )
+            
             
             # Create specialized tools
             self.tools = await self.create_copilot_tools()
@@ -88,10 +91,10 @@ class GitHubCopilotProAgent:
             # Create agent executor
             self.agent_executor = await self.create_agent_executor()
             
-            logger.info("✅ GitHub Copilot Pro Agent initialization completed")
+            logger.info("[OK] GitHub Copilot Pro Agent initialization completed")
             
         except Exception as e:
-            logger.error(f"❌ GitHub Copilot Pro Agent initialization failed: {e}")
+            logger.error(str(f"[ERROR] GitHub Copilot Pro Agent initialization failed: {e}")
             raise
 
     async def create_copilot_tools(self) -> List[Tool]:
@@ -99,60 +102,60 @@ class GitHubCopilotProAgent:
         tools = []
         
         # Code Generation Tool
-        tools.append(Tool(
+        tools.append(Tool())
             name="generate_code",
             description="Generate code based on specifications using GitHub Copilot Pro capabilities",
             func=self.generate_code
-        ))
+
         
         # Code Review Tool
-        tools.append(Tool(
+        tools.append(Tool())
             name="review_code",
             description="Review code for quality, security, and best practices",
             func=self.review_code
-        ))
+
         
         # Documentation Generator
-        tools.append(Tool(
+        tools.append(Tool())
             name="generate_documentation",
             description="Generate comprehensive documentation for code",
             func=self.generate_documentation
-        ))
+
         
         # Test Generator
-        tools.append(Tool(
+        tools.append(Tool())
             name="generate_tests",
             description="Generate unit tests and test cases",
             func=self.generate_tests
-        ))
+
         
         # Refactoring Assistant
-        tools.append(Tool(
+        tools.append(Tool())
             name="suggest_refactoring",
             description="Suggest code refactoring improvements",
             func=self.suggest_refactoring
-        ))
+
         
         # Security Scanner
-        tools.append(Tool(
+        tools.append(Tool())
             name="scan_security",
             description="Scan code for security vulnerabilities",
             func=self.scan_security
-        ))
+
         
         # Performance Optimizer
-        tools.append(Tool(
+        tools.append(Tool())
             name="optimize_performance",
             description="Suggest performance optimizations",
             func=self.optimize_performance
-        ))
+
         
         # Flash Loan Code Assistant
-        tools.append(Tool(
+        tools.append(Tool())
             name="flash_loan_assistant",
             description="Specialized assistant for flash loan and DeFi development",
             func=self.flash_loan_assistant
-        ))
+
         
         return tools
 
@@ -190,27 +193,27 @@ class GitHubCopilotProAgent:
         Use your tools wisely and provide detailed explanations for your recommendations.
         """
         
-        prompt = ChatPromptTemplate.from_messages([
+        prompt = ChatPromptTemplate.from_messages([)]
             ("system", system_prompt),
             ("human", "{input}"),
             ("assistant", "I'll help you with that. Let me analyze your request and use my specialized tools.")
-        ])
+        
         
         # Create React agent with enhanced capabilities
-        agent = create_react_agent(
+        agent = create_react_agent()
             llm=self.copilot_chat_model,
             tools=self.tools,
             prompt=prompt
-        )
         
-        return AgentExecutor(
+        
+        return AgentExecutor()
             agent=agent,
             tools=self.tools,
             memory=self.memory,
             verbose=True,
             max_iterations=10,
             handle_parsing_errors=True
-        )
+        
 
     async def generate_code(self, specification: str) -> str:
         """Generate code using Copilot Pro capabilities"""
@@ -233,16 +236,16 @@ class GitHubCopilotProAgent:
             Provide the complete, production-ready code with explanations.
             """
             
-            response = await self.copilot_chat_model.ainvoke([
+            response = await self.copilot_chat_model.ainvoke([)]
                 SystemMessage(content="You are GitHub Copilot Pro generating production-ready code."),
                 HumanMessage(content=prompt)
-            ])
             
-            logger.info("✅ Code generated successfully using Copilot Pro")
+            
+            logger.info("[OK] Code generated successfully using Copilot Pro")
             return response.content
             
         except Exception as e:
-            logger.error(f"❌ Code generation failed: {e}")
+            logger.error(str(f"[ERROR] Code generation failed: {e}")
             return f"Error generating code: {str(e)}"
 
     async def review_code(self, code: str) -> str:
@@ -269,16 +272,16 @@ class GitHubCopilotProAgent:
             Format your response with clear sections and actionable recommendations.
             """
             
-            response = await self.copilot_chat_model.ainvoke([
+            response = await self.copilot_chat_model.ainvoke([)]
                 SystemMessage(content="You are GitHub Copilot Pro performing a thorough code review."),
                 HumanMessage(content=prompt)
-            ])
             
-            logger.info("✅ Code review completed using Copilot Pro")
+            
+            logger.info("[OK] Code review completed using Copilot Pro")
             return response.content
             
         except Exception as e:
-            logger.error(f"❌ Code review failed: {e}")
+            logger.error(str(f"[ERROR] Code review failed: {e}")
             return f"Error reviewing code: {str(e)}"
 
     async def generate_documentation(self, code: str) -> str:
@@ -306,16 +309,16 @@ class GitHubCopilotProAgent:
             Use clear markdown formatting and provide practical examples.
             """
             
-            response = await self.copilot_chat_model.ainvoke([
+            response = await self.copilot_chat_model.ainvoke([)]
                 SystemMessage(content="You are GitHub Copilot Pro creating professional documentation."),
                 HumanMessage(content=prompt)
-            ])
             
-            logger.info("✅ Documentation generated using Copilot Pro")
+            
+            logger.info("[OK] Documentation generated using Copilot Pro")
             return response.content
             
         except Exception as e:
-            logger.error(f"❌ Documentation generation failed: {e}")
+            logger.error(str(f"[ERROR] Documentation generation failed: {e}")
             return f"Error generating documentation: {str(e)}"
 
     async def generate_tests(self, code: str) -> str:
@@ -343,16 +346,16 @@ class GitHubCopilotProAgent:
             Use appropriate testing frameworks (pytest for Python, Hardhat for Solidity, etc.)
             """
             
-            response = await self.copilot_chat_model.ainvoke([
+            response = await self.copilot_chat_model.ainvoke([)]
                 SystemMessage(content="You are GitHub Copilot Pro creating comprehensive test suites."),
                 HumanMessage(content=prompt)
-            ])
             
-            logger.info("✅ Tests generated using Copilot Pro")
+            
+            logger.info("[OK] Tests generated using Copilot Pro")
             return response.content
             
         except Exception as e:
-            logger.error(f"❌ Test generation failed: {e}")
+            logger.error(str(f"[ERROR] Test generation failed: {e}")
             return f"Error generating tests: {str(e)}"
 
     async def suggest_refactoring(self, code: str) -> str:
@@ -380,16 +383,16 @@ class GitHubCopilotProAgent:
             Show before/after examples where helpful.
             """
             
-            response = await self.copilot_chat_model.ainvoke([
+            response = await self.copilot_chat_model.ainvoke([)]
                 SystemMessage(content="You are GitHub Copilot Pro providing expert refactoring guidance."),
                 HumanMessage(content=prompt)
-            ])
             
-            logger.info("✅ Refactoring suggestions generated using Copilot Pro")
+            
+            logger.info("[OK] Refactoring suggestions generated using Copilot Pro")
             return response.content
             
         except Exception as e:
-            logger.error(f"❌ Refactoring analysis failed: {e}")
+            logger.error(str(f"[ERROR] Refactoring analysis failed: {e}")
             return f"Error analyzing refactoring: {str(e)}"
 
     async def scan_security(self, code: str) -> str:
@@ -417,16 +420,16 @@ class GitHubCopilotProAgent:
             Provide severity ratings and specific remediation steps.
             """
             
-            response = await self.copilot_chat_model.ainvoke([
+            response = await self.copilot_chat_model.ainvoke([)]
                 SystemMessage(content="You are GitHub Copilot Pro conducting a professional security audit."),
                 HumanMessage(content=prompt)
-            ])
             
-            logger.info("✅ Security scan completed using Copilot Pro")
+            
+            logger.info("[OK] Security scan completed using Copilot Pro")
             return response.content
             
         except Exception as e:
-            logger.error(f"❌ Security scan failed: {e}")
+            logger.error(str(f"[ERROR] Security scan failed: {e}")
             return f"Error scanning security: {str(e)}"
 
     async def optimize_performance(self, code: str) -> str:
@@ -454,16 +457,16 @@ class GitHubCopilotProAgent:
             Provide specific optimization techniques with performance impact estimates.
             """
             
-            response = await self.copilot_chat_model.ainvoke([
+            response = await self.copilot_chat_model.ainvoke([)]
                 SystemMessage(content="You are GitHub Copilot Pro optimizing code performance."),
                 HumanMessage(content=prompt)
-            ])
             
-            logger.info("✅ Performance optimization completed using Copilot Pro")
+            
+            logger.info("[OK] Performance optimization completed using Copilot Pro")
             return response.content
             
         except Exception as e:
-            logger.error(f"❌ Performance optimization failed: {e}")
+            logger.error(str(f"[ERROR] Performance optimization failed: {e}")
             return f"Error optimizing performance: {str(e)}"
 
     async def flash_loan_assistant(self, query: str) -> str:
@@ -489,29 +492,29 @@ class GitHubCopilotProAgent:
             Include code examples, best practices, and real-world considerations.
             """
             
-            response = await self.copilot_chat_model.ainvoke([
+            response = await self.copilot_chat_model.ainvoke([)]
                 SystemMessage(content="You are GitHub Copilot Pro with deep expertise in flash loans and DeFi."),
                 HumanMessage(content=prompt)
-            ])
             
-            logger.info("✅ Flash loan assistance provided using Copilot Pro")
+            
+            logger.info("[OK] Flash loan assistance provided using Copilot Pro")
             return response.content
             
         except Exception as e:
-            logger.error(f"❌ Flash loan assistance failed: {e}")
+            logger.error(str(f"[ERROR] Flash loan assistance failed: {e}")
             return f"Error providing flash loan assistance: {str(e)}"
 
     async def process_request(self, request: str) -> Dict[str, Any]:
         """Process user request with Copilot Pro capabilities"""
         try:
-            logger.info(f"🤖 Processing Copilot Pro request: {request[:100]}...")
+            logger.info(str(f"🤖 Processing Copilot Pro request: {request[:100]}...")
             
             # Use the agent executor to process the request
-            result = await self.agent_executor.ainvoke({
+            result = await self.agent_executor.ainvoke({)}
                 "input": request
-            })
             
-            response = {
+            
+            response = {}
                 "status": "success",
                 "agent": "github_copilot_pro",
                 "request": request,
@@ -519,20 +522,20 @@ class GitHubCopilotProAgent:
                 "timestamp": datetime.now().isoformat(),
                 "tools_used": [tool.name for tool in self.tools],
                 "memory_length": len(self.memory.chat_memory.messages)
-            }
             
-            logger.info("✅ Copilot Pro request processed successfully")
+            
+            logger.info("[OK] Copilot Pro request processed successfully")
             return response
             
         except Exception as e:
-            logger.error(f"❌ Copilot Pro request processing failed: {e}")
-            return {
+            logger.error(str(f"[ERROR] Copilot Pro request processing failed: {e}")
+            return {}
                 "status": "error",
                 "agent": "github_copilot_pro",
                 "request": request,
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
-            }
+            
 
     async def get_github_repository_info(self, repo_name: str) -> Dict[str, Any]:
         """Get information about a GitHub repository"""
@@ -542,7 +545,7 @@ class GitHubCopilotProAgent:
             
             repo = self.github_client.get_repo(repo_name)
             
-            return {
+            return {}
                 "name": repo.name,
                 "full_name": repo.full_name,
                 "description": repo.description,
@@ -554,10 +557,10 @@ class GitHubCopilotProAgent:
                 "updated_at": repo.updated_at.isoformat(),
                 "topics": repo.get_topics(),
                 "license": repo.license.name if repo.license else None
-            }
+            
             
         except Exception as e:
-            logger.error(f"❌ Failed to get repository info: {e}")
+            logger.error(str(f"[ERROR] Failed to get repository info: {e}")
             return {"error": str(e)}
 
     async def cleanup(self):
@@ -567,10 +570,10 @@ class GitHubCopilotProAgent:
                 # GitHub client doesn't need explicit cleanup
                 pass
             
-            logger.info("✅ GitHub Copilot Pro Agent cleanup completed")
+            logger.info("[OK] GitHub Copilot Pro Agent cleanup completed")
             
         except Exception as e:
-            logger.error(f"❌ GitHub Copilot Pro Agent cleanup failed: {e}")
+            logger.error(str(f"[ERROR] GitHub Copilot Pro Agent cleanup failed: {e}")
 
     async def process(self, request: str) -> Dict[str, Any]:
         """Process method required by the multi-agent system"""

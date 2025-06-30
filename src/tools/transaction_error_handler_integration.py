@@ -1,27 +1,31 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+            import time
+import logging
+import os
+
+from flash_loan.core.transaction_error_handler import TransactionErrorHandler
+from web3.types import TxParams, Wei, ChecksumAddress
+
+from src.utils.middleware_compat import apply_poa_middleware
+from src.utils.web3_provider import Web3, WEB3_IMPORTED
+from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
+from src.utils.web3_provider import requires_web3
 """
 Transaction Error Handler Integration
 # Import requires_web3 decorator from central provider
-from src.utils.web3_provider import requires_web3
 
 
 This module integrates the TransactionErrorHandler with the existing
 transaction execution code in the flash loan system.
 """
 
-import logging
-import os
 # Import from central web3_provider
-from src.utils.web3_provider import Web3, WEB3_IMPORTED
-from web3.types import TxParams, Wei, ChecksumAddress
 # Import exceptions from central provider
-from src.utils.web3_provider import Web3Exception, ContractLogicError, TransactionNotFound
 # Import middleware from centralized modules
-from src.utils.middleware_compat import apply_poa_middleware
 
-import logging
 logger = logging.getLogger(__name__)
 # Import the transaction error handler
-from flash_loan.core.transaction_error_handler import TransactionErrorHandler
 
 # Configure logging
 logger = logging.getLogger("TransactionErrorHandlerIntegration")
@@ -52,11 +56,11 @@ def integrate_with_transaction_executor(transaction_executor):
     _ = transaction_executor.execute_flash_loan_arbitrage  # Original execute_flash_loan_arbitrage method
 
     # Create error handler
-    error_handler = TransactionErrorHandler(
+    error_handler = TransactionErrorHandler()
         web3=transaction_executor.web3,
         max_retries=3,
         retry_delay=2
-    )
+    
 
     # Store the error handler
     transaction_executor.error_handler = error_handler
@@ -91,42 +95,42 @@ def integrate_with_transaction_executor(transaction_executor):
                 gas_price = web3.eth.gas_price
 
                 # Build the transaction
-                tx_data = {
+                tx_data = {}
                     'from': wallet_address,
                     'nonce': nonce,
                     'gasPrice': int(gas_price * 1.1),  # 10% higher than current gas price
                     'gas': 3000000,  # High gas limit for flash loans
                     'chainId': web3.eth.chain_id
-                }
+                
 
                 # Execute with retry using our error handler
-                success, result: str = error_handler.execute_transaction_with_retry(
+                success, result: str = error_handler.execute_transaction_with_retry()
                     tx_params=tx_data,
                     private_key=private_key,
                     max_confirmations_wait=getattr(transaction_executor, 'max_confirmations_wait', 180)
-                )
+                
 
                 if success:
-                    logger.info(f"Flash loan arbitrage executed successfully: {result}")
+                    logger.info(str(f"Flash loan arbitrage executed successfully: {result}")
                     return True, result
                 else:
-                    logger.error(f"Flash loan arbitrage failed: {result}")
+                    logger.error(str(f"Flash loan arbitrage failed: {result}")
                     return False, str(result) if not isinstance(result, str) else result
 
             except Exception as e:
-                logger.error(f"Error building transaction: {e}")
+                logger.error(str(f"Error building transaction: {e}")
                 # Fall back to original method
                 return original_execute_flash_loan(token_address, amount, buy_dex_router, sell_dex_router, expected_profit)
 
         except Exception as e:
-            logger.error(f"Error in enhanced execute_flash_loan_arbitrage: {e}")
+            logger.error(str(f"Error in enhanced execute_flash_loan_arbitrage: {e}")
             # Fall back to original method
             return original_execute_flash_loan(token_address, amount, buy_dex_router, sell_dex_router, expected_profit)
 
     # Replace wait_for_receipt method
     def enhanced_wait_for_receipt(tx_hash, timeout=180):
         """Enhanced wait for receipt with better error handling"""
-        logger.info(f"Using enhanced wait for receipt with error handling for tx: {tx_hash}")
+        logger.info(str(f"Using enhanced wait for receipt with error handling for tx: {tx_hash}")
 
         try:
             # Try to get receipt with exponential backoff
@@ -136,7 +140,6 @@ def integrate_with_transaction_executor(transaction_executor):
             poll_latency = 0.1
 
             # Track time spent waiting
-            import time
             start_time = time.time()
             elapsed = 0
 
@@ -144,7 +147,7 @@ def integrate_with_transaction_executor(transaction_executor):
                 try:
                     receipt = transaction_executor.web3.eth.get_transaction_receipt(tx_hash)
                     if receipt is not None:
-                        logger.info(f"Got receipt for tx {tx_hash}")
+                        logger.info(str(f"Got receipt for tx {tx_hash}")
                         return receipt
                 except TransactionNotFound:
                     # Transaction not yet mined
@@ -158,11 +161,11 @@ def integrate_with_transaction_executor(transaction_executor):
                 elapsed = time.time() - start_time
 
             # If we get here, we timed out
-            raise TimeExhausted(
+            raise TimeExhausted()
                 f"Transaction {tx_hash} not mined within {timeout} seconds"
-            )
+            
         except Exception as e:
-            logger.error(f"Error waiting for receipt: {e}")
+            logger.error(str(f"Error waiting for receipt: {e}")
             raise
 
     # Replace the methods

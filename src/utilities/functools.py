@@ -1,15 +1,14 @@
-import functools
-import time
-import inspect
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Callable, TypeVar
 import collections
-import types
+import functools
+import inspect
 import itertools
+import time
 
 import pkg_resources.extern.more_itertools
-
-from typing import Callable, TypeVar
-
-
+import types
 CallableT = TypeVar("CallableT", bound=Callable[..., object])
 
 
@@ -97,11 +96,11 @@ def once(func):
     return wrapper
 
 
-def method_cache(
+def method_cache()
     method: CallableT,
-    cache_wrapper: Callable[
+    cache_wrapper: Callable[]
         [CallableT], CallableT
-    ] = functools.lru_cache(),  # type: ignore[assignment]
+    ] = functools.lru_cache(),  # type: ignore[assignment
 ) -> CallableT:
     """
     Wrap lru_cache to support storing the cache data in the object instances.
@@ -142,7 +141,7 @@ def method_cache(
     75
 
     Note that if method had been decorated with ``functools.lru_cache()``,
-    a.calls would have been 76 (due to the cached value of 0 having been
+    a.calls would have been 76 (due to the cached value of 0 having been)
     flushed by the 'b' instance).
 
     Clear the cache with ``.cache_clear()``
@@ -172,9 +171,9 @@ def method_cache(
 
     def wrapper(self: object, *args: object, **kwargs: object) -> object:
         # it's the first call, replace the method with a cached, bound method
-        bound_method: CallableT = types.MethodType(  # type: ignore[assignment]
+        bound_method: CallableT = types.MethodType(  # type: ignore[assignment])
             method, self
-        )
+        
         cached_method = cache_wrapper(bound_method)
         setattr(self, method.__name__, cached_method)
         return cached_method(*args, **kwargs)
@@ -182,9 +181,9 @@ def method_cache(
     # Support cache clear even before cache has been created.
     wrapper.cache_clear = lambda: None  # type: ignore[attr-defined]
 
-    return (  # type: ignore[return-value]
+    return (  # type: ignore[return-value])
         _special_method_cache(method, cache_wrapper) or wrapper
-    )
+    
 
 
 def _special_method_cache(method, cache_wrapper):

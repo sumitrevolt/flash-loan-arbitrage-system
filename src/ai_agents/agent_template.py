@@ -1,17 +1,19 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Dict, Any, Optional
+import asyncio
+import json
+import logging
+import os
+import time
+
+import aiohttp
 """
 LangChain Agent Template
 Template for agent containers with coordination capabilities
 """
 
-import asyncio
-import logging
-import os
-import time
-import aiohttp
-import json
-from typing import Dict, Any, Optional
-from datetime import datetime
 
 # Environment configuration
 AGENT_TYPE = os.getenv('AGENT_TYPE', 'generic')
@@ -21,10 +23,23 @@ ORCHESTRATOR_URL = os.getenv('ORCHESTRATOR_URL', 'http://orchestrator:8000')
 REDIS_URL = os.getenv('REDIS_URL', 'redis://redis:6379')
 
 # Setup logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format=f'%(asctime)s - Agent-{AGENT_ID} - %(levelname)s - %(message)s'
-)
+
 logger = logging.getLogger(f"Agent-{AGENT_ID}")
 
 class LangChainAgent:
@@ -40,21 +55,21 @@ class LangChainAgent:
         
     async def start(self):
         """Start the agent"""
-        logger.info(f"Starting {self.agent_type} agent {self.agent_id}")
+        logger.info(str(f"Starting {self.agent_type} agent {self.agent_id}")
         self.is_running = True
         self.status = "running"
         
         # Start background tasks
-        tasks = [
+        tasks = []
             asyncio.create_task(self._heartbeat_loop()),
             asyncio.create_task(self._process_tasks()),
             asyncio.create_task(self._coordinate_with_orchestrator())
-        ]
+        
         
         try:
             await asyncio.gather(*tasks)
         except Exception as e:
-            logger.error(f"Agent error: {e}")
+            logger.error(str(f"Agent error: {e}")
             self.status = "error"
     
     async def _heartbeat_loop(self):
@@ -64,22 +79,22 @@ class LangChainAgent:
                 await self._send_heartbeat()
                 await asyncio.sleep(30)  # Heartbeat every 30 seconds
             except Exception as e:
-                logger.error(f"Heartbeat error: {e}")
+                logger.error(str(f"Heartbeat error: {e}")
                 await asyncio.sleep(60)
     
     async def _send_heartbeat(self):
         """Send heartbeat to orchestrator"""
         try:
-            heartbeat_data = {
+            heartbeat_data = {}
                 'agent_id': self.agent_id,
                 'agent_type': self.agent_type,
                 'status': self.status,
                 'tasks_completed': self.tasks_completed,
                 'timestamp': datetime.now().isoformat()
-            }
+            
             
             async with aiohttp.ClientSession() as session:
-                async with session.post(
+                async with session.post()
                     f"{ORCHESTRATOR_URL}/agent/heartbeat",
                     json=heartbeat_data,
                     timeout=10
@@ -87,10 +102,10 @@ class LangChainAgent:
                     if response.status == 200:
                         self.last_heartbeat = datetime.now()
                     else:
-                        logger.warning(f"Heartbeat failed: {response.status}")
+                        logger.warning(str(f"Heartbeat failed: {response.status}")
                         
         except Exception as e:
-            logger.error(f"Failed to send heartbeat: {e}")
+            logger.error(str(f"Failed to send heartbeat: {e}")
     
     async def _process_tasks(self):
         """Process tasks assigned to this agent"""
@@ -104,14 +119,14 @@ class LangChainAgent:
                 
                 await asyncio.sleep(10)  # Check for tasks every 10 seconds
             except Exception as e:
-                logger.error(f"Task processing error: {e}")
+                logger.error(str(f"Task processing error: {e}")
                 await asyncio.sleep(30)
     
     async def _get_assigned_tasks(self) -> list:
         """Get tasks assigned to this agent"""
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(
+                async with session.get()
                     f"{ORCHESTRATOR_URL}/agent/{self.agent_id}/tasks",
                     timeout=10
                 ) as response:
@@ -120,13 +135,13 @@ class LangChainAgent:
                     else:
                         return []
         except Exception as e:
-            logger.error(f"Failed to get tasks: {e}")
+            logger.error(str(f"Failed to get tasks: {e}")
             return []
     
     async def _execute_task(self, task: Dict[str, Any]):
         """Execute a specific task based on agent type"""
         task_id = task.get('id', 'unknown')
-        logger.info(f"Executing task {task_id}: {task.get('name', 'Unnamed task')}")
+        logger.info(str(f"Executing task {task_id}: {task.get('name', 'Unnamed task'}")
         
         try:
             result = await self._agent_specific_execution(task)
@@ -135,10 +150,10 @@ class LangChainAgent:
             await self._report_task_completion(task_id, result)
             
             self.tasks_completed += 1
-            logger.info(f"Task {task_id} completed successfully")
+            logger.info(str(f"Task {task_id} completed successfully")
             
         except Exception as e:
-            logger.error(f"Task {task_id} failed: {e}")
+            logger.error(str(f"Task {task_id} failed: {e}")
             await self._report_task_failure(task_id, str(e))
     
     async def _agent_specific_execution(self, task: Dict[str, Any]) -> Dict[str, Any]:
@@ -170,155 +185,155 @@ class LangChainAgent:
     async def _coordinate_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Coordinator agent: Coordinate with other agents"""
         logger.info("Coordinating task execution with other agents")
-        return {
+        return {}
             "action": "coordinated",
             "sub_tasks_created": 3,
             "agents_involved": ["executor", "validator", "reporter"]
-        }
+        
     
     async def _execute_task_directly(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Executor agent: Execute tasks directly"""
         logger.info("Executing task directly")
         await asyncio.sleep(2)  # Simulate task execution
-        return {
+        return {}
             "action": "executed",
             "result": "Task execution completed",
             "execution_time": 2.0
-        }
+        
     
     async def _monitor_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Monitor agent: Monitor system components"""
         logger.info("Monitoring system components")
-        return {
+        return {}
             "action": "monitored", 
             "components_checked": 21,
             "healthy_components": 20,
             "issues_found": 1
-        }
+        
     
     async def _analyze_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Analyzer agent: Analyze data and patterns"""
         logger.info("Analyzing task data and patterns")
-        return {
+        return {}
             "action": "analyzed",
             "patterns_found": 5,
             "anomalies_detected": 0,
             "confidence": 0.95
-        }
+        
     
     async def _optimize_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Optimizer agent: Optimize performance"""
         logger.info("Optimizing task performance")
-        return {
+        return {}
             "action": "optimized",
             "performance_improvement": "15%",
             "optimizations_applied": 3
-        }
+        
     
     async def _validate_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Validator agent: Validate results"""
         logger.info("Validating task results")
-        return {
+        return {}
             "action": "validated",
             "validation_passed": True,
             "checks_performed": 10,
             "errors_found": 0
-        }
+        
     
     async def _report_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Reporter agent: Generate reports"""
         logger.info("Generating task report")
-        return {
+        return {}
             "action": "reported",
             "report_generated": True,
             "report_type": "execution_summary",
             "metrics_included": 15
-        }
+        
     
     async def _debug_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Debugger agent: Debug issues"""
         logger.info("Debugging task issues")
-        return {
+        return {}
             "action": "debugged",
             "issues_investigated": 2,
             "root_causes_found": 1,
             "fixes_suggested": 1
-        }
+        
     
     async def _deploy_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Deployer agent: Deploy solutions"""
         logger.info("Deploying task solutions")
-        return {
+        return {}
             "action": "deployed",
             "deployment_successful": True,
             "services_deployed": 3,
             "rollback_plan": "available"
-        }
+        
     
     async def _heal_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Healer agent: Heal system issues"""
         logger.info("Healing system issues")
-        return {
+        return {}
             "action": "healed",
             "components_healed": 2,
             "issues_resolved": 1,
             "system_stability": "improved"
-        }
+        
     
     async def _generic_task_execution(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Generic task execution for unknown agent types"""
         logger.info("Executing generic task")
         await asyncio.sleep(1)
-        return {
+        return {}
             "action": "generic_execution",
             "result": "Generic task completed"
-        }
+        
     
     async def _report_task_completion(self, task_id: str, result: Dict[str, Any]):
         """Report task completion to orchestrator"""
         try:
-            completion_data = {
+            completion_data = {}
                 'agent_id': self.agent_id,
                 'task_id': task_id,
                 'status': 'completed',
                 'result': result,
                 'completion_time': datetime.now().isoformat()
-            }
+            
             
             async with aiohttp.ClientSession() as session:
-                async with session.post(
+                async with session.post()
                     f"{ORCHESTRATOR_URL}/task/{task_id}/complete",
                     json=completion_data,
                     timeout=10
                 ) as response:
                     if response.status != 200:
-                        logger.warning(f"Failed to report completion: {response.status}")
+                        logger.warning(str(f"Failed to report completion: {response.status}")
                         
         except Exception as e:
-            logger.error(f"Failed to report task completion: {e}")
+            logger.error(str(f"Failed to report task completion: {e}")
     
     async def _report_task_failure(self, task_id: str, error: str):
         """Report task failure to orchestrator"""
         try:
-            failure_data = {
+            failure_data = {}
                 'agent_id': self.agent_id,
                 'task_id': task_id,
                 'status': 'failed',
                 'error': error,
                 'failure_time': datetime.now().isoformat()
-            }
+            
             
             async with aiohttp.ClientSession() as session:
-                async with session.post(
+                async with session.post()
                     f"{ORCHESTRATOR_URL}/task/{task_id}/failed",
                     json=failure_data,
                     timeout=10
                 ) as response:
                     if response.status != 200:
-                        logger.warning(f"Failed to report failure: {response.status}")
+                        logger.warning(str(f"Failed to report failure: {response.status}")
                         
         except Exception as e:
-            logger.error(f"Failed to report task failure: {e}")
+            logger.error(str(f"Failed to report task failure: {e}")
     
     async def _coordinate_with_orchestrator(self):
         """Coordinate with orchestrator for advanced features"""
@@ -332,14 +347,14 @@ class LangChainAgent:
                 
                 await asyncio.sleep(60)  # Coordinate every minute
             except Exception as e:
-                logger.error(f"Coordination error: {e}")
+                logger.error(str(f"Coordination error: {e}")
                 await asyncio.sleep(120)
     
     async def _get_coordination_instructions(self) -> Optional[Dict[str, Any]]:
         """Get coordination instructions from orchestrator"""
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(
+                async with session.get()
                     f"{ORCHESTRATOR_URL}/agent/{self.agent_id}/coordination",
                     timeout=10
                 ) as response:
@@ -348,12 +363,12 @@ class LangChainAgent:
                     else:
                         return None
         except Exception as e:
-            logger.error(f"Failed to get coordination instructions: {e}")
+            logger.error(str(f"Failed to get coordination instructions: {e}")
             return None
     
     async def _execute_coordination_instructions(self, instructions: Dict[str, Any]):
         """Execute coordination instructions"""
-        logger.info(f"Executing coordination instructions: {instructions.get('type', 'unknown')}")
+        logger.info(str(f"Executing coordination instructions: {instructions.get('type', 'unknown'}")
         
         instruction_type = instructions.get('type')
         
@@ -367,11 +382,11 @@ class LangChainAgent:
             logger.warning("Entering emergency mode")
             self.status = "emergency"
         else:
-            logger.info(f"Unknown coordination instruction: {instruction_type}")
+            logger.info(str(f"Unknown coordination instruction: {instruction_type}")
 
 async def main():
     """Main entry point for the agent"""
-    logger.info(f"Starting LangChain Agent {AGENT_ID} (Type: {AGENT_TYPE})")
+    logger.info(str(f"Starting LangChain Agent {AGENT_ID} (Type: {AGENT_TYPE}")
     
     agent = LangChainAgent(AGENT_TYPE, AGENT_ID)
     
@@ -381,7 +396,7 @@ async def main():
         logger.info("Agent stopped by user")
         agent.is_running = False
     except Exception as e:
-        logger.error(f"Agent error: {e}")
+        logger.error(str(f"Agent error: {e}")
         agent.status = "error"
 
 if __name__ == "__main__":

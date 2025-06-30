@@ -1,0 +1,28 @@
+# ------------------------------------------------------------
+# Generic MCP Server Dockerfile
+# Base: python:3.11-slim
+# ------------------------------------------------------------
+FROM python:3.11-slim AS base
+
+ARG APP_DIR=/app
+WORKDIR ${APP_DIR}
+
+# system deps
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends gcc git curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# copy requirements first for cache
+COPY requirements.txt ${APP_DIR}/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# copy full project
+COPY . ${APP_DIR}
+
+# default env
+ENV PYTHONUNBUFFERED=1 \
+    LOG_LEVEL=INFO \
+    SERVER_HEALTH_PORT=3000
+
+# generic entrypoint (server path supplied by compose ENV)
+CMD ["sh", "-c", "python $MCP_SERVER_SCRIPT"]

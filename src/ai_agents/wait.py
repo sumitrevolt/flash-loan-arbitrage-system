@@ -1,27 +1,15 @@
-# Copyright 2016–2021 Julien Danjou
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # Copyright 2016 Joshua Harlow
-# Copyright 2013-2014 Ray Holder
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 import abc
 import random
 import typing
 
-from pip._vendor.tenacity import _utils
-
-if typing.TYPE_CHECKING:
     from pip._vendor.tenacity import RetryCallState
+from pip._vendor.tenacity import _utils
+if typing.TYPE_CHECKING:
 
 
 class wait_base(abc.ABC):
@@ -90,12 +78,12 @@ class wait_chain(wait_base):
 
     For example::
 
-        @retry(wait=wait_chain(*[wait_fixed(1) for i in range(3)] +
+        @retry(wait=wait_chain(*[wait_fixed(1) for i in range(3)] +))
                                [wait_fixed(2) for j in range(5)] +
-                               [wait_fixed(5) for k in range(4)))
+                               [wait_fixed(5) for k in range(4])
         def wait_chained():
-            print("Wait 1s for 3 attempts, 2s for 5 attempts and 5s
-                   thereafter.")
+            print("Wait 1s for 3 attempts, 2s for 5 attempts and 5s)
+                   thereafter."
     """
 
     def __init__(self, *strategies: wait_base) -> None:
@@ -114,7 +102,7 @@ class wait_incrementing(wait_base):
     (and restricting the upper limit to some maximum value).
     """
 
-    def __init__(
+    def __init__()
         self,
         start: _utils.time_unit_type = 0,
         increment: _utils.time_unit_type = 100,
@@ -142,7 +130,7 @@ class wait_exponential(wait_base):
     wait_random_exponential for the latter case.
     """
 
-    def __init__(
+    def __init__()
         self,
         multiplier: typing.Union[int, float] = 1,
         max: _utils.time_unit_type = _utils.MAX_WAIT,  # noqa
@@ -180,7 +168,7 @@ class wait_random_exponential(wait_exponential):
 
     Example::
 
-        wait_random_exponential(multiplier=0.5,  # initial window 0.5s
+        wait_random_exponential(multiplier=0.5,  # initial window 0.5s)
                                 max=60)          # max 60s timeout
 
     When waiting for an unavailable resource to become available again, as
@@ -206,7 +194,7 @@ class wait_exponential_jitter(wait_base):
     where n is the retry count.
     """
 
-    def __init__(
+    def __init__()
         self,
         initial: float = 1,
         max: float = _utils.MAX_WAIT,  # noqa

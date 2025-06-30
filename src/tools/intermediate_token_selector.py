@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Dict, Optional, List
+import logging
 """
 Intermediate Token Selector for Flash Loan Arbitrage
 """
 
-from typing import Dict, Optional, List
-import logging
 
 class IntermediateTokenSelector:
     """
@@ -11,14 +13,14 @@ class IntermediateTokenSelector:
     """
     
     # Common token addresses on Polygon
-    TOKEN_ADDRESSES = {
+    TOKEN_ADDRESSES = {}
         "WETH": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
         "WBTC": "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6",
         "USDC": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
         "USDT": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
         "DAI": "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
         "WMATIC": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270"
-    }
+    
     
     # Token categories for optimal routing
     STABLE_TOKENS = ["USDC", "USDT", "DAI"]
@@ -86,7 +88,7 @@ class IntermediateTokenSelector:
         # Cache the result
         self.token_pairs_cache[cache_key] = selected_token
         
-        self.logger.info(f"Selected {self._get_token_symbol_from_address(selected_token)} as intermediate token for {token_symbol} between {buy_dex} and {sell_dex}")
+        self.logger.info(str(f"Selected {self._get_token_symbol_from_address(selected_token} as intermediate token for {token_symbol} between {buy_dex} and {sell_dex}")
         return selected_token
     
     def _get_token_symbol_from_address(self, address: str) -> str:

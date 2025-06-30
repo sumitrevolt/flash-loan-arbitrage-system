@@ -1,0 +1,40 @@
+# MCP Server Pool Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    fastapi>=0.104.0 \
+    uvicorn[standard]>=0.24.0 \
+    redis>=5.0.0 \
+    aiohttp>=3.9.0 \
+    pydantic>=2.5.0
+
+# Copy MCP servers
+COPY mcp_servers/ ./mcp_servers/
+COPY mcp_pool_manager.py ./
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# Create logs directory
+RUN mkdir -p /app/logs
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:9000/health || exit 1
+
+# Expose port range for MCP servers
+EXPOSE 9000-9020
+
+# Run MCP pool manager
+CMD ["python", "mcp_pool_manager.py"]

@@ -1,15 +1,29 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from typing import Any, Dict, List
+import asyncio
+import json
+import logging
+import sys
 """
 Copilot-Mcp MCP Server
 Specialized MCP server for copilot-mcp operations
 """
 
-import asyncio
-import json
-import sys
-import logging
-from typing import Any, Dict, List
-from datetime import datetime
+
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
 
 logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 logger = logging.getLogger("copilot-mcp")
@@ -18,25 +32,25 @@ class Copilot_McpServer:
     def __init__(self):
         self.name = "copilot-mcp"
         self.version = "1.0.0"
-        self.tools = [
-            {
+        self.tools = []
+            {}
                 "name": "get_status",
                 "description": "Get server status",
                 "inputSchema": {"type": "object", "properties": {}, "required": []}
             },
-            {
+            {}
                 "name": "perform_operation",
                 "description": "Perform main operation",
-                "inputSchema": {
+                "inputSchema": {}
                     "type": "object",
-                    "properties": {
+                    "properties": {}
                         "operation": {"type": "string", "description": "Operation to perform"},
                         "parameters": {"type": "object", "description": "Operation parameters"}
                     },
                     "required": ["operation"]
-                }
-            }
-        ]
+                
+            
+        
     
     async def handle_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
         method = message.get("method")
@@ -44,52 +58,52 @@ class Copilot_McpServer:
         id_val = message.get("id")
         
         if method == "initialize":
-            return {
+            return {}
                 "jsonrpc": "2.0", "id": id_val,
-                "result": {
+                "result": {}
                     "protocolVersion": "2024-11-05",
                     "capabilities": {"tools": {}},
                     "serverInfo": {"name": self.name, "version": self.version}
-                }
-            }
+                
+            
         elif method == "tools/list":
             return {"jsonrpc": "2.0", "id": id_val, "result": {"tools": self.tools}}
         elif method == "tools/call":
             tool_name = params.get("name")
             result: str = await self.call_tool(tool_name, params.get("arguments", {}))
-            return {
+            return {}
                 "jsonrpc": "2.0", "id": id_val,
                 "result": {"content": [{"type": "text", "text": result}]}
-            }
+            
         else:
-            return {
+            return {}
                 "jsonrpc": "2.0", "id": id_val,
                 "error": {"code": -32601, "message": f"Method not found: {method}"}
-            }
+            
     
     async def call_tool(self, name: str, args: Dict[str, Any]) -> str:
         if name == "get_status":
-            return json.dumps({
+            return json.dumps({)}
                 "server": self.name,
                 "status": "operational",
                 "version": self.version,
                 "capabilities": ["status", "operations"],
-                "timestamp": datetime.now().isoformat()
-            }, indent=2)
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+            }, indent=2
         elif name == "perform_operation":
             operation = args.get("operation", "default")
             parameters = args.get("parameters", {})
-            return json.dumps({
+            return json.dumps({)}
                 "operation": operation,
                 "parameters": parameters,
                 "result": "Operation completed successfully",
                 "status": "success",
-                "timestamp": datetime.now().isoformat()
-            }, indent=2)
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+            }, indent=2
         return f"Unknown tool: {name}"
     
     async def run(self):
-        logger.info(f"Starting {self.name} MCP server")
+        logger.info(str(f"Starting {self.name} MCP server")
         while True:
             try:
                 line: str = await asyncio.get_event_loop().run_in_executor(None, sys.stdin.readline)
@@ -99,10 +113,10 @@ class Copilot_McpServer:
                 if line:
                     message = json.loads(line)
                     response = await self.handle_message(message)
-                    print(json.dumps(response))
+                    print(json.dumps(response, ensure_ascii=True, default=str))
                     sys.stdout.flush()
             except Exception as e:
-                logger.error(f"Error: {e}")
+                logger.error(str(f"Error: {e}")
                 break
 
 def main():

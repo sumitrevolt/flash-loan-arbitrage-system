@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from typing import Dict, Any, Optional, List
+import json
+import logging
+import os
 """
 Parameter synchronizer for flash loan arbitrage.
 
@@ -5,10 +11,6 @@ This module synchronizes tuned parameters across different components
 of the flash loan arbitrage system.
 """
 
-import logging
-import json
-import os
-from typing import Dict, Any, Optional, List
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -38,95 +40,95 @@ class ParameterSynchronizer:
                 with open(self.config_path, 'r') as f:
                     return json.load(f)
         except Exception as e:
-            self.logger.error(f"Error loading parameter synchronizer config: {e}")
+            self.logger.error(str(f"Error loading parameter synchronizer config: {e}")
             
         # Default configuration
-        return {
-            "parameter_mappings": {
-                "slippage.base_slippage": [
-                    {
+        return {}
+            "parameter_mappings": {}
+                "slippage.base_slippage": []
+                    {}
                         "config_file": "config/slippage_config.json",
                         "target_path": "base_slippage"
-                    }
+                    
                 ],
-                "slippage.max_slippage": [
-                    {
+                "slippage.max_slippage": []
+                    {}
                         "config_file": "config/slippage_config.json",
                         "target_path": "max_slippage"
-                    }
+                    
                 ],
-                "slippage.volatility_factor": [
-                    {
+                "slippage.volatility_factor": []
+                    {}
                         "config_file": "config/slippage_config.json",
                         "target_path": "volatility_factor"
-                    }
+                    
                 ],
-                "circuit_breaker.max_consecutive_failures": [
-                    {
+                "circuit_breaker.max_consecutive_failures": []
+                    {}
                         "config_file": "config/circuit_breaker_config.json",
                         "target_path": "max_consecutive_failures"
-                    }
+                    
                 ],
-                "circuit_breaker.cooldown_period_seconds": [
-                    {
+                "circuit_breaker.cooldown_period_seconds": []
+                    {}
                         "config_file": "config/circuit_breaker_config.json",
                         "target_path": "cooldown_period_seconds"
-                    }
+                    
                 ],
-                "gas.gas_price_multipliers.standard": [
-                    {
+                "gas.gas_price_multipliers.standard": []
+                    {}
                         "config_file": "config/gas_optimizer_config.json",
                         "target_path": "gas_price_multipliers.standard"
-                    }
+                    
                 ],
-                "gas.gas_price_multipliers.fast": [
-                    {
+                "gas.gas_price_multipliers.fast": []
+                    {}
                         "config_file": "config/gas_optimizer_config.json",
                         "target_path": "gas_price_multipliers.fast"
-                    }
+                    
                 ],
-                "retry.max_retries": [
-                    {
+                "retry.max_retries": []
+                    {}
                         "config_file": "config/auto_executor_config.json",
                         "target_path": "max_retries"
-                    }
+                    
                 ],
-                "retry.retry_delay": [
-                    {
+                "retry.retry_delay": []
+                    {}
                         "config_file": "config/auto_executor_config.json",
                         "target_path": "retry_delay"
-                    }
+                    
                 ],
-                "trade.min_profit_threshold_usd": [
-                    {
+                "trade.min_profit_threshold_usd": []
+                    {}
                         "config_file": "config/auto_executor_config.json",
                         "target_path": "min_profit_threshold_usd"
-                    }
+                    
                 ],
-                "trade.min_profit_percentage": [
-                    {
+                "trade.min_profit_percentage": []
+                    {}
                         "config_file": "config/auto_executor_config.json",
                         "target_path": "min_profit_percentage"
-                    }
-                ]
+                    
+                
             },
-            "token_specific_mappings": {
-                "slippage.base_slippage": [
-                    {
+            "token_specific_mappings": {}
+                "slippage.base_slippage": []
+                    {}
                         "config_file": "config/slippage_config.json",
                         "target_path": "token_specific_adjustments.{token}"
-                    }
-                ]
+                    
+                
             },
-            "dex_specific_mappings": {
-                "gas.gas_price_multipliers.standard": [
-                    {
+            "dex_specific_mappings": {}
+                "gas.gas_price_multipliers.standard": []
+                    {}
                         "config_file": "config/gas_optimizer_config.json",
                         "target_path": "dex_specific_adjustments.{dex}"
-                    }
-                ]
-            }
-        }
+                    
+                
+            
+        
     
     def sync_parameters(self, parameters: Dict[str, Any], token_specific: Optional[Dict[str, Dict[str, Any]]] = None, dex_specific: Optional[Dict[str, Dict[str, Any]]] = None) -> bool:
         """
@@ -205,7 +207,7 @@ class ParameterSynchronizer:
         try:
             # Check if the config file exists
             if not os.path.exists(config_file):
-                self.logger.warning(f"Config file {config_file} does not exist")
+                self.logger.warning(str(f"Config file {config_file} does not exist")
                 return False
             
             # Load the configuration file
@@ -236,11 +238,11 @@ class ParameterSynchronizer:
             with open(config_file, 'w') as f:
                 json.dump(config, f, indent=2)
             
-            self.logger.info(f"Updated {target_path} in {config_file} to {value}")
+            self.logger.info(str(f"Updated {target_path} in {config_file} to {value}")
             return True
             
         except Exception as e:
-            self.logger.error(f"Error updating {target_path} in {config_file}: {e}")
+            self.logger.error(str(f"Error updating {target_path} in {config_file}: {e}")
             return False
     
     def load_all_configs(self) -> Dict[str, Any]:
@@ -274,7 +276,7 @@ class ParameterSynchronizer:
                     with open(config_file, 'r') as f:
                         configs[config_file] = json.load(f)
                 except Exception as e:
-                    self.logger.error(f"Error loading {config_file}: {e}")
+                    self.logger.error(str(f"Error loading {config_file}: {e}")
         
         return configs
     
@@ -332,5 +334,5 @@ class ParameterSynchronizer:
                 return config.get(target_path)
                 
         except Exception as e:
-            self.logger.error(f"Error getting value at {target_path}: {e}")
+            self.logger.error(str(f"Error getting value at {target_path}: {e}")
             return None

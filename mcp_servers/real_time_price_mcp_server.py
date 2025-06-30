@@ -1,4 +1,20 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+from decimal import Decimal, getcontext
+from typing import Dict, List, Any
+from typing import TypedDict
+import asyncio
+import json
+import logging
+import os
+import random
+import sys
+import time
+
+from dataclasses import dataclass, asdict
+from web3 import Web3
+import requests
 """
 Real-Time Price MCP Server
 ==========================
@@ -14,22 +30,8 @@ Features:
 - Complete MCP Coordinator integration
 """
 
-import asyncio
-import json
-import sys
-import logging
-import os
-import time
-import random
-import requests
-from decimal import Decimal, getcontext
-from typing import Dict, List, Any
-from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
-from web3 import Web3
 
 # Type definitions
-from typing import TypedDict
 
 class DexConfigDict(TypedDict):
     name: str
@@ -50,14 +52,27 @@ ToolSchema = Dict[str, Any]
 getcontext().prec = 28
 
 # Configure logging
-logging.basicConfig(
+
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig()
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
+    handlers=[]
         logging.StreamHandler(sys.stderr),
         logging.FileHandler(os.path.join("logs", "real_time_price_mcp.log"))
-    ]
-)
+    
+
 logger = logging.getLogger("real-time-price-mcp")
 
 @dataclass
@@ -99,101 +114,101 @@ class RealTimePriceMCPServer:
         self.coordinator_url: str = os.getenv("MCP_COORDINATOR_URL", "http://localhost:9000")
         self.status: str = "operational"
           # DEX configurations
-        self.dex_configs: Dict[str, DexConfigDict] = {
-            'uniswap': {
+        self.dex_configs: Dict[str, DexConfigDict] = {}
+            'uniswap': {}
                 'name': 'Uniswap',
                 'base_price_multiplier': 1.0,
                 'volatility': 0.02,
                 'liquidity_base': 10000000,
                 'volume_base': 5000000
             },
-            'sushiswap': {
+            'sushiswap': {}
                 'name': 'SushiSwap',
                 'base_price_multiplier': 1.005,
                 'volatility': 0.025,
                 'liquidity_base': 8000000,
                 'volume_base': 3000000
             },
-            'quickswap': {
+            'quickswap': {}
                 'name': 'QuickSwap',
                 'base_price_multiplier': 0.995,
                 'volatility': 0.03,
                 'liquidity_base': 5000000,
                 'volume_base': 2000000
             },
-            'pancakeswap': {
+            'pancakeswap': {}
                 'name': 'PancakeSwap',
                 'base_price_multiplier': 1.01,
                 'volatility': 0.02,
                 'liquidity_base': 12000000,
                 'volume_base': 6000000
             },
-            'curve': {
+            'curve': {}
                 'name': 'Curve',
                 'base_price_multiplier': 0.998,
                 'volatility': 0.01,  # Lower volatility for stablecoin-focused DEX
                 'liquidity_base': 15000000,
                 'volume_base': 8000000
-            }
+            
         }          # Token configurations with base prices in USD
-        self.tokens: Dict[str, TokenConfigDict] = {
-            'WETH': {
+        self.tokens: Dict[str, TokenConfigDict] = {}
+            'WETH': {}
                 'price': 3000,
                 'decimals': 18,
                 'symbol': 'WETH',
                 'volatility': 0.03
             },
-            'WBTC': {
+            'WBTC': {}
                 'price': 50000,
                 'decimals': 8,
                 'symbol': 'WBTC',
                 'volatility': 0.025
             },
-            'USDC': {
+            'USDC': {}
                 'price': 1,
                 'decimals': 6,
                 'symbol': 'USDC',
                 'volatility': 0.001
             },
-            'USDT': {
+            'USDT': {}
                 'price': 1,
                 'decimals': 6,
                 'symbol': 'USDT',
                 'volatility': 0.001
             },
-            'DAI': {
+            'DAI': {}
                 'price': 1,
                 'decimals': 18,
                 'symbol': 'DAI',
                 'volatility': 0.002
             },
-            'MATIC': {
+            'MATIC': {}
                 'price': 1.2,
                 'decimals': 18,
                 'symbol': 'MATIC',
                 'volatility': 0.04
             },
-            'LINK': {
+            'LINK': {}
                 'price': 15,
                 'decimals': 18,
                 'symbol': 'LINK',
                 'volatility': 0.035
             },
-            'UNI': {
+            'UNI': {}
                 'price': 7,
                 'decimals': 18,
                 'symbol': 'UNI',
                 'volatility': 0.03
             },
-            'AAVE': {
+            'AAVE': {}
                 'price': 80,
                 'decimals': 18,
                 'symbol': 'AAVE',
                 'volatility': 0.035
-            }
-        }
+            
+        
           # Trading pairs to monitor
-        self.monitored_pairs: List[str] = [
+        self.monitored_pairs: List[str] = []
             'WETH/USDC',
             'WBTC/USDC',
             'WETH/WBTC',
@@ -203,7 +218,7 @@ class RealTimePriceMCPServer:
             'LINK/USDC',
             'UNI/USDC',
             'AAVE/USDC'
-        ]
+        
         
         # Price cache
         self.price_cache: Dict[str, Dict[str, PricePoint]] = {}
@@ -225,85 +240,85 @@ class RealTimePriceMCPServer:
     
     def _setup_tools(self):
         """Setup available tools"""
-        self.tools = [
-            {
+        self.tools = []
+            {}
                 "name": "fetch_price",
                 "description": "Fetch real-time price from specific DEX",
-                "inputSchema": {
+                "inputSchema": {}
                     "type": "object",
-                    "properties": {
+                    "properties": {}
                         "dex": {"type": "string", "description": "DEX name (uniswap, sushiswap, etc.)"},
                         "token_pair": {"type": "string", "description": "Token pair (WETH/USDC, etc.)"}
                     },
                     "required": ["dex", "token_pair"]
-                }
+                
             },
-            {
+            {}
                 "name": "fetch_all_prices",
                 "description": "Fetch prices from all DEXes for specified pairs",
-                "inputSchema": {
+                "inputSchema": {}
                     "type": "object",
-                    "properties": {
+                    "properties": {}
                         "pairs": {"type": "array", "items": {"type": "string"}, "description": "Token pairs to fetch"}
-                    }
-                }
+                    
+                
             },
-            {
+            {}
                 "name": "find_arbitrage_opportunities",
                 "description": "Find arbitrage opportunities across all DEXes",
-                "inputSchema": {
+                "inputSchema": {}
                     "type": "object",
-                    "properties": {
+                    "properties": {}
                         "min_profit_percentage": {"type": "number", "description": "Minimum profit percentage", "default": 0.1},
                         "min_liquidity_usd": {"type": "number", "description": "Minimum liquidity in USD", "default": 10000}
-                    }
-                }
+                    
+                
             },
-            {
+            {}
                 "name": "get_token_liquidity",
                 "description": "Get liquidity data for specific token pair",
-                "inputSchema": {
+                "inputSchema": {}
                     "type": "object",
-                    "properties": {
+                    "properties": {}
                         "dex": {"type": "string"},
                         "token_pair": {"type": "string"}
                     },
                     "required": ["dex", "token_pair"]
-                }
+                
             },
-            {
+            {}
                 "name": "validate_price_feed",
                 "description": "Validate price feed accuracy and freshness",
-                "inputSchema": {
+                "inputSchema": {}
                     "type": "object",
-                    "properties": {
+                    "properties": {}
                         "dex": {"type": "string"},
                         "token_pair": {"type": "string"},
                         "max_age_seconds": {"type": "number", "default": 60}
                     },
                     "required": ["dex", "token_pair"]
-                }
+                
             },
-            {
+            {}
                 "name": "health_check",
                 "description": "Check the health of the pricing server",
-                "inputSchema": {
+                "inputSchema": {}
                     "type": "object",
                     "properties": {}
-                }
+                
             },
-            {
+            {}
                 "name": "register_with_coordinator",
                 "description": "Register this server with the MCP coordinator",
-                "inputSchema": {
+                "inputSchema": {}
                     "type": "object",
-                    "properties": {
+                    "properties": {}
                         "coordinator_url": {"type": "string", "description": "URL of the coordinator"},
                         "capabilities": {"type": "array", "items": {"type": "string"}, "description": "Server capabilities"}
-                    }
-                }
-            }
-        ]
+                    
+                
+            
+        
     
     def _initialize_price_simulation(self):
         """Initialize price simulation for all pairs and DEXes"""
@@ -333,31 +348,31 @@ class RealTimePriceMCPServer:
     
     def _get_router_info(self, dex_name):
         # Map DEX names to router addresses and ABI files
-        router_info = {
-            'uniswap': {
+        router_info = {}
+            'uniswap': {}
                 'address': '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
                 'abi': 'data/abi/uniswap_router.json',
                 'chain': 'ethereum'
             },
-            'sushiswap': {
+            'sushiswap': {}
                 'address': '0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F',
                 'abi': 'data/abi/sushiswap_router.json',
                 'chain': 'ethereum'
             },
-            'quickswap': {
+            'quickswap': {}
                 'address': '0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff',
                 'abi': 'data/abi/uniswap_router.json',
                 'chain': 'polygon'
-            }
-        }
+            
+        
         return router_info.get(dex_name)
 
     def _get_web3(self, chain):
         # Map chain to RPC URL (customize as needed)
-        rpc_urls = {
+        rpc_urls = {}
             'ethereum': os.getenv('ETHEREUM_RPC_URL', 'https://mainnet.infura.io/v3/YOUR_KEY'),
             'polygon': os.getenv('POLYGON_RPC_URL', 'https://polygon-rpc.com')
-        }
+        
         return Web3(Web3.HTTPProvider(rpc_urls[chain]))
 
     def _fetch_real_dex_price(self, dex_name, token_pair, amount_in_wei):
@@ -378,7 +393,7 @@ class RealTimePriceMCPServer:
             amounts = router.functions.getAmountsOut(amount_in_wei, path).call()
             return amounts[-1]
         except Exception as e:
-            logger.warning(f"Failed to fetch real price for {dex_name} {token_pair}: {e}")
+            logger.warning(str(f"Failed to fetch real price for {dex_name} {token_pair}: {e}")
             return None
 
     def _generate_price_point(self, dex_name: str, token_pair: str) -> PricePoint:
@@ -395,7 +410,7 @@ class RealTimePriceMCPServer:
                 liquidity = Decimal('1000000')
                 volume_24h = Decimal('500000')
                 confidence = 0.9
-                return PricePoint(
+                return PricePoint()
                     dex=self.dex_configs[dex_name]['name'],
                     token_pair=token_pair,
                     price=price,
@@ -404,7 +419,7 @@ class RealTimePriceMCPServer:
                     timestamp=datetime.now(),
                     confidence=confidence,
                     source='web3'
-                )
+                
         # Fallback to simulation for unsupported DEXes or errors
         return self._generate_simulated_price_point(dex_name, token_pair)
 
@@ -424,7 +439,7 @@ class RealTimePriceMCPServer:
         liquidity = Decimal(str(dex_config['liquidity_base'] * liquidity_variation))
         volume_24h = Decimal(str(dex_config['volume_base'] * volume_variation))
         confidence = min(float(liquidity) / 1000000, 0.95)
-        return PricePoint(
+        return PricePoint()
             dex=dex_config['name'],
             token_pair=token_pair,
             price=final_price,
@@ -433,7 +448,7 @@ class RealTimePriceMCPServer:
             timestamp=datetime.now(),
             confidence=confidence,
             source='simulated'
-        )
+        
     
     def _update_prices(self):
         """Update all simulated prices if needed"""
@@ -466,29 +481,29 @@ class RealTimePriceMCPServer:
         id_val = message.get("id")
         
         if method == "initialize":
-            return {
+            return {}
                 "jsonrpc": "2.0",
                 "id": id_val,
-                "result": {
+                "result": {}
                     "protocolVersion": "2024-11-05",
-                    "capabilities": {
+                    "capabilities": {}
                         "tools": {}
                     },
-                    "serverInfo": {
+                    "serverInfo": {}
                         "name": self.name,
                         "version": self.version
-                    }
-                }
-            }
+                    
+                
+            
         
         elif method == "tools/list":
-            return {
+            return {}
                 "jsonrpc": "2.0", 
                 "id": id_val,
-                "result": {
+                "result": {}
                     "tools": self.tools
-                }
-            }
+                
+            
         
         elif method == "tools/call":
             tool_name = params.get("name")
@@ -496,34 +511,34 @@ class RealTimePriceMCPServer:
             
             result: str = await self.call_tool(tool_name, tool_args)
             
-            return {
+            return {}
                 "jsonrpc": "2.0",
                 "id": id_val,
-                "result": {
-                    "content": [
-                        {
+                "result": {}
+                    "content": []
+                        {}
                             "type": "text",
                             "text": result
-                        }
-                    ]
-                }
-            }
+                        
+                    
+                
+            
         
         else:
-            return {
+            return {}
                 "jsonrpc": "2.0",
                 "id": id_val,
-                "error": {
+                "error": {}
                     "code": -32601,
                     "message": f"Method not found: {method}"
-                }
-            }
+                
+            
     
     async def call_tool(self, name: str, args: Dict[str, Any]) -> str:
         """Handle tool calls for the server"""
         self._update_prices()  # Update prices before responding
         
-        logger.info(f"Tool call: {name} with args {args}")
+        logger.info(str(f"Tool call: {name} with args {args}")
         
         if name == "fetch_price":
             return await self._fetch_price(args)
@@ -546,10 +561,10 @@ class RealTimePriceMCPServer:
         elif name == "register_with_coordinator":
             return await self._register_with_coordinator(args)
         
-        return json.dumps({
+        return json.dumps({)}
             "error": f"Unknown tool: {name}",
-            "timestamp": datetime.now().isoformat()
-        })
+            "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+        
     
     async def _fetch_price(self, args: Dict[str, Any]) -> str:
         """Fetch price from specific DEX"""
@@ -558,46 +573,46 @@ class RealTimePriceMCPServer:
             token_pair = args.get("token_pair")
             
             if not dex or not token_pair:
-                return json.dumps({
+                return json.dumps({)}
                     "success": False,
                     "error": "Missing dex or token_pair parameter",
-                    "timestamp": datetime.now().isoformat()
-                })
+                    "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+                
             
             if dex not in self.dex_configs:
-                return json.dumps({
+                return json.dumps({)}
                     "success": False,
                     "error": f"Unsupported DEX: {dex}",
-                    "timestamp": datetime.now().isoformat()
-                })
+                    "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+                
             
             if token_pair not in self.monitored_pairs:
-                return json.dumps({
+                return json.dumps({)}
                     "success": False,
                     "error": f"Unsupported token pair: {token_pair}",
-                    "timestamp": datetime.now().isoformat()
-                })
+                    "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+                
             
             price_point = self.price_cache[token_pair][dex]
             
-            return json.dumps({
+            return json.dumps({)}
                 "success": True,
                 "dex": dex,
                 "token_pair": token_pair,
-                "price": float(price_point.price),
+                "price": float(price_point.price, ensure_ascii=True, default=str),
                 "liquidity": float(price_point.liquidity),
                 "volume_24h": float(price_point.volume_24h),
                 "timestamp": price_point.timestamp.isoformat(),                "confidence": price_point.confidence,
                 "source": price_point.source
-            }, indent=2)
+            }, indent=2
             
         except Exception as e:
-            logger.error(f"Error in fetch_price: {str(e)}")
-            return json.dumps({
+            logger.error(str(f"Error in fetch_price: {str(e}")
+            return json.dumps({)}
                 "success": False,
-                "error": str(e),
+                "error": str(e, ensure_ascii=True, default=str),
                 "timestamp": datetime.now().isoformat()
-            })
+            
     
     async def _fetch_all_prices(self, args: Dict[str, Any]) -> str:
         """Fetch prices from all DEXes for specified pairs"""
@@ -613,30 +628,30 @@ class RealTimePriceMCPServer:
                 all_prices[pair] = {}
                 
                 for dex_name, price_point in self.price_cache[pair].items():
-                    all_prices[pair][dex_name] = {
+                    all_prices[pair][dex_name] = {}
                         "price": float(price_point.price),
                         "liquidity": float(price_point.liquidity),
                         "volume_24h": float(price_point.volume_24h),
                         "timestamp": price_point.timestamp.isoformat(),
                         "confidence": price_point.confidence,
                         "source": price_point.source
-                    }
+                    
             
-            return json.dumps({
+            return json.dumps({)}
                 "success": True,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat(),
                 "prices": all_prices,
                 "total_pairs": len(pairs),
                 "successful_fetches": sum(1 for pair in pairs if pair in self.price_cache)
-            }, indent=2)
+            }, indent=2
             
         except Exception as e:
-            logger.error(f"Error in fetch_all_prices: {str(e)}")
-            return json.dumps({
+            logger.error(str(f"Error in fetch_all_prices: {str(e}")
+            return json.dumps({)}
                 "success": False,
-                "error": str(e),
+                "error": str(e, ensure_ascii=True, default=str),
                 "timestamp": datetime.now().isoformat()
-            })
+            
     
     async def _find_arbitrage_opportunities(self, args: Dict[str, Any]) -> str:
         """Find arbitrage opportunities across DEXes"""
@@ -683,7 +698,7 @@ class RealTimePriceMCPServer:
                                     liquidity_score = min(min_liquidity / 100000, 1.0)
                                     confidence = (buy_price_point.confidence + sell_price_point.confidence) / 2
                                     
-                                    opportunity = ArbitrageOpportunity(
+                                    opportunity = ArbitrageOpportunity()
                                         token_pair=pair,
                                         buy_dex=buy_dex_name,
                                         sell_dex=sell_dex_name,
@@ -694,28 +709,28 @@ class RealTimePriceMCPServer:
                                         liquidity_score=liquidity_score,
                                         confidence=confidence,
                                         timestamp=datetime.now()
-                                    )
+                                    
                                     
                                     opportunities.append(opportunity)
             
             # Sort by profit percentage descending
-            opportunities.sort(key=lambda x: x.profit_percentage, reverse=True)
+            opportunities.sort(key=lambda x: Any: Any: x.profit_percentage, reverse=True)
             
-            return json.dumps({
+            return json.dumps({)}
                 "success": True,
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat(),
                 "opportunities": [asdict(opp) for opp in opportunities],
                 "total_opportunities": len(opportunities),
                 "best_profit_percentage": float(opportunities[0].profit_percentage) if opportunities else 0
-            }, indent=2)
+            }, indent=2
             
         except Exception as e:
-            logger.error(f"Error in find_arbitrage_opportunities: {str(e)}")
-            return json.dumps({
+            logger.error(str(f"Error in find_arbitrage_opportunities: {str(e}")
+            return json.dumps({)}
                 "success": False,
-                "error": str(e),
+                "error": str(e, ensure_ascii=True, default=str),
                 "timestamp": datetime.now().isoformat()
-            })
+            
     
     async def _get_token_liquidity(self, args: Dict[str, Any]) -> str:
         """Get detailed liquidity information"""
@@ -724,47 +739,47 @@ class RealTimePriceMCPServer:
             token_pair = args.get("token_pair")
             
             if not dex or not token_pair:
-                return json.dumps({
+                return json.dumps({)}
                     "success": False,
                     "error": "Missing dex or token_pair parameter",
-                    "timestamp": datetime.now().isoformat()
-                })
+                    "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+                
             
             if dex not in self.dex_configs:
-                return json.dumps({
+                return json.dumps({)}
                     "success": False,
                     "error": f"Unsupported DEX: {dex}",
-                    "timestamp": datetime.now().isoformat()
-                })
+                    "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+                
             
             if token_pair not in self.monitored_pairs:
-                return json.dumps({
+                return json.dumps({)}
                     "success": False,
                     "error": f"Unsupported token pair: {token_pair}",
-                    "timestamp": datetime.now().isoformat()
-                })
+                    "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+                
             
             price_point = self.price_cache[token_pair][dex]
             
-            return json.dumps({
+            return json.dumps({)}
                 "success": True,
                 "dex": dex,
                 "token_pair": token_pair,
-                "liquidity_usd": float(price_point.liquidity),
+                "liquidity_usd": float(price_point.liquidity, ensure_ascii=True, default=str),
                 "volume_24h_usd": float(price_point.volume_24h),
                 "price": float(price_point.price),
                 "confidence": price_point.confidence,
                 "source": price_point.source,
                 "timestamp": price_point.timestamp.isoformat()
-            }, indent=2)
+            }, indent=2
             
         except Exception as e:
-            logger.error(f"Error in get_token_liquidity: {str(e)}")
-            return json.dumps({
+            logger.error(str(f"Error in get_token_liquidity: {str(e}")
+            return json.dumps({)}
                 "success": False,
-                "error": str(e),
+                "error": str(e, ensure_ascii=True, default=str),
                 "timestamp": datetime.now().isoformat()
-            })
+            
     
     async def _validate_price_feed(self, args: Dict[str, Any]) -> str:
         """Validate price feed accuracy and freshness"""
@@ -774,25 +789,25 @@ class RealTimePriceMCPServer:
             max_age_seconds = int(args.get("max_age_seconds", 60))
             
             if not dex or not token_pair:
-                return json.dumps({
+                return json.dumps({)}
                     "success": False,
                     "error": "Missing dex or token_pair parameter",
-                    "timestamp": datetime.now().isoformat()
-                })
+                    "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+                
             
             if dex not in self.dex_configs:
-                return json.dumps({
+                return json.dumps({)}
                     "success": False,
                     "error": f"Unsupported DEX: {dex}",
-                    "timestamp": datetime.now().isoformat()
-                })
+                    "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+                
             
             if token_pair not in self.monitored_pairs:
-                return json.dumps({
+                return json.dumps({)}
                     "success": False,
                     "error": f"Unsupported token pair: {token_pair}",
-                    "timestamp": datetime.now().isoformat()
-                })
+                    "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+                
             
             price_point = self.price_cache[token_pair][dex]
             
@@ -808,61 +823,61 @@ class RealTimePriceMCPServer:
             
             is_valid = is_fresh and has_good_confidence and has_sufficient_liquidity
             
-            return json.dumps({
+            return json.dumps({)}
                 "success": True,
                 "valid": is_valid,
                 "dex": dex,
                 "token_pair": token_pair,
-                "checks": {
+                "checks": {}
                     "is_fresh": is_fresh,
                     "age_seconds": age_seconds,
                     "max_age_seconds": max_age_seconds,
                     "has_good_confidence": has_good_confidence,
                     "confidence": price_point.confidence,
                     "has_sufficient_liquidity": has_sufficient_liquidity,
-                    "liquidity_usd": float(price_point.liquidity)
+                    "liquidity_usd": float(price_point.liquidity, ensure_ascii=True, default=str)
                 },
-                "price_data": {
+                "price_data": {}
                     "price": float(price_point.price),
                     "source": price_point.source,
                     "timestamp": price_point.timestamp.isoformat()
-                }
-            }, indent=2)
+                
+            }, indent=2
             
         except Exception as e:
-            logger.error(f"Error in validate_price_feed: {str(e)}")
-            return json.dumps({                "success": False,
-                "error": str(e),
+            logger.error(str(f"Error in validate_price_feed: {str(e}")
+            return json.dumps({                "success": False,)}
+                "error": str(e, ensure_ascii=True, default=str),
                 "timestamp": datetime.now().isoformat()
-            })
+            
     
     async def _health_check(self, args: Dict[str, Any]) -> str:
         """Check the health of the server"""
-        health_data: Dict[str, Any] = {
+        health_data: Dict[str, Any] = {}
             "status": self.status,
             "timestamp": datetime.now().isoformat(),
-            "server_info": {
+            "server_info": {}
                 "name": self.name,
                 "type": self.server_type,
                 "version": self.version
             },
             "active_requests": len(self.active_requests),
             "request_history": len(self.request_history),
-            "price_cache_stats": {
+            "price_cache_stats": {}
                 "pairs": len(self.price_cache),
                 "dexes": len(self.dex_configs),
                 "total_price_points": sum(len(dexes) for dexes in self.price_cache.values()),
                 "last_update": self.last_price_update.isoformat()
             },
-            "capabilities": [
+            "capabilities": []
                 "real_time_price_feeds",
                 "arbitrage_detection",
                 "multi_dex_support",
                 "liquidity_analysis"
-            ]
-        }
+            
         
-        return json.dumps(health_data, indent=2)
+        
+        return json.dumps(health_data, indent=2, ensure_ascii=True, default=str)
     
     async def _register_with_coordinator(self, args: Dict[str, Any]) -> str:
         """Register this server with the MCP coordinator"""
@@ -872,79 +887,79 @@ class RealTimePriceMCPServer:
         if not capabilities:
             capabilities = self._get_default_capabilities()
         
-        logger.info(f"Registering with coordinator at {coordinator_url}")
+        logger.info(str(f"Registering with coordinator at {coordinator_url}")
         
         try:
             server_port = os.getenv("MCP_PORT", "8002")
             server_url = f"http://localhost:{server_port}"
             
-            response = requests.post(
+            response = requests.post()
                 f"{coordinator_url}/register_server",
-                json={
+                json={}
                     "server_name": self.name,
                     "server_type": self.server_type,
                     "server_url": server_url,
                     "capabilities": capabilities
                 },
                 timeout=10
-            )
+            
             
             if response.status_code == 200:
                 result: str = response.json()
-                logger.info(f"Successfully registered with coordinator: {result}")
-                return json.dumps({
+                logger.info(str(f"Successfully registered with coordinator: {result}")
+                return json.dumps({)}
                     "success": True,
                     "coordinator_url": coordinator_url,
                     "registration_result": result,
-                    "timestamp": datetime.now().isoformat()
-                })
+                    "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+                
             else:
-                logger.warning(f"Failed to register with coordinator: {response.status_code} - {response.text}")
-                return json.dumps({
+                logger.warning(str(f"Failed to register with coordinator: {response.status_code} - {response.text}")
+                return json.dumps({)}
                     "success": False,
                     "error": f"Coordinator returned status {response.status_code}",
                     "response": response.text,
-                    "timestamp": datetime.now().isoformat()
-                })
+                    "timestamp": datetime.now(, ensure_ascii=True, default=str).isoformat()
+                
         except Exception as e:
-            logger.error(f"Error registering with coordinator: {e}")
-            return json.dumps({
+            logger.error(str(f"Error registering with coordinator: {e}")
+            return json.dumps({)}
                 "success": False,
-                "error": str(e),
+                "error": str(e, ensure_ascii=True, default=str),
                 "timestamp": datetime.now().isoformat()
-            })
+            
     
     def _get_default_capabilities(self) -> List[str]:
         """Get default capabilities for this server type"""
-        return [
+        return []
             "real_time_price_feeds",
             "arbitrage_detection",
             "multi_dex_support",
             "liquidity_analysis",
             "price_validation"
-        ]
+        
     
     async def _heartbeat_loop(self):
         """Send regular heartbeats to the coordinator"""
         while True:
             try:
-                response = requests.post(
+                response = requests.post()
                     f"{self.coordinator_url}/server_heartbeat",
-                    json={
+                    json={}
                         "server_name": self.name,
                         "status": self.status,
-                        "stats": {
+                        "stats": {}
                             "active_requests": len(self.active_requests),
                             "uptime_seconds": int(time.time() - self.start_time)
-                        }
+                        
                     },
                     timeout=5
-                )
+                
                 
                 if response.status_code == 200:
-                    logger.debug(f"Heartbeat sent successfully")
+                    logger.debug(str(f"Heartbeat sent successfully")
                 else:
-                    logger.warning(f"Failed to send heartbeat: {response.status_code}")
+                    logger.warning(str(f"Failed to send heartbeat: {response.status_code}")
                     
                     # If we got a 404, try to re-register
                     if response.status_code == 404:
@@ -952,14 +967,14 @@ class RealTimePriceMCPServer:
                         await self._register_with_coordinator({})
                 
             except Exception as e:
-                logger.error(f"Error sending heartbeat: {e}")
+                logger.error(str(f"Error sending heartbeat: {e}")
             
             await asyncio.sleep(30)  # Send heartbeat every 30 seconds
     
     async def run(self):
         """Run the MCP server"""
         self.start_time = time.time()
-        logger.info(f"Starting {self.name} v{self.version} (stdio mode)")
+        logger.info(str(f"Starting {self.name} v{self.version} (stdio mode")
         
         # Register with coordinator
         await self._register_with_coordinator({})
@@ -970,9 +985,9 @@ class RealTimePriceMCPServer:
         # Start the server
         while True:
             try:
-                line: str = await asyncio.get_event_loop().run_in_executor(
+                line: str = await asyncio.get_event_loop().run_in_executor()
                     None, sys.stdin.readline
-                )                
+                
                 if not line:
                     break
                     
@@ -984,23 +999,23 @@ class RealTimePriceMCPServer:
                     message = json.loads(line)
                     response = await self.handle_message(message)
                     
-                    print(json.dumps(response))
+                    print(json.dumps(response, ensure_ascii=True, default=str))
                     sys.stdout.flush()
                     
                 except json.JSONDecodeError as e:
-                    error_response: Dict[str, Any] = {
+                    error_response: Dict[str, Any] = {}
                         "jsonrpc": "2.0",
                         "id": None,
-                        "error": {
+                        "error": {}
                             "code": -32700,
                             "message": f"Parse error: {str(e)}"
-                        }
-                    }
-                    print(json.dumps(error_response))
+                        
+                    
+                    print(json.dumps(error_response, ensure_ascii=True, default=str))
                     sys.stdout.flush()
                     
             except Exception as e:
-                logger.error(f"Server error: {str(e)}")
+                logger.error(str(f"Server error: {str(e}")
                 break
 
 def main():
@@ -1011,7 +1026,7 @@ def main():
     except KeyboardInterrupt:
         logger.info("Real-Time Price MCP Server shutting down...")
     except Exception as e:
-        logger.error(f"Fatal error: {str(e)}")
+        logger.error(str(f"Fatal error: {str(e}")
         sys.exit(1)
 
 if __name__ == "__main__":

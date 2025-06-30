@@ -1,16 +1,19 @@
-#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+        import os
+from typing import Dict, Any, Optional
+import asyncio
+import logging
+
+from dataclasses import dataclass
+from eth_account import Account
+from web3 import Web3
 """
 IMMEDIATE NEXT STEP: REAL TRADING MODULE
 =======================================
 Convert simulation to actual flash loan execution with safety limits
 """
 
-import asyncio
-import logging
-from typing import Dict, Any, Optional
-from dataclasses import dataclass
-from web3 import Web3
-from eth_account import Account
 
 @dataclass
 class TradingConfig:
@@ -35,7 +38,6 @@ class RealTradingExecutor:
     def setup_connections(self):
         """Setup Web3 connections and wallet"""
         # Load from environment variables for security
-        import os
         rpc_url = os.getenv("ETHEREUM_RPC_URL", "https://eth-mainnet.alchemyapi.io/v2/YOUR_KEY")
         self.private_key = os.getenv("WALLET_PRIVATE_KEY")
         
@@ -47,7 +49,7 @@ class RealTradingExecutor:
         account = Account.from_key(self.private_key)
         self.wallet_address = account.address
         
-        self.logger.info(f"Connected to Ethereum mainnet, wallet: {self.wallet_address}")
+        self.logger.info(str(f"Connected to Ethereum mainnet, wallet: {self.wallet_address}")
     
     async def execute_flash_loan_arbitrage(self, opportunity: Dict[str, Any]) -> Dict[str, Any]:
         """Execute real flash loan arbitrage with safety checks"""
@@ -79,8 +81,8 @@ class RealTradingExecutor:
                 return {"status": "simulation_failed", "details": simulation_result}
             
             # Step 3: Execute real transaction
-            self.logger.info(f"Executing real flash loan: {opportunity['token_symbol']} "
-                           f"{opportunity['buy_dex']} -> {opportunity['sell_dex']}")
+            self.logger.info(str(f"Executing real flash loan: {opportunity['token_symbol']} ")
+                           f"{opportunity['buy_dex']} -> {opportunity['sell_dex']}"
             
             transaction_hash = await self.submit_transaction(flash_loan_params)
             
@@ -89,31 +91,31 @@ class RealTradingExecutor:
             
             if receipt["status"] == 1:
                 actual_profit = await self.calculate_actual_profit(receipt)
-                self.logger.info(f"Trade successful! Profit: ${actual_profit:.2f}")
-                return {
+                self.logger.info(str(f"Trade successful! Profit: ${actual_profit:.2f}")
+                return {}
                     "status": "success",
                     "transaction_hash": transaction_hash,
                     "actual_profit_usd": actual_profit,
                     "gas_used": receipt["gasUsed"]
-                }
+                
             else:
-                self.logger.error(f"Transaction failed: {transaction_hash}")
+                self.logger.error(str(f"Transaction failed: {transaction_hash}")
                 return {"status": "transaction_failed", "hash": transaction_hash}
                 
         except Exception as e:
-            self.logger.error(f"Flash loan execution failed: {e}")
+            self.logger.error(str(f"Flash loan execution failed: {e}")
             return {"status": "error", "message": str(e)}
     
     async def prepare_flash_loan(self, opportunity: Dict[str, Any]) -> Dict[str, Any]:
         """Prepare flash loan transaction parameters"""
         # This would contain the actual smart contract interaction code
         # For now, return simulation parameters
-        return {
+        return {}
             "token": opportunity["token_symbol"],
             "amount": opportunity["max_trade_size"],
             "dex_path": [opportunity["buy_dex"], opportunity["sell_dex"]],
             "min_profit": opportunity["net_profit_usd"]
-        }
+        
     
     async def simulate_transaction(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Simulate transaction before execution"""
@@ -130,11 +132,11 @@ class RealTradingExecutor:
     async def wait_for_confirmation(self, tx_hash: str) -> Dict[str, Any]:
         """Wait for transaction confirmation"""
         # Mock successful receipt
-        return {
+        return {}
             "status": 1,
             "gasUsed": 200000,
             "transactionHash": tx_hash
-        }
+        
     
     async def calculate_actual_profit(self, receipt: Dict[str, Any]) -> float:
         """Calculate actual profit from transaction receipt"""
@@ -156,29 +158,42 @@ class RealTradingExecutor:
 # Example usage and testing
 async def test_real_trading():
     """Test the real trading module"""
-    config = TradingConfig(
+    config = TradingConfig()
         max_position_size_usd=50.0,  # Very conservative start
         min_profit_threshold_usd=1.0,
         emergency_stop=False
-    )
+    
     
     executor = RealTradingExecutor(config)
     
     # Mock opportunity for testing
-    test_opportunity = {
+    test_opportunity = {}
         "token_symbol": "USDC",
         "buy_dex": "Uniswap V3",
         "sell_dex": "SushiSwap",
         "net_profit_usd": 3.50,
         "max_trade_size": 1000
-    }
+    
     
     result: str = await executor.execute_flash_loan_arbitrage(test_opportunity)
     print(f"Trading result: {result}")
 
 if __name__ == "__main__":
     # Set up logging
-    logging.basicConfig(level=logging.INFO)
+    
+# Unicode-safe logging setup
+class UnicodeFormatter(logging.Formatter):
+    """Custom formatter that handles Unicode characters safely"""
+    
+    def format(self, record):
+        try:
+            return super().format(record)
+        except UnicodeEncodeError:
+            # Fallback to ASCII if Unicode fails
+            record.msg = str(record.msg).encode('ascii', 'ignore').decode('ascii')
+            return super().format(record)
+
+logging.basicConfig(level=logging.INFO)
     
     # Run test
     asyncio.run(test_real_trading())
