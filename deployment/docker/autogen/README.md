@@ -222,7 +222,7 @@ Ready for Web3 integration with support for:
 ### Common Issues
 
 1. **AutoGen Import Errors**
-   - Ensure `pyautogen` is installed: `pip install pyautogen==0.2.25`
+   - Ensure `ag2` is installed: `pip install ag2==0.2.25`
    - Check Python version compatibility (3.11+ recommended)
 
 2. **Redis Connection Issues**
