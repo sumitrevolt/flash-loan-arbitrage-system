@@ -45,7 +45,7 @@ try:
     AUTOGEN_AVAILABLE = True
 except ImportError:
     AUTOGEN_AVAILABLE = False
-    logging.warning("AutoGen not available. Install with: pip install pyautogen")
+    logging.warning("AutoGen not available. Install with: pip install ag2")
 
 # Configure logging
 
