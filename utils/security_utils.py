@@ -12,6 +12,10 @@ Security utilities and safety mechanisms for protecting the system:
 
 import hashlib
 import hmac
+import inspect
+import math
+import os
+import threading
 import time
 import logging
 import re
@@ -39,10 +43,13 @@ class SecurityManager:
         self.emergency_stop = False
         self.security_alerts: List[SecurityAlert] = []
         self.rate_limits: Dict[str, List[datetime]] = {}
+        self._rate_limit_lock = threading.Lock()
         self.failed_attempts: Dict[str, int] = {}
         self.max_failed_attempts = 5
         self.rate_limit_window = timedelta(minutes=1)
         self.max_requests_per_window = 60
+        self.current_position_usd = 0.0
+        self.max_total_position_usd = 100000.0
     
     def validate_wallet_address(self, address: str) -> bool:
         """Validate Ethereum wallet address format"""
@@ -84,9 +91,11 @@ class SecurityManager:
     
     def sanitize_trade_amount(self, amount: float, max_amount: float) -> float:
         """Sanitize and validate trade amounts"""
-        if not isinstance(amount, (int, float)):
-            raise ValueError("Trade amount must be numeric")
-        
+        if isinstance(amount, bool) or not isinstance(amount, (int, float)) or not math.isfinite(amount):
+            raise ValueError("Trade amount must be a finite number")
+        if isinstance(max_amount, bool) or not isinstance(max_amount, (int, float)) or not math.isfinite(max_amount) or max_amount <= 0:
+            raise ValueError("Max trade amount must be a positive finite number")
+
         if amount <= 0:
             raise ValueError("Trade amount must be positive")
         
@@ -109,32 +118,24 @@ class SecurityManager:
         return 0.001 <= slippage <= 0.1
     
     def check_rate_limit(self, identifier: str) -> bool:
-        """Check if request is within rate limits"""
+        """Check if request is within rate limits (thread-safe)"""
         now = datetime.now()
-        
-        # Initialize rate limit tracking for this identifier
-        if identifier not in self.rate_limits:
-            self.rate_limits[identifier] = []
-        
-        # Remove old requests outside the window
         cutoff_time = now - self.rate_limit_window
-        self.rate_limits[identifier] = [
-            req_time for req_time in self.rate_limits[identifier]
-            if req_time > cutoff_time
-        ]
-        
-        # Check if under rate limit
-        if len(self.rate_limits[identifier]) >= self.max_requests_per_window:
-            self.log_security_alert(
-                severity="medium",
-                message=f"Rate limit exceeded for {identifier}",
-                source="rate_limiting"
-            )
-            return False
-        
-        # Add this request to the tracking
-        self.rate_limits[identifier].append(now)
-        return True
+        with self._rate_limit_lock:
+            history = self.rate_limits.setdefault(identifier, [])
+            history = [req_time for req_time in history if req_time > cutoff_time]
+            self.rate_limits[identifier] = history
+
+            if len(history) >= self.max_requests_per_window:
+                self.log_security_alert(
+                    severity="medium",
+                    message=f"Rate limit exceeded for {identifier}",
+                    source="rate_limiting"
+                )
+                return False
+
+            history.append(now)
+            return True
     
     def log_failed_attempt(self, identifier: str) -> bool:
         """Log failed attempt and check if should be blocked"""
@@ -169,14 +170,16 @@ class SecurityManager:
         """Check if system is in emergency stop state"""
         return self.emergency_stop
     
-    def lift_emergency_stop(self, authorization_code: str) -> bool:
-        """Lift emergency stop with proper authorization"""
-        # In production, implement proper authorization mechanism
-        if authorization_code == "EMERGENCY_LIFT_AUTHORIZED":
+    def lift_emergency_stop(self, authorization_code: str, operator_role: str = "") -> bool:
+        """Lift emergency stop only with an authenticated operator role and env-configured token"""
+        expected = os.getenv("EMERGENCY_LIFT_TOKEN", "").strip()
+        if not expected or operator_role.lower() not in ("admin", "operator"):
+            return False
+        if hmac.compare_digest((authorization_code or "").encode("utf-8"), expected.encode("utf-8")):
             self.emergency_stop = False
             self.log_security_alert(
                 severity="high",
-                message="Emergency stop lifted",
+                message=f"Emergency stop lifted by {operator_role}",
                 source="emergency_stop"
             )
             logger.warning("🔓 Emergency stop lifted")
@@ -242,6 +245,11 @@ class SecurityManager:
             risk_score += 0.3
             risk_factors.append("Low liquidity")
         
+        # Check resulting position limit
+        if self.current_position_usd + trade_size > self.max_total_position_usd:
+            risk_score += 0.4
+            risk_factors.append("Exceeds maximum aggregate position limit")
+
         # Determine risk level
         if risk_score >= 0.7:
             risk_level = "high"
@@ -265,16 +273,20 @@ def rate_limited(identifier_func: Callable = None):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            # Determine identifier
+            # Determine identifier using stable value-based key rather than tuple id()
             if identifier_func:
                 identifier = identifier_func(*args, **kwargs)
             else:
-                identifier = f"{func.__name__}_{id(args)}"
-            
+                try:
+                    sig_key = json.dumps({"a": args, "k": kwargs}, sort_keys=True, default=repr)
+                except Exception:
+                    sig_key = repr((args, sorted(kwargs.items())))
+                identifier = f"{func.__qualname__}:{hashlib.sha256(sig_key.encode('utf-8')).hexdigest()[:16]}"
+
             # Check rate limit
             if not security_manager.check_rate_limit(identifier):
                 raise Exception(f"Rate limit exceeded for {identifier}")
-            
+
             return func(*args, **kwargs)
         return wrapper
     return decorator
@@ -292,14 +304,14 @@ def risk_assessment_required(func):
     """Decorator to require risk assessment for trading functions"""
     @wraps(func)
     async def wrapper(*args, **kwargs):
-        # Extract trade data from arguments (simplified)
-        trade_data = kwargs.get('trade_data', {})
-        if not trade_data and args:
-            trade_data = args[0] if isinstance(args[0], dict) else {}
-        
+        # Extract trade_data from kwargs or positional args (skipping bound self/cls)
+        trade_data = kwargs.get('trade_data')
+        if not isinstance(trade_data, dict):
+            trade_data = next((arg for arg in args if isinstance(arg, dict)), {})
+
         # Perform risk assessment
         risk_assessment = security_manager.assess_trade_risk(trade_data)
-        
+
         if risk_assessment['recommendation'] == 'block':
             security_manager.log_security_alert(
                 severity="high",
@@ -308,8 +320,10 @@ def risk_assessment_required(func):
                 details=risk_assessment
             )
             raise Exception(f"Trade blocked: {risk_assessment['risk_factors']}")
-        
-        return await func(*args, **kwargs)
+
+        if inspect.iscoroutinefunction(func):
+            return await func(*args, **kwargs)
+        return func(*args, **kwargs)
     return wrapper
 
 def validate_input(**validations):
@@ -389,13 +403,24 @@ class AuditLogger:
 audit_logger = AuditLogger()
 
 def audit_log(event_type: str):
-    """Decorator for audit logging"""
+    """Decorator for audit logging (awaits async coroutines before recording outcome)"""
     def decorator(func):
+        if inspect.iscoroutinefunction(func):
+            @wraps(func)
+            async def async_wrapper(*args, **kwargs):
+                audit_logger.logger.info(f"{event_type} - Function: {func.__name__} - Args: {str(args)[:100]}")
+                try:
+                    result = await func(*args, **kwargs)
+                    audit_logger.logger.info(f"{event_type}_SUCCESS - Function: {func.__name__}")
+                    return result
+                except Exception as e:
+                    audit_logger.logger.error(f"{event_type}_FAILED - Function: {func.__name__} - Error: {str(e)}")
+                    raise
+            return async_wrapper
+
         @wraps(func)
         def wrapper(*args, **kwargs):
-            # Log function call
             audit_logger.logger.info(f"{event_type} - Function: {func.__name__} - Args: {str(args)[:100]}")
-            
             try:
                 result = func(*args, **kwargs)
                 audit_logger.logger.info(f"{event_type}_SUCCESS - Function: {func.__name__}")

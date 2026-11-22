@@ -5,7 +5,7 @@ System Monitoring for Flash Loan Arbitrage System
 Comprehensive monitoring system for:
 - Performance metrics collection
 - Health monitoring
-- Alerting and notifications
+- In-memory alert recording & structured logging (external notifications require an external receiver)
 - Resource usage tracking
 - Trading performance analytics
 """
@@ -122,15 +122,21 @@ class SystemMonitor:
         # Service health tracking
         self.service_health: Dict[str, bool] = {}
         self.last_health_check: Dict[str, datetime] = {}
-    
+        self.first_failed_check: Dict[str, datetime] = {}
+        self.health_history: Dict[str, List[tuple]] = {}
+        self._prometheus_server = None
+        self._prometheus_thread = None
+
     async def start_monitoring(self, interval_seconds: int = 30):
         """Start the monitoring loop"""
         self.is_running = True
         logger.info("🔍 Starting system monitoring...")
-        
-        # Start Prometheus metrics server
+
+        # Start Prometheus metrics server and retain handle for clean shutdown
         try:
-            start_http_server(9090)
+            srv = start_http_server(9090)
+            if isinstance(srv, tuple) and len(srv) >= 2:
+                self._prometheus_server, self._prometheus_thread = srv[0], srv[1]
             logger.info("📊 Prometheus metrics server started on port 9090")
         except Exception as e:
             logger.warning(f"Failed to start Prometheus server: {e}")
@@ -158,8 +164,8 @@ class SystemMonitor:
     async def collect_system_metrics(self):
         """Collect current system metrics"""
         try:
-            # Get system info
-            cpu_percent = psutil.cpu_percent(interval=1)
+            # Get system info without blocking the asyncio event loop
+            cpu_percent = await asyncio.to_thread(psutil.cpu_percent, 1)
             memory = psutil.virtual_memory()
             disk = psutil.disk_usage('/')
             network = psutil.net_io_counters()
@@ -208,29 +214,45 @@ class SystemMonitor:
                     response_time = time.time() - start_time
                     
                     is_healthy = response.status == 200
+                    now = datetime.now()
                     self.service_health[service_name] = is_healthy
-                    self.last_health_check[service_name] = datetime.now()
-                    
+                    self.last_health_check[service_name] = now
+                    self.health_history.setdefault(service_name, []).append((now, is_healthy))
+                    if is_healthy:
+                        self.first_failed_check.pop(service_name, None)
+                    else:
+                        self.first_failed_check.setdefault(service_name, now)
+
                     # Update Prometheus metrics
                     self.prometheus_metrics.service_health.labels(service_name=service_name).set(1 if is_healthy else 0)
                     self.prometheus_metrics.response_time.labels(endpoint=health_url).observe(response_time)
-                    
+
                     if not is_healthy:
                         self.add_alert(
                             severity='error',
                             message=f"Service {service_name} is unhealthy (HTTP {response.status})",
                             source='health_check'
                         )
-                    
+
         except asyncio.TimeoutError:
+            now = datetime.now()
             self.service_health[service_name] = False
+            self.last_health_check[service_name] = now
+            self.first_failed_check.setdefault(service_name, now)
+            self.health_history.setdefault(service_name, []).append((now, False))
+            self.prometheus_metrics.service_health.labels(service_name=service_name).set(0)
             self.add_alert(
                 severity='error',
                 message=f"Service {service_name} health check timed out",
                 source='health_check'
             )
         except Exception as e:
+            now = datetime.now()
             self.service_health[service_name] = False
+            self.last_health_check[service_name] = now
+            self.first_failed_check.setdefault(service_name, now)
+            self.health_history.setdefault(service_name, []).append((now, False))
+            self.prometheus_metrics.service_health.labels(service_name=service_name).set(0)
             self.add_alert(
                 severity='error',
                 message=f"Service {service_name} health check failed: {str(e)}",
@@ -274,11 +296,11 @@ class SystemMonitor:
                 threshold=self.alert_thresholds['disk_usage_percent']
             )
         
-        # Service health alerts
+        # Service health alerts (escalate 5+ minutes from FIRST failed probe)
         for service_name, is_healthy in self.service_health.items():
             if not is_healthy:
-                last_check = self.last_health_check.get(service_name)
-                if last_check and datetime.now() - last_check > timedelta(minutes=5):
+                first_failed = self.first_failed_check.get(service_name)
+                if first_failed and datetime.now() - first_failed > timedelta(minutes=5):
                     self.add_alert(
                         severity='critical',
                         message=f"Service {service_name} has been down for >5 minutes",
@@ -408,8 +430,15 @@ class SystemMonitor:
             },
             "alerts": alert_counts,
             "service_uptime": {
-                service: sum(1 for m in recent_metrics if self.service_health.get(service, False)) / len(recent_metrics) * 100
-                for service in self.service_health.keys()
+                service: round(
+                    (
+                        sum(1 for ts, ok in samples if ts > cutoff_time and ok)
+                        / max(1, sum(1 for ts, _ in samples if ts > cutoff_time))
+                    ) * 100,
+                    2,
+                )
+                for service, samples in self.health_history.items()
+                if any(ts > cutoff_time for ts, _ in samples)
             }
         }
     
@@ -422,6 +451,8 @@ class SystemMonitor:
             m for m in self.metrics_history
             if m.timestamp > cutoff_time
         ]
+        for svc, samples in list(self.health_history.items()):
+            self.health_history[svc] = [(ts, ok) for ts, ok in samples if ts > cutoff_time]
         
         # Clean alerts (keep 30 days)
         alert_cutoff = datetime.now() - timedelta(days=30)
@@ -431,8 +462,16 @@ class SystemMonitor:
         ]
     
     def stop_monitoring(self):
-        """Stop the monitoring loop"""
+        """Stop the monitoring loop and shut down Prometheus HTTP server"""
         self.is_running = False
+        if self._prometheus_server is not None:
+            try:
+                self._prometheus_server.shutdown()
+                self._prometheus_server.server_close()
+            except Exception as e:
+                logger.debug(f"Prometheus server shutdown error: {e}")
+            self._prometheus_server = None
+            self._prometheus_thread = None
         logger.info("🛑 System monitoring stopped")
 
 # Global monitor instance

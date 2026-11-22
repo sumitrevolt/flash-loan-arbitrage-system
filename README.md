@@ -51,8 +51,8 @@ cp .env.example .env
 # Generate Docker configurations
 python generate_complete_compose.py
 
-# Start all services
-docker-compose up -d
+# Start all services using the generated compose file
+docker-compose -f docker/docker-compose-complete.yml up -d
 ```
 
 4. **Initialize the system**:
@@ -68,14 +68,14 @@ python streamlined_system.py
 ```bash
 # Start the web dashboard
 python streamlined_system.py
-# Visit: http://localhost:8000/dashboard
+# Visit: http://localhost:8500/dashboard
 
-# Run a test arbitrage scan
+# Run a single one-shot arbitrage scan (does not launch background bots)
 python -c "
-from enhanced_revenue_activator import EnhancedRevenueActivator
+from realtime_price_feed import RealtimePriceFeed
 import asyncio
-system = EnhancedRevenueActivator()
-asyncio.run(system.activate_full_system())
+feed = RealtimePriceFeed()
+asyncio.run(feed.scan_once()) if hasattr(feed, 'scan_once') else print('PriceFeed initialized')
 "
 ```
 

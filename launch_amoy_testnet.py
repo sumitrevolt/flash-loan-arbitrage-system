@@ -67,8 +67,11 @@ class AmoyTestnetLauncher:
         from dotenv import load_dotenv
         load_dotenv()
         
-        # Check for demo mode
+        # Check for demo mode — live on-chain execution is not implemented in this launcher
         self.demo_mode = os.getenv('DEMO_MODE', 'true').lower() == 'true'
+        if not self.demo_mode:
+            logger.error("❌ Live mode (DEMO_MODE=false) is not supported yet: on-chain execution is not implemented. Set DEMO_MODE=true for simulated demo runs.")
+            return False
         
         # Validate required variables
         required_vars = [
@@ -143,8 +146,9 @@ Once configured, run: python launch_amoy_testnet.py
             # Verify chain ID
             chain_id = self.w3.eth.chain_id
             if chain_id != 80002:
-                logger.warning(f"⚠️ Connected to chain ID {chain_id}, expected 80002 (Amoy)")
-            
+                logger.error(f"❌ Connected to chain ID {chain_id}, expected 80002 (Polygon Amoy)")
+                return False
+
             logger.info(f"✅ Connected to Amoy testnet (Chain ID: {chain_id})")
             
             # Check wallet balance if not in demo mode
@@ -333,23 +337,19 @@ Once configured, run: python launch_amoy_testnet.py
         
         # Show daily target progress
         daily_target = float(os.getenv('DAILY_PROFIT_TARGET_USD', 10))
-        progress = (self.revenue_stats['total_profit_usd'] / daily_target) * 100
-        print(f"🎯 Daily Target Progress: {progress:.1f}% (${self.revenue_stats['total_profit_usd']:.2f}/${daily_target})")
-        
+        if daily_target > 0:
+            progress = (self.revenue_stats['total_profit_usd'] / daily_target) * 100
+            print(f"🎯 Daily Target Progress: {progress:.1f}% (${self.revenue_stats['total_profit_usd']:.2f}/${daily_target})")
+        else:
+            print(f"🎯 Daily Target: disabled (earned ${self.revenue_stats['total_profit_usd']:.2f})")
+
         if self.demo_mode:
-            print("🎮 DEMO MODE - Simulated profits")
+            print("🎮 [SIMULATED DEMO MODE] Figures above are simulated, not on-chain trades")
         print("="*70)
     
     async def start_monitoring_dashboard(self):
-        """Start web monitoring dashboard"""
-        try:
-            # Try to start the streamlined system dashboard
-            logger.info("📊 Starting web dashboard...")
-            logger.info("� Web dashboard will be available at: http://localhost:8000/dashboard")
-            logger.info("� System status endpoint: http://localhost:8000/status")
-            
-        except Exception as e:
-            logger.warning(f"⚠️ Dashboard startup skipped: {e}")
+        """Log local monitoring status (no standalone HTTP server is started by this launcher)"""
+        logger.info("Local console & file monitoring active (logs/amoy_testnet.log, logs/trades.log)")
     
     async def run_testnet_system(self):
         """Main function to run the testnet system"""
@@ -381,25 +381,26 @@ Once configured, run: python launch_amoy_testnet.py
         try:
             # Start the main trading loop
             await self.start_price_monitoring()
-            
-        except KeyboardInterrupt:
+
+        except (KeyboardInterrupt, asyncio.CancelledError):
             logger.info("\n🛑 Shutting down testnet system...")
             self.display_revenue_stats()
-            
+
             # Save final stats
             final_stats = {
+                'simulated': self.demo_mode,
                 'session_end': datetime.now().isoformat(),
                 'runtime_hours': (datetime.now() - self.revenue_stats['start_time']).total_seconds() / 3600,
                 'total_profit': self.revenue_stats['total_profit_usd'],
                 'total_trades': self.revenue_stats['trades_executed'],
                 'success_rate': (self.revenue_stats['successful_trades'] / max(1, self.revenue_stats['opportunities_found'])) * 100
             }
-            
+
             with open('logs/session_summary.json', 'w') as f:
                 json.dump(final_stats, f, indent=2)
-            
+
             print("\n✅ Testnet session completed successfully!")
-            print(f"📊 Session summary saved to logs/session_summary.json")
+            print("📊 Session summary saved to logs/session_summary.json")
         
         except Exception as e:
             logger.error(f"❌ System error: {e}")

@@ -1,24 +1,24 @@
-# 🚀 Flash Loan Arbitrage System - Amoy Testnet Status Report
+# 🚀 Flash Loan Arbitrage System - Amoy Testnet Simulated Demo Report
 
-## ✅ SYSTEM STATUS: ACTIVE & GENERATING REVENUE
+## ✅ SYSTEM STATUS: SIMULATED DEMO SESSION (NO ON-CHAIN EXECUTION)
 
 **Report Generated:** 2025-06-30 11:43:00 UTC  
-**Network:** Polygon Amoy Testnet (Chain ID: 80002)  
-**Mode:** Demo Mode - Safe Testing Environment  
-**Status:** 🟢 OPERATIONAL - Actively generating profits
+**Network:** Polygon Amoy Testnet (Chain ID: 80002 — Simulated Fallback Allowed in Demo Mode)  
+**Mode:** Demo Mode - Safe Simulated Testing Environment  
+**Status:** 🟢 SIMULATED DEMO - Generating simulated opportunities & outcomes (no transactions submitted on-chain)
 
 ---
 
-## 💰 REVENUE PERFORMANCE
+## 💰 SIMULATED REVENUE PERFORMANCE
 
-### Current Session Statistics
+### Simulated Session Statistics
 - **🕐 Runtime:** ~15 minutes (since 11:28 UTC)
-- **💵 Total Profit Generated:** **$42.94 USD**
-- **📊 Successful Trades:** 36 trades executed
-- **❌ Failed Trades:** 8 trades (network/slippage)
-- **🎯 Total Opportunities:** 44 found
-- **📈 Success Rate:** 81.8%
-- **⚡ Average Hourly Rate:** **$171.76/hour**
+- **💵 Simulated Total Profit:** **$42.94 USD (simulated)**
+- **📊 Simulated Successful Trades:** 36 simulated trades
+- **❌ Simulated Failed Trades:** 8 simulated failures (network/slippage simulation)
+- **🎯 Simulated Trade Outcomes:** 44 counted trade outcomes (threshold rejections not included)
+- **📈 Simulated Success Rate:** 81.8%
+- **⚡ Simulated Hourly Rate:** **$171.76/hour (simulated)**
 
 ### Trade Distribution by Pair
 - **WMATIC/USDC:** 12 trades - $13.53 profit
@@ -80,10 +80,10 @@ The system has already generated **4.3x** the daily target in just 15 minutes of
 
 ## 🔗 NETWORK & INFRASTRUCTURE
 
-### Polygon Amoy Testnet Connection
+### Polygon Amoy Testnet Connection (Demo Mode)
 - **RPC Endpoint:** https://rpc-amoy.polygon.technology/
-- **Chain ID:** 80002 ✅ Verified
-- **Connection Status:** 🟢 Stable
+- **Chain ID:** 80002 (demo mode permits simulated continuation without live RPC)
+- **Connection Status:** 🟡 Simulated in Demo Mode
 - **Wallet Balance:** 10.0000 MATIC (simulated)
 
 ### Supported DEXes

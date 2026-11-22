@@ -39,14 +39,19 @@ class TestSystemIntegration:
     
     @pytest.mark.asyncio
     async def test_system_startup_sequence(self):
-        """Test complete system startup and initialization"""
+        """Test complete system startup and initialization phases run in order"""
         activator = EnhancedRevenueActivator()
-        
-        # Mock external dependencies
-        with patch.object(activator, 'load_configurations') as mock_load:
-            mock_load.return_value = None
-            
-            # Test initialization
+        call_order = []
+
+        async def _rec(name):
+            call_order.append(name)
+
+        with patch.object(activator, 'load_configurations', side_effect=lambda: _rec('load_configurations')), \
+             patch.object(activator, 'initialize_connections', side_effect=lambda: _rec('initialize_connections'), create=True), \
+             patch.object(activator, 'start_agents', side_effect=lambda: _rec('start_agents'), create=True), \
+             patch.object(activator, 'start_monitoring', side_effect=lambda: _rec('start_monitoring'), create=True):
+            await activator.activate_full_system()
+            assert call_order[0] == 'load_configurations'
             assert activator.revenue_metrics['total_profit_usd'] == 0.0
             assert activator.revenue_metrics['trades_executed'] == 0
     

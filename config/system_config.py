@@ -99,49 +99,92 @@ class ConfigManager:
         self.load_config()
     
     def load_config(self):
-        """Load configuration from environment and files"""
-        # Load from environment variables
-        self._load_from_env()
-        
-        # Load from JSON config file if exists
+        """Load configuration from .env, JSON file, and process environment (env wins)."""
+        try:
+            from dotenv import load_dotenv
+            load_dotenv()
+        except Exception:
+            pass
+
+        # Load JSON config file first so non-empty environment variables always override it
         if os.path.exists(self.config_file):
             self._load_from_file()
         else:
             logger.warning(f"Config file {self.config_file} not found, using defaults")
-            self.save_config()  # Save default config
-    
+
+        # Apply environment variables on top without mutating/persisting blank env snapshots
+        self._load_from_env()
+
+    @staticmethod
+    def _parse_int_env(name: str, default: int) -> int:
+        raw = os.getenv(name)
+        if raw is None or not raw.strip():
+            return default
+        try:
+            return int(raw.strip())
+        except ValueError:
+            logger.warning(f"Invalid integer for {name}={raw!r}; keeping {default}")
+            return default
+
+    @staticmethod
+    def _parse_float_env(name: str, default: float) -> float:
+        raw = os.getenv(name)
+        if raw is None or not raw.strip():
+            return default
+        try:
+            return float(raw.strip())
+        except ValueError:
+            logger.warning(f"Invalid float for {name}={raw!r}; keeping {default}")
+            return default
+
     def _load_from_env(self):
-        """Load configuration from environment variables"""
+        """Load non-empty configuration overrides from environment variables"""
         # System settings
-        self.config.environment = os.getenv("ENVIRONMENT", "development")
-        self.config.debug = os.getenv("DEBUG", "false").lower() == "true"
-        self.config.log_level = os.getenv("LOG_LEVEL", "INFO")
-        
-        # Blockchain configuration
-        self.config.blockchain.polygon_rpc = os.getenv("POLYGON_RPC_URL", "")
-        self.config.blockchain.ethereum_rpc = os.getenv("ETHEREUM_RPC_URL", "")
-        self.config.blockchain.bsc_rpc = os.getenv("BSC_RPC_URL", "")
-        self.config.blockchain.arbitrum_rpc = os.getenv("ARBITRUM_RPC_URL", "")
-        self.config.blockchain.private_key = os.getenv("PRIVATE_KEY", "")
-        
+        if os.getenv("ENVIRONMENT"):
+            self.config.environment = os.getenv("ENVIRONMENT", self.config.environment)
+        if os.getenv("DEBUG"):
+            self.config.debug = os.getenv("DEBUG", "false").lower() == "true"
+        if os.getenv("LOG_LEVEL"):
+            self.config.log_level = os.getenv("LOG_LEVEL", self.config.log_level)
+
+        # Blockchain configuration (only override when non-empty)
+        if os.getenv("POLYGON_RPC_URL"):
+            self.config.blockchain.polygon_rpc = os.getenv("POLYGON_RPC_URL", "")
+        if os.getenv("ETHEREUM_RPC_URL"):
+            self.config.blockchain.ethereum_rpc = os.getenv("ETHEREUM_RPC_URL", "")
+        if os.getenv("BSC_RPC_URL"):
+            self.config.blockchain.bsc_rpc = os.getenv("BSC_RPC_URL", "")
+        if os.getenv("ARBITRUM_RPC_URL"):
+            self.config.blockchain.arbitrum_rpc = os.getenv("ARBITRUM_RPC_URL", "")
+        if os.getenv("PRIVATE_KEY"):
+            self.config.blockchain.private_key = os.getenv("PRIVATE_KEY", "")
+
         # Trading configuration
-        self.config.trading.max_trade_size_usd = float(
-            os.getenv("MAX_TRADE_SIZE_USD", "10000")
+        self.config.trading.max_trade_size_usd = self._parse_float_env(
+            "MAX_TRADE_SIZE_USD", self.config.trading.max_trade_size_usd
         )
-        self.config.trading.min_profit_usd = float(
-            os.getenv("MIN_PROFIT_USD", "5")
+        self.config.trading.min_profit_usd = self._parse_float_env(
+            "MIN_PROFIT_USD", self.config.trading.min_profit_usd
         )
-        self.config.trading.slippage_tolerance = float(
-            os.getenv("SLIPPAGE_TOLERANCE", "0.005")
+        self.config.trading.slippage_tolerance = self._parse_float_env(
+            "SLIPPAGE_TOLERANCE", self.config.trading.slippage_tolerance
         )
-        self.config.trading.auto_execute = os.getenv("AUTO_EXECUTE", "false").lower() == "true"
-        
+        if os.getenv("AUTO_EXECUTE"):
+            self.config.trading.auto_execute = os.getenv("AUTO_EXECUTE", "false").lower() == "true"
+
         # MCP configuration
-        self.config.mcp.base_port = int(os.getenv("MCP_BASE_PORT", "8000"))
-        
+        self.config.mcp.base_port = self._parse_int_env("MCP_BASE_PORT", self.config.mcp.base_port)
+
         # Monitoring configuration
-        self.config.monitoring.discord_webhook = os.getenv("DISCORD_WEBHOOK", "")
-        self.config.monitoring.enable_discord_alerts = bool(self.config.monitoring.discord_webhook)
+        if os.getenv("DISCORD_WEBHOOK"):
+            self.config.monitoring.discord_webhook = os.getenv("DISCORD_WEBHOOK", "")
+        enable_discord_env = os.getenv("ENABLE_DISCORD_ALERTS")
+        if enable_discord_env is not None and enable_discord_env.strip():
+            self.config.monitoring.enable_discord_alerts = enable_discord_env.strip().lower() in (
+                "1", "true", "yes", "on"
+            )
+        elif self.config.monitoring.discord_webhook:
+            self.config.monitoring.enable_discord_alerts = True
     
     def _load_from_file(self):
         """Load configuration from JSON file"""
