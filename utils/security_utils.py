@@ -170,7 +170,7 @@ class SecurityManager:
         """Check if system is in emergency stop state"""
         return self.emergency_stop
     
-    def lift_emergency_stop(self, authorization_code: str, operator_role: str = "") -> bool:
+    def lift_emergency_stop(self, authorization_code: str, operator_role: str = "operator") -> bool:
         """Lift emergency stop only with an authenticated operator role and env-configured token"""
         expected = os.getenv("EMERGENCY_LIFT_TOKEN", "").strip()
         if not expected or operator_role.lower() not in ("admin", "operator"):
@@ -301,17 +301,12 @@ def emergency_stop_check(func):
     return wrapper
 
 def risk_assessment_required(func):
-    """Decorator to require risk assessment for trading functions"""
-    @wraps(func)
-    async def wrapper(*args, **kwargs):
-        # Extract trade_data from kwargs or positional args (skipping bound self/cls)
+    """Decorator to require risk assessment for trading functions (sync or async)"""
+    def _evaluate(args, kwargs):
         trade_data = kwargs.get('trade_data')
         if not isinstance(trade_data, dict):
             trade_data = next((arg for arg in args if isinstance(arg, dict)), {})
-
-        # Perform risk assessment
         risk_assessment = security_manager.assess_trade_risk(trade_data)
-
         if risk_assessment['recommendation'] == 'block':
             security_manager.log_security_alert(
                 severity="high",
@@ -321,10 +316,18 @@ def risk_assessment_required(func):
             )
             raise Exception(f"Trade blocked: {risk_assessment['risk_factors']}")
 
-        if inspect.iscoroutinefunction(func):
+    if inspect.iscoroutinefunction(func):
+        @wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            _evaluate(args, kwargs)
             return await func(*args, **kwargs)
+        return async_wrapper
+
+    @wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        _evaluate(args, kwargs)
         return func(*args, **kwargs)
-    return wrapper
+    return sync_wrapper
 
 def validate_input(**validations):
     """Decorator for input validation"""

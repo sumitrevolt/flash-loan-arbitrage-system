@@ -106,13 +106,14 @@ class ConfigManager:
         except Exception:
             pass
 
-        # Load JSON config file first so non-empty environment variables always override it
+        # Load JSON config file first, or create a default non-secret template before applying env
         if os.path.exists(self.config_file):
             self._load_from_file()
         else:
-            logger.warning(f"Config file {self.config_file} not found, using defaults")
+            logger.warning(f"Config file {self.config_file} not found, creating defaults")
+            self.save_config()
 
-        # Apply environment variables on top without mutating/persisting blank env snapshots
+        # Apply environment variables on top without persisting secrets back to JSON
         self._load_from_env()
 
     @staticmethod
